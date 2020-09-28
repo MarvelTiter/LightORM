@@ -1,0 +1,13 @@
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\obj\Debug\MDbAction.csproj.CoreCompileInputs.cache
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\MDbAction.dll.config
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\MDbAction.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\MDbAction.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\Dapper.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\MySql.Data.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\Oracle.ManagedDataAccess.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\Dapper.xml
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\bin\Debug\MySql.Data.xml
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\obj\Debug\MDbAction.csproj.CopyComplete
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\obj\Debug\MDbAction.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\obj\Debug\MDbAction.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbAction\obj\Debug\MDbAction.csprojAssemblyReference.cache

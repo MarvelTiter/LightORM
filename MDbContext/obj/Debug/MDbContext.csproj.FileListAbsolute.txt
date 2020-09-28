@@ -1,0 +1,17 @@
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\obj\Debug\MDbContext.csprojAssemblyReference.cache
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\obj\Debug\MDbContext.csproj.CoreCompileInputs.cache
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MDbContext.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MDbContext.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\ExpSql.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\Oracle.ManagedDataAccess.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\Dapper.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\ExpSql.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\Dapper.xml
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\obj\Debug\MDbContext.csproj.CopyComplete
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\obj\Debug\MDbContext.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\obj\Debug\MDbContext.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MDbAction.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MDbAction.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MDbAction.dll.config
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MySql.Data.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbContext\bin\Debug\MySql.Data.xml

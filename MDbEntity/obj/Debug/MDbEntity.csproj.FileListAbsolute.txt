@@ -1,0 +1,5 @@
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbEntity\bin\Debug\MDbEntity.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbEntity\bin\Debug\MDbEntity.pdb
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbEntity\obj\Debug\MDbEntity.csproj.CoreCompileInputs.cache
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbEntity\obj\Debug\MDbEntity.dll
+C:\Users\MarvelY\OneDrive\Code\DBManage\MDbEntity\obj\Debug\MDbEntity.pdb
