@@ -4,6 +4,7 @@ using MDbAction.IServices;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace MDbContext
 {
@@ -53,6 +54,11 @@ namespace MDbContext
             return dbAction.Query<T>(_sql, _p);
         }
 
+        public T Single<T>()
+        {
+            return dbAction.SingleResult<T>(_sql, _p);
+        }
+
         public int Excute(string sql, object p)
         {
             return dbAction.ExcuteNonQuery(sql, p);
@@ -66,6 +72,11 @@ namespace MDbContext
         public IEnumerable<T> Query<T>(string sql, object p)
         {
             return dbAction.Query<T>(sql, p);
+        }
+
+        public T Single<T>(string sql, object p)
+        {
+            return dbAction.SingleResult<T>(sql, p);
         }
 
         public void Dispose()

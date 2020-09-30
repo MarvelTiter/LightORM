@@ -10,6 +10,8 @@ namespace DExpSql
 {
     public partial class ExpressionSqlCore<T>
     {
+        private bool _firstWhere;
+
         private string SelectHandle(params Type[] arr)
         {
             _sqlCaluse.Clear();
@@ -36,7 +38,13 @@ namespace DExpSql
 
         private void WhereHandle(Expression<Func<T, object>> exp)
         {
-            _sqlCaluse += "\n WHERE";
+            if (_firstWhere)
+            {
+                _sqlCaluse += "\n WHERE";
+                _firstWhere = false;
+            }
+            else
+                _sqlCaluse += "\n AND";
             ExpressionVisit.Where(exp.Body, _sqlCaluse);
         }
 
