@@ -100,11 +100,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj",
+      "projectUniqueName": "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj",
       "projectName": "WebTest",
-      "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj",
+      "projectPath": "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj",
       "packagesPath": "C:\\Users\\MarvelY\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\obj\\",
+      "outputPath": "E:\\GitRepositories\\DBManage\\WebTest\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet\\",
@@ -125,8 +125,8 @@
       "frameworks": {
         "netcoreapp3.1": {
           "projectReferences": {
-            "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj": {
-              "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj"
+            "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj": {
+              "projectPath": "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj"
             }
           }
         }

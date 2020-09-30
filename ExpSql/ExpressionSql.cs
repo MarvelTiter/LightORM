@@ -17,15 +17,18 @@ namespace DExpSql
         }
         public ExpressionSqlCore<T> Select<T>(Expression<Func<T, object>> exp = null)
         {
+            SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
         }
         public ExpressionSqlCore<T> Select<T, T1>(Expression<Func<T, T1, object>> exp = null)
         {
+            SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
         }
 
         public ExpressionSqlCore<T> Update<T>(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null)
         {
+            SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Update(exp, pkExp);
         }
 
@@ -43,6 +46,7 @@ namespace DExpSql
 
         public ExpressionSqlCore<T> Insert<T>(Expression<Func<object>> exp)
         {
+            SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Insert(exp);
         }
 
@@ -53,6 +57,7 @@ namespace DExpSql
 
         public ExpressionSqlCore<T> Count<T>()
         {
+            SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Count();
         }
 

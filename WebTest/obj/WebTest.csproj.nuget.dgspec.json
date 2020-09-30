@@ -1,42 +1,42 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj": {}
+    "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\ExpSql\\ExpSql.csproj": {
+    "E:\\GitRepositories\\DBManage\\ExpSql\\ExpSql.csproj": {
       "restore": {
-        "projectUniqueName": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\ExpSql\\ExpSql.csproj",
+        "projectUniqueName": "E:\\GitRepositories\\DBManage\\ExpSql\\ExpSql.csproj",
         "projectName": "ExpSql",
-        "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\ExpSql\\ExpSql.csproj"
+        "projectPath": "E:\\GitRepositories\\DBManage\\ExpSql\\ExpSql.csproj"
       },
       "frameworks": {
         "net472": {}
       }
     },
-    "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbAction\\MDbAction.csproj": {
+    "E:\\GitRepositories\\DBManage\\MDbAction\\MDbAction.csproj": {
       "restore": {
-        "projectUniqueName": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbAction\\MDbAction.csproj",
+        "projectUniqueName": "E:\\GitRepositories\\DBManage\\MDbAction\\MDbAction.csproj",
         "projectName": "MDbAction",
-        "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbAction\\MDbAction.csproj"
+        "projectPath": "E:\\GitRepositories\\DBManage\\MDbAction\\MDbAction.csproj"
       },
       "frameworks": {
         "net472": {}
       }
     },
-    "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj": {
+    "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj": {
       "restore": {
-        "projectUniqueName": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj",
+        "projectUniqueName": "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj",
         "projectName": "MDbContext",
-        "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj",
+        "projectPath": "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj",
         "frameworks": {
           "net472": {
             "projectReferences": {
-              "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\ExpSql\\ExpSql.csproj": {
-                "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\ExpSql\\ExpSql.csproj"
+              "E:\\GitRepositories\\DBManage\\ExpSql\\ExpSql.csproj": {
+                "projectPath": "E:\\GitRepositories\\DBManage\\ExpSql\\ExpSql.csproj"
               },
-              "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbAction\\MDbAction.csproj": {
-                "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbAction\\MDbAction.csproj"
+              "E:\\GitRepositories\\DBManage\\MDbAction\\MDbAction.csproj": {
+                "projectPath": "E:\\GitRepositories\\DBManage\\MDbAction\\MDbAction.csproj"
               }
             }
           }
@@ -46,14 +46,14 @@
         "net472": {}
       }
     },
-    "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj": {
+    "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj",
+        "projectUniqueName": "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj",
         "projectName": "WebTest",
-        "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj",
+        "projectPath": "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj",
         "packagesPath": "C:\\Users\\MarvelY\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\obj\\",
+        "outputPath": "E:\\GitRepositories\\DBManage\\WebTest\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Microsoft\\Xamarin\\NuGet\\",
@@ -74,8 +74,8 @@
         "frameworks": {
           "netcoreapp3.1": {
             "projectReferences": {
-              "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj": {
-                "projectPath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\MDbContext\\MDbContext.csproj"
+              "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj": {
+                "projectPath": "E:\\GitRepositories\\DBManage\\MDbContext\\MDbContext.csproj"
               }
             }
           }

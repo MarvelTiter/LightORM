@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KFAmm8b5DinTGtWQCM/yGYj4izf1qYCDJDrvXHg0xTG+qzpE7eEfZEYm3RXI8xqZBBr+4u5WzyPPRD4LPZ7RAQ==",
+  "dgSpecHash": "OIidv8ksALNFSvoviE1Vxg2+lWbyU04lkhV7wV4eM18STsqZh4WldlWsFkTQXa5ClqkQ0tcNqls3BYuaDATyBQ==",
   "success": true,
-  "projectFilePath": "C:\\Users\\MarvelY\\OneDrive\\Code\\DBManage\\WebTest\\WebTest.csproj",
+  "projectFilePath": "E:\\GitRepositories\\DBManage\\WebTest\\WebTest.csproj",
   "expectedPackageFiles": [
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\microsoft.aspnetcore.razor.design\\2.2.0\\microsoft.aspnetcore.razor.design.2.2.0.nupkg.sha512"
   ],

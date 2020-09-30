@@ -3,7 +3,9 @@ using MDbAction;
 using MDbContext;
 using MDbEntity.Attributes;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Test.Models.Entities;
 
 namespace Test
@@ -26,22 +28,25 @@ namespace Test
 
                 //Console.ReadKey();
 
+                var s1 = Console.ReadLine();
+                var s2 = Console.ReadLine();
 
-                var p = new Teacher();
-                p.Age = 33;
-                p.Name = "测试1111111111";
-                DbContext.Init((int)DBType.Oracle, "Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True");
-                var db = DbContext.Instance;
+                var b = Equals(s1, s2);
+
+                Console.WriteLine(b);
+              
+                //DbContext.Init((int)DBType.Oracle, "Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True");
+                //var db = DbContext.Instance;
 
                
-                ////db.DbSet.Update<Users>(user);
+                //////db.DbSet.Update<Users>(user);
 
-                //foreach (var item in result)
-                //{
-                //    Console.WriteLine($"{item.USERNAME}:{item.LOGINDATE}");
-                //}
-                Console.WriteLine(db.DbSet);
-                Console.WriteLine();
+                ////foreach (var item in result)
+                ////{
+                ////    Console.WriteLine($"{item.USERNAME}:{item.LOGINDATE}");
+                ////}
+                //Console.WriteLine(db.DbSet);
+                //Console.WriteLine();
                 //
                 //begin = DateTime.Now;
                 //IValidate<Teacher> validate = new ValidateImp<Teacher>();

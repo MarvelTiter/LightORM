@@ -10,3 +10,9 @@ C:\Users\MarvelY\OneDrive\Code\DBManage\ExpSql\obj\Debug\ExpSql.csprojAssemblyRe
 C:\Users\MarvelY\OneDrive\Code\DBManage\ExpSql\obj\Debug\ExpSql.csproj.CoreCompileInputs.cache
 C:\Users\MarvelY\OneDrive\Code\DBManage\ExpSql\obj\Debug\ExpSql.dll
 C:\Users\MarvelY\OneDrive\Code\DBManage\ExpSql\obj\Debug\ExpSql.pdb
+E:\GitRepositories\DBManage\ExpSql\bin\Debug\ExpSql.dll
+E:\GitRepositories\DBManage\ExpSql\bin\Debug\ExpSql.pdb
+E:\GitRepositories\DBManage\ExpSql\obj\Debug\ExpSql.csprojAssemblyReference.cache
+E:\GitRepositories\DBManage\ExpSql\obj\Debug\ExpSql.csproj.CoreCompileInputs.cache
+E:\GitRepositories\DBManage\ExpSql\obj\Debug\ExpSql.dll
+E:\GitRepositories\DBManage\ExpSql\obj\Debug\ExpSql.pdb

@@ -47,6 +47,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\Entities\SQLLOG.cs" />
+    <Compile Include="Models\Entities\Test.cs" />
     <Compile Include="Models\QueryParam\UserQueryParam.cs" />
     <Compile Include="Models\Entities\Users.cs" />
     <Compile Include="Program.cs" />
@@ -76,10 +78,6 @@
     <ProjectReference Include="..\MDbEntity\MDbEntity.csproj">
       <Project>{71BC935C-26FA-4579-975E-C0740B9A4969}</Project>
       <Name>MDbEntity</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WebTest\WebTest.csproj">
-      <Project>{46acfb0b-12d9-44ba-9117-7e59347672ea}</Project>
-      <Name>WebTest</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
