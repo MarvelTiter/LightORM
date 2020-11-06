@@ -22,5 +22,10 @@ namespace DExpSql.ExpressionMethod
         {
             return true;
         }
+
+        public static bool In(this object self, params object[] array)
+        {
+            return true;
+        }
     }
 }

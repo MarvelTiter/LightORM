@@ -30,52 +30,99 @@ namespace MDbAction
 
         public int ExcuteNonQuery(string sql, object p = null)
         {
-            using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+            try
             {
-                conn.ConnectionString = connString;
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
-                var ret = conn.Execute(sql, param: p);
-                return ret;
+                using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+                {
+                    conn.ConnectionString = connString;
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = sql;
+                    int ret;
+                    if (p == null)
+                        ret = conn.Execute(sql);
+                    else
+                        ret = conn.Execute(sql, param: p);
+                    return ret;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
         public DataTable QueryDataTable(string sql, object p = null)
         {
-            using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+            try
             {
-                conn.ConnectionString = connString;
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
-                var ret = conn.ExecuteReader(sql, param: p);
-                DataTable dt = new DataTable();
-                dt.Load(ret);
-                return dt;
+                using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+                {
+                    conn.ConnectionString = connString;
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = sql;
+                    IDataReader ret;
+                    if (p == null)
+                        ret = conn.ExecuteReader(sql);
+                    else
+                        ret = conn.ExecuteReader(sql, param: p);
+                    DataTable dt = new DataTable();
+                    dt.Load(ret);
+                    return dt;
+                }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
         }
 
         public IEnumerable<T> Query<T>(string sql, object p)
         {
-            using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+            try
             {
-                conn.ConnectionString = connString;
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
-                var ret = conn.Query<T>(sql, param: p);
-                return ret;
+                using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+                {
+                    conn.ConnectionString = connString;
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = sql;
+                    IEnumerable<T> ret;
+                    if (p == null)
+                        ret = conn.Query<T>(sql);
+                    else
+                        ret = conn.Query<T>(sql, param: p);
+                    return ret;
+                }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
         }
 
         public T SingleResult<T>(string sql, object p = null)
         {
-            using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+            try
             {
-                conn.ConnectionString = connString;
-                IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = sql;
-                var ret = conn.QuerySingle<T>(sql, param: p);
-                return ret;
+                using (IDbConnection conn = DbConnectionFactory.CreateConnect(dbType))
+                {
+                    conn.ConnectionString = connString;
+                    IDbCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = sql;
+                    T ret;
+                    if (p == null)
+                        ret = conn.QuerySingle<T>(sql);
+                    else
+                        ret = conn.QuerySingle<T>(sql, param: p);
+                    return ret;
+                }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
         }
     }
 }

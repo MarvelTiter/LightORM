@@ -49,6 +49,7 @@
     <Compile Include="ExpressionHandle\ConstantExpression.cs" />
     <Compile Include="ExpressionHandle\MemberExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\MethodCallExpressionCaluse.cs" />
+    <Compile Include="ExpressionHandle\NewArrayExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\NewExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\ParameterExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\UnaryExpressionCaluse.cs" />

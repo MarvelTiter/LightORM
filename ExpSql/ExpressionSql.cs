@@ -15,11 +15,13 @@ namespace DExpSql
             SqlCaluse = new SqlCaluse();
             SqlCaluse.DbType = DbType;
         }
+
         public ExpressionSqlCore<T> Select<T>(Expression<Func<T, object>> exp = null)
         {
             SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
         }
+
         public ExpressionSqlCore<T> Select<T, T1>(Expression<Func<T, T1, object>> exp = null)
         {
             SqlCaluse.Clear();
@@ -32,13 +34,6 @@ namespace DExpSql
             return new ExpressionSqlCore<T>(SqlCaluse).Update(exp, pkExp);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="entity"></param>
-        /// <param name="pkExp">过滤主键的Lambda</param>
-        /// <returns></returns>
         public ExpressionSqlCore<T> Update<T>(T entity, Expression<Func<T,object>> pkExp = null)
         {
             return Update<T>(() => entity, pkExp);
@@ -53,6 +48,12 @@ namespace DExpSql
         public ExpressionSqlCore<T> Insert<T>(T entity)
         {
             return Insert<T>(() => entity);
+        }
+
+        public ExpressionSqlCore<T> Delete<T>()
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse).Delete();
         }
 
         public ExpressionSqlCore<T> Count<T>()

@@ -56,6 +56,13 @@ namespace DExpSql
             return this;
         }
 
+        public ExpressionSqlCore<T> Delete()
+        {
+            var sql = DeleteHandle();
+            _sqlCaluse += sql;
+            return this;
+        }
+
         public ExpressionSqlCore<T> InnerJoin<T1>(Expression<Func<T, T1, object>> exp)
         {
             JoinHandle("\n INNER", exp);

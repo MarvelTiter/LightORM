@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -87,6 +88,18 @@ namespace DExpSql.ExpressionHandle
                 sqlCaluse.SelectFields.Add(p.Name);
                 sqlCaluse.AddDbParameter(value);
             }
+            return sqlCaluse;
+        }
+
+        protected override SqlCaluse In(MemberExpression exp, SqlCaluse sqlCaluse)
+        {
+            var v = Expression.Lambda(exp).Compile().DynamicInvoke();
+            IEnumerable array = v as IEnumerable;
+            foreach (var item in array)
+            {
+                sqlCaluse += $"'{item}', ";
+            }
+            sqlCaluse -= ", ";
             return sqlCaluse;
         }
 

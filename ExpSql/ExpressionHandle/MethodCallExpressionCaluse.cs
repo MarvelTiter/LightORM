@@ -14,6 +14,7 @@ namespace DExpSql.ExpressionHandle
             {"Like",LikeMethod },
             {"LeftLike",LeftLikeMethod },
             {"RightLike",RightLikeMethod },
+            {"In",InMethod },
         };
 
         protected override SqlCaluse Where(MethodCallExpression exp, SqlCaluse sqlCaluse)
@@ -24,6 +25,14 @@ namespace DExpSql.ExpressionHandle
                 var func = methodDic[key];
                 func.Invoke(exp, sqlCaluse);
             }
+            return sqlCaluse;
+        }
+
+        private static SqlCaluse InMethod(MethodCallExpression exp, SqlCaluse sqlCaluse)
+        {
+            ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
+            sqlCaluse += " In";
+            ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
             return sqlCaluse;
         }
 

@@ -30,6 +30,7 @@ namespace DExpSql
         public int LikeMode { get; set; }
 
         public bool SelectAll { get; set; }
+
         public bool HasOrderBy { get; set; }
         #endregion
 
@@ -41,7 +42,7 @@ namespace DExpSql
         public string ParamString { get => string.Join(",", SqlParam.Keys); }
         #endregion
         /// <summary>
-        /// 0 - SqlServer; 1 - Oracle; 2 - MySql
+        /// 0 - SqlServer; 1 - Oracle; 2 - MySql 3 - Sqlite
         /// </summary>
         public int DbType { get; set; }
 
@@ -52,6 +53,7 @@ namespace DExpSql
                 switch (DbType)
                 {
                     case 0:
+                    case 3:
                         return "@";
                     case 1:
                         return ":";
@@ -66,6 +68,12 @@ namespace DExpSql
         public static SqlCaluse operator +(SqlCaluse sqlCaluse, string sql)
         {
             sqlCaluse.Sql.Append(sql);
+            return sqlCaluse;
+        }
+        public static SqlCaluse operator -(SqlCaluse sqlCaluse, string sql)
+        {
+            var start = sqlCaluse.Sql.Length - sql.Length;
+            sqlCaluse.Sql.Remove(start, sql.Length);
             return sqlCaluse;
         }
 
@@ -103,32 +111,45 @@ namespace DExpSql
             var max = Math.Max(from, to);
             var min = Math.Min(from, to);
             if (DbType == 0)
-            {
-                if (HasOrderBy)
-                    throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
-                var orderByField = SelectFields[0].Remove(0, 2);
-                // 子查询，获得ROWNO
-                var sql = $"SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
-                Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-
-                // 子查询筛选 ROWNO
-                sql = " SELECT * FROM (\n {0} \n ) Paging";
-                Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-                Sql.Append($"\n WHERE Paging.ROWNO > {min}");
-                Sql.Append($" AND Paging.ROWNO <= {max}");
-            }
+                SqlServerPaging(max, min);
             else if (DbType == 1)
-            {
-                var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
-                Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-                Sql.AppendLine($" WHERE ROWNUM <= {max}");
-
-                sql = " SELECT * FROM (\n {0} \n) SubMin";
-                Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-                Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
-            }
+                OraclePaging(max, min);
+            else if (DbType == 2)
+                MySqlPaging(max, min);
             else
                 throw new NotImplementedException("其余数据库分页查询未实现");
+        }
+
+        private void MySqlPaging(int max, int min)
+        {
+            Sql.AppendLine($" LIMIT {min},{max - min}");
+        }
+
+        private void OraclePaging(int max, int min)
+        {
+            var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.AppendLine($" WHERE ROWNUM <= {max}");
+
+            sql = " SELECT * FROM (\n {0} \n) SubMin";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
+        }
+
+        private void SqlServerPaging(int max, int min)
+        {
+            if (HasOrderBy)
+                throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
+            var orderByField = SelectFields[0].Remove(0, 2);
+            // 子查询，获得ROWNO
+            var sql = $"SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+
+            // 子查询筛选 ROWNO
+            sql = " SELECT * FROM (\n {0} \n ) Paging";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.Append($"\n WHERE Paging.ROWNO > {min}");
+            Sql.Append($" AND Paging.ROWNO <= {max}");
         }
 
         public string AddDbParameter(object parameterValue)

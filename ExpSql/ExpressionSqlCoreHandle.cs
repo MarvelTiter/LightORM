@@ -10,7 +10,7 @@ namespace DExpSql
 {
     public partial class ExpressionSqlCore<T>
     {
-        private bool _firstWhere;
+        private bool _firstWhere = true;
 
         private string SelectHandle(params Type[] arr)
         {
@@ -60,6 +60,11 @@ namespace DExpSql
         private string InsertHandle()
         {
             return $" INSERT INTO {typeof(T).Name} ({{0}}) \n VALUES ({{1}})";
+        }
+
+        private string DeleteHandle()
+        {
+            return $" DELETE FROM {typeof(T).Name} \n";
         }
 
         private void OrderByHandle(Expression<Func<T, object>> exp)

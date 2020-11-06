@@ -40,7 +40,7 @@ namespace DExpSql
             else if (exp is MethodCallExpression)
                 _i = new MethodCallExpressionCaluse();
             else if (exp is NewArrayExpression)
-                _i = null;
+                _i = new NewArrayExpressionCaluse();
             else if (exp is NewExpression)
                 _i = new NewExpressionCaluse();
             else if (exp is UnaryExpression)

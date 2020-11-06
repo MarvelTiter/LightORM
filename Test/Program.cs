@@ -5,7 +5,9 @@ using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Test.Models.Entities;
 
 namespace Test
@@ -17,48 +19,13 @@ namespace Test
         {
             try
             {
-                //MainWindow mw = new MainWindow();
-                //Application app = new Application();
-                //app.Run(mw);
-
-                //IUserService userService = new UserService();
-                //UserQueryParam p = new UserQueryParam();
-                //p.Account = "00";
-                //var result = userService.Select(p);
-
-                //Console.ReadKey();
-
-                var s1 = Console.ReadLine();
-                var s2 = Console.ReadLine();
-
-                var b = Equals(s1, s2);
-
-                Console.WriteLine(b);
-              
-                //DbContext.Init((int)DBType.Oracle, "Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True");
-                //var db = DbContext.Instance;
-
-               
-                //////db.DbSet.Update<Users>(user);
-
-                ////foreach (var item in result)
-                ////{
-                ////    Console.WriteLine($"{item.USERNAME}:{item.LOGINDATE}");
-                ////}
-                //Console.WriteLine(db.DbSet);
-                //Console.WriteLine();
-                //
-                //begin = DateTime.Now;
-                //IValidate<Teacher> validate = new ValidateImp<Teacher>();
-                //validate.Validate(p);
-                //var duration = DateTime.Now - begin;
-                //foreach (string item in validate.ValidateMsg)
-                //{
-                //    Console.WriteLine(item);
-                //}
-                //Console.WriteLine("=============================");
-                //Console.WriteLine($"Cost {duration.TotalMilliseconds} ms");
-
+                var task = Task.Run(() =>
+                {
+                    var m = 0;
+                    var r = 1 / m;
+                });
+                task.Wait();
+                throw task.Exception;
             }
             catch (Exception ex)
             {

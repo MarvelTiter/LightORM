@@ -45,6 +45,12 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
+        protected override SqlCaluse In(UnaryExpression exp, SqlCaluse sqlCaluse)
+        {
+            ExpressionVisit.In(exp.Operand, sqlCaluse);
+            return sqlCaluse;
+        }
+
         protected override SqlCaluse PrimaryKey(UnaryExpression exp, SqlCaluse sqlCaluse)
         {
             ExpressionVisit.PrimaryKey(exp.Operand, sqlCaluse);

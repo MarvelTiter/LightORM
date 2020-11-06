@@ -71,10 +71,6 @@
       <Project>{A0D4C26D-84A1-4528-9243-9003F7FD14BA}</Project>
       <Name>MDbAction</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MDbContext\MDbContext.csproj">
-      <Project>{7477fbe6-7ff0-4b4a-bfe0-74ee9d19e40f}</Project>
-      <Name>MDbContext</Name>
-    </ProjectReference>
     <ProjectReference Include="..\MDbEntity\MDbEntity.csproj">
       <Project>{71BC935C-26FA-4579-975E-C0740B9A4969}</Project>
       <Name>MDbEntity</Name>
