@@ -16,8 +16,8 @@ namespace ExpSql.ExpressionHandle
         {
             var t = exp.Type;
             var props = t.GetProperties();
-            sqlCaluse.SetTableAlias(t.Name);
-            var alia = sqlCaluse.GetTableAlias(t.Name);
+            sqlCaluse.SetTableAlias(t);
+            var alia = sqlCaluse.GetTableAlias(t);
             foreach (PropertyInfo item in props)
             {
                 sqlCaluse.SelectFields.Add($"{alia}.{item.Name}");

@@ -15,7 +15,7 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse Select(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            var table = exp.Member.DeclaringType.Name;
+            var table = exp.Member.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             sqlCaluse.SelectFields.Add($"{alias}.{exp.Member.Name}");
@@ -24,7 +24,7 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse Join(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            var table = exp.Member.DeclaringType.Name;
+            var table = exp.Member.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             sqlCaluse += $" {alias}.{exp.Member.Name}";
@@ -33,7 +33,7 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse OrderBy(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            var table = exp.Member.DeclaringType.Name;
+            var table = exp.Member.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             sqlCaluse += $" {alias}.{exp.Member.Name}";
@@ -107,8 +107,7 @@ namespace DExpSql.ExpressionHandle
         {
             if (exp.Expression.NodeType == ExpressionType.Parameter)
             {
-                //sqlCaluse.SetTableAlias(exp.Member.DeclaringType.Name);
-                string tableAlias = sqlCaluse.GetTableAlias(exp.Member.DeclaringType.Name);
+                string tableAlias = sqlCaluse.GetTableAlias(exp.Member.DeclaringType);
                 if (!string.IsNullOrWhiteSpace(tableAlias))
                 {
                     tableAlias += ".";

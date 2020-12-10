@@ -1,17 +1,16 @@
 ﻿using System;
 
-namespace Test.Models.Entities
-{
-    public class Users 
-    {
-        public int ID { get; set; }
-        public string USERNAME { get; set; }
-        public string PASSWORD { get; set; }
-        public string LOGINIP { get; set; }
-        public string ROLESLIST { get; set; }
-        public string DQSJ { get; set; }
-        public string PhoneNumber { get; set; }
-        public DateTime? LOGINDATE { get; set; }
+namespace Test.Models.Entities {
+    public class Users {
+        public string Account { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public string Tel { get; set; }
+        public string Sex { get; set; }
+        public int Age { get; set; }
+        public string Duty { get; set; }
+        public bool IsUse { get; set; }
+        public DateTime? ValidDate { get; set; }
     }
 
 }

@@ -13,5 +13,6 @@ namespace MDbAction.IServices
         int ExcuteNonQuery(string sql, object p = null);
         DataTable QueryDataTable(string sql, object p = null);
         IEnumerable<T> Query<T>(string sql, object p);
+        bool ExecuteTransaction(List<string> sqls, List<object> ps);
     }
 }

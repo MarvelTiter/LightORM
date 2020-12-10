@@ -49,6 +49,7 @@
     <Compile Include="Attributes\MaxLengthAttribute.cs" />
     <Compile Include="Attributes\PrimaryKeyAttribute.cs" />
     <Compile Include="Attributes\RangeAttribute.cs" />
+    <Compile Include="Attributes\TableNameAttribute.cs" />
     <Compile Include="Attributes\ValidateAttribute.cs" />
     <Compile Include="Attributes\ValidateImp.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
