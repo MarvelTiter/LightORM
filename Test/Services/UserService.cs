@@ -25,7 +25,6 @@ namespace Test.Services {
             using (SqlConnection conn = new SqlConnection(connString)) {
                 db = DbContext.Instance(conn);
                 db.DbSet.Select<Users>();
-                var sql = db.DbSet.SqlCaluse.Sql.ToString();
                 return db.Query<Users>();
             }
         }

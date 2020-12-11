@@ -3,14 +3,15 @@ using ExpSql.ExpressionHandle;
 using System;
 using System.Linq.Expressions;
 
-namespace DExpSql
-{
-    internal class ExpressionVisit
-    {
+namespace DExpSql {
+    internal class ExpressionVisit {
         public static void Update(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).Update(exp, SqlCaluse);
+
         public static void PrimaryKey(Expression exp, SqlCaluse sqlCaluse) => GetExpressionHandler(exp).PrimaryKey(exp, sqlCaluse);
 
         public static void Select(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).Select(exp, SqlCaluse);
+
+        public static void SelectMethod(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).SelectMethod(exp, SqlCaluse);
 
         public static void Join(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).Join(exp, SqlCaluse);
 
@@ -25,8 +26,7 @@ namespace DExpSql
         public static void OrderBy(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).OrderBy(exp, SqlCaluse);
 
 
-        private static IExpressionSql GetExpressionHandler(Expression exp)
-        {
+        private static IExpressionSql GetExpressionHandler(Expression exp) {
             IExpressionSql _i;
             var expType = exp.GetType();
             if (exp == null)
@@ -46,7 +46,9 @@ namespace DExpSql
             else if (exp is UnaryExpression)
                 _i = new UnaryExpressionCaluse();
             else if (exp is ParameterExpression)
-                _i = new ParameterExpressionCaluse() ;
+                _i = new ParameterExpressionCaluse();
+            else if (exp is LambdaExpression)
+                _i = new LambdaExpressionCaluse();
             else
                 throw new ArgumentException("不支持的Expression");
 

@@ -48,6 +48,7 @@
     <Compile Include="BaseExpressionSql.cs" />
     <Compile Include="ExpressionHandle\BinaryExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\ConstantExpression.cs" />
+    <Compile Include="ExpressionHandle\LambdaExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\MemberExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\MethodCallExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\NewArrayExpressionCaluse.cs" />

@@ -9,7 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DExpSql {
-    public class SqlCaluse {
+    public partial class SqlCaluse {
+        public Func<string> GetMemberName { get; set; }
         public StringBuilder Sql { get; set; }
 
         private Dictionary<Type, char> tableAlia;
@@ -23,6 +24,9 @@ namespace DExpSql {
 
         public List<string> SelectFields { get; private set; }
 
+        public List<string> GroupByFields { get; private set; }
+
+        public StringBuilder SelectMethod { get; set; }
         /// <summary>
         /// 模糊查询Like  0:非模糊查询 1：like 2：leftlike 3:rightlike
         /// </summary>
@@ -31,6 +35,11 @@ namespace DExpSql {
         public bool SelectAll { get; set; }
 
         public bool HasOrderBy { get; set; }
+
+        /// <summary>
+        /// 0 - SqlServer; 1 - Oracle; 2 - MySql 3 - Sqlite
+        /// </summary>
+        public int DbType { get; set; }
         #endregion
 
         #region readonly value
@@ -39,11 +48,9 @@ namespace DExpSql {
         public string SelectedFieldString { get => string.Join(",", SelectFields); }
 
         public string ParamString { get => string.Join(",", SqlParam.Keys); }
+
+        public string GroupByFieldString { get => string.Join(",", GroupByFields); }
         #endregion
-        /// <summary>
-        /// 0 - SqlServer; 1 - Oracle; 2 - MySql 3 - Sqlite
-        /// </summary>
-        public int DbType { get; set; }
 
         private string DbParamPrefix {
             get {
@@ -59,16 +66,6 @@ namespace DExpSql {
                         return "@";
                 }
             }
-        }
-
-        public static SqlCaluse operator +(SqlCaluse sqlCaluse, string sql) {
-            sqlCaluse.Sql.Append(sql);
-            return sqlCaluse;
-        }
-        public static SqlCaluse operator -(SqlCaluse sqlCaluse, string sql) {
-            var start = sqlCaluse.Sql.Length - sql.Length;
-            sqlCaluse.Sql.Remove(start, sql.Length);
-            return sqlCaluse;
         }
 
         public SqlCaluse() {
@@ -93,50 +90,14 @@ namespace DExpSql {
             if (IgnoreFields == null) IgnoreFields = new List<string>();
             else IgnoreFields.Clear();
 
+            if (GroupByFields == null) GroupByFields = new List<string>();
+            else GroupByFields.Clear();
+
             if (Sql == null) Sql = new StringBuilder();
             else Sql.Clear();
-        }
 
-        public void Paging(int from, int to) {
-            var max = Math.Max(from, to);
-            var min = Math.Min(from, to);
-            if (DbType == 0)
-                SqlServerPaging(max, min);
-            else if (DbType == 1)
-                OraclePaging(max, min);
-            else if (DbType == 2)
-                MySqlPaging(max, min);
-            else
-                throw new NotImplementedException("其余数据库分页查询未实现");
-        }
-
-        private void MySqlPaging(int max, int min) {
-            Sql.AppendLine($" LIMIT {min},{max - min}");
-        }
-
-        private void OraclePaging(int max, int min) {
-            var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            Sql.AppendLine($" WHERE ROWNUM <= {max}");
-
-            sql = " SELECT * FROM (\n {0} \n) SubMin";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
-        }
-
-        private void SqlServerPaging(int max, int min) {
-            if (HasOrderBy)
-                throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
-            var orderByField = SelectFields[0].Remove(0, 2);
-            // 子查询，获得ROWNO
-            var sql = $"SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-
-            // 子查询筛选 ROWNO
-            sql = " SELECT * FROM (\n {0} \n ) Paging";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            Sql.Append($"\n WHERE Paging.ROWNO > {min}");
-            Sql.Append($" AND Paging.ROWNO <= {max}");
+            if (SelectMethod == null) SelectMethod = new StringBuilder();
+            else SelectMethod.Clear();
         }
 
         public string AddDbParameter(object parameterValue) {
@@ -204,5 +165,64 @@ namespace DExpSql {
         public override string ToString() {
             return this.Sql.ToString();
         }
+    }
+
+    /// <summary>
+    /// 分页
+    /// </summary>
+    public partial class SqlCaluse {
+
+        public static SqlCaluse operator +(SqlCaluse sqlCaluse, string sql) {
+            sqlCaluse.Sql.Append(sql);
+            return sqlCaluse;
+        }
+        public static SqlCaluse operator -(SqlCaluse sqlCaluse, string sql) {
+            var start = sqlCaluse.Sql.Length - sql.Length;
+            sqlCaluse.Sql.Remove(start, sql.Length);
+            return sqlCaluse;
+        }
+
+        public void Paging(int from, int to) {
+            var max = Math.Max(from, to);
+            var min = Math.Min(from, to);
+            if (DbType == 0)
+                SqlServerPaging(max, min);
+            else if (DbType == 1)
+                OraclePaging(max, min);
+            else if (DbType == 2)
+                MySqlPaging(max, min);
+            else
+                throw new NotImplementedException("其余数据库分页查询未实现");
+        }
+
+        private void MySqlPaging(int max, int min) {
+            Sql.AppendLine($" LIMIT {min},{max - min}");
+        }
+
+        private void OraclePaging(int max, int min) {
+            var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.AppendLine($" WHERE ROWNUM <= {max}");
+
+            sql = " SELECT * FROM (\n {0} \n) SubMin";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
+        }
+
+        private void SqlServerPaging(int max, int min) {
+            if (HasOrderBy)
+                throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
+            var orderByField = SelectFields[0].Remove(0, 2);
+            // 子查询，获得ROWNO
+            var sql = $"SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+
+            // 子查询筛选 ROWNO
+            sql = " SELECT * FROM (\n {0} \n ) Paging";
+            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            Sql.Append($"\n WHERE Paging.ROWNO > {min}");
+            Sql.Append($" AND Paging.ROWNO <= {max}");
+        }
+
     }
 }

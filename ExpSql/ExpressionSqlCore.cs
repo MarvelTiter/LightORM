@@ -13,7 +13,7 @@ namespace DExpSql {
             this._sqlCaluse = sqlCaluse;
         }
         #region select part
-       
+
         public ExpressionSqlCore<T> Select(Expression<Func<T, object>> exp) {
             if (exp == null) {
                 _sqlCaluse.SelectAll = true;
@@ -122,7 +122,26 @@ namespace DExpSql {
             WhereHandle(exp.Body);
             return this;
         }
-        #endregion 
+        #endregion
+
+        #region group by
+        public ExpressionSqlCore<T> GroupBy(Expression<Func<T, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+        #endregion
 
         public ExpressionSqlCore<T> OrderByAsc(Expression<Func<T, object>> exp) {
             OrderByHandle(exp);

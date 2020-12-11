@@ -5,6 +5,7 @@ using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,11 +18,20 @@ namespace Test {
         //[STAThread]
         static void Main(string[] args) {
             try {
+                var limit = new SearchParam { Age = 10 };
                 var sql = DbContext.Instance(null);
-                sql.DbSet.Select<Teacher, Student>()
-                    .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
-                    .Where<Student>((t, s) => t.ClassID == 1 || s.ClassID == 2);
-                sql.DbSet.Log();
+                CalcTimeSpan("BuildSql", () => {
+                    sql.DbSet.Select<Teacher, Student>((t, s) => new {
+                        AgeCount = Db.Sum(() => t.Age > limit.Age && t.Age < 15), //  =>  SUM(CASE WHEN a.Age > 10 THEN 1 ELSE null END) AgeCount
+                        ClassCount = Db.Sum(() => t.ClassID > 10) //  =>  SUM(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount
+                        //t.Age
+                    })
+                   .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
+                   .Where<Student>((t, s) => t.ClassID == 1 || s.ClassID == 2)
+                   .GroupBy<Student>((t, s) => new { t.Age, s.ClassID });
+                    sql.DbSet.Log();
+                });
+
                 //var userService = new UserService();
                 //userService.Update(new Users());
             } catch (Exception ex) {
@@ -47,8 +57,6 @@ namespace Test {
         public static void Log(this object self) {
             Console.WriteLine(self.ToString());
         }
-
-
 
         public static T Parse<T>(this object self) {
             var type = typeof(T);

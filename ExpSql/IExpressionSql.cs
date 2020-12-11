@@ -5,15 +5,15 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DExpSql
-{
-    internal interface IExpressionSql
-    {
+namespace DExpSql {
+    internal interface IExpressionSql {
         SqlCaluse Update(Expression expression, SqlCaluse SqlCaluse);
 
         SqlCaluse PrimaryKey(Expression expression, SqlCaluse SqlCaluse);
 
         SqlCaluse Select(Expression expression, SqlCaluse SqlCaluse);
+
+        SqlCaluse SelectMethod(Expression expression, SqlCaluse SqlCaluse);
 
         SqlCaluse Join(Expression expression, SqlCaluse SqlCaluse);
 

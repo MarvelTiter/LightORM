@@ -66,6 +66,11 @@ namespace DExpSql {
             ExpressionVisit.OrderBy(exp.Body, _sqlCaluse);
         }
 
+        private void GroupByHandle(Expression body) {
+            ExpressionVisit.GroupBy(body, _sqlCaluse);
+            _sqlCaluse += "\n GROUP BY " + _sqlCaluse.GroupByFieldString;
+        }
+
         private void CountHandle() {
             var tbType = typeof(T);
             _sqlCaluse.SetTableAlias(tbType);
