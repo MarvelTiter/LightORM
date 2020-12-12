@@ -65,7 +65,7 @@ namespace MDbContext {
             return dbAction.SingleResult<T>(_sql, _p);
         }
 
-        public int Excute(string sql, object p) {
+        public int Execute(string sql, object p) {
             return dbAction.ExcuteNonQuery(sql, p);
         }
 

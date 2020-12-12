@@ -1,16 +1,8 @@
-﻿using DExpSql.ExpressionMethod;
-using MDbAction;
+﻿using DExpSql;
 using MDbContext;
 using MDbEntity.Attributes;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Test.Models.Entities;
-using Test.Services;
 
 namespace Test {
     class Program //: Application
@@ -18,19 +10,29 @@ namespace Test {
         //[STAThread]
         static void Main(string[] args) {
             try {
+                Console.ReadKey(true);
                 var limit = new SearchParam { Age = 10 };
                 var sql = DbContext.Instance(null);
                 CalcTimeSpan("BuildSql", () => {
                     sql.DbSet.Select<Teacher, Student>((t, s) => new {
                         AgeCount = Db.Sum(() => t.Age > limit.Age && t.Age < 15), //  =>  SUM(CASE WHEN a.Age > 10 THEN 1 ELSE null END) AgeCount
-                        ClassCount = Db.Sum(() => t.ClassID > 10) //  =>  SUM(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount
+                        ClassCount = Db.Sum(() => t.ClassID > 10), //  =>  SUM(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount
+                        ClassCount2 = Db.Count(() => t.ClassID > 10) //  =>  COUNT(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount2
                         //t.Age
                     })
-                   .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
-                   .Where<Student>((t, s) => t.ClassID == 1 || s.ClassID == 2)
-                   .GroupBy<Student>((t, s) => new { t.Age, s.ClassID });
+                    .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
+                    .Where((t) => t.ClassID == 1)
+                    .GroupBy((t) => t.Age);
                     sql.DbSet.Log();
                 });
+
+                var entity = new Teacher { Age = 20, ClassID = 2 };
+                CalcTimeSpan("BuildSql", () => {
+                    sql.DbSet.Update<Teacher>(() => new { entity.Age, entity.ClassID })
+                    .Where(tea => tea.ClassID == 1);
+                    sql.DbSet.Log();
+                });
+
 
                 //var userService = new UserService();
                 //userService.Update(new Users());
@@ -44,7 +46,7 @@ namespace Test {
             var begin = DateTime.Now;
             action.Invoke();
             var duration = DateTime.Now - begin;
-            Console.WriteLine($"{title} Cost : {duration.TotalMilliseconds}");
+            Console.WriteLine($"{title} Cost : {duration.TotalMilliseconds} ms");
             Console.WriteLine("=============================");
         }
     }

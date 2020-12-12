@@ -63,7 +63,7 @@ namespace DExpSql {
         /// <param name="pkExp">忽略的列</param>
         /// <returns></returns>
         public ExpressionSqlCore<T> Update(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null) {
-            UpdateHandle(exp, pkExp);
+            UpdateHandle(exp.Body, pkExp);
             return this;
         }
         #endregion
@@ -165,8 +165,8 @@ namespace DExpSql {
             return this;
         }
 
-        public ExpressionSqlCore<T> Max(string column) {
-            MaxHandle(column);
+        public ExpressionSqlCore<T> Max(Expression<Func<T, object>> exp) {
+            MaxHandle(exp.Body);
             return this;
         }
 

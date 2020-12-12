@@ -14,6 +14,7 @@ namespace DExpSql.ExpressionHandle {
             {"RightLike",RightLikeMethod },
             {"In",InMethod },
             {"Sum",SelectSum },
+            {"Count",SelectCount },
         };
 
         protected override SqlCaluse Where(MethodCallExpression exp, SqlCaluse sqlCaluse) {
@@ -36,6 +37,17 @@ namespace DExpSql.ExpressionHandle {
 
         private static SqlCaluse SelectSum(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             sqlCaluse.SelectMethod.Append("\n SUM(CASE WHEN");
+            var a = exp.Arguments[0];
+            ExpressionVisit.SelectMethod(a, sqlCaluse);
+            sqlCaluse.SelectMethod.Append(" THEN 1 ELSE 0 END) ");
+            sqlCaluse.SelectMethod.Append(sqlCaluse.GetMemberName());
+            sqlCaluse.SelectFields.Add(sqlCaluse.SelectMethod.ToString());
+            sqlCaluse.SelectMethod.Clear();
+            return sqlCaluse;
+        }
+
+        private static SqlCaluse SelectCount(MethodCallExpression exp, SqlCaluse sqlCaluse) {
+            sqlCaluse.SelectMethod.Append("\n COUNT(CASE WHEN");
             var a = exp.Arguments[0];
             ExpressionVisit.SelectMethod(a, sqlCaluse);
             sqlCaluse.SelectMethod.Append(" THEN 1 ELSE null END) ");

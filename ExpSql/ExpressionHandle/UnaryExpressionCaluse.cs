@@ -56,5 +56,10 @@ namespace DExpSql.ExpressionHandle {
             ExpressionVisit.PrimaryKey(exp.Operand, sqlCaluse);
             return sqlCaluse;
         }
+
+        protected override SqlCaluse Max(UnaryExpression exp, SqlCaluse sqlCaluse) {
+            ExpressionVisit.Max(exp.Operand, sqlCaluse);
+            return sqlCaluse;
+        }
     }
 }

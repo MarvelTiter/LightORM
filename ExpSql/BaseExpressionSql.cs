@@ -47,5 +47,10 @@ namespace DExpSql {
         public SqlCaluse OrderBy(Expression exp, SqlCaluse sqlCaluse) => OrderBy((T)exp, sqlCaluse);
         protected virtual SqlCaluse OrderBy(T exp, SqlCaluse sqlCaluse) =>
             throw new NotImplementedException($"[{_expressionType}] 未实现 OrderBy");
+
+        public SqlCaluse Max(Expression exp, SqlCaluse sqlCaluse) => Max((T)exp, sqlCaluse);
+        protected virtual SqlCaluse Max(T exp, SqlCaluse sqlCaluse) =>
+            throw new NotImplementedException($"[{_expressionType}] 未实现 Max");
+
     }
 }

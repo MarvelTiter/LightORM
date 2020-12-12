@@ -25,6 +25,8 @@ namespace DExpSql {
 
         public static void OrderBy(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).OrderBy(exp, SqlCaluse);
 
+        public static void Max(Expression exp, SqlCaluse SqlCaluse) => GetExpressionHandler(exp).Max(exp, SqlCaluse);
+
 
         private static IExpressionSql GetExpressionHandler(Expression exp) {
             IExpressionSql _i;

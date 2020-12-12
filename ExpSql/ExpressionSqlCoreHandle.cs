@@ -43,12 +43,12 @@ namespace DExpSql {
             ExpressionVisit.Where(body, _sqlCaluse);
         }
 
-        private void UpdateHandle(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null) {
+        private void UpdateHandle(Expression body, Expression pkExp = null) {
             var tableName = _sqlCaluse.GetTableName(typeof(T));
             _sqlCaluse += $" UPDATE {tableName} SET \n";
             if (null != pkExp)
-                ExpressionVisit.PrimaryKey(pkExp.Body, _sqlCaluse);
-            ExpressionVisit.Update(exp.Body, _sqlCaluse);
+                ExpressionVisit.PrimaryKey(pkExp, _sqlCaluse);
+            ExpressionVisit.Update(body, _sqlCaluse);
         }
 
         private string InsertHandle() {
@@ -79,12 +79,14 @@ namespace DExpSql {
             _sqlCaluse += $" SELECT COUNT(*) FROM {tbName} {alia}";
         }
 
-        private void MaxHandle(string col) {
+        private void MaxHandle(Expression body) {
             var tbType = typeof(T);
             var tbName = _sqlCaluse.GetTableName(tbType);
             _sqlCaluse.SetTableAlias(tbType);
             var alia = _sqlCaluse.GetTableAlias(tbType);
-            _sqlCaluse += $" SELECT MAX({col}) FROM {tbName} {alia}";
+            ExpressionVisit.Max(body, _sqlCaluse);
+            var sql = $" SELECT {{0}} FROM {tbName} {alia}";
+            _sqlCaluse.Sql.AppendFormat(sql, _sqlCaluse.SelectMethod.ToString());
         }
     }
 }

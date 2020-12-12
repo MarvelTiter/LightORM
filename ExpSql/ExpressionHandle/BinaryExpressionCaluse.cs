@@ -18,20 +18,20 @@ namespace DExpSql.ExpressionHandle {
                     if (useIs) {
                         content.Insert(operatorIndex, " IS");
                     } else {
-                        content.Insert(operatorIndex, " =");
+                        content.Insert(operatorIndex, " = ");
                     }
                     break;
                 case ExpressionType.GreaterThan:
-                    content.Insert(operatorIndex, " >");
+                    content.Insert(operatorIndex, " > ");
                     break;
                 case ExpressionType.GreaterThanOrEqual:
-                    content.Insert(operatorIndex, " >=");
+                    content.Insert(operatorIndex, " >= ");
                     break;
                 case ExpressionType.NotEqual:
                     if (useIs) {
                         content.Insert(operatorIndex, " IS NOT");
                     } else {
-                        content.Insert(operatorIndex, " <>");
+                        content.Insert(operatorIndex, " <> ");
                     }
                     break;
                 case ExpressionType.Or:
@@ -39,10 +39,10 @@ namespace DExpSql.ExpressionHandle {
                     content.Insert(operatorIndex, $"{n} OR");
                     break;
                 case ExpressionType.LessThan:
-                    content.Insert(operatorIndex, " <");
+                    content.Insert(operatorIndex, " < ");
                     break;
                 case ExpressionType.LessThanOrEqual:
-                    content.Insert(operatorIndex, " <=");
+                    content.Insert(operatorIndex, " <= ");
                     break;
                 default:
                     throw new NotImplementedException("未实现的节点类型" + expressionNodeType);

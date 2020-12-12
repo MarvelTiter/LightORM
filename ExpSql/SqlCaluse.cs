@@ -123,7 +123,7 @@ namespace DExpSql {
                 }
                 //this.Sql.Append(" "+name);
                 LikeMode = 0;
-                return " " + name;
+                return  name;
             }
         }
 

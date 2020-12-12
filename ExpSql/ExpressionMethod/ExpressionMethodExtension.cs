@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DExpSql.ExpressionMethod {
+namespace DExpSql {
     public static class Db {
         public static bool Like(this object self, string keyWord) {
             return true;
@@ -23,8 +23,12 @@ namespace DExpSql.ExpressionMethod {
             return true;
         }
 
-        public static object Sum( Expression<Func<bool>> exp) {//this object self,
-            return null;
+        public static int Sum(Expression<Func<bool>> exp) {//this object self,
+            return 0;
+        }
+
+        public static int Count(Expression<Func<bool>> exp) {
+            return 0;
         }
     }
 }

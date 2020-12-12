@@ -40,7 +40,7 @@ namespace DExpSql.ExpressionHandle {
                 var value = Expression.Lambda(exp.Arguments[i]).Compile().DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
-                sqlCaluse += $" {name} =";
+                sqlCaluse += $" {name} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);
                 sqlCaluse += ",\n";
             }

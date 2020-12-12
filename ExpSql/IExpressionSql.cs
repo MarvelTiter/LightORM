@@ -27,5 +27,7 @@ namespace DExpSql {
 
         SqlCaluse OrderBy(Expression expression, SqlCaluse SqlCaluse);
 
+        SqlCaluse Max(Expression expression, SqlCaluse SqlCaluse);
+
     }
 }

@@ -79,9 +79,9 @@ namespace DExpSql {
             return new ExpressionSqlCore<T>(SqlCaluse).Count();
         }
 
-        public ExpressionSqlCore<T> Max<T>(string col) {
+        public ExpressionSqlCore<T> Max<T>(Expression<Func<T,object>> exp) {
             SqlCaluse.Clear();
-            return new ExpressionSqlCore<T>(SqlCaluse).Max(col);
+            return new ExpressionSqlCore<T>(SqlCaluse).Max(exp);
         }
 
         public override string ToString() {

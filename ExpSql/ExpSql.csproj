@@ -60,6 +60,7 @@
     <Compile Include="ExpressionSql.cs" />
     <Compile Include="ExpressionSqlCore.cs" />
     <Compile Include="ExpressionSqlCoreHandle.cs" />
+    <Compile Include="Extension\StringExtension.cs" />
     <Compile Include="IExpressionSql.cs" />
     <Compile Include="SqlCaluse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

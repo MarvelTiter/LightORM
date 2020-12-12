@@ -11,10 +11,14 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse Select(MemberExpression exp, SqlCaluse sqlCaluse) {
-            var table = exp.Member.DeclaringType;
-            sqlCaluse.SetTableAlias(table);
-            var alias = sqlCaluse.GetTableAlias(table);
-            sqlCaluse.SelectFields.Add($"{alias}.{exp.Member.Name}");
+            string col = CustomHandle(exp, sqlCaluse);
+            sqlCaluse.SelectFields.Add(col);
+            return sqlCaluse;
+        }
+
+        protected override SqlCaluse Max(MemberExpression exp, SqlCaluse sqlCaluse) {
+            var col = CustomHandle(exp, sqlCaluse);
+            sqlCaluse.SelectMethod.Append($"MAX({col})");
             return sqlCaluse;
         }
 
@@ -25,29 +29,22 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse Join(MemberExpression exp, SqlCaluse sqlCaluse) {
-            var table = exp.Member.DeclaringType;
-            sqlCaluse.SetTableAlias(table);
-            var alias = sqlCaluse.GetTableAlias(table);
-            sqlCaluse += $" {alias}.{exp.Member.Name}";
+            string col = CustomHandle(exp, sqlCaluse);
+            sqlCaluse += col;
             return sqlCaluse;
         }
 
         protected override SqlCaluse OrderBy(MemberExpression exp, SqlCaluse sqlCaluse) {
-            var table = exp.Member.DeclaringType;
-            sqlCaluse.SetTableAlias(table);
-            var alias = sqlCaluse.GetTableAlias(table);
-            sqlCaluse += $" {alias}.{exp.Member.Name}";
+            string col = CustomHandle(exp, sqlCaluse);
+            sqlCaluse += col;
             sqlCaluse.HasOrderBy = true;
             return sqlCaluse;
         }
 
         protected override SqlCaluse GroupBy(MemberExpression exp, SqlCaluse sqlCaluse) {
-            var table = exp.Member.DeclaringType;
-            sqlCaluse.SetTableAlias(table);
-            var alias = sqlCaluse.GetTableAlias(table);
-            var f = $"{alias}.{exp.Member.Name}";
-            if (!sqlCaluse.GroupByFields.Contains(f))
-                sqlCaluse.GroupByFields.Add(f);
+            string col = CustomHandle(exp, sqlCaluse);
+            if (!sqlCaluse.GroupByFields.Contains(col))
+                sqlCaluse.GroupByFields.Add(col);
             return sqlCaluse;
         }
 
@@ -70,7 +67,7 @@ namespace DExpSql.ExpressionHandle {
                     continue;
                 if (sqlCaluse.IgnoreFields.Contains(p.Name))
                     continue;
-                sqlCaluse += $" {p.Name} =";
+                sqlCaluse += $" {p.Name} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);
                 sqlCaluse += ",\n";
             }
@@ -103,6 +100,13 @@ namespace DExpSql.ExpressionHandle {
             }
             sqlCaluse -= ", ";
             return sqlCaluse;
+        }
+
+        private string CustomHandle(MemberExpression exp, SqlCaluse sqlCaluse) {
+            var table = exp.Member.DeclaringType;
+            sqlCaluse.SetTableAlias(table);
+            var alias = sqlCaluse.GetTableAlias(table);
+            return $"{alias}.{exp.Member.Name}";
         }
 
         private string FindValue(MemberExpression exp, SqlCaluse sqlCaluse) {
