@@ -11,14 +11,15 @@ namespace Test {
         static void Main(string[] args) {
             try {
                 Console.ReadKey(true);
+                DbContext.Init(2);
                 var limit = new SearchParam { Age = 10 };
                 var sql = DbContext.Instance(null);
                 CalcTimeSpan("BuildSql", () => {
                     sql.DbSet.Select<Teacher, Student>((t, s) => new {
                         AgeCount = Db.Sum(() => t.Age > limit.Age && t.Age < 15), //  =>  SUM(CASE WHEN a.Age > 10 THEN 1 ELSE null END) AgeCount
                         ClassCount = Db.Sum(() => t.ClassID > 10), //  =>  SUM(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount
-                        ClassCount2 = Db.Count(() => t.ClassID > 10) //  =>  COUNT(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount2
-                        //t.Age
+                        ClassCount2 = Db.Count(() => t.ClassID > 10), //  =>  COUNT(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount2
+                        YHZ = Db.GroupConcat(() => t.Age)
                     })
                     .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
                     .Where((t) => t.ClassID == 1)

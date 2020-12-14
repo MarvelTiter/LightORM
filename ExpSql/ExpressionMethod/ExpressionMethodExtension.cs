@@ -30,5 +30,9 @@ namespace DExpSql {
         public static int Count(Expression<Func<bool>> exp) {
             return 0;
         }
+
+        public static int GroupConcat(Expression<Func<object>> exp) {
+            return 0;
+        }
     }
 }

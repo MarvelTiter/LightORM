@@ -15,7 +15,10 @@ namespace DExpSql.ExpressionHandle {
             {"In",InMethod },
             {"Sum",SelectSum },
             {"Count",SelectCount },
+            {"GroupConcat",SelectGroupConcat }
         };
+
+
 
         protected override SqlCaluse Where(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             var key = exp.Method.Name;
@@ -36,25 +39,35 @@ namespace DExpSql.ExpressionHandle {
         }
 
         private static SqlCaluse SelectSum(MethodCallExpression exp, SqlCaluse sqlCaluse) {
-            sqlCaluse.SelectMethod.Append("\n SUM(CASE WHEN");
             var a = exp.Arguments[0];
             ExpressionVisit.SelectMethod(a, sqlCaluse);
-            sqlCaluse.SelectMethod.Append(" THEN 1 ELSE 0 END) ");
-            sqlCaluse.SelectMethod.Append(sqlCaluse.GetMemberName());
-            sqlCaluse.SelectFields.Add(sqlCaluse.SelectMethod.ToString());
-            sqlCaluse.SelectMethod.Clear();
+            AddColumn(sqlCaluse, "\n SUM(CASE WHEN{0} THEN 1 ELSE 0 END) ");
             return sqlCaluse;
         }
 
         private static SqlCaluse SelectCount(MethodCallExpression exp, SqlCaluse sqlCaluse) {
-            sqlCaluse.SelectMethod.Append("\n COUNT(CASE WHEN");
             var a = exp.Arguments[0];
             ExpressionVisit.SelectMethod(a, sqlCaluse);
-            sqlCaluse.SelectMethod.Append(" THEN 1 ELSE null END) ");
-            sqlCaluse.SelectMethod.Append(sqlCaluse.GetMemberName());
-            sqlCaluse.SelectFields.Add(sqlCaluse.SelectMethod.ToString());
-            sqlCaluse.SelectMethod.Clear();
+            AddColumn(sqlCaluse, "\n COUNT(CASE WHEN{0} THEN 1 ELSE null END) ");
             return sqlCaluse;
+        }
+
+        private static SqlCaluse SelectGroupConcat(MethodCallExpression exp, SqlCaluse sqlCaluse) {
+            if (sqlCaluse.DbType == 2) {
+                var a = exp.Arguments[0];
+                ExpressionVisit.SelectMethod(a, sqlCaluse);
+                AddColumn(sqlCaluse, "\n GROUP_CONCAT({0}) ");
+            } else {
+                throw new Exception("GroupConcat 只支持 MySql");
+            }
+            return sqlCaluse;
+        }
+
+        private static void AddColumn(SqlCaluse sqlCaluse, string columnTemplate) {
+            var content = sqlCaluse.SelectMethod.ToString();
+            var col = string.Format(columnTemplate, content) + sqlCaluse.GetMemberName();
+            sqlCaluse.SelectFields.Add(col);
+            sqlCaluse.SelectMethod.Clear();
         }
 
         private static SqlCaluse InMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
