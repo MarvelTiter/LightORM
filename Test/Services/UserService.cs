@@ -17,7 +17,7 @@ namespace Test.Services {
             using (SqlConnection conn = new SqlConnection(connString)) {
                 db = DbContext.Instance(conn);
                 db.DbSet.Insert(user);
-                return db.Excute();
+                return db.Execute();
             }
         }
 

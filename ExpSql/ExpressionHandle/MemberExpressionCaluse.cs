@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MDbEntity.Attributes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -63,9 +64,11 @@ namespace DExpSql.ExpressionHandle {
             for (int i = 0; i < props.Length; i++) {
                 var p = props[i];
                 var value = p.GetValue(e, null);
-                if (value == null || value == DBNull.Value)
+                if (value == null || value == default || value == DBNull.Value)
                     continue;
                 if (sqlCaluse.IgnoreFields.Contains(p.Name))
+                    continue;
+                if (p.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Length > 0)
                     continue;
                 sqlCaluse += $" {p.Name} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);

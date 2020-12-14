@@ -63,7 +63,7 @@ namespace DExpSql {
         /// <param name="pkExp">忽略的列</param>
         /// <returns></returns>
         public ExpressionSqlCore<T> Update(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null) {
-            UpdateHandle(exp.Body, pkExp);
+            UpdateHandle(exp.Body, pkExp?.Body);
             return this;
         }
         #endregion

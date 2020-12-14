@@ -49,7 +49,7 @@ namespace MDbContext {
             DbSet = new ExpressionSql(DBType);
         }
 
-        public int Excute() {
+        public int Execute() {
             return dbAction.ExcuteNonQuery(_sql, _p);
         }
 

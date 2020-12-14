@@ -6,6 +6,7 @@ namespace Test.Models.Entities {
     [TableName("t_user")]
     public class User {
         private string _yhbh;
+        [PrimaryKey]
         /// <summary>
         /// 用户编号
         /// </summary>

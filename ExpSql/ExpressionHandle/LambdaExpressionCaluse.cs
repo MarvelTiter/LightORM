@@ -12,5 +12,9 @@ namespace ExpSql.ExpressionHandle {
             ExpressionVisit.SelectMethod(exp.Body, sqlCaluse);
             return sqlCaluse;
         }
+
+        protected override SqlCaluse PrimaryKey(LambdaExpression exp, SqlCaluse sqlCaluse) {
+            return base.PrimaryKey(exp, sqlCaluse);
+        }
     }
 }
