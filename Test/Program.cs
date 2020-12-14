@@ -17,7 +17,7 @@ namespace Test {
                 var limit = new SearchParam { Age = 10 };
                 var db = DbContext.Instance(null);
                 CalcTimeSpan("BuildSql", () => {
-                    var p = new UserQueryParam();
+                    var p = new UserQueryParam() { KeyWord = "11" };
                     var sql = db.DbSet.Select<User>(u => new {
                         u.YHBH, u.YHMC, u.YHMM, u.YHMMSJ, u.YHZBH, u.JYJGBH, u.YHJB, u.YHSFQY, u.YHSFZH, u.YHLXDH, u.YHYDDH, u.YHCJSJ, u.SFGLY,
                         UserRoles = Db.GroupConcat(() => u.YHJSBH)

@@ -79,7 +79,7 @@ namespace DExpSql.ExpressionHandle {
 
         private static SqlCaluse RightLikeMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
-            sqlCaluse += " Like";
+            sqlCaluse += " Like ";
             sqlCaluse.LikeMode = 3;
             ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
             return sqlCaluse;
@@ -87,7 +87,7 @@ namespace DExpSql.ExpressionHandle {
 
         private static SqlCaluse LeftLikeMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
-            sqlCaluse += " Like";
+            sqlCaluse += " Like ";
             sqlCaluse.LikeMode = 2;
             ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
             return sqlCaluse;
@@ -95,7 +95,7 @@ namespace DExpSql.ExpressionHandle {
 
         private static SqlCaluse LikeMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
-            sqlCaluse += " Like";
+            sqlCaluse += " Like ";
             sqlCaluse.LikeMode = 1;
             ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
             return sqlCaluse;
