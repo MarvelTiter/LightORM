@@ -13,7 +13,7 @@ namespace Test.Services {
             connString = "Data Source=192.168.56.11;Database=APDSDB3IN1;User ID=sa;Password=Ybeluoek3;";
             DbContext.Init(0);
         }
-        public int Insert(Users user) {
+        public int Insert(User user) {
             using (SqlConnection conn = new SqlConnection(connString)) {
                 db = DbContext.Instance(conn);
                 db.DbSet.Insert(user);
@@ -21,20 +21,20 @@ namespace Test.Services {
             }
         }
 
-        public IEnumerable<Users> Select(UserQueryParam p) {
+        public IEnumerable<User> Select(UserQueryParam p) {
             using (SqlConnection conn = new SqlConnection(connString)) {
                 db = DbContext.Instance(conn);
-                db.DbSet.Select<Users>();
-                return db.Query<Users>();
+                db.DbSet.Select<User>();
+                return db.Query<User>();
             }
         }
 
-        public int Update(Users user) {
+        public int Update(User user) {
             using (SqlConnection conn = new SqlConnection(connString)) {
                 db = conn.DbContext();
-                db.DbSet.Update<Users>(() => new { Age = 12 }).Where(u => u.Account == "001");
+                db.DbSet.Update<User>(() => new { Age = 12 }).Where(u => u.JYJGBH == "001");
                 db.AddTrans();
-                db.DbSet.Update<Users>(() => new { Sex = "男" }).Where(u => u.Account == "001");
+                db.DbSet.Update<User>(() => new { Sex = "男" }).Where(u => u.JYJGBH == "001");
                 db.AddTrans();
                 return db.ExecuteTrans() ? 1 : 0;
 

@@ -8,6 +8,8 @@ namespace Test.Models.QueryParam
 {
     public class UserQueryParam
     {
-        public string Account { get; set; }
+        public int From { get; set; }
+        public int To { get; set; }
+        public string KeyWord { get; set; }
     }
 }

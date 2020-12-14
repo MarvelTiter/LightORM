@@ -62,7 +62,7 @@ namespace DExpSql {
         }
 
         private void OrderByHandle(Expression<Func<T, object>> exp) {
-            _sqlCaluse += "\n ORDER BY";
+            _sqlCaluse += "\n ORDER BY ";
             ExpressionVisit.OrderBy(exp.Body, _sqlCaluse);
         }
 

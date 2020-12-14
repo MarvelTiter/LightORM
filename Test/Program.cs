@@ -3,6 +3,8 @@ using MDbContext;
 using MDbEntity.Attributes;
 using System;
 using System.Linq;
+using Test.Models.Entities;
+using Test.Models.QueryParam;
 
 namespace Test {
     class Program //: Application
@@ -13,25 +15,26 @@ namespace Test {
                 Console.ReadKey(true);
                 DbContext.Init(2);
                 var limit = new SearchParam { Age = 10 };
-                var sql = DbContext.Instance(null);
+                var db = DbContext.Instance(null);
                 CalcTimeSpan("BuildSql", () => {
-                    sql.DbSet.Select<Teacher, Student>((t, s) => new {
-                        AgeCount = Db.Sum(() => t.Age > limit.Age && t.Age < 15), //  =>  SUM(CASE WHEN a.Age > 10 THEN 1 ELSE null END) AgeCount
-                        ClassCount = Db.Sum(() => t.ClassID > 10), //  =>  SUM(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount
-                        ClassCount2 = Db.Count(() => t.ClassID > 10), //  =>  COUNT(CASE WHEN a.ClassID > 10 THEN 1 ELSE null END) ClassCount2
-                        YHZ = Db.GroupConcat(() => t.Age)
-                    })
-                    .InnerJoin<Student>((t, s) => t.ClassID == s.ClassID)
-                    .Where((t) => t.ClassID == 1)
-                    .GroupBy((t) => t.Age);
-                    sql.DbSet.Log();
+                    var p = new UserQueryParam();
+                    var sql = db.DbSet.Select<User>(u => new {
+                        u.YHBH, u.YHMC, u.YHMM, u.YHMMSJ, u.YHZBH, u.JYJGBH, u.YHJB, u.YHSFQY, u.YHSFZH, u.YHLXDH, u.YHYDDH, u.YHCJSJ, u.SFGLY,
+                        UserRoles = Db.GroupConcat(() => u.YHJSBH)
+                    });
+                    if (!string.IsNullOrEmpty(p.KeyWord))
+                        sql = sql.Where(u => u.YHBH.Like(p.KeyWord) || u.YHMC.Like(p.KeyWord));
+                    sql.GroupBy(u => new {
+                        u.YHBH, u.YHMC, u.YHMM, u.YHMMSJ, u.YHZBH, u.JYJGBH, u.YHJB, u.YHSFQY, u.YHSFZH, u.YHLXDH, u.YHYDDH, u.YHCJSJ, u.SFGLY
+                    }).OrderByDesc(u => u.YHCJSJ).Paging(p.From, p.To);
+                    db.DbSet.Log();
                 });
 
                 var entity = new Teacher { Age = 20, ClassID = 2 };
                 CalcTimeSpan("BuildSql", () => {
-                    sql.DbSet.Update<Teacher>(() => new { entity.Age, entity.ClassID })
+                    db.DbSet.Update<Teacher>(() => new { entity.Age, entity.ClassID })
                     .Where(tea => tea.ClassID == 1);
-                    sql.DbSet.Log();
+                    db.DbSet.Log();
                 });
 
 

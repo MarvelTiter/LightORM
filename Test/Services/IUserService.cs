@@ -11,10 +11,10 @@ namespace Test.Services
 {
     interface IUserService
     {
-        int Insert(Users user);
-        int Update(Users user);
+        int Insert(User user);
+        int Update(User user);
         int Update(object dyc);
-        IEnumerable<Users> Select(UserQueryParam p);
+        IEnumerable<User> Select(UserQueryParam p);
 
     }
 }
