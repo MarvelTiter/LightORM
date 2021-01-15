@@ -11,6 +11,10 @@ namespace DExpSql {
             return true;
         }
 
+        public static bool NotLike(this object self, string keyWord) {
+            return true;
+        }
+
         public static bool LeftLike(this object self, string keyWord) {
             return true;
         }

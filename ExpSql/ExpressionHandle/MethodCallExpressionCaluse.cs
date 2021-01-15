@@ -10,6 +10,7 @@ namespace DExpSql.ExpressionHandle {
         Dictionary<string, Func<MethodCallExpression, SqlCaluse, SqlCaluse>> methodDic = new Dictionary<string, Func<MethodCallExpression, SqlCaluse, SqlCaluse>>()
         {
             {"Like",LikeMethod },
+            {"NotLike",NotLikeMethod },
             {"LeftLike",LeftLikeMethod },
             {"RightLike",RightLikeMethod },
             {"In",InMethod },
@@ -96,6 +97,13 @@ namespace DExpSql.ExpressionHandle {
         private static SqlCaluse LikeMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
             sqlCaluse += " Like ";
+            sqlCaluse.LikeMode = 1;
+            ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
+            return sqlCaluse;
+        }
+        private static SqlCaluse NotLikeMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
+            ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
+            sqlCaluse += " Not Like ";
             sqlCaluse.LikeMode = 1;
             ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
             return sqlCaluse;
