@@ -123,12 +123,21 @@ namespace DExpSql {
                 }
                 //this.Sql.Append(" "+name);
                 LikeMode = 0;
-                return  name;
+                return name;
             }
         }
-
+        private bool CheckAssign(Type newType, out Type registedType) {
+            foreach (var item in tableAlia.Keys) {
+                if (item.IsAssignableFrom(newType) || newType.IsAssignableFrom(item)) {
+                    registedType = item;
+                    return true;
+                }
+            }
+            registedType = null;
+            return false;
+        }
         public bool SetTableAlias(Type tableName) {
-            if (!tableAlia.Keys.Contains(tableName)) {
+            if (!CheckAssign(tableName, out _) && !tableAlia.Keys.Contains(tableName)) {
                 tableAlia.Add(tableName, charAlia.Dequeue());
                 return true;
             }
@@ -136,7 +145,9 @@ namespace DExpSql {
         }
 
         public string GetTableAlias(Type tableName) {
-            if (tableAlia.Keys.Contains(tableName)) {
+            if (CheckAssign(tableName, out Type registed)) {
+                return tableAlia[registed].ToString();
+            } else if (tableAlia.Keys.Contains(tableName)) {
                 return tableAlia[tableName].ToString();
             }
             return "";
