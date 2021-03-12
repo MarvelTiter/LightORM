@@ -10,9 +10,10 @@ namespace DExpSql.ExpressionHandle {
         protected override SqlCaluse Select(NewExpression exp, SqlCaluse sqlCaluse) {
             for (int i = 0; i < exp.Arguments.Count; i++) {
                 var argExp = exp.Arguments[i];
-                sqlCaluse.GetMemberName = () => {
-                    return exp.Members[i].Name;
-                };
+                if (sqlCaluse.GetMemberName == null)
+                    sqlCaluse.GetMemberName = () => {
+                        return exp.Members[i].Name;
+                    };
                 ExpressionVisit.Select(argExp, sqlCaluse);
             }
             return sqlCaluse;

@@ -3,8 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Reflection;
 
-namespace MDbAction
-{
+namespace MDbAction {
     internal class DbConnectionFactory
     {
         private static Type[] TypeCache = new Type[4];
@@ -78,12 +77,5 @@ namespace MDbAction
             var c = t.GetConstructors()[0];
             return (IDbConnection)c.Invoke(null);
         }
-    }
-
-    public enum DBType
-    {
-        SqlServer = 0,
-        Oracle = 1,
-        MySql = 2
     }
 }

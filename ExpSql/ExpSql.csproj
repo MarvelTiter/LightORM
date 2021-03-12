@@ -45,7 +45,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BaseExpressionSql.cs" />
     <Compile Include="ExpressionHandle\BinaryExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\ConstantExpression.cs" />
     <Compile Include="ExpressionHandle\LambdaExpressionCaluse.cs" />
@@ -55,13 +54,9 @@
     <Compile Include="ExpressionHandle\NewExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\ParameterExpressionCaluse.cs" />
     <Compile Include="ExpressionHandle\UnaryExpressionCaluse.cs" />
-    <Compile Include="ExpressionMethod\ExpressionMethodExtension.cs" />
-    <Compile Include="ExpressionVisit.cs" />
     <Compile Include="ExpressionSql.cs" />
     <Compile Include="ExpressionSqlCore.cs" />
     <Compile Include="ExpressionSqlCoreHandle.cs" />
-    <Compile Include="Extension\StringExtension.cs" />
-    <Compile Include="IExpressionSql.cs" />
     <Compile Include="SqlCaluse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -71,5 +66,6 @@
       <Name>MDbEntity</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="..\Shared.ExpSql\Shared.ExpSql.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

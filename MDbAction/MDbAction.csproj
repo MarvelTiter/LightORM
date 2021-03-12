@@ -60,9 +60,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DbAction.cs" />
-    <Compile Include="DbConnectionFactory.cs" />
     <Compile Include="DbContext.cs" />
+    <Compile Include="DBType.cs" />
     <Compile Include="Extension\ConnectionEx.cs" />
+    <Compile Include="Extension\DbContextEx.cs" />
     <Compile Include="IServices\IDbAction.cs" />
     <Compile Include="IServices\IEntityAction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -9,9 +9,11 @@ using System.Data.SqlClient;
 namespace MDbContext {
     public class DbContext : IDisposable {
         public ExpressionSql DbSet { get; private set; }
+        public IDbAction DbExec { get; private set; }
+
         private IDbAction dbAction;
-        private string _sql => DbSet.SqlCaluse.Sql.ToString();
-        private object _p {
+        public string Sql => DbSet.SqlCaluse.Sql.ToString();
+        public object SqlParameter {
             get {
                 var temp = new Dictionary<string, object>();
                 foreach (var item in DbSet.SqlCaluse.SqlParam) {
@@ -21,8 +23,8 @@ namespace MDbContext {
             }
         }
 
-        private List<string> _sqls;
-        private List<object> _ps;
+        public List<string> TransSqls { get; set; }
+        public List<object> TransSqlParameter { get; set; }
 
         private static int DBType;
         public static DbContext Instance(IDbConnection conn) {
@@ -48,52 +50,7 @@ namespace MDbContext {
             dbAction = new DbAction(connection);
             DbSet = new ExpressionSql(DBType);
         }
-
-        public int Execute() {
-            return dbAction.ExcuteNonQuery(_sql, _p);
-        }
-
-        public DataTable QueryDataTable() {
-            return dbAction.QueryDataTable(_sql, _p);
-        }
-
-        public IEnumerable<T> Query<T>() {
-            return dbAction.Query<T>(_sql, _p);
-        }
-
-        public T Single<T>() {
-            return dbAction.SingleResult<T>(_sql, _p);
-        }
-
-        public int Execute(string sql, object p) {
-            return dbAction.ExcuteNonQuery(sql, p);
-        }
-
-        public DataTable QueryDataTable(string sql, object p) {
-            return dbAction.QueryDataTable(sql, p);
-        }
-
-        public IEnumerable<T> Query<T>(string sql, object p) {
-            return dbAction.Query<T>(sql, p);
-        }
-
-        public T Single<T>(string sql, object p) {
-            return dbAction.SingleResult<T>(sql, p);
-        }
-
-        public void AddTrans() {
-            if (_sqls == null) _sqls = new List<string>();
-            if (_ps == null) _ps = new List<object>();
-            _sqls.Add(_sql);
-            _ps.Add(_p);
-        }
-
-        public bool ExecuteTrans() {
-            var result = dbAction.ExecuteTransaction(_sqls, _ps);
-            _sqls.Clear();
-            _ps.Clear();
-            return result;
-        }
+                
 
         public void Dispose() {
             Dispose(true);

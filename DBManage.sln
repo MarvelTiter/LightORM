@@ -11,12 +11,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDbAction", "MDbAction\MDbA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDbEntity", "MDbEntity\MDbEntity.csproj", "{71BC935C-26FA-4579-975E-C0740B9A4969}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{91D6DFE6-8A17-40B8-A177-EC36A9DAAD0C}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared.ExpSql", "Shared.ExpSql\Shared.ExpSql.shproj", "{DE308D4E-A2CB-4926-998E-5437F342ECC6}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared.ExpSql\Shared.ExpSql.projitems*{07302fa9-6901-4600-ba13-0c4a9512b28b}*SharedItemsImports = 4
+		Shared.ExpSql\Shared.ExpSql.projitems*{de308d4e-a2cb-4926-998e-5437f342ecc6}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

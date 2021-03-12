@@ -14,9 +14,10 @@ namespace MDbAction {
     /// 1. 查询
     /// 2. 执行Sql，返回受影响函数
     /// 3. 执行Sql，返回DataTable
-    /// 4. 执行Sql，返回IEnumerable<T>
+    /// 4. 执行Sql，返回IEnumerable 
     /// </summary>
     public class DbAction : IDbAction {
+
         private readonly IDbConnection conn;
         public DbAction(IDbConnection conn) {
             this.conn = conn;
@@ -62,13 +63,13 @@ namespace MDbAction {
             }
         }
 
-        public bool ExecuteTransaction(List<string> sqls, List<object> ps) {
+        public bool ExecuteTransaction(string[] sqls, object[] ps) {
             conn.Open();
             var tran = conn.BeginTransaction();
             try {
-                if (sqls.Count != ps.Count)
+                if (sqls.Length != ps.Length)
                     throw new ArgumentException("SQL与参数不匹配");
-                for (int i = 0; i < sqls.Count; i++) {
+                for (int i = 0; i < sqls.Length; i++) {
                     var sql = sqls[i];
                     var p = ps[i];
                     conn.Execute(sql, p, tran);
