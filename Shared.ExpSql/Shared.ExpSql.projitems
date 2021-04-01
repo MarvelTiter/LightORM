@@ -9,10 +9,35 @@
     <Import_RootNamespace>Shared.ExpSql</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\DisplayAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidateAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\MaxLengthAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\PrimaryKeyAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\RangeAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\TableNameAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ValidateAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ValidateImp.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BaseExpressionSql.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\BinaryExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\ConstantExpression.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\LambdaExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\MemberExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\MethodCallExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\NewArrayExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\NewExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\ParameterExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\UnaryExpressionCaluse.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionMethod\ExpressionMethodExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionSql.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionSqlCore.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionSqlCoreHandle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionVisit.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extension\StringExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IExpressionSql.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlCaluse.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)DbEntity\" />
   </ItemGroup>
 </Project>

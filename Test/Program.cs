@@ -1,10 +1,17 @@
-﻿using DExpSql;
-using MDbContext;
+﻿using MDbContext;
+using MDbContext.Extension;
+using MDbContext.SqlExecutor;
+using MDbContext.SqlExecutor.Service;
 using MDbEntity.Attributes;
+using Notice.Core.Entities;
+using Oracle.ManagedDataAccess.Client;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
-using Test.Models.Entities;
-using Test.Models.QueryParam;
 
 namespace Test {
     class Program //: Application
@@ -12,21 +19,43 @@ namespace Test {
         //[STAThread]
         static void Main(string[] args) {
             try {
-                Console.ReadKey(true);
-                DbContext.Init(2);
-                var limit = new SearchParam { Age = 10 };
-                var db = DbContext.Instance(null);
-                CalcTimeSpan("BuildSql", () => {
-                    db.DbSet.Select<Student>()
-                     .Where(t => t.ClassID2 == 1);
-                });
-                db.DbSet.ToString().Log();
+                //Console.ReadKey(true);
+                //MDbContext.DbContext.Init(2);
+                //var limit = new SearchParam { Age = 10 };
+                //var db = MDbContext.DbContext.Instance(null);
+                //CalcTimeSpan("BuildSql", () => {
+                //    db.DbSet.Select<Student>()
+                //     .Where(t => t.ClassID2 == 1);
+                //});
+
+                //db.DbSet.ToString().Log();
                 //var entity = new Teacher { Age = 20, ClassID = 2 };
                 //CalcTimeSpan("BuildSql", () => {
                 //    db.DbSet.Update<Teacher>(() => new { entity.Age, entity.ClassID })
                 //    .Where(tea => tea.ClassID == 1);
                 //    db.DbSet.Log();
                 //});
+
+                using (IDbConnection conn = new OracleConnection("Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True")) {
+                    var db = conn.DbContext();
+                    db.DbSet.Select<RoadTransTruck>();
+                    var com = conn.CreateCommand();
+                    com.CommandText = db.Sql;
+                    conn.Open();
+                    var reader = com.ExecuteReader();
+                    //IDeserializer des = new ExpressionBuilder();
+                    //des.BuildDeserializer(reader, typeof(RoadTransTruck));
+                    var dt = reader.GetSchemaTable();
+                    CalcTimeSpan("CustomReflection", () => {
+                        //CustomReflection(reader);
+                    });
+
+                    CalcTimeSpan("EmitReflection", () => {
+                        EmitReflection(reader);
+                    });
+                }
+
+
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
@@ -35,11 +64,37 @@ namespace Test {
         }
 
         static void CalcTimeSpan(string title, Action action) {
-            var begin = DateTime.Now;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             action.Invoke();
-            var duration = DateTime.Now - begin;
-            Console.WriteLine($"{title} Cost : {duration.TotalMilliseconds} ms");
+            stopwatch.Stop();
+            Console.WriteLine($"{title} Cost : {stopwatch.ElapsedMilliseconds} ms");
             Console.WriteLine("=============================");
+        }
+
+        static void CustomReflection(IDataReader reader) {
+            List<RoadTransTruck> list = new List<RoadTransTruck>();
+            var props = typeof(RoadTransTruck).GetProperties();
+            while (reader.Read()) {
+                RoadTransTruck road = new RoadTransTruck();
+                for (int i = 0; i < reader.FieldCount; i++) {
+                    var name = reader.GetName(i);
+                    var value = reader.GetValue(i);
+                    var prop = props.FirstOrDefault(p => p.CanWrite && p.Name == name);
+                    if (prop != null && value != DBNull.Value) {
+                        var type = prop.PropertyType;
+                        var underlyingType = Nullable.GetUnderlyingType(type);
+                        prop.SetValue(road, Convert.ChangeType(value, underlyingType ?? type));
+                    }
+                }
+                list.Add(road);
+            }
+            Console.WriteLine(list.Count());
+        }
+
+        static void EmitReflection(IDataReader reader) {
+            var result = reader.Select<RoadTransTruck>().ToList();
+            Console.WriteLine(result.Count());
         }
     }
 

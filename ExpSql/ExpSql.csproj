@@ -60,12 +60,6 @@
     <Compile Include="SqlCaluse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MDbEntity\MDbEntity.csproj">
-      <Project>{71bc935c-26fa-4579-975e-c0740b9a4969}</Project>
-      <Name>MDbEntity</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="..\Shared.ExpSql\Shared.ExpSql.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

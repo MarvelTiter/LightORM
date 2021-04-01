@@ -5,17 +5,13 @@ VisualStudioVersion = 16.0.30330.147
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{4E38A7DF-213A-454C-A2B2-CB19C8CEB611}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpSql", "ExpSql\ExpSql.csproj", "{07302FA9-6901-4600-BA13-0C4A9512B28B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDbAction", "MDbAction\MDbAction.csproj", "{A0D4C26D-84A1-4528-9243-9003F7FD14BA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MDbEntity", "MDbEntity\MDbEntity.csproj", "{71BC935C-26FA-4579-975E-C0740B9A4969}"
-EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared.ExpSql", "Shared.ExpSql\Shared.ExpSql.shproj", "{DE308D4E-A2CB-4926-998E-5437F342ECC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContext", "DbContext\DbContext.csproj", "{5630E0E1-3DC0-4397-BB92-3A94DD39727F}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Shared.ExpSql\Shared.ExpSql.projitems*{07302fa9-6901-4600-ba13-0c4a9512b28b}*SharedItemsImports = 4
+		Shared.ExpSql\Shared.ExpSql.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
 		Shared.ExpSql\Shared.ExpSql.projitems*{de308d4e-a2cb-4926-998e-5437f342ecc6}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,18 +23,10 @@ Global
 		{4E38A7DF-213A-454C-A2B2-CB19C8CEB611}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E38A7DF-213A-454C-A2B2-CB19C8CEB611}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E38A7DF-213A-454C-A2B2-CB19C8CEB611}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07302FA9-6901-4600-BA13-0C4A9512B28B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07302FA9-6901-4600-BA13-0C4A9512B28B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07302FA9-6901-4600-BA13-0C4A9512B28B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07302FA9-6901-4600-BA13-0C4A9512B28B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A0D4C26D-84A1-4528-9243-9003F7FD14BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0D4C26D-84A1-4528-9243-9003F7FD14BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0D4C26D-84A1-4528-9243-9003F7FD14BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0D4C26D-84A1-4528-9243-9003F7FD14BA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{71BC935C-26FA-4579-975E-C0740B9A4969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{71BC935C-26FA-4579-975E-C0740B9A4969}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{71BC935C-26FA-4579-975E-C0740B9A4969}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{71BC935C-26FA-4579-975E-C0740B9A4969}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5630E0E1-3DC0-4397-BB92-3A94DD39727F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5630E0E1-3DC0-4397-BB92-3A94DD39727F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5630E0E1-3DC0-4397-BB92-3A94DD39727F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5630E0E1-3DC0-4397-BB92-3A94DD39727F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
