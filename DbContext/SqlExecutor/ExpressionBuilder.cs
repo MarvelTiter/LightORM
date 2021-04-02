@@ -23,59 +23,61 @@ namespace MDbContext.SqlExecutor {
         private static readonly MethodInfo DataRecord_GetString = typeof(IDataRecord).GetMethod("GetString");
         private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull");
         private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue");
+
         public Func<IDataReader, object> BuildDeserializer(IDataReader reader, Type targetType) {
             IDataReader dataReader = reader;
             Type type = targetType;
 
-            List<MemberBinding> Bindings = new List<MemberBinding>();
-
+            //List<MemberBinding> Bindings = new List<MemberBinding>();
+            List<Expression> body = new List<Expression>();
             Type SourceType = typeof(IDataReader);
-            ParameterExpression SourceInstance = Expression.Parameter(SourceType, "SourceInstance");
+            ParameterExpression SourceInstance = Expression.Parameter(SourceType, "reader");
 
-            DataTable SchemaTable = dataReader.GetSchemaTable();
+            //DataTable SchemaTable = dataReader.GetSchemaTable();
 
-            //通过在目标属性和字段在记录中的循环检查哪些是匹配的
             var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            // var entity = new Entity()
+            var exEntity = Expression.Variable(targetType, "entity");
+            Expression exEntityInstance = Expression.New(targetType);
+            body.Add(Expression.Assign(exEntity, exEntityInstance));
+            // object temp = null
+            var temp = Expression.Variable(typeof(object), "temp");
+            body.Add(Expression.Assign(temp, Expression.Constant(null)));
             for (int i = 0; i < dataReader.FieldCount; i++) {
-                foreach (PropertyInfo prop in props) {
-                    //如果属性名和字段名称是一样的
-                    if (prop.Name.ToLower() == dataReader.GetName(i).ToLower() && prop.CanWrite) {
-                        //获取 RecordField 的类型
-                        Type fieldType = dataReader.GetFieldType(i);
-                        //RecordField 可空类型检查
-                        if ((bool)(SchemaTable.Rows[i]["AllowDBNull"]) == true && fieldType.IsValueType) {
-                            fieldType = typeof(Nullable<>).MakeGenericType(fieldType);
-                        }
+                // 
+                var prop = props.FirstOrDefault(p => p.CanWrite && p.Name.ToLower() == dataReader.GetName(i).ToLower());
+                if (prop == null) continue;
+                var propType = prop.PropertyType;
 
-                        //为 RecordField 创建一个表达式
-                        Expression RecordFieldExpression = Expression.Call(SourceInstance, DataRecord_ItemGetter_Int, Expression.Constant(i, typeof(int)));
+                // reader.get_Item(i)
+                Expression exFieldValue = Expression.Call(SourceInstance, DataRecord_ItemGetter_Int, Expression.Constant(i, typeof(int)));
 
-                        //获取一个表示 SourceValue 的表达式
-                        Expression SourceValueExpression = GetSourceValueExpression(fieldType, RecordFieldExpression);
-
-                        //从 RecordField 到 TargetProperty 类型的值转换
-                        Expression ConvertedRecordFieldExpression = GetConvertedRecordFieldExpression(fieldType, SourceValueExpression, prop.PropertyType);
-
-                        MethodInfo TargetPropertySetter = prop.GetSetMethod();
-                        //为属性创建绑定
-                        var BindExpression = Expression.Bind(TargetPropertySetter, ConvertedRecordFieldExpression);
-                        //将绑定添加到绑定列表
-                        Bindings.Add(BindExpression);
-                    }
-                }
+                // temp = reader.get_Item(i)
+                Expression tempAssign = Expression.Assign(temp, exFieldValue);
+                body.Add(tempAssign);
+                //
+                Expression propExpression = Expression.Property(exEntity, prop.Name);
+                Expression converted = Expression.Convert(temp, propType);
+                // entity.PropertyName = (PropertyType)temp;
+                Expression propAdd = Expression.Assign(propExpression, converted);
+                /*
+                 * if (!(temp is DBNull || temp is null)){
+                 *  
+                 * }
+                 */
+                var exCheckDBNull = Expression.TypeIs(temp, typeof(DBNull));
+                var exCheckNull = Expression.NotEqual(temp, Expression.Constant(null));
+                var exIfThenElse = Expression.IfThen(
+                    Expression.Not(Expression.Or(exCheckNull, exCheckDBNull)),
+                    propAdd);
+                body.Add(exIfThenElse);
             }
-            //创建 Target 的新实例并绑定到 DataRecord
-            MemberInitExpression Body = Expression.MemberInit(Expression.New(type), Bindings);
+            // return entity;
+            body.Add(exEntity);
 
-            return Expression.Lambda<Func<IDataReader, object>>(Body, SourceInstance).Compile();
-        }
-
-        private Expression GetSourceValueExpression(Type recordFieldType, Expression recordFieldExpression) {
-            throw new NotImplementedException();
-        }
-
-        private Expression GetConvertedRecordFieldExpression(Type recordFieldType, Expression sourceValueExpression, Type targetPropertyType) {
-            throw new NotImplementedException();
-        }
+            Expression block = Expression.Block(new[] { exEntity, temp }, body);
+            var lambda = Expression.Lambda<Func<IDataReader, object>>(block, SourceInstance);
+            return lambda.Compile();
+        }       
     }
 }

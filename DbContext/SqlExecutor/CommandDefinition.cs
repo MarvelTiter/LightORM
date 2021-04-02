@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
     public struct CommandDefinition {
-        private static Dictionary<Type, Action<IDbCommand>> commandInitCache;
+        private static Dictionary<Type, Action<IDbCommand>> commandInitCache = new Dictionary<Type, Action<IDbCommand>>();
 
         public string CommandText { get; }
 

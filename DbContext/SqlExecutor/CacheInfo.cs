@@ -24,12 +24,12 @@ namespace MDbContext.SqlExecutor {
                 Action<IDbCommand, object> action;
                 if (parameters is IEnumerable<KeyValuePair<string, object>>) {
                     action = (cmd, obj) => {
-                        IDbParameterHandle handler = new EnumerableParameterHandler();
+                        IDbParameterHandle handler = new EnumerableParameterHandler(certificate);
                         handler.AddDbParameter(cmd, obj);
                     };
                 } else {
                     action = (cmd, obj) => {
-                        IDbParameterHandle handler = new EntityParameterHandler();
+                        IDbParameterHandle handler = new EntityParameterHandler(certificate);
                         handler.AddDbParameter(cmd, obj);
                     };
                 }

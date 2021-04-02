@@ -36,29 +36,53 @@ namespace Test {
                 //    db.DbSet.Log();
                 //});
 
-                using (IDbConnection conn = new OracleConnection("Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True")) {
-                    var db = conn.DbContext();
-                    db.DbSet.Select<RoadTransTruck>();
-                    var com = conn.CreateCommand();
-                    com.CommandText = db.Sql;
-                    conn.Open();
-                    var reader = com.ExecuteReader();
-                    //IDeserializer des = new ExpressionBuilder();
-                    //des.BuildDeserializer(reader, typeof(RoadTransTruck));
-                    var dt = reader.GetSchemaTable();
-                    CalcTimeSpan("CustomReflection", () => {
-                        //CustomReflection(reader);
-                    });
+                //using (IDbConnection conn = new OracleConnection("Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True")) {
+                //    var db = conn.DbContext();
+                //    db.DbSet.Select<RoadTransTruck>()
+                //        .Paging(0,100);
 
-                    CalcTimeSpan("EmitReflection", () => {
-                        EmitReflection(reader);
-                    });
-                }
+                //    //var dt = reader.GetSchemaTable();
+                //    //CalcTimeSpan("CustomReflection", () => {
+                //    //    CustomReflection(reader);
+                //    //});
 
+                //    CalcTimeSpan(nameof(CustomReflection), () => {
+
+                //        var com = conn.CreateCommand();
+                //        com.CommandText = db.Sql;
+                //        conn.Open();
+                //        var reader = com.ExecuteReader();
+                //        CustomReflection(reader);
+                //    });
+
+                //    CalcTimeSpan(nameof(ExpressionTreeReflection), () => {
+                //       var result = conn.QueryTest<RoadTransTruck>(db.Sql).ToList();
+                //        Console.WriteLine(result.Count);
+                //    });
+
+                //    CalcTimeSpan("DapperQuery", () => {
+                //        DapperQuery(db);
+                //    });
+
+                //}
+                int j = 5;
+                var student = new  {
+                    ClassID = j,
+                    Age = 10
+                };
+
+                var prop = student.GetType().GetProperties()[0];
+                int loop = 1000000;
+                CalcTimeSpan("Exp", () => {
+                    for (int i = 0; i < loop; i++) {
+                        student.ReadProperty(prop);
+                    }
+                });
 
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
             Console.ReadKey();
         }
@@ -68,7 +92,7 @@ namespace Test {
             stopwatch.Start();
             action.Invoke();
             stopwatch.Stop();
-            Console.WriteLine($"{title} Cost : {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"{title} Cost : {stopwatch.Elapsed}");
             Console.WriteLine("=============================");
         }
 
@@ -92,8 +116,15 @@ namespace Test {
             Console.WriteLine(list.Count());
         }
 
-        static void EmitReflection(IDataReader reader) {
-            var result = reader.Select<RoadTransTruck>().ToList();
+        static void ExpressionTreeReflection(IDataReader reader, Func<IDataReader, object> func) {
+            List<RoadTransTruck> result = new List<RoadTransTruck>();
+            while (reader.Read()) {
+                result.Add((RoadTransTruck)func(reader));
+            }
+            Console.WriteLine(result.Count());
+        }
+        static void DapperQuery(DbContext db) {
+            var result = db.Query<RoadTransTruck>().ToList();
             Console.WriteLine(result.Count());
         }
     }
@@ -157,10 +188,8 @@ namespace Test {
     }
 
     [TableName("t_student")]
-    public class Student : Student2 {
+    public class Student {
         public int ClassID { get; set; }
-    }
-    public class Student2 {
-        public int ClassID2 { get; set; }
+        public int Age { get; set; }
     }
 }

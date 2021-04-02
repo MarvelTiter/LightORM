@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    internal static class SqlExecutor {
+    public static class SqlExecutor {
         public static int Execute(this IDbConnection self, string sql, object param) {
             return 0;
         }
@@ -22,7 +22,7 @@ namespace MDbContext.SqlExecutor {
             return null;
         }
 
-        public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param) {
+        public static IEnumerable<T> QueryTest<T>(this IDbConnection self, string sql, object param = null) {
             CommandDefinition command = new CommandDefinition(sql, param);
             return self.internalQuery<T>(command);
         }

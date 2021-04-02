@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
     internal class EnumerableParameterHandler : IDbParameterHandle {
+        private readonly Certificate certificate;
+
+        public EnumerableParameterHandler(Certificate certificate) {
+            this.certificate = certificate;
+        }
         public void AddDbParameter(IDbCommand cmd, object param) {
             throw new NotImplementedException();
         }

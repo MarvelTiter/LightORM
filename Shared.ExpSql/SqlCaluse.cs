@@ -196,21 +196,23 @@ namespace DExpSql {
         public void Paging(int from, int to) {
             var max = Math.Max(from, to);
             var min = Math.Min(from, to);
+            var minParam = AddDbParameter(min);
+            var maxParam = AddDbParameter(max);
             if (DbType == 0)
-                SqlServerPaging(max, min);
+                SqlServerPaging(maxParam, minParam);
             else if (DbType == 1)
-                OraclePaging(max, min);
+                OraclePaging(maxParam, minParam);
             else if (DbType == 2)
-                MySqlPaging(max, min);
+                MySqlPaging(maxParam, minParam);
             else
                 throw new NotImplementedException("其余数据库分页查询未实现");
         }
 
-        private void MySqlPaging(int max, int min) {
-            Sql.AppendLine($" LIMIT {min},{max - min}");
+        private void MySqlPaging(string max, string min) {
+            Sql.AppendLine($" LIMIT {min},({max} - {min})");
         }
 
-        private void OraclePaging(int max, int min) {
+        private void OraclePaging(string max, string min) {
             var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
             Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
             Sql.AppendLine($" WHERE ROWNUM <= {max}");
@@ -220,7 +222,7 @@ namespace DExpSql {
             Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
         }
 
-        private void SqlServerPaging(int max, int min) {
+        private void SqlServerPaging(string max, string min) {
             if (HasOrderBy)
                 throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
             var orderByField = SelectFields[0].Remove(0, 2);
