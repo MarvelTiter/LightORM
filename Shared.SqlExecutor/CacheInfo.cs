@@ -22,17 +22,11 @@ namespace MDbContext.SqlExecutor {
             CacheInfo info = new CacheInfo();
             if (certificate.ParameterType != null) {
                 Action<IDbCommand, object> action;
-                if (parameters is IEnumerable<KeyValuePair<string, object>>) {
-                    action = (cmd, obj) => {
-                        IDbParameterHandle handler = new EnumerableParameterHandler(certificate);
-                        handler.AddDbParameter(cmd, obj);
-                    };
-                } else {
-                    action = (cmd, obj) => {
-                        IDbParameterHandle handler = new EntityParameterHandler(certificate);
-                        handler.AddDbParameter(cmd, obj);
-                    };
-                }
+                // IDictionary, Object
+                action = (cmd, obj) => {
+                    IDbParameterHandle handler = new DbParameterHandler(obj);
+                    handler.AddDbParameter(cmd, certificate);
+                };
                 info.ParameterReader = action;
             }
             cache.TryAdd(certificate, info);

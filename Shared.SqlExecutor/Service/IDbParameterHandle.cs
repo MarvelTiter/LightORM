@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor.Service {
     internal interface IDbParameterHandle {
-        void AddDbParameter(IDbCommand cmd, object param);
+        void AddDbParameter(IDbCommand cmd, Certificate certificate);
     }
 }

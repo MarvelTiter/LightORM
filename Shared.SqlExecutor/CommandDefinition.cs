@@ -19,10 +19,13 @@ namespace MDbContext.SqlExecutor {
 
         public CommandType? CommandType { get; }
 
-        public CommandDefinition(string commandText, object parameters = null, CommandType? commandType = null) {
+        public IDbTransaction Transaction { get; set; }
+
+        public CommandDefinition(string commandText, object parameters = null, IDbTransaction trans = null, CommandType? commandType = null) {
             CommandText = commandText;
             Parameters = parameters;
             CommandType = commandType;
+            Transaction = trans;
         }
 
         private CommandDefinition(object parameters) {
@@ -34,7 +37,10 @@ namespace MDbContext.SqlExecutor {
             IDbCommand dbCommand = cnn.CreateCommand();
 
             GetInit(dbCommand.GetType())?.Invoke(dbCommand);
-            
+
+            if (Transaction != null)
+                dbCommand.Transaction = Transaction;
+
             dbCommand.CommandText = CommandText;
             if (CommandType.HasValue)
                 dbCommand.CommandType = CommandType.Value;
@@ -61,7 +67,7 @@ namespace MDbContext.SqlExecutor {
                     typeof(IDbCommand)
                 });
                 ILGenerator iLGenerator = dynamicMethod.GetILGenerator();
-                
+
                 if (basicPropertySetter != null) {
                     iLGenerator.Emit(OpCodes.Ldarg_0);
                     iLGenerator.Emit(OpCodes.Castclass, commandType);

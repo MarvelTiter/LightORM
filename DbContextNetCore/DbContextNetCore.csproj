@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <Import Project="..\Shared.ExpSql\Shared.ExpSql.projitems" Label="Shared" />
+
+  <Import Project="..\Shared.SqlExecutor\Shared.SqlExecutor.projitems" Label="Shared" />
+
+</Project>

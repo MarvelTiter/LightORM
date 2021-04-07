@@ -1,4 +1,5 @@
-﻿using MDbContext;
+﻿using DExpSql;
+using MDbContext;
 using MDbContext.Extension;
 using MDbContext.SqlExecutor;
 using MDbContext.SqlExecutor.Service;
@@ -35,50 +36,25 @@ namespace Test {
                 //    .Where(tea => tea.ClassID == 1);
                 //    db.DbSet.Log();
                 //});
-
-                //using (IDbConnection conn = new OracleConnection("Password=dbo_gzjwjkjcz;User ID=dbo_gzjwjkjcz;Data Source=172.18.169.230/ORCL;Persist Security Info=True")) {
-                //    var db = conn.DbContext();
-                //    db.DbSet.Select<RoadTransTruck>()
-                //        .Paging(0,100);
-
-                //    //var dt = reader.GetSchemaTable();
-                //    //CalcTimeSpan("CustomReflection", () => {
-                //    //    CustomReflection(reader);
-                //    //});
-
-                //    CalcTimeSpan(nameof(CustomReflection), () => {
-
-                //        var com = conn.CreateCommand();
-                //        com.CommandText = db.Sql;
-                //        conn.Open();
-                //        var reader = com.ExecuteReader();
-                //        CustomReflection(reader);
-                //    });
-
-                //    CalcTimeSpan(nameof(ExpressionTreeReflection), () => {
-                //       var result = conn.QueryTest<RoadTransTruck>(db.Sql).ToList();
-                //        Console.WriteLine(result.Count);
-                //    });
-
-                //    CalcTimeSpan("DapperQuery", () => {
-                //        DapperQuery(db);
-                //    });
-
-                //}
-                int j = 5;
-                var student = new  {
-                    ClassID = j,
-                    Age = 10
-                };
-
-                var prop = student.GetType().GetProperties()[0];
-                int loop = 1000000;
-                CalcTimeSpan("Exp", () => {
-                    for (int i = 0; i < loop; i++) {
-                        student.ReadProperty(prop);
+                DbContext.Init(1);
+                using (IDbConnection conn = new OracleConnection("Password=cgs;User ID=cgs;Data Source=192.168.5.10/gzorcl;Persist Security Info=True")) {
+                    var db = conn.DbContext();
+                    var sql = db.DbSet.Select<Job>().Paging(0, 10);
+                    var result = db.Query<Job>();
+                    foreach (Job item in result) {
+                        Console.WriteLine($"{item.JOB_ID}-{item.JOB_SN}-{item.JOB_COMMENT}");
                     }
-                });
+                }
 
+                //DbContext.Init(0);
+                //using (IDbConnection conn = new SqlConnection("Data Source=192.168.56.11;Initial Catalog=APDSDBNEW; User Id=sa;Password=Ybeluoek3")) {
+                //    var db = conn.DbContext();
+                //    db.DbSet.Select<Users>();
+                //    var result = db.Query<Users>();
+                //    foreach (var item in result) {
+                //        Console.WriteLine($"{item.Account}-{item.Age}-{item.Tel}");
+                //    }
+                //}
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
@@ -86,7 +62,6 @@ namespace Test {
             }
             Console.ReadKey();
         }
-
         static void CalcTimeSpan(string title, Action action) {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -166,30 +141,41 @@ namespace Test {
         }
     }
 
-
-    public class SearchParam {
-        public int Age { get; set; }
-        public string Name { get; set; }
+    public class Users {
+        public string Account { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public int? Tel { get; set; }
+        public string Sex { get; set; }
+        public int? Age { get; set; }
+        public string Duty { get; set; }
+        public bool? IsUse { get; set; }
+        public string ValidDate { get; set; }
     }
 
-    [TableName("t_teacher")]
-    public class Teacher {
-        public static Student stu { get; set; }
-        public int ClassID { get; set; }
-
-        [Display("年龄")]
-        [Range(10, 20)]
-        public int Age { get; set; }
-
-        [Display("姓名")]
-        [MaxLength(4)]
-        public string Name { get; set; }
-
-    }
-
-    [TableName("t_student")]
-    public class Student {
-        public int ClassID { get; set; }
-        public int Age { get; set; }
+    [TableName("DQJY_JOBS")]
+    public class Job {
+        public double JOB_ID { get; set; }
+        public string JOB_SN { get; set; }
+        public double JOB_SEQ { get; set; }
+        public DateTime? JOB_DATE { get; set; }
+        public string JOB_PLATE { get; set; }
+        public string JOB_PCLASS { get; set; }
+        public double BNS_ID { get; set; }
+        public string STN_ID { get; set; }
+        public double JOB_STATE { get; set; }
+        public string USR_ID { get; set; }
+        public DateTime? JOB_TIMESTAMP { get; set; }
+        public string JOB_COMMENT { get; set; }
+        public string JOB_WHMD { get; set; }
+        public string JOB_CANCELRESULT { get; set; }
+        public double JOB_APP1_RLT { get; set; }
+        public string JOB_APP1_USR_ID { get; set; }
+        public double JOB_APP2_RLT { get; set; }
+        public string JOB_APP2_USR_ID { get; set; }
+        public string BOOKING_SOURCE { get; set; }
+        public string CYYXM { get; set; }
+        public string JGXTJYLSH { get; set; }
+        public string CLSBDH { get; set; }
     }
 }
