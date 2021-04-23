@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MDbEntity.Attributes;
+using Shared.ExpSql.Extension;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -37,11 +39,12 @@ namespace DExpSql.ExpressionHandle {
         }
         protected override SqlCaluse Update(NewExpression exp, SqlCaluse sqlCaluse) {
             for (int i = 0; i < exp.Members.Count; i++) {
-                var name = exp.Members[i].Name;
+                var member = exp.Members[i];
+                //var name = member.GetAttribute<ColumnNameAttribute>()?.Name ?? member.Name;
                 var value = Expression.Lambda(exp.Arguments[i]).Compile().DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
-                sqlCaluse += $" {name} = ";
+                sqlCaluse += $" {member.Name} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);
                 sqlCaluse += ",\n";
             }
@@ -53,7 +56,8 @@ namespace DExpSql.ExpressionHandle {
 
         protected override SqlCaluse Insert(NewExpression exp, SqlCaluse sqlCaluse) {
             for (int i = 0; i < exp.Members.Count; i++) {
-                var name = exp.Members[i].Name;
+                var member = exp.Members[i];
+                var name = member.GetAttribute<ColumnNameAttribute>()?.Name ?? member.Name;
                 sqlCaluse.SelectFields.Add(name);
                 ExpressionVisit.Insert(exp.Arguments[i], sqlCaluse);
             }

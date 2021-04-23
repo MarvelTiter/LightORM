@@ -54,10 +54,10 @@ namespace DExpSql {
         /// </summary>
         /// <typeparam name="T">更新的实体类型</typeparam>
         /// <param name="entity">实体实例</param>
-        /// <param name="pkExp">忽略的列</param>
+        /// <param name="ingore">忽略的列</param>
         /// <returns></returns>
-        public ExpressionSqlCore<T> Update<T>(T entity, Expression<Func<T, object>> pkExp = null) {
-            return Update<T>(() => entity, pkExp);
+        public ExpressionSqlCore<T> Update<T>(T entity, Expression<Func<T, object>> ingore = null) {
+            return Update<T>(() => entity, ingore);
         }
 
         public ExpressionSqlCore<T> Insert<T>(Expression<Func<object>> exp) {

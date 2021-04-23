@@ -13,6 +13,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Test {
     class Program //: Application
@@ -20,41 +22,25 @@ namespace Test {
         //[STAThread]
         static void Main(string[] args) {
             try {
-                //Console.ReadKey(true);
-                //MDbContext.DbContext.Init(2);
-                //var limit = new SearchParam { Age = 10 };
-                //var db = MDbContext.DbContext.Instance(null);
-                //CalcTimeSpan("BuildSql", () => {
-                //    db.DbSet.Select<Student>()
-                //     .Where(t => t.ClassID2 == 1);
-                //});
 
-                //db.DbSet.ToString().Log();
-                //var entity = new Teacher { Age = 20, ClassID = 2 };
-                //CalcTimeSpan("BuildSql", () => {
-                //    db.DbSet.Update<Teacher>(() => new { entity.Age, entity.ClassID })
-                //    .Where(tea => tea.ClassID == 1);
-                //    db.DbSet.Log();
-                //});
-                DbContext.Init(1);
-                using (IDbConnection conn = new OracleConnection("Password=cgs;User ID=cgs;Data Source=192.168.5.10/gzorcl;Persist Security Info=True")) {
-                    var db = conn.DbContext();
-                    var sql = db.DbSet.Select<Job>().Paging(0, 10);
-                    var result = db.Query<Job>();
-                    foreach (Job item in result) {
-                        Console.WriteLine($"{item.JOB_ID}-{item.JOB_SN}-{item.JOB_COMMENT}");
-                    }
-                }
 
-                //DbContext.Init(0);
-                //using (IDbConnection conn = new SqlConnection("Data Source=192.168.56.11;Initial Catalog=APDSDBNEW; User Id=sa;Password=Ybeluoek3")) {
-                //    var db = conn.DbContext();
-                //    db.DbSet.Select<Users>();
-                //    var result = db.Query<Users>();
-                //    foreach (var item in result) {
-                //        Console.WriteLine($"{item.Account}-{item.Age}-{item.Tel}");
-                //    }
+                //MD5 md5 = MD5.Create();
+                //byte[] buffers = md5.ComputeHash(Encoding.Default.GetBytes("123"));
+
+                //string result1 = "";
+                //for (int i = 0; i < buffers.Length; i++) {
+                //    result1 += buffers[i].ToString("x2");
                 //}
+                //Console.WriteLine(result1);
+                //Console.ReadKey();
+
+
+                DbContext.Init(0);
+                var db = new DbContext(null);
+                var job = new Job();
+                db.DbSet.Insert<Job>(job)
+                    .Where(j => j.JobId == 1);
+                db.DbSet.Log();
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
@@ -155,9 +141,12 @@ namespace Test {
 
     [TableName("DQJY_JOBS")]
     public class Job {
-        public double JOB_ID { get; set; }
-        public string JOB_SN { get; set; }
-        public double JOB_SEQ { get; set; }
+        [ColumnName("JOB_ID")]
+        public double JobId { get; set; }
+        [ColumnName("JOB_SN")]
+        public string JobSn { get; set; }
+        [ColumnName("JOB_SEQ")]
+        public double JobSeq { get; set; }
         public DateTime? JOB_DATE { get; set; }
         public string JOB_PLATE { get; set; }
         public string JOB_PCLASS { get; set; }

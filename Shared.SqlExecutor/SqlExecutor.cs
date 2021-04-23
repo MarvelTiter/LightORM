@@ -49,9 +49,9 @@ namespace MDbContext.SqlExecutor {
             IDataReader reader = null;
             var wasClosed = conn.State == ConnectionState.Closed;
             try {
+                cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
                 if (wasClosed)
                     conn.Open();
-                cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult | CommandBehavior.SequentialAccess);
                 if (cacheInfo.Deserializer == null) {
                     cacheInfo.Deserializer = BuildDeserializer(reader, typeof(T));

@@ -9,6 +9,8 @@
     <Import_RootNamespace>Shared.ExpSql</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ColumnNameAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ColumnDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\DisplayAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidateAttribute.cs" />
@@ -33,11 +35,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionSqlCore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionSqlCoreHandle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionVisit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extension\AttributeExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extension\StringExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IExpressionSql.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SqlCaluse.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)DbEntity\" />
   </ItemGroup>
 </Project>

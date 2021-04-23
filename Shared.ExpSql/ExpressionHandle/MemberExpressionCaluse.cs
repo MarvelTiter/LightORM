@@ -1,4 +1,5 @@
 ﻿using MDbEntity.Attributes;
+using Shared.ExpSql.Extension;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -68,9 +69,10 @@ namespace DExpSql.ExpressionHandle {
                     continue;
                 if (sqlCaluse.IgnoreFields.Contains(p.Name))
                     continue;
-                if (p.GetCustomAttributes(typeof(PrimaryKeyAttribute), false).Length > 0)
+                if (p.GetAttribute<PrimaryKeyAttribute>() != null)
                     continue;
-                sqlCaluse += $" {p.Name} = ";
+                var name = p.GetAttribute<ColumnNameAttribute>()?.Name;
+                sqlCaluse += $" {name ?? p.Name} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);
                 sqlCaluse += ",\n";
             }
@@ -89,7 +91,8 @@ namespace DExpSql.ExpressionHandle {
                 var value = p.GetValue(e, null);
                 if (value == null || value == DBNull.Value)
                     continue;
-                sqlCaluse.SelectFields.Add(p.Name);
+                var name = p.GetAttribute<ColumnNameAttribute>()?.Name;
+                sqlCaluse.SelectFields.Add(name ?? p.Name);
                 sqlCaluse.AddDbParameter(value);
             }
             return sqlCaluse;
@@ -109,7 +112,11 @@ namespace DExpSql.ExpressionHandle {
             var table = exp.Member.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
-            return $"{alias}.{exp.Member.Name}";
+            var attr = exp.Member.GetAttribute<ColumnNameAttribute>();
+            if (attr == null)
+                return $"{alias}.{exp.Member.Name}";
+            else
+                return $"{alias}.{attr.Name} {exp.Member.Name}";
         }
 
         private string FindValue(MemberExpression exp, SqlCaluse sqlCaluse) {
@@ -118,7 +125,11 @@ namespace DExpSql.ExpressionHandle {
                 if (!string.IsNullOrWhiteSpace(tableAlias)) {
                     tableAlias += ".";
                 }
-                return " " + tableAlias + exp.Member.Name;
+                var attr = exp.Member.GetAttribute<ColumnNameAttribute>();
+                if (attr == null)
+                    return " " + tableAlias + exp.Member.Name;
+                else
+                    return " " + tableAlias + attr.Name;
             } else {
                 //var v = exp.Expression as ConstantExpression;
                 var v = Expression.Lambda(exp).Compile().DynamicInvoke();

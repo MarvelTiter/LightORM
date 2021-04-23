@@ -22,8 +22,8 @@ namespace DExpSql {
             var tableName = _sqlCaluse.GetTableName(mainTable);
             sql = sql + tableName + " " + _sqlCaluse.GetTableAlias(mainTable);
             ExpressionVisit.Select(body, _sqlCaluse);
-            var selected = _sqlCaluse.SelectAll ? "*" : _sqlCaluse.SelectedFieldString;
-            _sqlCaluse.Sql.AppendFormat(sql, selected);
+            //var selected = _sqlCaluse.SelectAll ? "*" : _sqlCaluse.SelectedFieldString;
+            _sqlCaluse.Sql.AppendFormat(sql, _sqlCaluse.SelectedFieldString);
         }
 
         private void JoinHandle<T1>(string joinType, Expression<Func<T, T1, object>> exp) {
