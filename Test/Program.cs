@@ -13,6 +13,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -34,12 +35,11 @@ namespace Test {
                 //Console.WriteLine(result1);
                 //Console.ReadKey();
 
-
                 DbContext.Init(0);
                 var db = new DbContext(null);
-                var job = new Job();
-                db.DbSet.Insert<Job>(job)
-                    .Where(j => j.JobId == 1);
+                var job = new Job { JobId = 10 };
+
+                db.DbSet.Update<Job>(() => new Job{ JobId = job.JobId });
                 db.DbSet.Log();
 
             } catch (Exception ex) {
@@ -126,13 +126,17 @@ namespace Test {
             return Convert.ChangeType(value, type);
         }
     }
-
+    public class Student {
+        public int Age { get; set; }
+        public string Name { get; set; }
+    }
     public class Users {
         public string Account { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
         public int? Tel { get; set; }
         public string Sex { get; set; }
+        [ColumnName("_AGE")]
         public int? Age { get; set; }
         public string Duty { get; set; }
         public bool? IsUse { get; set; }

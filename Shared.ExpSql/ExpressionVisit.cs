@@ -51,6 +51,8 @@ namespace DExpSql {
                 _i = new ParameterExpressionCaluse();
             else if (exp is LambdaExpression)
                 _i = new LambdaExpressionCaluse();
+            else if (exp is MemberInitExpression)
+                _i = new MemberInitExpressionCaluse();
             else
                 throw new ArgumentException("不支持的Expression");
 

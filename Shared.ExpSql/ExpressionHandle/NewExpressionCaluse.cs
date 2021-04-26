@@ -40,8 +40,10 @@ namespace DExpSql.ExpressionHandle {
         protected override SqlCaluse Update(NewExpression exp, SqlCaluse sqlCaluse) {
             for (int i = 0; i < exp.Members.Count; i++) {
                 var member = exp.Members[i];
+                var arg = exp.Arguments[i];
                 //var name = member.GetAttribute<ColumnNameAttribute>()?.Name ?? member.Name;
-                var value = Expression.Lambda(exp.Arguments[i]).Compile().DynamicInvoke();
+                var func = Expression.Lambda(arg).Compile();
+                var value = func.DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
                 sqlCaluse += $" {member.Name} = ";

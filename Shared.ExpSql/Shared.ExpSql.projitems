@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\ConstantExpression.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\LambdaExpressionCaluse.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\MemberExpressionCaluse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\MemberInitExpressionCaluse.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\MethodCallExpressionCaluse.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\NewArrayExpressionCaluse.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionHandle\NewExpressionCaluse.cs" />

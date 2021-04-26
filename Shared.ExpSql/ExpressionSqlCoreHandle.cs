@@ -26,12 +26,12 @@ namespace DExpSql {
             _sqlCaluse.Sql.AppendFormat(sql, _sqlCaluse.SelectedFieldString);
         }
 
-        private void JoinHandle<T1>(string joinType, Expression<Func<T, T1, object>> exp) {
+        private void JoinHandle<T1>(string joinType, Expression exp) {
             var joinTable = typeof(T1);
             _sqlCaluse.SetTableAlias(joinTable);
             var tableName = _sqlCaluse.GetTableName(joinTable);
             _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable)}";
-            ExpressionVisit.Join(exp.Body, _sqlCaluse);
+            ExpressionVisit.Join(exp, _sqlCaluse);
         }
 
         private void WhereHandle(Expression body) {
@@ -61,9 +61,9 @@ namespace DExpSql {
             return $" DELETE FROM {tableName} \n";
         }
 
-        private void OrderByHandle(Expression<Func<T, object>> exp) {
+        private void OrderByHandle(Expression exp) {
             _sqlCaluse += "\n ORDER BY ";
-            ExpressionVisit.OrderBy(exp.Body, _sqlCaluse);
+            ExpressionVisit.OrderBy(exp, _sqlCaluse);
         }
 
         private void GroupByHandle(Expression body) {

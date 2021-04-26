@@ -31,20 +31,20 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse Join(MemberExpression exp, SqlCaluse sqlCaluse) {
-            string col = CustomHandle(exp, sqlCaluse);
+            string col = CustomHandle(exp, sqlCaluse, false);
             sqlCaluse += col;
             return sqlCaluse;
         }
 
         protected override SqlCaluse OrderBy(MemberExpression exp, SqlCaluse sqlCaluse) {
-            string col = CustomHandle(exp, sqlCaluse);
+            string col = CustomHandle(exp, sqlCaluse, false);
             sqlCaluse += col;
             sqlCaluse.HasOrderBy = true;
             return sqlCaluse;
         }
 
         protected override SqlCaluse GroupBy(MemberExpression exp, SqlCaluse sqlCaluse) {
-            string col = CustomHandle(exp, sqlCaluse);
+            string col = CustomHandle(exp, sqlCaluse, false);
             if (!sqlCaluse.GroupByFields.Contains(col))
                 sqlCaluse.GroupByFields.Add(col);
             return sqlCaluse;
@@ -108,15 +108,18 @@ namespace DExpSql.ExpressionHandle {
             return sqlCaluse;
         }
 
-        private string CustomHandle(MemberExpression exp, SqlCaluse sqlCaluse) {
+        private string CustomHandle(MemberExpression exp, SqlCaluse sqlCaluse, bool aliaRequest = true) {
             var table = exp.Member.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             var attr = exp.Member.GetAttribute<ColumnNameAttribute>();
-            if (attr == null)
+            if (attr != null) {
+                if (aliaRequest)
+                    return $"{alias}.{attr.Name} {exp.Member.Name}";
+                else
+                    return $"{alias}.{attr.Name}";
+            } else
                 return $"{alias}.{exp.Member.Name}";
-            else
-                return $"{alias}.{attr.Name} {exp.Member.Name}";
         }
 
         private string FindValue(MemberExpression exp, SqlCaluse sqlCaluse) {

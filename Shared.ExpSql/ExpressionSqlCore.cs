@@ -12,6 +12,7 @@ namespace DExpSql {
         public ExpressionSqlCore(SqlCaluse sqlCaluse) {
             this._sqlCaluse = sqlCaluse;
         }
+
         #region select part
 
         public ExpressionSqlCore<T> Select(Expression<Func<T, object>> exp) {
@@ -56,12 +57,6 @@ namespace DExpSql {
         #endregion
 
         #region update part
-        /// <summary>
-        /// 更新实体
-        /// </summary>
-        /// <param name="exp"></param>
-        /// <param name="pkExp">忽略的列</param>
-        /// <returns></returns>
         public ExpressionSqlCore<T> Update(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null) {
             UpdateHandle(exp.Body, pkExp?.Body);
             return this;
@@ -87,19 +82,50 @@ namespace DExpSql {
 
         #region join part
         public ExpressionSqlCore<T> InnerJoin<T1>(Expression<Func<T, T1, object>> exp) {
-            JoinHandle("\n INNER", exp);
+            JoinHandle<T1>("\n INNER", exp.Body);
             return this;
         }
 
         public ExpressionSqlCore<T> LeftJoin<T1>(Expression<Func<T, T1, object>> exp) {
-            JoinHandle("\n LEFT", exp);
+            JoinHandle<T1>("\n LEFT", exp.Body);
             return this;
         }
 
         public ExpressionSqlCore<T> RightJoin<T1>(Expression<Func<T, T1, object>> exp) {
-            JoinHandle("\n RIGHT", exp);
+            JoinHandle<T1>("\n RIGHT", exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> InnerJoin<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            JoinHandle<T1>("\n INNER", exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> InnerJoin<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            JoinHandle<T1>("\n INNER", exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> LeftJoin<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            JoinHandle<T1>("\n LEFT", exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> LeftJoin<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            JoinHandle<T1>("\n LEFT", exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> RightJoin<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            JoinHandle<T1>("\n RIGHT", exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> RightJoin<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            JoinHandle<T1>("\n RIGHT", exp.Body);
+            return this;
+        }
+
         #endregion
 
         #region where part
@@ -112,13 +138,25 @@ namespace DExpSql {
             WhereHandle(exp.Body);
             return this;
         }
+        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T1, object>> exp) {
+            WhereHandle(exp.Body);
+            return this;
+        }
 
         public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
             WhereHandle(exp.Body);
             return this;
         }
+        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            WhereHandle(exp.Body);
+            return this;
+        }
 
         public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp) {
+            WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp) {
             WhereHandle(exp.Body);
             return this;
         }
@@ -129,31 +167,116 @@ namespace DExpSql {
             GroupByHandle(exp.Body);
             return this;
         }
+
         public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp) {
             GroupByHandle(exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T1, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+
         public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
             GroupByHandle(exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+
         public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp) {
             GroupByHandle(exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp) {
+            GroupByHandle(exp.Body);
+            return this;
+        }
+
         #endregion
 
+        #region order by asc
         public ExpressionSqlCore<T> OrderByAsc(Expression<Func<T, object>> exp) {
-            OrderByHandle(exp);
+            OrderByHandle(exp.Body);
             _sqlCaluse += " ASC";
             return this;
         }
 
+        public ExpressionSqlCore<T> OrderByAsc<T1>(Expression<Func<T, T1, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByAsc<T1>(Expression<Func<T1, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByAsc<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByAsc<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+
+        public ExpressionSqlCore<T> OrderByAsc<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByAsc<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " ASC";
+            return this;
+        }
+        #endregion
+
+        #region order by desc
         public ExpressionSqlCore<T> OrderByDesc(Expression<Func<T, object>> exp) {
-            OrderByHandle(exp);
+            OrderByHandle(exp.Body);
             _sqlCaluse += " DESC";
             return this;
         }
+        public ExpressionSqlCore<T> OrderByDesc<T1>(Expression<Func<T, T1, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByDesc<T1>(Expression<Func<T1, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByDesc<T1, T2>(Expression<Func<T, T1, T2, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByDesc<T1, T2>(Expression<Func<T1, T2, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByDesc<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        public ExpressionSqlCore<T> OrderByDesc<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp) {
+            OrderByHandle(exp.Body);
+            _sqlCaluse += " DESC";
+            return this;
+        }
+        #endregion
 
         public ExpressionSqlCore<T> Paging(int from, int to) {
             _sqlCaluse.Paging(from, to);
