@@ -12,9 +12,9 @@ namespace DExpSql {
         private bool _firstWhere = true;
 
 
-        private void SelectHandle(Expression body, params Type[] arr) {
+        private void SelectHandle(bool distinct, Expression body, params Type[] arr) {
             _sqlCaluse.Clear();
-            var sql = " SELECT {0}\n FROM ";
+            var sql = distinct? " SELECT DISTINCT {0}\n FROM " : " SELECT {0}\n FROM ";
             foreach (Type item in arr) {
                 _sqlCaluse.SetTableAlias(item);
             }

@@ -18,9 +18,9 @@ namespace DExpSql {
         /// <typeparam name="T">表1</typeparam>
         /// <param name="exp">列</param>
         /// <returns></returns>
-        public ExpressionSqlCore<T> Select<T>(Expression<Func<T, object>> exp = null) {
+        public ExpressionSqlCore<T> Select<T>(Expression<Func<T, object>> exp = null, bool distinct = false) {
             SqlCaluse.Clear();
-            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
+            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp, distinct);
         }
         /// <summary>
         /// Select 
@@ -29,19 +29,19 @@ namespace DExpSql {
         /// <typeparam name="T1">表2</typeparam>
         /// <param name="exp">列</param>
         /// <returns></returns>
-        public ExpressionSqlCore<T> Select<T, T1>(Expression<Func<T, T1, object>> exp = null) {
+        public ExpressionSqlCore<T> Select<T, T1>(Expression<Func<T, T1, object>> exp = null, bool distinct = false) {
             SqlCaluse.Clear();
-            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
+            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp, distinct);
         }
 
-        public ExpressionSqlCore<T> Select<T, T1, T2>(Expression<Func<T, T1, T2, object>> exp = null) {
+        public ExpressionSqlCore<T> Select<T, T1, T2>(Expression<Func<T, T1, T2, object>> exp = null, bool distinct = false) {
             SqlCaluse.Clear();
-            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
+            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp, distinct);
         }
 
-        public ExpressionSqlCore<T> Select<T, T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp = null) {
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp = null, bool distinct = false) {
             SqlCaluse.Clear();
-            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp);
+            return new ExpressionSqlCore<T>(SqlCaluse).Select(exp, distinct);
         }
 
         public ExpressionSqlCore<T> Update<T>(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null) {

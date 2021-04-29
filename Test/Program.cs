@@ -40,7 +40,7 @@ namespace Test {
                 var job = new Job { JobId = 10 };
                 var stu = new Student();
                 stu.Name = "123";
-                db.DbSet.Insert(stu);
+                db.DbSet.Select<Student>(distinct: true);
                 db.DbSet.Log();
 
             } catch (Exception ex) {
