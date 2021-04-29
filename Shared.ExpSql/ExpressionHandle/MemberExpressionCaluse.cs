@@ -13,8 +13,10 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse Select(MemberExpression exp, SqlCaluse sqlCaluse) {
-            string col = CustomHandle(exp, sqlCaluse);
-            sqlCaluse.SelectFields.Add(col);
+            if (exp.Member.GetAttribute<IgnoreAttribute>() == null) {
+                string col = CustomHandle(exp, sqlCaluse);
+                sqlCaluse.SelectFields.Add(col);
+            }            
             return sqlCaluse;
         }
 
@@ -69,6 +71,8 @@ namespace DExpSql.ExpressionHandle {
                     continue;
                 if (sqlCaluse.IgnoreFields.Contains(p.Name))
                     continue;
+                if (p.GetAttribute<IgnoreAttribute>() != null)
+                    continue;
                 if (p.GetAttribute<PrimaryKeyAttribute>() != null)
                     continue;
                 var name = p.GetAttribute<ColumnNameAttribute>()?.Name;
@@ -88,6 +92,8 @@ namespace DExpSql.ExpressionHandle {
             var props = eType.GetProperties();
             for (int i = 0; i < props.Length; i++) {
                 var p = props[i];
+                if (p.GetAttribute<IgnoreAttribute>() != null)
+                    continue;
                 var value = p.GetValue(e, null);
                 if (value == null || value == DBNull.Value)
                     continue;

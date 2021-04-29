@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ColumnNameAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\ColumnDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\DisplayAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IgnoreAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\IValidateAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbEntity\Attributes\MaxLengthAttribute.cs" />

@@ -18,6 +18,8 @@ namespace ExpSql.ExpressionHandle {
             sqlCaluse.SetTableAlias(t);
             var alia = sqlCaluse.GetTableAlias(t);
             foreach (PropertyInfo item in props) {
+                if (item.GetAttribute<IgnoreAttribute>() != null)
+                    continue;
                 var col = item.GetAttribute<ColumnNameAttribute>();
                 if (col == null)
                     sqlCaluse.SelectFields.Add($"{alia}.{item.Name}");

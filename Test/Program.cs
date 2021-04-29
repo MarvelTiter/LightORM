@@ -38,8 +38,9 @@ namespace Test {
                 DbContext.Init(0);
                 var db = new DbContext(null);
                 var job = new Job { JobId = 10 };
-
-                db.DbSet.Update<Job>(() => new Job{ JobId = job.JobId });
+                var stu = new Student();
+                stu.Name = "123";
+                db.DbSet.Insert(stu);
                 db.DbSet.Log();
 
             } catch (Exception ex) {
@@ -127,6 +128,7 @@ namespace Test {
         }
     }
     public class Student {
+        [Ignore]
         public int Age { get; set; }
         public string Name { get; set; }
     }
