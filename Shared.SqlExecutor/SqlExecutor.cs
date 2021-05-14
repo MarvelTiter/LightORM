@@ -89,8 +89,6 @@ namespace MDbContext.SqlExecutor {
             }
         }
 
-
-
         private static T internalSingle<T>(this IDbConnection conn, CommandDefinition command) {
             return internalReader(conn, command, (reader, cacheInfo) => {
                 while (reader.Read()) {
@@ -183,7 +181,6 @@ namespace MDbContext.SqlExecutor {
             IDeserializer des = new ExpressionBuilder();
             return des.BuildDeserializer(reader, type);
         }
-
         private static T GetValue<T>(object val) {
             if (val is T) {
                 return (T)val;

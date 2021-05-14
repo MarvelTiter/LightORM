@@ -40,7 +40,9 @@ namespace DExpSql {
                 _firstWhere = false;
             } else
                 _sqlCaluse += "\n AND";
+            _sqlCaluse += "(";
             ExpressionVisit.Where(body, _sqlCaluse);
+            _sqlCaluse += ")";
         }
 
         private void UpdateHandle(Expression body, Expression pkExp = null) {

@@ -40,7 +40,9 @@ namespace Test {
                 var job = new Job { JobId = 10 };
                 var stu = new Student();
                 stu.Name = "123";
-                db.DbSet.Select<Student>(distinct: true);
+                db.DbSet.Select<Student>(distinct: true)
+                    .Where(s => s.Age > 10)
+                    .Where(s => s.Name == "1" || s.Name == "2");
                 db.DbSet.Log();
 
             } catch (Exception ex) {

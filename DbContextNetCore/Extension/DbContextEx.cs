@@ -42,6 +42,13 @@ namespace MDbContext {
             self.TransSqlParameter.Add(self.SqlParameter);
         }
 
+        public static void AddTrans(this DbContext self, string sql, object param) {
+            if (self.TransSqls == null) self.TransSqls = new List<string>();
+            if (self.TransSqlParameter == null) self.TransSqlParameter = new List<object>();
+            self.TransSqls.Add(sql);
+            self.TransSqlParameter.Add(param);
+        }
+
         public static bool ExecuteTrans(this DbContext self) {
             var sqls = self.TransSqls.ToArray();
             var ps = self.TransSqlParameter.ToArray();
