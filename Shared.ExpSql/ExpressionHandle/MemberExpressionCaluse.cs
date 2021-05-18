@@ -16,7 +16,7 @@ namespace DExpSql.ExpressionHandle {
             if (exp.Member.GetAttribute<IgnoreAttribute>() == null) {
                 string col = CustomHandle(exp, sqlCaluse);
                 sqlCaluse.SelectFields.Add(col);
-            }            
+            }
             return sqlCaluse;
         }
 
@@ -106,11 +106,15 @@ namespace DExpSql.ExpressionHandle {
 
         protected override SqlCaluse In(MemberExpression exp, SqlCaluse sqlCaluse) {
             var v = Expression.Lambda(exp).Compile().DynamicInvoke();
-            IEnumerable array = v as IEnumerable;
-            foreach (var item in array) {
-                sqlCaluse += $"'{item}', ";
+            if (v.GetType() == typeof(string)) {
+                sqlCaluse += $"{v}";
+            } else {
+                IEnumerable array = v as IEnumerable;
+                foreach (var item in array) {
+                    sqlCaluse += $"'{item}', ";
+                }
+                sqlCaluse -= ", ";
             }
-            sqlCaluse -= ", ";
             return sqlCaluse;
         }
 

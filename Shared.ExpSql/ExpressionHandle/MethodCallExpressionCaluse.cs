@@ -30,6 +30,16 @@ namespace DExpSql.ExpressionHandle {
             return sqlCaluse;
         }
 
+        protected override SqlCaluse Join(MethodCallExpression exp, SqlCaluse sqlCaluse) {
+            var key = exp.Method.Name;
+            sqlCaluse += " ON ";
+            if (methodDic.ContainsKey(key)) {
+                var func = methodDic[key];
+                func.Invoke(exp, sqlCaluse);
+            }
+            return sqlCaluse;
+        }
+
         protected override SqlCaluse Select(MethodCallExpression exp, SqlCaluse sqlCaluse) {
             var key = exp.Method.Name;
             if (methodDic.ContainsKey(key)) {
@@ -72,9 +82,10 @@ namespace DExpSql.ExpressionHandle {
         }
 
         private static SqlCaluse InMethod(MethodCallExpression exp, SqlCaluse sqlCaluse) {
-            ExpressionVisit.Where(exp.Arguments[0], sqlCaluse);
-            sqlCaluse += " In";
-            ExpressionVisit.Where(exp.Arguments[1], sqlCaluse);
+            ExpressionVisit.Join(exp.Arguments[0], sqlCaluse);
+            sqlCaluse += " In (";
+            ExpressionVisit.In(exp.Arguments[1], sqlCaluse);
+            sqlCaluse += ")";
             return sqlCaluse;
         }
 

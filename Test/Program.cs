@@ -39,10 +39,11 @@ namespace Test {
                 var db = new DbContext(null);
                 var job = new Job { JobId = 10 };
                 var stu = new Student();
-                stu.Name = "123";
+                stu.Name = "123,4212";
+                var arr = stu.Name.Split(',');
                 db.DbSet.Select<Student>(distinct: true)
-                    .Where(s => s.Age > 10)
-                    .Where(s => s.Name == "1" || s.Name == "2");
+                    .InnerJoin<Job>((s, j) => s.Name.In(arr))
+                    .Where(s => s.Age > 10);
                 db.DbSet.Log();
 
             } catch (Exception ex) {

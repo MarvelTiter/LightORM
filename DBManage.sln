@@ -11,14 +11,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContext", "DbContext\DbCo
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared.SqlExecutor", "Shared.SqlExecutor\Shared.SqlExecutor.shproj", "{D9BE8663-1735-4BFC-B7F3-B02AB859EE0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContextNetCore", "DbContextNetCore\DbContextNetCore.csproj", "{870D7C9A-D0E4-4261-8856-5665A0391733}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbContextNetCore", "DbContextNetCore\DbContextNetCore.csproj", "{870D7C9A-D0E4-4261-8856-5665A0391733}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCoreVersionTest", "NetCoreVersionTest\NetCoreVersionTest.csproj", "{32274359-5355-4673-AA89-EDDA4D68C4F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetCoreVersionTest", "NetCoreVersionTest\NetCoreVersionTest.csproj", "{32274359-5355-4673-AA89-EDDA4D68C4F2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{8DC28A72-49B8-4CC3-B8CB-4B180B053D76}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContextFx4", "DbContextFx4\DbContextFx4.csproj", "{562E5AFD-711D-4C31-BA7D-B84EAD2DF69E}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared.ExpSql\Shared.ExpSql.projitems*{562e5afd-711d-4c31-ba7d-b84ead2df69e}*SharedItemsImports = 4
+		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{562e5afd-711d-4c31-ba7d-b84ead2df69e}*SharedItemsImports = 4
 		Shared.ExpSql\Shared.ExpSql.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
 		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
 		Shared.ExpSql\Shared.ExpSql.projitems*{870d7c9a-d0e4-4261-8856-5665a0391733}*SharedItemsImports = 5
@@ -51,6 +55,10 @@ Global
 		{8DC28A72-49B8-4CC3-B8CB-4B180B053D76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DC28A72-49B8-4CC3-B8CB-4B180B053D76}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DC28A72-49B8-4CC3-B8CB-4B180B053D76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{562E5AFD-711D-4C31-BA7D-B84EAD2DF69E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{562E5AFD-711D-4C31-BA7D-B84EAD2DF69E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{562E5AFD-711D-4C31-BA7D-B84EAD2DF69E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{562E5AFD-711D-4C31-BA7D-B84EAD2DF69E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

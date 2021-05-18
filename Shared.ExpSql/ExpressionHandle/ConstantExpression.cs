@@ -26,5 +26,7 @@ namespace DExpSql.ExpressionHandle
             sqlCaluse += $"'{exp.Value}'";
             return sqlCaluse;
         }
+
+
     }
 }
