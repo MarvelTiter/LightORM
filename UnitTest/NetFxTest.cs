@@ -4,6 +4,7 @@ using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Data;
 using System.Diagnostics;
+using Test.Core.Models;
 
 namespace UnitTest {
     [TestClass]

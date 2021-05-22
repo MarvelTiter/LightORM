@@ -18,4 +18,6 @@
     <ProjectReference Include="..\DbContextNetCore\DbContextNetCore.csproj" />
   </ItemGroup>
 
+  <Import Project="..\Test.Core\Test.Core.projitems" Label="Shared" />
+
 </Project>

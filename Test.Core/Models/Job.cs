@@ -3,8 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace NetCoreVersionTest {
-
+namespace Test.Core.Models {
     [TableName("DQJY_JOBS")]
     public class Job {
         public double JOB_ID { get; set; }

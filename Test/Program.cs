@@ -4,7 +4,6 @@ using MDbContext.Extension;
 using MDbContext.SqlExecutor;
 using MDbContext.SqlExecutor.Service;
 using MDbEntity.Attributes;
-using Notice.Core.Entities;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections;
@@ -59,38 +58,6 @@ namespace Test {
             stopwatch.Stop();
             Console.WriteLine($"{title} Cost : {stopwatch.Elapsed}");
             Console.WriteLine("=============================");
-        }
-
-        static void CustomReflection(IDataReader reader) {
-            List<RoadTransTruck> list = new List<RoadTransTruck>();
-            var props = typeof(RoadTransTruck).GetProperties();
-            while (reader.Read()) {
-                RoadTransTruck road = new RoadTransTruck();
-                for (int i = 0; i < reader.FieldCount; i++) {
-                    var name = reader.GetName(i);
-                    var value = reader.GetValue(i);
-                    var prop = props.FirstOrDefault(p => p.CanWrite && p.Name == name);
-                    if (prop != null && value != DBNull.Value) {
-                        var type = prop.PropertyType;
-                        var underlyingType = Nullable.GetUnderlyingType(type);
-                        prop.SetValue(road, Convert.ChangeType(value, underlyingType ?? type));
-                    }
-                }
-                list.Add(road);
-            }
-            Console.WriteLine(list.Count());
-        }
-
-        static void ExpressionTreeReflection(IDataReader reader, Func<IDataReader, object> func) {
-            List<RoadTransTruck> result = new List<RoadTransTruck>();
-            while (reader.Read()) {
-                result.Add((RoadTransTruck)func(reader));
-            }
-            Console.WriteLine(result.Count());
-        }
-        static void DapperQuery(DbContext db) {
-            var result = db.Query<RoadTransTruck>().ToList();
-            Console.WriteLine(result.Count());
         }
     }
 
