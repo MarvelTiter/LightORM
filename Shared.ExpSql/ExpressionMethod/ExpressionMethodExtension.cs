@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DExpSql {
-    public static class Db {
+    public static class Fn {
         public static bool Like(this object self, string keyWord) {
             return true;
         }
