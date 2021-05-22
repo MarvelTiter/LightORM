@@ -8,6 +8,10 @@
     <DefineConstants>TRACE;FXCORE</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;FXCORE</DefineConstants>
+  </PropertyGroup>
+
   <Import Project="..\Shared.ExpSql\Shared.ExpSql.projitems" Label="Shared" />
 
   <Import Project="..\Shared.SqlExecutor\Shared.SqlExecutor.projitems" Label="Shared" />

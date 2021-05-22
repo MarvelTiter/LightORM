@@ -113,7 +113,7 @@ namespace MDbContext.SqlExecutor {
 
         private DbType? GetDbType(object value) {
             var t = value.GetType();
-            if (typeMap.TryGetValue(t, out var v))
+            if (typeMapDbType.TryGetValue(t, out var v))
                 return v;
             else return default;
         }
@@ -176,7 +176,7 @@ namespace MDbContext.SqlExecutor {
             }
         }
 
-        readonly static Dictionary<Type, DbType> typeMap = new Dictionary<Type, DbType>(37) {
+        readonly static Dictionary<Type, DbType> typeMapDbType = new Dictionary<Type, DbType>(37) {
             [typeof(byte)] = DbType.Byte,
             [typeof(sbyte)] = DbType.SByte,
             [typeof(short)] = DbType.Int16,

@@ -14,8 +14,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)CommandDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbParameterHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ReflectBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Service\IDbParameterHandle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Service\IDeserializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SqlExecutor.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Common\" />
   </ItemGroup>
 </Project>

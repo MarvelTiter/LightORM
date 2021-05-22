@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -30,7 +31,7 @@ namespace MDbContext.SqlExecutor {
 
         public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            var result = internalQuery<T>(self, command);
+            var result = self.internalQuery<T>(command);
             return result;
         }
 
@@ -39,7 +40,7 @@ namespace MDbContext.SqlExecutor {
             return self.internalSingle<T>(command);
         }
 
-        private static IEnumerable<T> internalQuery<T>(IDbConnection conn, CommandDefinition command) {
+        private static IEnumerable<T> internalQuery<T>(this IDbConnection conn, CommandDefinition command) {
             // 缓存
             var parameter = command.Parameters;
             Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
@@ -52,13 +53,22 @@ namespace MDbContext.SqlExecutor {
                 cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
                 if (wasClosed)
                     conn.Open();
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult | CommandBehavior.SequentialAccess);
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult );
                 if (cacheInfo.Deserializer == null) {
                     cacheInfo.Deserializer = BuildDeserializer(reader, typeof(T));
                 }
+                var props = typeof(T).GetProperties();
                 while (reader.Read()) {
                     var val = cacheInfo.Deserializer(reader);
                     yield return GetValue<T>(val);
+                    //for (int i = 0; i < props.Length; i++) {
+                    //    var prop = props[i];
+                    //    if (prop == null || !prop.CanWrite) continue;
+                    //    var index = reader.GetOrdinal(prop.Name);
+                    //    var value = reader.GetValue(index);
+                    //    Debug.WriteLine($"{prop.Name} = {value}");
+                    //}
+                    //yield return default(T);
                 }
             } finally {
                 // dispose
@@ -178,7 +188,7 @@ namespace MDbContext.SqlExecutor {
             }
         }
         private static Func<IDataReader, object> BuildDeserializer(IDataReader reader, Type type) {
-            IDeserializer des = new ExpressionBuilder();
+            IDeserializer des = new ReflectBuilder();
             return des.BuildDeserializer(reader, type);
         }
         private static T GetValue<T>(object val) {

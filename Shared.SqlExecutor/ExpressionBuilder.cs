@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -15,17 +16,60 @@ namespace MDbContext.SqlExecutor {
         private static readonly MethodInfo DataRecord_GetOrdinal = typeof(IDataRecord).GetMethod("GetOrdinal");
         private static readonly MethodInfo DataReader_Read = typeof(IDataReader).GetMethod("Read");
         private static readonly MethodInfo Convert_ChangeType = typeof(ExpressionBuilder).GetMethod("ChangeType", BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo DataRecord_GetDateTime = typeof(IDataRecord).GetMethod("GetDateTime");
-        private static readonly MethodInfo DataRecord_GetDecimal = typeof(IDataRecord).GetMethod("GetDecimal");
-        private static readonly MethodInfo DataRecord_GetFloat = typeof(IDataRecord).GetMethod("GetFloat");
-        private static readonly MethodInfo DataRecord_GetDouble = typeof(IDataRecord).GetMethod("GetDouble");
-        private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16");
-        private static readonly MethodInfo DataRecord_GetInt32 = typeof(IDataRecord).GetMethod("GetInt32");
-        private static readonly MethodInfo DataRecord_GetInt64 = typeof(IDataRecord).GetMethod("GetInt64");
-        private static readonly MethodInfo DataRecord_GetString = typeof(IDataRecord).GetMethod("GetString");
         private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull");
         private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue");
         private static readonly MethodInfo DataRecord_GetFieldType = typeof(IDataRecord).GetMethod("GetFieldType");
+
+        private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte");
+        private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16");
+        private static readonly MethodInfo DataRecord_GetInt32 = typeof(IDataRecord).GetMethod("GetInt32");
+        private static readonly MethodInfo DataRecord_GetInt64 = typeof(IDataRecord).GetMethod("GetInt64");
+        private static readonly MethodInfo DataRecord_GetFloat = typeof(IDataRecord).GetMethod("GetFloat");
+        private static readonly MethodInfo DataRecord_GetDouble = typeof(IDataRecord).GetMethod("GetDouble");
+        private static readonly MethodInfo DataRecord_GetDecimal = typeof(IDataRecord).GetMethod("GetDecimal");
+        private static readonly MethodInfo DataRecord_GetBoolean = typeof(IDataRecord).GetMethod("GetBoolean");
+        private static readonly MethodInfo DataRecord_GetString = typeof(IDataRecord).GetMethod("GetString");
+        private static readonly MethodInfo DataRecord_GetChar = typeof(IDataRecord).GetMethod("GetChar");
+        private static readonly MethodInfo DataRecord_GetGuid = typeof(IDataRecord).GetMethod("GetGuid");
+        private static readonly MethodInfo DataRecord_GetDateTime = typeof(IDataRecord).GetMethod("GetDateTime");
+
+        readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37) {
+            [typeof(byte)] = DataRecord_GetByte,
+            [typeof(sbyte)] = DataRecord_GetByte,
+            [typeof(short)] = DataRecord_GetInt16,
+            [typeof(ushort)] = DataRecord_GetInt16,
+            [typeof(int)] = DataRecord_GetInt32,
+            [typeof(uint)] = DataRecord_GetInt32,
+            [typeof(long)] = DataRecord_GetInt64,
+            [typeof(ulong)] = DataRecord_GetInt64,
+            [typeof(float)] = DataRecord_GetFloat,
+            [typeof(double)] = DataRecord_GetDouble,
+            [typeof(decimal)] = DataRecord_GetDecimal,
+            [typeof(bool)] = DataRecord_GetBoolean,
+            [typeof(string)] = DataRecord_GetString,
+            [typeof(char)] = DataRecord_GetChar,
+            [typeof(Guid)] = DataRecord_GetGuid,
+            [typeof(DateTime)] = DataRecord_GetDateTime,
+            //[typeof(byte[])] = DbType.Binary,
+            //[typeof(byte?)] = DbType.Byte,
+            //[typeof(sbyte?)] = DbType.SByte,
+            //[typeof(short?)] = DbType.Int16,
+            //[typeof(ushort?)] = DbType.UInt16,
+            //[typeof(int?)] = DbType.Int32,
+            //[typeof(uint?)] = DbType.UInt32,
+            //[typeof(long?)] = DbType.Int64,
+            //[typeof(ulong?)] = DbType.UInt64,
+            //[typeof(float?)] = DbType.Single,
+            //[typeof(double?)] = DbType.Double,
+            //[typeof(decimal?)] = DbType.Decimal,
+            //[typeof(bool?)] = DbType.Boolean,
+            //[typeof(char?)] = DbType.StringFixedLength,
+            //[typeof(Guid?)] = DbType.Guid,
+            //[typeof(DateTime?)] = DbType.DateTime,
+            //[typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
+            //[typeof(TimeSpan?)] = DbType.Time,
+            //[typeof(object)] = DbType.Object
+        };
 
         private static readonly Dictionary<Type, MethodInfo> typeMethodMap = new Dictionary<Type, MethodInfo>() {
             [typeof(string)] = DataRecord_GetString,
@@ -64,12 +108,12 @@ namespace MDbContext.SqlExecutor {
             //    var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
             //    var fieldType = dataReader.GetFieldType(i);
 
-            //    if (!typeMethodMap.TryGetValue(fieldType, out var mi))
-            //        mi = DataRecord_GetValue;
+            //    //if (!typeMethodMap.TryGetValue(fieldType, out var mi))
+            //    //    mi = DataRecord_GetValue;
 
             //    var indexExp = Expression.Constant(i);
             //    // reader.Get_XXX(i)
-            //    var valueExp = Expression.Call(SourceInstance, mi, indexExp);
+            //    var valueExp = Expression.Call(SourceInstance, DataRecord_GetValue, indexExp);
             //    //var valueConvertExp = Expression.Convert(valueExp, fieldType);
             //    var converted = GetRealValueExpression(valueExp, propType);
             //    var binding = Expression.Bind(prop, converted);
@@ -89,8 +133,10 @@ namespace MDbContext.SqlExecutor {
             for (int i = 0; i < props.Length; i++) {
                 var prop = props[i];
                 if (prop == null || !prop.CanWrite) continue;
-                var propType =  prop.PropertyType;//Nullable.GetUnderlyingType(prop.PropertyType) ??
+                var propType = prop.PropertyType;//Nullable.GetUnderlyingType(prop.PropertyType) ??
                 var indexExp = Expression.Call(SourceInstance, DataRecord_GetOrdinal, Expression.Constant(prop.Name));
+                Debug.WriteLine($"{prop.Name} => Index:{reader.GetOrdinal(prop.Name)}");
+
                 //if (!typeMethodMap.TryGetValue(fieldType, out var mi))
                 //    mi = DataRecord_GetValue;
                 // e.XXX = reader.GetXX(i)
@@ -110,7 +156,9 @@ namespace MDbContext.SqlExecutor {
                 body.ToArray()
                 );
             var lambda = Expression.Lambda<Func<IDataReader, object>>(block, SourceInstance);
+
             return lambda.Compile();
+
 
             //
             Expression GetRealValueExpression(Expression valueExp, Type targetPropType) {
@@ -156,7 +204,7 @@ namespace MDbContext.SqlExecutor {
             if (value is string && type == typeof(Guid)) return new Guid(value as string);
             if (value is string && type == typeof(Version)) return new Version(value as string);
             if (!(value is IConvertible)) return value;
-            return Convert.ChangeType(value, type);
+            return Convert.ChangeType(value, Nullable.GetUnderlyingType(type) ?? type);
         }
     }
 }

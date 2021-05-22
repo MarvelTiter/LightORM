@@ -40,7 +40,6 @@ namespace MDbAction {
             } catch (Exception ex) {
                 throw ex;
             }
-
         }
 
         public IEnumerable<T> Query<T>(string sql, object p) {

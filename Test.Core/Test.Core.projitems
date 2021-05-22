@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Models\Job.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Models\Users.cs" />
   </ItemGroup>
 </Project>
