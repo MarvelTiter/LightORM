@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    public class ExpressionBuilder : IDeserializer {
+    internal class ExpressionBuilder : IDeserializer {
 
         private static readonly MethodInfo DataRecord_ItemGetter_Int = typeof(IDataRecord).GetMethod("get_Item", new Type[] { typeof(int) });
         private static readonly MethodInfo DataRecord_GetOrdinal = typeof(IDataRecord).GetMethod("GetOrdinal");
@@ -66,7 +66,7 @@ namespace MDbContext.SqlExecutor {
             return Buffer;
         }
         public Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader) {
-            return GetInstanceCreator<T>(reader, CultureInfo.CurrentCulture, false);
+            return BuildFunc<T>(reader, CultureInfo.CurrentCulture, false);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace MDbContext.SqlExecutor {
         /// <param name="Culture"></param>
         /// <param name="MustMapAllProperties"></param>
         /// <returns></returns>
-        private Func<IDataRecord, object> GetInstanceCreator<Target>(IDataRecord RecordInstance, CultureInfo Culture, bool MustMapAllProperties) {
+        private Func<IDataRecord, object> BuildFunc<Target>(IDataRecord RecordInstance, CultureInfo Culture, bool MustMapAllProperties) {
             ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataRecord), "Record");
             Type TargetType = typeof(Target);
             DataTable SchemaTable = ((IDataReader)RecordInstance).GetSchemaTable();

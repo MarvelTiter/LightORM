@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    public class Certificate : IEquatable<Certificate> {
+    internal class Certificate : IEquatable<Certificate> {
 
         public Certificate(string commandText, CommandType? commandType, IDbConnection conn, Type targetType, Type parameterType) {
             Sql = commandText;
