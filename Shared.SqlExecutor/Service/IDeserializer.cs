@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor.Service {
     public interface IDeserializer {
-        Func<IDataReader, object> BuildDeserializer(IDataReader reader, Type targetType);
+        Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader);
     }
 }

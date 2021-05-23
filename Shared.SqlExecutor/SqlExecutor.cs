@@ -55,7 +55,7 @@ namespace MDbContext.SqlExecutor {
                     conn.Open();
                 reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult );
                 if (cacheInfo.Deserializer == null) {
-                    cacheInfo.Deserializer = BuildDeserializer(reader, typeof(T));
+                    cacheInfo.Deserializer = BuildDeserializer<T>(reader);
                 }
                 var props = typeof(T).GetProperties();
                 while (reader.Read()) {
@@ -146,7 +146,7 @@ namespace MDbContext.SqlExecutor {
                 cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
                 reader = cmd.ExecuteReader(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess);
                 if (cacheInfo.Deserializer == null) {
-                    cacheInfo.Deserializer = BuildDeserializer(reader, typeof(T));
+                    cacheInfo.Deserializer = BuildDeserializer<T>(reader);
                 }
                 return func(reader, cacheInfo);
             } finally {
@@ -187,9 +187,9 @@ namespace MDbContext.SqlExecutor {
                 cmd?.Dispose();
             }
         }
-        private static Func<IDataReader, object> BuildDeserializer(IDataReader reader, Type type) {
-            IDeserializer des = new ReflectBuilder();
-            return des.BuildDeserializer(reader, type);
+        private static Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader) {
+            IDeserializer des = new ExpressionBuilder();
+            return des.BuildDeserializer<T>(reader);
         }
         private static T GetValue<T>(object val) {
             if (val is T) {

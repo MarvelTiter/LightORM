@@ -7,9 +7,9 @@ using System.Text;
 
 namespace MDbContext.SqlExecutor {
     public class ReflectBuilder : IDeserializer {
-        public Func<IDataReader, object> BuildDeserializer(IDataReader reader, Type targetType) {
-            Type type = targetType;
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        public Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader) {
+            Type targetType = typeof(T);
+            var props = targetType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             return r => {
                 var entity = Activator.CreateInstance(targetType);
