@@ -28,5 +28,9 @@ namespace Test.Core.Models {
         public string CYYXM { get; set; }
         public string JGXTJYLSH { get; set; }
         public string CLSBDH { get; set; }
+
+        public override string ToString() {
+            return $"{JOB_ID} => {JOB_COMMENT} => {CLSBDH}";
+        }
     }
 }
