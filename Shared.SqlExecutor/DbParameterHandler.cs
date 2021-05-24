@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    public class DbParameterHandler : IDbParameterHandle {
+    internal class DbParameterHandler : IDbParameterHandle {
         private static Dictionary<Certificate, Action<IDbCommand, object>> parameterReaderCache = new Dictionary<Certificate, Action<IDbCommand, object>>();
         private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
         private object temp;

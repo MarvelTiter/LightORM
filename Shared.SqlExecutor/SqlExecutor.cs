@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    public static class SqlExecutor {
+    internal static class SqlExecutor {
 
         public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
@@ -53,7 +53,7 @@ namespace MDbContext.SqlExecutor {
                 cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
                 if (wasClosed)
                     conn.Open();
-                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult );
+                reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult);
                 if (cacheInfo.Deserializer == null) {
                     cacheInfo.Deserializer = BuildDeserializer<T>(reader);
                 }

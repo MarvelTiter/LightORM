@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor.Service {
-    public interface IDeserializer {
+    internal interface IDeserializer {
         Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader);
     }
 }
