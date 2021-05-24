@@ -57,18 +57,9 @@ namespace MDbContext.SqlExecutor {
                 if (cacheInfo.Deserializer == null) {
                     cacheInfo.Deserializer = BuildDeserializer<T>(reader);
                 }
-                var props = typeof(T).GetProperties();
                 while (reader.Read()) {
                     var val = cacheInfo.Deserializer(reader);
                     yield return GetValue<T>(val);
-                    //for (int i = 0; i < props.Length; i++) {
-                    //    var prop = props[i];
-                    //    if (prop == null || !prop.CanWrite) continue;
-                    //    var index = reader.GetOrdinal(prop.Name);
-                    //    var value = reader.GetValue(index);
-                    //    Debug.WriteLine($"{prop.Name} = {value}");
-                    //}
-                    //yield return default(T);
                 }
             } finally {
                 // dispose

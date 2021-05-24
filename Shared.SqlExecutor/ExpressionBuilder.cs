@@ -15,11 +15,7 @@ using System.Threading.Tasks;
 namespace MDbContext.SqlExecutor {
     public class ExpressionBuilder : IDeserializer {
 
-        private static readonly MethodInfo DataRecord_ItemGetter_Int = typeof(IDataRecord).GetMethod("get_Item", new Type[] { typeof(int) });
-        private static readonly MethodInfo DataRecord_GetOrdinal = typeof(IDataRecord).GetMethod("GetOrdinal");
-        private static readonly MethodInfo DataReader_Read = typeof(IDataReader).GetMethod("Read");
         private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod("RecordFieldToBytes", BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo DataRecord_GetFieldType = typeof(IDataRecord).GetMethod("GetFieldType", new Type[] { typeof(int) });
 
         private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte", new Type[] { typeof(int) });
         private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16", new Type[] { typeof(int) });
@@ -195,7 +191,8 @@ namespace MDbContext.SqlExecutor {
                     }
                 }
 
-                Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
+                Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);               
+
             }
             //Compile as Delegate
             return Expression.Lambda<Func<IDataRecord, object>>(Body, recordInstanceExp).Compile();
@@ -228,7 +225,7 @@ namespace MDbContext.SqlExecutor {
             MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
 
             //Create an expression that assigns the converted value to the target
-            Expression TargetValueExpression = default(Expression);
+            Expression TargetValueExpression;
             if (AllowDBNull) {
                 TargetValueExpression = Expression.Condition(
                     NullCheckExpression,
