@@ -33,17 +33,9 @@ namespace Test {
                 //}
                 //Console.WriteLine(result1);
                 //Console.ReadKey();
-
-                DbContext.Init(0);
-                var db = new DbContext(null);
-                var job = new Job { JobId = 10 };
-                var stu = new Student();
-                stu.Name = "123,4212";
-                var arr = stu.Name.Split(',');
-                db.DbSet.Select<Student>(distinct: true)
-                    .InnerJoin<Job>((s, j) => s.Name.In(arr))
-                    .Where(s => s.Age > 10);
-                db.DbSet.Log();
+                OracleCommand cmd = new OracleConnection().CreateCommand();
+                cmd.BindByName = true;
+                cmd.InitialLONGFetchSize = -1;
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
@@ -96,51 +88,5 @@ namespace Test {
             if (!(value is IConvertible)) return value;
             return Convert.ChangeType(value, type);
         }
-    }
-    public class Student {
-        [Ignore]
-        public int Age { get; set; }
-        public string Name { get; set; }
-    }
-    public class Users {
-        public string Account { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public int? Tel { get; set; }
-        public string Sex { get; set; }
-        [ColumnName("_AGE")]
-        public int? Age { get; set; }
-        public string Duty { get; set; }
-        public bool? IsUse { get; set; }
-        public string ValidDate { get; set; }
-    }
-
-    [TableName("DQJY_JOBS")]
-    public class Job {
-        [ColumnName("JOB_ID")]
-        public double JobId { get; set; }
-        [ColumnName("JOB_SN")]
-        public string JobSn { get; set; }
-        [ColumnName("JOB_SEQ")]
-        public double JobSeq { get; set; }
-        public DateTime? JOB_DATE { get; set; }
-        public string JOB_PLATE { get; set; }
-        public string JOB_PCLASS { get; set; }
-        public double BNS_ID { get; set; }
-        public string STN_ID { get; set; }
-        public double JOB_STATE { get; set; }
-        public string USR_ID { get; set; }
-        public DateTime? JOB_TIMESTAMP { get; set; }
-        public string JOB_COMMENT { get; set; }
-        public string JOB_WHMD { get; set; }
-        public string JOB_CANCELRESULT { get; set; }
-        public double JOB_APP1_RLT { get; set; }
-        public string JOB_APP1_USR_ID { get; set; }
-        public double JOB_APP2_RLT { get; set; }
-        public string JOB_APP2_USR_ID { get; set; }
-        public string BOOKING_SOURCE { get; set; }
-        public string CYYXM { get; set; }
-        public string JGXTJYLSH { get; set; }
-        public string CLSBDH { get; set; }
     }
 }

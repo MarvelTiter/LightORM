@@ -30,7 +30,6 @@ namespace DExpSql {
                 exp = (t1, t2) => new { t1, t2 };
             }
             SelectHandle(distinct, exp.Body, typeof(T), typeof(T1));
-
             return this;
         }
 
