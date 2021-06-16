@@ -89,7 +89,7 @@ namespace MDbContext.SqlExecutor {
                 }
             }
             //
-
+            
             foreach (ParamInfo item in parameters.Values) {
                 IDbDataParameter p;
                 var name = item.Name;

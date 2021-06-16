@@ -16,4 +16,6 @@
 
   <Import Project="..\Shared.SqlExecutor\Shared.SqlExecutor.projitems" Label="Shared" />
 
+  <Import Project="..\Shared.Context\Shared.Context.projitems" Label="Shared" />
+
 </Project>

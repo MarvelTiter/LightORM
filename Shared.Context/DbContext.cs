@@ -1,16 +1,13 @@
 ﻿using DExpSql;
-using MDbAction;
-using MDbAction.IServices;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 
 namespace MDbContext {
     public class DbContext : IDisposable {
         public ExpressionSql DbSet { get; private set; }
-        internal IDbAction DbExec { get; private set; }
-
+        //internal IDbAction DbExec { get; private set; }
+        internal IDbConnection DbConnection { get; private set; }
         public string Sql => DbSet.SqlCaluse.Sql.ToString();
         public object SqlParameter {
             get {
@@ -41,12 +38,12 @@ namespace MDbContext {
         }
 
         public DbContext(int type, IDbConnection connection) {
-            DbExec = new DbAction(connection);
+            DbConnection = connection;
             DbSet = new ExpressionSql(type);
         }
 
         public DbContext(IDbConnection connection) {
-            DbExec = new DbAction(connection);
+            DbConnection = connection;
             DbSet = new ExpressionSql(DBType);
         }
 
@@ -63,9 +60,9 @@ namespace MDbContext {
                 if (disposing) {
                     // Release managed resources                   
                     DbSet = null;
-                    DbExec = null;
                 }
-
+                DbConnection?.Close();
+                DbConnection?.Dispose();
                 // Release unmanaged resources
 
                 m_disposed = true;

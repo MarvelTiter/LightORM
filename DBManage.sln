@@ -21,16 +21,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbContextFx4", "DbContextFx
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Test.Core", "Test.Core\Test.Core.shproj", "{E3CDBA36-768F-4F98-A00A-6EFB5617E523}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared.Context", "Shared.Context\Shared.Context.shproj", "{98CD0902-7169-4829-B1DC-842062626C8E}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Test.Core\Test.Core.projitems*{32274359-5355-4673-aa89-edda4d68c4f2}*SharedItemsImports = 5
+		Shared.Context\Shared.Context.projitems*{562e5afd-711d-4c31-ba7d-b84ead2df69e}*SharedItemsImports = 4
 		Shared.ExpSql\Shared.ExpSql.projitems*{562e5afd-711d-4c31-ba7d-b84ead2df69e}*SharedItemsImports = 4
 		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{562e5afd-711d-4c31-ba7d-b84ead2df69e}*SharedItemsImports = 4
+		Shared.Context\Shared.Context.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
 		Shared.ExpSql\Shared.ExpSql.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
 		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{5630e0e1-3dc0-4397-bb92-3a94dd39727f}*SharedItemsImports = 4
+		Shared.Context\Shared.Context.projitems*{870d7c9a-d0e4-4261-8856-5665a0391733}*SharedItemsImports = 5
 		Shared.ExpSql\Shared.ExpSql.projitems*{870d7c9a-d0e4-4261-8856-5665a0391733}*SharedItemsImports = 5
 		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{870d7c9a-d0e4-4261-8856-5665a0391733}*SharedItemsImports = 5
 		Test.Core\Test.Core.projitems*{8dc28a72-49b8-4cc3-b8cb-4b180b053d76}*SharedItemsImports = 4
+		Shared.Context\Shared.Context.projitems*{98cd0902-7169-4829-b1dc-842062626c8e}*SharedItemsImports = 13
 		Shared.SqlExecutor\Shared.SqlExecutor.projitems*{d9be8663-1735-4bfc-b7f3-b02ab859ee0f}*SharedItemsImports = 13
 		Shared.ExpSql\Shared.ExpSql.projitems*{de308d4e-a2cb-4926-998e-5437f342ecc6}*SharedItemsImports = 13
 		Test.Core\Test.Core.projitems*{e3cdba36-768f-4f98-a00a-6efb5617e523}*SharedItemsImports = 13

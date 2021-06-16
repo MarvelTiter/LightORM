@@ -19,7 +19,4 @@
     <Compile Include="$(MSBuildThisFileDirectory)Service\IDeserializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SqlExecutor.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Common\" />
-  </ItemGroup>
 </Project>

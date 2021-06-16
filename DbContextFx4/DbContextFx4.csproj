@@ -40,20 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DbAction.cs" />
-    <Compile Include="DbContext.cs" />
-    <Compile Include="DBType.cs" />
-    <Compile Include="Extension\ConnectionEx.cs" />
-    <Compile Include="Extension\DbContextEx.cs" />
-    <Compile Include="Extension\DictionaryEx.cs" />
-    <Compile Include="IServices\IDbAction.cs" />
-    <Compile Include="IServices\IEntityAction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <Import Project="..\Shared.ExpSql\Shared.ExpSql.projitems" Label="Shared" />
   <Import Project="..\Shared.SqlExecutor\Shared.SqlExecutor.projitems" Label="Shared" />
+  <Import Project="..\Shared.Context\Shared.Context.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

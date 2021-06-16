@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    internal static class SqlExecutor {
+    public static class SqlExecutor {
 
         public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
@@ -38,6 +38,28 @@ namespace MDbContext.SqlExecutor {
         public static T QuerySingle<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return self.internalSingle<T>(command);
+        }
+
+        public static bool ExecuteTrans(this IDbConnection self, IList<string> sqls, IList<object> ps) {
+            self.Open();
+            var tran = self.BeginTransaction();
+            try {
+                if (sqls.Count != ps.Count)
+                    throw new ArgumentException("SQL与参数不匹配");
+                for (int i = 0; i < sqls.Count; i++) {
+                    var sql = sqls[i];
+                    var p = ps[i];
+                    self.Execute(sql, p, tran);
+                }
+                tran.Commit();
+                return true;
+            } catch (Exception ex) {
+                tran.Rollback();
+                self.Close();
+                throw ex;
+            } finally {
+                self.Close();
+            }
         }
 
         private static IEnumerable<T> internalQuery<T>(this IDbConnection conn, CommandDefinition command) {

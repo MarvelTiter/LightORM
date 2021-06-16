@@ -4,6 +4,7 @@ using MDbContext.Extension;
 using MDbContext.SqlExecutor;
 using MDbContext.SqlExecutor.Service;
 using MDbEntity.Attributes;
+using Newtonsoft.Json;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
@@ -22,20 +24,28 @@ namespace Test {
         //[STAThread]
         static void Main(string[] args) {
             try {
+                var fs = File.Open(@"E:\Documents\Desktop\247Struct.json", FileMode.Open, FileAccess.Read);
+                StreamReader reader = new StreamReader(fs);
+                var jsonString = reader.ReadToEnd();
+                var S247 = JsonConvert.DeserializeObject<List<TableStruct>>(jsonString);
 
-
-                //MD5 md5 = MD5.Create();
-                //byte[] buffers = md5.ComputeHash(Encoding.Default.GetBytes("123"));
-
-                //string result1 = "";
-                //for (int i = 0; i < buffers.Length; i++) {
-                //    result1 += buffers[i].ToString("x2");
-                //}
-                //Console.WriteLine(result1);
-                //Console.ReadKey();
-                OracleCommand cmd = new OracleConnection().CreateCommand();
-                cmd.BindByName = true;
-                cmd.InitialLONGFetchSize = -1;
+                var fs2 = File.Open(@"E:\Documents\Desktop\21Struct.json", FileMode.Open, FileAccess.Read);
+                StreamReader reader2 = new StreamReader(fs2);
+                var jsonString2 = reader2.ReadToEnd();
+                var S21 = JsonConvert.DeserializeObject<List<TableStruct>>(jsonString2);
+                int success = 0;
+                foreach (TableStruct item in S247) {
+                    TableStruct diff = S21.FirstOrDefault(ts => ts.TABLENAME == item.TABLENAME && ts.COLUMNNAME == item.COLUMNNAME);
+                    if (diff.NULLABLE == item.NULLABLE) {
+                        success += 1;
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"{item.TABLENAME}:{item.COLUMNNAME}:{item.NULLABLE} == {diff.TABLENAME}:{diff.COLUMNNAME}:{diff.NULLABLE}");
+                    } else {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"{item.TABLENAME}:{item.COLUMNNAME}:{item.NULLABLE} <> {diff.TABLENAME}:{diff.COLUMNNAME}:{diff.NULLABLE}");
+                    }
+                }
+                Console.WriteLine($"总数：555，一致数:{success}");
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
@@ -51,6 +61,12 @@ namespace Test {
             Console.WriteLine($"{title} Cost : {stopwatch.Elapsed}");
             Console.WriteLine("=============================");
         }
+    }
+
+    class TableStruct {
+        public string TABLENAME { get; set; }
+        public string COLUMNNAME { get; set; }
+        public string NULLABLE { get; set; }
     }
 
     public static class Ex {
