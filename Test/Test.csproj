@@ -66,11 +66,5 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DbContextFx4\DbContextFx4.csproj">
-      <Project>{562e5afd-711d-4c31-ba7d-b84ead2df69e}</Project>
-      <Name>DbContextFx4</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
