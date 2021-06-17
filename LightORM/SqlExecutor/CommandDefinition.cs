@@ -62,6 +62,28 @@ namespace MDbContext.SqlExecutor {
             MethodInfo basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
             MethodInfo basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
             if (basicPropertySetter != null || basicPropertySetter2 != null) {
+#if NETSTANDARD2_0_OR_GREATER
+                /*
+                 * (IDbCommand cmd) => {
+                 *     (OracleCommand)cmd.set_BindByName(true);
+                 *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
+                 * }
+                 */
+                ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
+                List<Expression> body = new List<Expression>();
+                if (basicPropertySetter != null) {
+                    UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                    MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, basicPropertySetter, Expression.Constant(true, typeof(bool)));
+                    body.Add(setter1Exp);
+                }
+                if (basicPropertySetter2 != null) {
+                    UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                    MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, basicPropertySetter2, Expression.Constant(-1, typeof(int)));
+                    body.Add(setter2Exp);
+                }
+                var lambda = Expression.Lambda<Action<IDbCommand>>(Expression.Block(body), cmdExp);
+                value = lambda.Compile();
+#else
                 DynamicMethod dynamicMethod = new DynamicMethod(commandType.Name + "_init", null, new Type[1]
                 {
                     typeof(IDbCommand)
@@ -83,28 +105,8 @@ namespace MDbContext.SqlExecutor {
                 }
 
                 iLGenerator.Emit(OpCodes.Ret);
-                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));
-
-                /*
-                 * (IDbCommand cmd) => {
-                 *     (OracleCommand)cmd.set_BindByName(true);
-                 *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
-                 * }
-                 */
-                //ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
-                //List<Expression> body = new List<Expression>();
-                //if (basicPropertySetter != null) {
-                //    UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                //    MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, basicPropertySetter, Expression.Constant(true, typeof(bool)));
-                //    body.Add(setter1Exp);
-                //}
-                //if (basicPropertySetter2 != null) {
-                //    UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                //    MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, basicPropertySetter2, Expression.Constant(-1, typeof(int)));
-                //    body.Add(setter2Exp);
-                //}
-                //var lambda = Expression.Lambda<Action<IDbCommand>>(Expression.Block(body), cmdExp);
-                //value = lambda.Compile();
+                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));      
+#endif
             }
 
             commandInitCache.TryAdd(commandType, value);
