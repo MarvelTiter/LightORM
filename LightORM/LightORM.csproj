@@ -4,6 +4,13 @@
     <TargetFrameworks>net40;netcoreapp3.1;netstandard2.0;net5.0</TargetFrameworks>
     <RootNamespace>MDbContext</RootNamespace>
     <AssemblyName>MT.LightORM</AssemblyName>
+    <Authors>MarvelTiter</Authors>
+    <Description>使用表达式树（ExpressionTree）构建Sql</Description>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
 </Project>
