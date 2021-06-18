@@ -3,12 +3,11 @@ using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Oracle.ManagedDataAccess.Client;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Test.Core.Models;
 
@@ -45,7 +44,7 @@ namespace UnitTest {
             }
         }
 
-        public class Mission:INotifyPropertyChanged {
+        public class Mission:ObservableObject {
             public int ID { get; set; }
             public int ConnectionID { get; set; }
             public int GroupID { get; set; }
@@ -56,21 +55,32 @@ namespace UnitTest {
             /// 0-日统计全天，1-日统计时间段 2-月统计
             /// </summary>
             private int _MissionType;
-
-            public event PropertyChangedEventHandler PropertyChanged;
-
+                       
             public int MissionType {
                 get { return _MissionType; }
                 set { SetValue(ref _MissionType, value); }
             }
 
-            private void SetValue(ref int missionType, int value) {
-                missionType = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MissionType"));
-            }
-
             public string MissionParameter { get; set; }
         }
+
+        public class ObservableObject : INotifyPropertyChanged, ICloneable {
+            public bool SetValue<T>(ref T oldValue, T newValue, [CallerMemberName] string name = null) {
+                if (Equals(oldValue, newValue))
+                    return false;
+                oldValue = newValue;
+                RaisePropertyChanged(name);
+                return true;
+            }
+            protected void RaisePropertyChanged([CallerMemberName] string name = null) {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            }
+            public object Clone() {
+                return MemberwiseClone();
+            }
+            public event PropertyChangedEventHandler PropertyChanged;
+        }
+
         private IEnumerable<Mission> GetIEnumerable() {
             DbContext.Init(3);
             using (var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS\CGS\bin\Debug\CGS.db")) {
