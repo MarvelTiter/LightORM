@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net40;netcoreapp3.1;netstandard2.0;net5.0</TargetFrameworks>
+    <RootNamespace>MDbContext</RootNamespace>
+    <AssemblyName>MT.LightORM</AssemblyName>
+  </PropertyGroup>
+
+</Project>

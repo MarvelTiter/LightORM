@@ -51,6 +51,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+<<<<<<< HEAD
   <ItemGroup>
     <ProjectReference Include="..\DbContext\DbContext.csproj">
       <Project>{5630e0e1-3dc0-4397-bb92-3a94dd39727f}</Project>
@@ -72,6 +73,8 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="..\Test.Core\Test.Core.projitems" Label="Shared" />
+=======
+>>>>>>> 949949b0cf3c73a795237102d654a5b9936eab5b
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

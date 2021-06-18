@@ -15,10 +15,6 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\DbContextNetCore\DbContextNetCore.csproj" />
-  </ItemGroup>
-
   <Import Project="..\Test.Core\Test.Core.projitems" Label="Shared" />
 
 </Project>
