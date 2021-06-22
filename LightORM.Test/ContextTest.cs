@@ -1,5 +1,6 @@
 using LightORM.Test.Models;
 using MDbContext;
+using Microsoft.Data.Sqlite;
 using NUnit.Framework;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
@@ -13,18 +14,33 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void TestMethod1() {
-            DbContext.Init(0);
-            //using (IDbConnection conn = new SqlConnection("Persist Security Info=False;User ID=sa;Password=sa;Initial Catalog=APDSDB2020;Server=192.168.0.104")) {
-            using (IDbConnection conn = new OracleConnection("Password=cgs;User ID=cgs;Data Source=192.168.5.10/gzorcl;Persist Security Info=True")) {
-                var db = conn.DbContext();
-                var sql = db.DbSet.Select<Job>();
-                var result = db.Query<Job>();
-                foreach (var item in result) {
-                    Debug.WriteLine(item.ToString());
-                }
+        public void SingleTest() {
+            using (var db = GetContext()) {
+                db.DbSet.Count<NetConfig>();
+                var count = db.Single<int>();
+                Assert.IsTrue(count == 4);
             }
         }
+
+        [Test]
+        public void AddTest() {
+            using (var db = GetContext()) {
+                db.DbSet.Select<NetConfig>()
+                    .Where(nc => nc.ConfigName == "华工");
+                NetConfig netConfig = db.Single<NetConfig>();
+                netConfig.ConfigName = "华工2";
+                db.DbSet.Insert(netConfig);
+                db.Execute();
+            }
+        }
+
+
+        private DbContext GetContext() {
+            DbContext.Init(3);
+            var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
+            return conn.DbContext();
+        }
+
         [Test]
         public void TestNumber() {
             var number = 12312312.123;

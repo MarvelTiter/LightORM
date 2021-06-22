@@ -127,12 +127,11 @@ namespace MDbContext.SqlExecutor {
                                                         Ordinal,
                                                         TargetType);
 
-                ParameterExpression TargetExpression = Expression.Variable(TargetType, "Target");
-                Expression AssignExpression = Expression.Assign(TargetExpression, TargetValueExpression);
-                Body = Expression.Block(new ParameterExpression[] { TargetExpression }, AssignExpression);
+                UnaryExpression converted = Expression.Convert(TargetValueExpression, typeof(object));
+                Body = Expression.Block(converted);
             }
             // 其他
-            else {                
+            else {
                 SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
                 // 字段处理 Field
                 foreach (FieldInfo TargetMember in TargetType.GetFields(BindingFlags.Public | BindingFlags.Instance)) {
@@ -191,7 +190,7 @@ namespace MDbContext.SqlExecutor {
                     }
                 }
 
-                Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);               
+                Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
 
             }
             //Compile as Delegate
@@ -219,7 +218,8 @@ namespace MDbContext.SqlExecutor {
             int Ordinal,
             Type TargetMemberType) {
             Type RecordFieldType = RecordInstance.GetFieldType(Ordinal);
-            bool AllowDBNull = Convert.ToBoolean(SchemaTable.Rows[Ordinal]["AllowDBNull"]);
+            var columnAllowDbNull = SchemaTable.Rows[Ordinal]["AllowDBNull"];
+            bool AllowDBNull = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
             Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
             Expression ConvertedRecordFieldExpression = GetConversionExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
             MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
