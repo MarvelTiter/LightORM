@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
-    internal class Certificate : IEquatable<Certificate> {
+    public class Certificate : IEquatable<Certificate> {
 
         public Certificate(string commandText, CommandType? commandType, IDbConnection conn, Type targetType, Type parameterType) {
             Sql = commandText;
@@ -38,5 +38,28 @@ namespace MDbContext.SqlExecutor {
                 return true;
             return false;
         }
+
+        public override int GetHashCode() {
+            var h1 = Sql.GetHashCode();
+            var h2 = CommandType.GetHashCode();
+            var h3 = Connection.GetHashCode();
+            var h4 = TargetType.GetHashCode();
+            var h5 = ParameterType.GetHashCode();
+            var code =
+                R(h1, 1) |
+                R(h2, 27) |
+                R(h3, 27) |
+                R(h4, 4) |
+                R(h5, 5);
+            return (int)code;
+        }
+
+        private uint L(int num, int step) {
+            return ((uint)num) << step;
+        }
+        private uint R(int num, int step) {
+            return ((uint)num) >> step;
+        }
+
     }
 }

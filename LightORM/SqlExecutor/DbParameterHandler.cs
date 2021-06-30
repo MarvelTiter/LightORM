@@ -64,11 +64,11 @@ namespace MDbContext.SqlExecutor {
 
         public void AddDbParameter(IDbCommand cmd, Certificate certificate) {
             if (temp != null) {
-                if (!parameterReaderCache.TryGet(certificate, out var value)) {
+                if (!parameterReaderCache.TryGetValue(certificate, out var value)) {
                     // create reader
                     lock (parameterReaderCache) {
                         value = CreateReader(certificate);
-                        parameterReaderCache.TryAdd(certificate, value);
+                        parameterReaderCache.Add(certificate, value);
                     }
 
                 }

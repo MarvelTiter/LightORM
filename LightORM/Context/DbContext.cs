@@ -33,8 +33,8 @@ namespace MDbContext {
         /// 初始化数据库类型 0 - SqlServer; 1 - Oracle; 2 - MySql
         /// </summary>
         /// <param name="dBType">0 - SqlServer; 1 - Oracle; 2 - MySql</param>
-        public static void Init(int dBType) {
-            DBType = dBType;
+        public static void Init(DbBaseType dBType) {
+            DBType = (int)dBType;
         }
 
         public DbContext(int type, IDbConnection connection) {

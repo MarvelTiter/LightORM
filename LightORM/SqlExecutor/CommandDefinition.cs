@@ -55,7 +55,7 @@ namespace MDbContext.SqlExecutor {
                 return null;
             }
 
-            if (commandInitCache.TryGet(commandType, out Action<IDbCommand> value)) {
+            if (commandInitCache.TryGetValue(commandType, out Action<IDbCommand> value)) {
                 return value;
             }
 
@@ -109,7 +109,7 @@ namespace MDbContext.SqlExecutor {
 #endif
             }
 
-            commandInitCache.TryAdd(commandType, value);
+            commandInitCache.Add(commandType, value);
             return value;
         }
 

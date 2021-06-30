@@ -36,7 +36,7 @@ namespace LightORM.Test {
 
 
         private DbContext GetContext() {
-            DbContext.Init(3);
+            DbContext.Init(DbBaseType.Sqlite);
             var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
             return conn.DbContext();
         }

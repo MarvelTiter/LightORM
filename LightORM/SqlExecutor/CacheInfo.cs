@@ -16,7 +16,7 @@ namespace MDbContext.SqlExecutor {
         public Func<IDataReader, object> Deserializer { get; set; }
 
         internal static CacheInfo GetCacheInfo(Certificate certificate, object parameters) {
-            if (cache.TryGet(certificate, out CacheInfo value))
+            if (cache.TryGetValue(certificate, out CacheInfo value))
                 return value;
 
             CacheInfo info = new CacheInfo();
@@ -29,7 +29,7 @@ namespace MDbContext.SqlExecutor {
                 };
                 info.ParameterReader = action;
             }
-            cache.TryAdd(certificate, info);
+            cache.Add(certificate, info);
             return info;
         }
     }
