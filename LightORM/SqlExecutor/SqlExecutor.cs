@@ -14,28 +14,28 @@ using System.Threading.Tasks;
 namespace MDbContext.SqlExecutor {
     public static class SqlExecutor {
 
-        public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return self.internalExecute(command);
         }
 
-        public static object ExecuteScale(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public static object ExecuteScale(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return self.internalScale(command);
         }
 
-        public static DataTable ExecuteReader(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public static DataTable ExecuteReader(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return self.internalExecuteReader(command);
         }
 
-        public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             var result = self.internalQuery<T>(command);
             return result;
         }
 
-        public static T QuerySingle<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public static T QuerySingle<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text) {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return self.internalSingle<T>(command);
         }

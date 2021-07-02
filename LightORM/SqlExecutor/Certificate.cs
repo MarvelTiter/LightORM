@@ -44,13 +44,13 @@ namespace MDbContext.SqlExecutor {
             var h2 = CommandType.GetHashCode();
             var h3 = Connection.GetHashCode();
             var h4 = TargetType.GetHashCode();
-            var h5 = ParameterType.GetHashCode();
+            var h5 = ParameterType is null ? h1 : ParameterType.GetHashCode();
             var code =
-                R(h1, 1) |
+                L(h1, 1) |
                 R(h2, 27) |
                 R(h3, 27) |
-                R(h4, 4) |
-                R(h5, 5);
+                L(h4, 2) |
+                L(h5, 3);
             return (int)code;
         }
 

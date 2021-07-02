@@ -289,5 +289,10 @@ namespace DExpSql {
             return this;
         }
 
+        public ExpressionSqlCore<T> Top(int count) {
+            
+            return this;
+        }
+
     }
 }

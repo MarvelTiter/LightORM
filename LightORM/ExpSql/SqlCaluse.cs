@@ -236,6 +236,5 @@ namespace DExpSql {
             Sql.Append($"\n WHERE Paging.ROWNO > {min}");
             Sql.Append($" AND Paging.ROWNO <= {max}");
         }
-
     }
 }

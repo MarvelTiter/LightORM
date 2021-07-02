@@ -62,7 +62,7 @@ namespace MDbContext {
                     DbSet = null;
                 }
                 DbConnection?.Close();
-                DbConnection?.Dispose();
+                //DbConnection?.Dispose();
                 // Release unmanaged resources
 
                 m_disposed = true;

@@ -2,15 +2,21 @@ using LightORM.Test.Models;
 using MDbContext;
 using Microsoft.Data.Sqlite;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using Oracle.ManagedDataAccess.Client;
+using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace LightORM.Test {
     public class ContextTest {
         [SetUp]
         public void Setup() {
+
         }
 
         [Test]
@@ -34,12 +40,41 @@ namespace LightORM.Test {
             }
         }
 
+        [Test]
+        public void IEnumerableTest() {
+            var list = netConfigs();
+            foreach (var item in list) {
+                Console.WriteLine(item.ToString());
+            }
+        }
+
+        private IEnumerable<Users> netConfigs() {
+            using (var db = GetContext()) {
+                //var db = GetContext();
+                db.DbSet.Select<Users>();
+                return db.Query<Users>();
+            }
+        }
+
 
         private DbContext GetContext() {
-            DbContext.Init(DbBaseType.Sqlite);
-            var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
+            //DbContext.Init(DbBaseType.Sqlite);
+            //var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
+            //return conn.DbContext();
+            DbContext.Init(DbBaseType.SqlServer);
+            var conn = new SqlConnection("Data Source=172.20.10.8;Initial Catalog=APDSDB2020;User ID=sa;Password=sa");
             return conn.DbContext();
+
         }
+
+        [Test]
+        public void Test2() {
+            using (var db = GetContext()) {
+                var list = db.Query<Users>(" SELECT TOP 10 * FROM TBD_XinCheLiangJianCeShuJuJiJieGuoBiao where ShuJuShangChuangBiaoZhi = 0 order by JYJLD_JianCeRiQi desc", null);
+                int c = list.Count();
+            }
+        }
+
 
         [Test]
         public void TestNumber() {
