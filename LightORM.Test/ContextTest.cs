@@ -52,6 +52,7 @@ namespace LightORM.Test {
             using (var db = GetContext()) {
                 //var db = GetContext();
                 db.DbSet.Select<Users>();
+
                 return db.Query<Users>();
             }
         }
@@ -84,6 +85,5 @@ namespace LightORM.Test {
             var r = Regex.Replace(d, ".", m => "¸ºÔª¿ÕÁãÒ¼·¡ÈşËÁÎéÂ½Æâ°Æ¾Á¿Õ¿Õ¿Õ¿Õ¿Õ¿Õ¿Õ·Ö½ÇÊ°°ÛÇªÍòÒÚÕ×¾©Ûòïöğ¦"[m.Value[0] - '-'].ToString());
             Debug.WriteLine(r);
         }
-
     }
 }

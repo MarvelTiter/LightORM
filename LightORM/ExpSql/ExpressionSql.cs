@@ -6,8 +6,8 @@ using System.Text;
 namespace DExpSql {
     public class ExpressionSql {
         private int DbType { get; set; }
-        public SqlCaluse SqlCaluse { get; private set; }
-        public ExpressionSql(int dBType) {
+        internal SqlCaluse SqlCaluse { get; private set; }
+        internal ExpressionSql(int dBType) {
             DbType = dBType;
             SqlCaluse = new SqlCaluse();
             SqlCaluse.DbType = DbType;
