@@ -1,3 +1,4 @@
+using DExpSql;
 using LightORM.Test.Models;
 using MDbContext;
 using Microsoft.Data.Sqlite;
@@ -25,6 +26,14 @@ namespace LightORM.Test {
                 db.DbSet.Count<NetConfig>();
                 var count = db.Single<int>();
                 Assert.IsTrue(count == 4);
+            }
+        }
+
+        [Test]
+        public void SelectTest() {
+            using (var db = GetContext()) {
+                db.DbSet.Select<Users, Job>((u, j) => new { u.Age, u.Duty, j.BNS_ID });
+                Console.WriteLine(db.DbSet);
             }
         }
 

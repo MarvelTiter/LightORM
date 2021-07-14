@@ -1,14 +1,8 @@
 ﻿using DExpSql;
+using MDbContext.Extension;
 using MDbEntity.Attributes;
-using Shared.ExpSql.Extension;
-using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExpSql.ExpressionHandle {
     class ParameterExpressionCaluse : BaseExpressionSql<ParameterExpression> {
