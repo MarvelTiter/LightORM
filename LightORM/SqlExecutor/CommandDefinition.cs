@@ -105,11 +105,11 @@ namespace MDbContext.SqlExecutor {
                 }
 
                 iLGenerator.Emit(OpCodes.Ret);
-                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));      
+                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));
 #endif
+                commandInitCache.Add(commandType, value);
             }
 
-            commandInitCache.Add(commandType, value);
             return value;
         }
 
