@@ -6,7 +6,6 @@ using System.Data;
 namespace MDbContext {
     public class DbContext : IDisposable {
         public ExpressionSql DbSet { get; private set; }
-        //internal IDbAction DbExec { get; private set; }
         internal IDbConnection DbConnection { get; private set; }
         public string Sql => DbSet.SqlCaluse.Sql.ToString();
         public object SqlParameter {
@@ -58,12 +57,10 @@ namespace MDbContext {
         protected virtual void Dispose(bool disposing) {
             if (!m_disposed) {
                 if (disposing) {
-                    // Release managed resources                   
-                    DbSet = null;
+                    // Release managed resources      
                 }
-                DbConnection?.Close();
-                //DbConnection?.Dispose();
                 // Release unmanaged resources
+                DbConnection?.Close();
 
                 m_disposed = true;
             }

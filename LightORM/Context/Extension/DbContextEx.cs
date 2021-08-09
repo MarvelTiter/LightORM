@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MDbContext {
@@ -35,7 +36,7 @@ namespace MDbContext {
             TaskCompletionSource<IEnumerable<T>> task = new TaskCompletionSource<IEnumerable<T>>();
             try {
                 var result = self.Query<T>();
-                task.SetResult(result);
+                task.SetResult(result.ToList());
             } catch (Exception ex) {
                 task.SetException(ex);
             }
@@ -83,7 +84,7 @@ namespace MDbContext {
             TaskCompletionSource<IEnumerable<T>> task = new TaskCompletionSource<IEnumerable<T>>();
             try {
                 var result = self.Query<T>(sql, p);
-                task.SetResult(result);
+                task.SetResult(result.ToList());
             } catch (Exception ex) {
                 task.SetException(ex);
             }

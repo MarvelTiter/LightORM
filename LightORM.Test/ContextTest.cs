@@ -1,3 +1,4 @@
+using DExpSql;
 using LightORM.Test.Models;
 using MDbContext;
 using Microsoft.Data.Sqlite;
@@ -74,6 +75,24 @@ namespace LightORM.Test {
                 var list = db.Query<Users>(" SELECT TOP 10 * FROM TBD_XinCheLiangJianCeShuJuJiJieGuoBiao where ShuJuShangChuangBiaoZhi = 0 order by JYJLD_JianCeRiQi desc", null);
                 int c = list.Count();
             }
+        }
+
+        [Test]
+        public void TestIn() {
+            var db = GetContext();
+            int[] arr = { 1, 2, 3, 4 };
+            db.DbSet.Update<Users>(() => new { Age = 1 })
+                .Where(u => u.Age.In(1, 2, 3, 4));
+            Console.WriteLine(db.DbSet);
+        }
+
+        [Test]
+        public void TestWhere() {
+            var db = GetContext();
+            int[] arr = { 1, 2, 3, 4 };
+            var d = DateTime.Now.ToString("yyyyMM");
+            db.DbSet.Select<Users>()
+                .Where(u => u.Duty == d);
         }
 
 
