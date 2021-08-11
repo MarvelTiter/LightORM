@@ -70,11 +70,11 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void Test2() {
-            using (var db = GetContext()) {
-                var list = db.Query<Users>(" SELECT TOP 10 * FROM TBD_XinCheLiangJianCeShuJuJiJieGuoBiao where ShuJuShangChuangBiaoZhi = 0 order by JYJLD_JianCeRiQi desc", null);
-                int c = list.Count();
-            }
+        public void TestSelect() {
+            var db = GetContext();
+            db.DbSet.Count<Users>()
+                .InnerJoin<Job>((j, u) => j.Duty == u.CLSBDH);
+            Console.WriteLine(db.DbSet);
         }
 
         [Test]

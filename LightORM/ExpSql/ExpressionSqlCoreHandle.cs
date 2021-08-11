@@ -77,7 +77,6 @@ namespace DExpSql {
         }
 
         private void CountHandle() {
-            _sqlCaluse.EnableTableAlia = false;
             var tbType = typeof(T);
             _sqlCaluse.SetTableAlias(tbType);
             var tbName = _sqlCaluse.GetTableName(tbType);
@@ -86,7 +85,6 @@ namespace DExpSql {
         }
 
         private void MaxHandle(Expression body) {
-            _sqlCaluse.EnableTableAlia = false;
             var tbType = typeof(T);
             var tbName = _sqlCaluse.GetTableName(tbType);
             _sqlCaluse.SetTableAlias(tbType);

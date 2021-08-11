@@ -3,104 +3,77 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext {
     public static class DbContextEx {
+        private static Task<T> RunAsync<T>(Func<T> func) {
+            var tcs = new TaskCompletionSource<T>();
+            ThreadPool.QueueUserWorkItem(_ => {
+                try {
+                    var result = func.Invoke();
+                    tcs.SetResult(result);
+                } catch (Exception ex) {
+                    tcs.SetException(ex);
+                }
+            });
+            return tcs.Task;
+        }
         public static int Execute(this DbContext self) => self.DbConnection.Execute(self.Sql, self.SqlParameter);
         public static Task<int> ExecuteAsync(this DbContext self) {
-            TaskCompletionSource<int> task = new TaskCompletionSource<int>();
-            try {
-                var result = self.Execute();
-                task.SetResult(result);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.Execute();
+            });
         }
 
         public static DataTable QueryDataTable(this DbContext self) => self.DbConnection.ExecuteReader(self.Sql, self.SqlParameter);
         public static Task<DataTable> QueryDataTableAsync(this DbContext self) {
-            TaskCompletionSource<DataTable> task = new TaskCompletionSource<DataTable>();
-            try {
-                var dt = self.QueryDataTable();
-                task.SetResult(dt);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.QueryDataTable();
+            });
         }
 
         public static IEnumerable<T> Query<T>(this DbContext self) => self.DbConnection.Query<T>(self.Sql, self.SqlParameter);
         public static Task<IEnumerable<T>> QueryAsync<T>(this DbContext self) {
-            TaskCompletionSource<IEnumerable<T>> task = new TaskCompletionSource<IEnumerable<T>>();
-            try {
-                var result = self.Query<T>();
-                task.SetResult(result.ToList());
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync<IEnumerable<T>>(() => {
+                return self.Query<T>().ToList();
+            });
         }
 
         public static T Single<T>(this DbContext self) => self.DbConnection.QuerySingle<T>(self.Sql, self.SqlParameter);
         public static Task<T> SingleAsync<T>(this DbContext self) {
-            TaskCompletionSource<T> task = new TaskCompletionSource<T>();
-            try {
-                var result = self.Single<T>();
-                task.SetResult(result);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.Single<T>();
+            });
         }
 
         public static int Execute(this DbContext self, string sql, object p) => self.DbConnection.Execute(sql, p);
         public static Task<int> ExecuteAsync(this DbContext self, string sql, object p) {
-            TaskCompletionSource<int> task = new TaskCompletionSource<int>();
-            try {
-                var result = self.Execute(sql, p);
-                task.SetResult(result);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.Execute(sql, p);
+            });
         }
 
         public static DataTable QueryDataTable(this DbContext self, string sql, object p) => self.DbConnection.ExecuteReader(sql, p);
         public static Task<DataTable> QueryDataTableAsync(this DbContext self, string sql, object p) {
-            TaskCompletionSource<DataTable> task = new TaskCompletionSource<DataTable>();
-            try {
-                var dt = self.QueryDataTable(sql, p);
-                task.SetResult(dt);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.QueryDataTable(sql, p);
+            });
         }
 
         public static IEnumerable<T> Query<T>(this DbContext self, string sql, object p) => self.DbConnection.Query<T>(sql, p);
         public static Task<IEnumerable<T>> QueryAsync<T>(this DbContext self, string sql, object p) {
-            TaskCompletionSource<IEnumerable<T>> task = new TaskCompletionSource<IEnumerable<T>>();
-            try {
-                var result = self.Query<T>(sql, p);
-                task.SetResult(result.ToList());
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync<IEnumerable<T>>(() => {
+                return self.Query<T>(sql, p).ToList();
+            });
         }
 
         public static T Single<T>(this DbContext self, string sql, object p) => self.DbConnection.QuerySingle<T>(sql, p);
         public static Task<T> SingleAsync<T>(this DbContext self, string sql, object p) {
-            TaskCompletionSource<T> task = new TaskCompletionSource<T>();
-            try {
-                var result = self.Single<T>(sql, p);
-                task.SetResult(result);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.Single<T>(sql, p);
+            });
         }
 
         public static void AddTrans(this DbContext self) {
@@ -124,14 +97,9 @@ namespace MDbContext {
             return result;
         }
         public static Task<bool> ExecuteTransAsync(this DbContext self) {
-            TaskCompletionSource<bool> task = new TaskCompletionSource<bool>();
-            try {
-                var result = self.ExecuteTrans();
-                task.SetResult(result);
-            } catch (Exception ex) {
-                task.SetException(ex);
-            }
-            return task.Task;
+            return RunAsync(() => {
+                return self.ExecuteTrans();
+            });
         }
     }
 }
