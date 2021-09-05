@@ -13,16 +13,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace LightORM.Test {
-    public class ContextTest {
+namespace LightORM.Test
+{
+    public class ContextTest
+    {
         [SetUp]
-        public void Setup() {
+        public void Setup()
+        {
 
         }
 
         [Test]
-        public void SingleTest() {
-            using (var db = GetContext()) {
+        public void SingleTest()
+        {
+            using (var db = GetContext())
+            {
                 db.DbSet.Count<NetConfig>();
                 var count = db.Single<int>();
                 Assert.IsTrue(count == 4);
@@ -30,8 +35,10 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void AddTest() {
-            using (var db = GetContext()) {
+        public void AddTest()
+        {
+            using (var db = GetContext())
+            {
                 db.DbSet.Select<NetConfig>()
                     .Where(nc => nc.ConfigName == "»ª¹¤");
                 NetConfig netConfig = db.Single<NetConfig>();
@@ -42,15 +49,19 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void IEnumerableTest() {
+        public void IEnumerableTest()
+        {
             var list = netConfigs();
-            foreach (var item in list) {
+            foreach (var item in list)
+            {
                 Console.WriteLine(item.ToString());
             }
         }
 
-        private IEnumerable<Users> netConfigs() {
-            using (var db = GetContext()) {
+        private IEnumerable<Users> netConfigs()
+        {
+            using (var db = GetContext())
+            {
                 //var db = GetContext();
                 db.DbSet.Select<Users>();
 
@@ -59,7 +70,8 @@ namespace LightORM.Test {
         }
 
 
-        private DbContext GetContext() {
+        private DbContext GetContext()
+        {
             //DbContext.Init(DbBaseType.Sqlite);
             //var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
             //return conn.DbContext();
@@ -70,7 +82,8 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void TestSelect() {
+        public void TestSelect()
+        {
             var db = GetContext();
             db.DbSet.Count<Users>()
                 .InnerJoin<Job>((j, u) => j.Duty == u.CLSBDH);
@@ -78,7 +91,8 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void TestIn() {
+        public void TestIn()
+        {
             var db = GetContext();
             int[] arr = { 1, 2, 3, 4 };
             db.DbSet.Update<Users>(() => new { Age = 1 })
@@ -87,17 +101,30 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void TestWhere() {
+        public void TestWhere()
+        {
             var db = GetContext();
             int[] arr = { 1, 2, 3, 4 };
             var d = DateTime.Now.ToString("yyyyMM");
             db.DbSet.Select<Users>()
                 .Where(u => u.Duty == d);
         }
-
+        [Test]
+        public void TestIfWhere()
+        {
+            var db = GetContext();
+            int[] arr = { 1, 2, 3, 4 };
+            var d = DateTime.Now.ToString("yyyyMM");
+            db.DbSet.Select<Users>()
+                .IfWhere(() => arr.Length > 5, u => u.Age > 10)
+                .IfWhere(() => arr.Length > 2, u => u.Age > 10)
+                .IfWhere(() => arr.Length > 3, u => u.Age > 10);
+            Console.WriteLine(db.DbSet);
+        }
 
         [Test]
-        public void TestNumber() {
+        public void TestNumber()
+        {
             var number = 12312312.123;
             var s = number.ToString("#L#E#D#C#K#E#D#C#J#E#D#C#I#E#D#C#H#E#D#C#G#E#D#C#F#E#D#C#.0B0A");
             var d = Regex.Replace(s, @"((?<=-|^)[^1-9]*)|((?'z'0)[0A-E]*((?=[1-9])|(?'-z'(?=[F-L\.]|$))))|((?'b'[F-L])(?'z'0)[0A-L]*((?=[1-9])|(?'-z'(?=[\.]|$))))", "${b}${z}");
