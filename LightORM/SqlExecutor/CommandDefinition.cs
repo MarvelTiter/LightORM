@@ -10,8 +10,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.SqlExecutor {
-    internal struct CommandDefinition {
+namespace MDbContext.SqlExecutor
+{
+    internal struct CommandDefinition
+    {
         private static Dictionary<Type, Action<IDbCommand>> commandInitCache = new Dictionary<Type, Action<IDbCommand>>();
 
         public string CommandText { get; }
@@ -22,19 +24,22 @@ namespace MDbContext.SqlExecutor {
 
         public IDbTransaction Transaction { get; set; }
 
-        public CommandDefinition(string commandText, object parameters = null, IDbTransaction trans = null, CommandType? commandType = null) {
+        public CommandDefinition(string commandText, object parameters = null, IDbTransaction trans = null, CommandType? commandType = null)
+        {
             CommandText = commandText;
             Parameters = parameters;
             CommandType = commandType;
             Transaction = trans;
         }
 
-        private CommandDefinition(object parameters) {
+        private CommandDefinition(object parameters)
+        {
             this = default(CommandDefinition);
             Parameters = parameters;
         }
 
-        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader) {
+        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
+        {
             IDbCommand dbCommand = cnn.CreateCommand();
 
             GetInit(dbCommand.GetType())?.Invoke(dbCommand);
@@ -50,18 +55,22 @@ namespace MDbContext.SqlExecutor {
             return dbCommand;
         }
 
-        private static Action<IDbCommand> GetInit(Type commandType) {
-            if (commandType == null) {
+        private static Action<IDbCommand> GetInit(Type commandType)
+        {
+            if (commandType == null)
+            {
                 return null;
             }
 
-            if (commandInitCache.TryGetValue(commandType, out Action<IDbCommand> value)) {
+            if (commandInitCache.TryGetValue(commandType, out Action<IDbCommand> value))
+            {
                 return value;
             }
 
             MethodInfo basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
             MethodInfo basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
-            if (basicPropertySetter != null || basicPropertySetter2 != null) {
+            if (basicPropertySetter != null || basicPropertySetter2 != null)
+            {
 #if NETSTANDARD2_0_OR_GREATER
                 /*
                  * (IDbCommand cmd) => {
@@ -90,14 +99,16 @@ namespace MDbContext.SqlExecutor {
                 });
                 ILGenerator iLGenerator = dynamicMethod.GetILGenerator();
 
-                if (basicPropertySetter != null) {
+                if (basicPropertySetter != null)
+                {
                     iLGenerator.Emit(OpCodes.Ldarg_0);
                     iLGenerator.Emit(OpCodes.Castclass, commandType);
                     iLGenerator.Emit(OpCodes.Ldc_I4_1);
                     iLGenerator.EmitCall(OpCodes.Callvirt, basicPropertySetter, null);
                 }
 
-                if (basicPropertySetter2 != null) {
+                if (basicPropertySetter2 != null)
+                {
                     iLGenerator.Emit(OpCodes.Ldarg_0);
                     iLGenerator.Emit(OpCodes.Castclass, commandType);
                     iLGenerator.Emit(OpCodes.Ldc_I4_M1);
@@ -105,17 +116,19 @@ namespace MDbContext.SqlExecutor {
                 }
 
                 iLGenerator.Emit(OpCodes.Ret);
-                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));      
+                value = (Action<IDbCommand>)dynamicMethod.CreateDelegate(typeof(Action<IDbCommand>));
 #endif
-            commandInitCache.Add(commandType, value);
+                commandInitCache.Add(commandType, value);
             }
 
             return value;
         }
 
-        private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType) {
+        private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+        {
             PropertyInfo property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-            if ((object)property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0) {
+            if ((object)property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
+            {
                 return property.GetSetMethod();
             }
             return null;
