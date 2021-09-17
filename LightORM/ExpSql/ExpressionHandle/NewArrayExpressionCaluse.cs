@@ -20,13 +20,13 @@ namespace ExpSql.ExpressionHandle {
         //}
 
         protected override SqlCaluse In(NewArrayExpression exp, SqlCaluse sqlCaluse) {
-            sqlCaluse += "(";
+            //sqlCaluse += "(";
             foreach (var item in exp.Expressions) {
                 ExpressionVisit.In(item, sqlCaluse);
                 sqlCaluse += ",";
             }
             sqlCaluse -= ",";
-            sqlCaluse += ")";
+            //sqlCaluse += ")";
             return sqlCaluse;
         }
     }

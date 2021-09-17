@@ -30,16 +30,10 @@ namespace LightORM.Test {
         }
 
         [Test]
-        public void SelectTest() {
-            using (var db = GetContext()) {
-                db.DbSet.Select<Users, Job>((u, j) => new { u.Age, u.Duty, j.BNS_ID });
-                Console.WriteLine(db.DbSet);
-            }
-        }
-
-        [Test]
-        public void AddTest() {
-            using (var db = GetContext()) {
+        public void AddTest()
+        {
+            using (var db = GetContext())
+            {
                 db.DbSet.Select<NetConfig>()
                     .Where(nc => nc.ConfigName == "»ª¹¤");
                 NetConfig netConfig = db.Single<NetConfig>();

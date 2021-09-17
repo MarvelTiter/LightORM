@@ -16,9 +16,9 @@ namespace ExpSql.ExpressionHandle {
                     continue;
                 var col = item.GetAttribute<ColumnNameAttribute>();
                 if (col == null)
-                    sqlCaluse.SelectFields.Add($"{alia}.{item.Name}");
+                    sqlCaluse.SelectFields.Add($"{alia}{item.Name}");
                 else
-                    sqlCaluse.SelectFields.Add($"{alia}.{col.Name} {item.Name}");
+                    sqlCaluse.SelectFields.Add($"{alia}{col.Name} {item.Name}");
 
             }
             return sqlCaluse;

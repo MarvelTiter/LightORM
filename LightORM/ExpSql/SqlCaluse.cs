@@ -19,6 +19,7 @@ namespace DExpSql {
 
         #region 
         public List<string> IgnoreFields { get; private set; }
+        public bool EnableTableAlia { get; set; } = true;
 
         public Dictionary<string, object> SqlParam { get; private set; }
 
@@ -145,10 +146,13 @@ namespace DExpSql {
         }
 
         public string GetTableAlias(Type tableName) {
+            if (!EnableTableAlia) {
+                return "";
+            }
             if (CheckAssign(tableName, out Type registed)) {
-                return tableAlia[registed].ToString();
+                return tableAlia[registed].ToString() + ".";
             } else if (tableAlia.Keys.Contains(tableName)) {
-                return tableAlia[tableName].ToString();
+                return tableAlia[tableName].ToString() + ".";
             }
             return "";
         }
@@ -197,19 +201,22 @@ namespace DExpSql {
             var max = Math.Max(from, to);
             var min = Math.Min(from, to);
             var minParam = AddDbParameter(min);
-            var maxParam = AddDbParameter(max);
-            if (DbType == 0)
+            if (DbType == 0) {
+                var maxParam = AddDbParameter(max);
                 SqlServerPaging(maxParam, minParam);
-            else if (DbType == 1)
+            } else if (DbType == 1) {
+                var maxParam = AddDbParameter(max);
                 OraclePaging(maxParam, minParam);
-            else if (DbType == 2)
-                MySqlPaging(maxParam, minParam);
-            else
+            } else if (DbType == 2) {
+                var diff = AddDbParameter(max - min);
+                MySqlPaging(minParam, diff);
+
+            } else
                 throw new NotImplementedException("其余数据库分页查询未实现");
         }
 
-        private void MySqlPaging(string max, string min) {
-            Sql.AppendLine($" LIMIT {min},({max} - {min})");
+        private void MySqlPaging(string min, string diff) {
+            Sql.AppendLine($" LIMIT {min},{diff}");
         }
 
         private void OraclePaging(string max, string min) {

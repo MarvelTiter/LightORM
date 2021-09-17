@@ -124,19 +124,17 @@ namespace DExpSql.ExpressionHandle {
             var attr = exp.Member.GetAttribute<ColumnNameAttribute>();
             if (attr != null) {
                 if (aliaRequest)
-                    return $"{alias}.{attr.Name} {exp.Member.Name}";
+                    return $"{alias}{attr.Name} {exp.Member.Name}";
                 else
-                    return $"{alias}.{attr.Name}";
+                    return $"{alias}{attr.Name}";
             } else
-                return $"{alias}.{exp.Member.Name}";
+                return $"{alias}{exp.Member.Name}";
         }
 
         private string FindValue(MemberExpression exp, SqlCaluse sqlCaluse) {
             if (exp.Expression.NodeType == ExpressionType.Parameter) {
                 string tableAlias = sqlCaluse.GetTableAlias(exp.Member.DeclaringType);
-                if (!string.IsNullOrWhiteSpace(tableAlias)) {
-                    tableAlias += ".";
-                }
+                
                 var attr = exp.Member.GetAttribute<ColumnNameAttribute>();
                 if (attr == null)
                     return " " + tableAlias + exp.Member.Name;
