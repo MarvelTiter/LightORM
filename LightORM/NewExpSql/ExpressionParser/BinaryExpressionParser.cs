@@ -3,19 +3,26 @@ using System;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.NewExpSql.ExpressionParser {
-    internal class BinaryExpressionParser : BaseParser<BinaryExpression> {
-        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, StringBuilder content, bool useIs = false, bool newLine = true) {
+namespace MDbContext.NewExpSql.ExpressionParser
+{
+    internal class BinaryExpressionParser : BaseParser<BinaryExpression>
+    {
+        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, StringBuilder content, bool useIs = false, bool newLine = true)
+        {
             var n = newLine ? "\n" : "";
-            switch (expressionNodeType) {
+            switch (expressionNodeType)
+            {
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
                     content.Insert(operatorIndex, $"{n} AND");
                     break;
                 case ExpressionType.Equal:
-                    if (useIs) {
+                    if (useIs)
+                    {
                         content.Insert(operatorIndex, " IS");
-                    } else {
+                    }
+                    else
+                    {
                         content.Insert(operatorIndex, " = ");
                     }
                     break;
@@ -26,9 +33,12 @@ namespace MDbContext.NewExpSql.ExpressionParser {
                     content.Insert(operatorIndex, " >= ");
                     break;
                 case ExpressionType.NotEqual:
-                    if (useIs) {
+                    if (useIs)
+                    {
                         content.Insert(operatorIndex, " IS NOT");
-                    } else {
+                    }
+                    else
+                    {
                         content.Insert(operatorIndex, " <> ");
                     }
                     break;
@@ -48,24 +58,23 @@ namespace MDbContext.NewExpSql.ExpressionParser {
         }
 
 
-        public override BaseFragment Where(BinaryExpression exp, ISqlContext context, WhereFragment fragment) {
-            context.Position = Position.Left;
-            ExpressionVisit.Where(exp.Left, context,fragment);
+        public override BaseFragment Where(BinaryExpression exp, WhereFragment fragment)
+        {
+            ExpressionVisit.Where(exp.Left, fragment);
             var insertIndex = fragment.Length;
-            context.Position = Position.Right;
-            ExpressionVisit.Where(exp.Right, context, fragment);
+            ExpressionVisit.Where(exp.Right, fragment);
             var endIndex = fragment.Length;
             var b = endIndex - insertIndex == 5 && fragment.EndWith("null");
             OperatorParser(exp.NodeType, insertIndex, fragment.Sql, b);
             return fragment;
         }
 
-
-        public override BaseFragment Join(BinaryExpression exp, ISqlContext context, JoinFragment fragment) {
-            fragment.Add(" ON ");
-            ExpressionVisit.Join(exp.Left, context, fragment);
+        public override BaseFragment Join(BinaryExpression exp, JoinFragment fragment)
+        {
+            fragment.SqlAppend(" ON ");
+            ExpressionVisit.Join(exp.Left, fragment);
             var insertIndex = fragment.Length;
-            ExpressionVisit.Join(exp.Right, context, fragment);
+            ExpressionVisit.Join(exp.Right, fragment);
             OperatorParser(exp.NodeType, insertIndex, fragment.Sql, false);
             return fragment;
         }

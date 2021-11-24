@@ -10,8 +10,5 @@ namespace MDbContext.NewExpSql.SqlFragment {
             throw new NotImplementedException();
         }
 
-        public override string ToString() {
-            throw new NotImplementedException();
-        }
     }
 }

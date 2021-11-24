@@ -1,18 +1,16 @@
-﻿using MDbContext.NewExpSql.ExpressionParser;
+﻿using MDbContext.NewExpSql.ExpressionParamParser;
 using MDbContext.NewExpSql.SqlFragment;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace MDbContext.NewExpSql
 {
-    internal class ExpressionVisit
+    internal class ExpressionParamVisit
     {
-
-        public static void Select(Expression exp, BaseFragment fragment) => GetParser(exp).Select(exp, fragment);
-        public static void Join(Expression exp, BaseFragment fragment) => GetParser(exp).Join(exp, fragment);
         public static void Where(Expression exp, BaseFragment fragment) => GetParser(exp).Where(exp, fragment);
-
 
         private static IExpressionParser GetParser(Expression exp)
         {
@@ -21,28 +19,27 @@ namespace MDbContext.NewExpSql
             if (exp == null)
                 throw new ArgumentNullException("Expression", "不能为null");
             else if (exp is BinaryExpression)
-                _i = new BinaryExpressionParser();
+                _i = new BinaryParamParser();
             else if (exp is ConstantExpression)
-                _i = new ConstantExpressionParser();
+                _i = new ConstantParamParser();
             else if (exp is MemberExpression)
-                _i = new MemberExpressionParser();
+                _i = new MemberParamParser();
             else if (exp is MethodCallExpression)
-                _i = new MethodCallExpressionParser();
+                _i = new MethodCallParamParser();
             else if (exp is NewArrayExpression)
-                _i = new NewArrayExpressionParser();
+                _i = new NewArrayParamParser();
             else if (exp is NewExpression)
-                _i = new NewExpressionParser();
+                _i = new NewParamParser();
             else if (exp is UnaryExpression)
-                _i = new UnaryExpressionParser();
+                _i = new UnaryParamParser();
             else if (exp is ParameterExpression)
-                _i = new ParameterExpressionParser();
+                _i = new ParameterParamParser();
             else if (exp is LambdaExpression)
-                _i = new LambdaExpressionParser();
+                _i = new LambdaParamParser();
             else if (exp is MemberInitExpression)
-                _i = new MemberInitExpressionParser();
+                _i = new MemberInitParamParser();
             else
                 throw new ArgumentException("不支持的Expression");
-
             return _i;
         }
     }
