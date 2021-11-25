@@ -1,4 +1,6 @@
-﻿using LightORM.Test.Models;
+﻿
+using LightORM.Test.Models;
+using MDbContext;
 using MDbContext.NewExpSql;
 using NUnit.Framework;
 using System;
@@ -11,6 +13,7 @@ namespace LightORM.Test
 {
     class ContextTestV2
     {
+        P p = new P { Age = 5, Bns = 10 };
         [SetUp]
         public void Setup()
         {
@@ -19,23 +22,33 @@ namespace LightORM.Test
         [Test]
         public void SelectTest()
         {
-            NewMethod(5, 5);
-            NewMethod(10, 15);
-
-            static void NewMethod(int a1, int a2)
+            Watch(sql =>
             {
-                ExpressionSql eSql = new ExpressionSql(MDbContext.DbBaseType.SqlServer);
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                eSql.Select<Users, Job>(distanct: true)
-                    .InnerJoin<JobFile>((u, jf) => u.Duty == jf.FLT_CATEGORY)
-                .InnerJoin<Job, JobFile>((j, jf) => j.CLSBDH == jf.FLT_ID)
-                .Where(u => u.Age > a1)
-                .Where<Job>(j => j.BNS_ID > a2);
-                stopwatch.Stop();
-                Console.WriteLine(stopwatch.ElapsedMilliseconds);
-                Console.WriteLine(eSql);
-            }
+                sql.Select<Users, Job>().Where<Job>(j => j.BNS_ID > p.Bns);
+            });
+
+        }
+        [Test]
+        public void JoinTest()
+        {
+            Watch(sql =>
+            {
+                sql.Select<Users>()
+                .InnerJoin<Job>((u, j) => u.Duty == j.CLSBDH);
+
+            });
+        }
+
+        private void Watch(Action<ExpressionSql> action)
+        {
+            ExpressionSql eSql = new ExpressionSql((int)DbBaseType.SqlServer);
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            action(eSql);
+            stopwatch.Stop();
+            Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine(eSql);
+            Console.WriteLine("====================================");
         }
     }
 }

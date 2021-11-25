@@ -10,6 +10,7 @@ namespace MDbContext.NewExpSql
 {
     public enum Position
     {
+        None,
         Left,
         Right
     }

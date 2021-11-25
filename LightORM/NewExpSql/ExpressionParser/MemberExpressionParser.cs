@@ -19,28 +19,28 @@ namespace MDbContext.NewExpSql.ExpressionParser
 
         public override BaseFragment Where(MemberExpression exp, WhereFragment fragment)
         {
-            //if (context.Position == Position.Left)
-            //{
-            //    var col = GetMemberName(exp, context);
-            //    fragment.Add(col);
-            //}
-            //else if (context.Position == Position.Right)
-            //{
-            //    var p = GetParameterName(exp, context);
-            //    fragment.Add(p);
-            //}
+            if (fragment.Position == Position.Left)
+            {
+                var col = GetMemberName(exp, fragment.Tables);
+                fragment.SqlAppend(col);
+                return fragment;
+            }
+            else if (fragment.Position == Position.Right)
+            {
+                var p = GetParameterName(exp, fragment.Tables);
+                fragment.SqlAppend(p);
+            }
             return fragment;
         }
 
         public override BaseFragment Join(MemberExpression exp, JoinFragment fragment)
         {
-            var col = GetMemberName(exp, fragment.Tables);
+            var col = GetMemberName(exp, fragment.Tables, false);
             fragment.SqlAppend(col);
             return fragment;
-
         }
 
-        private string GetMemberName(MemberExpression exp, ITableContext context, bool aliaReqired = true)
+        private static string GetMemberName(MemberExpression exp, ITableContext context, bool aliaReqired = true)
         {
             var table = exp.Member.DeclaringType;
             context.SetTableAlias(table);
@@ -57,10 +57,9 @@ namespace MDbContext.NewExpSql.ExpressionParser
                 return $"{alias}.{exp.Member.Name}";
         }
 
-        //private string GetParameterName(MemberExpression exp, ISqlContext context)
-        //{
-        //    var v = Expression.Lambda(exp).Compile().DynamicInvoke();
-        //    return context.AddDbParameter(v);
-        //}
+        private static string GetParameterName(MemberExpression exp, ITableContext context)
+        {
+            return $"{context.GetPrefix()}{exp.Member.Name}";
+        }
     }
 }

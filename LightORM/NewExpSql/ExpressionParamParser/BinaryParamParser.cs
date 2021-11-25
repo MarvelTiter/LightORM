@@ -11,7 +11,8 @@ namespace MDbContext.NewExpSql.ExpressionParamParser
     {
         public override BaseFragment Where(BinaryExpression exp, WhereFragment fragment)
         {
-            return base.Where(exp, fragment);
+            ExpressionParamVisit.Where(exp.Right, fragment);
+            return fragment;
         }
     }
 }

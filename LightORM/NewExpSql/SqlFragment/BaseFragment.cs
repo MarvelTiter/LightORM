@@ -8,7 +8,6 @@ namespace MDbContext.NewExpSql.SqlFragment
 {
     internal abstract class BaseFragment
     {
-        protected static Dictionary<Type, Dictionary<string, BaseFragment>> cache = new Dictionary<Type, Dictionary<string, BaseFragment>>();
         protected bool HasResolved { get; set; }
         protected bool RequiredAlia { get; set; } = true;
         internal StringBuilder Sql { get; set; } = new StringBuilder();
@@ -17,6 +16,9 @@ namespace MDbContext.NewExpSql.SqlFragment
         internal ITableContext Tables { get; set; }
         internal virtual void ResolveSql(Expression body, params Type[] types)
         {
+            //Sql.Clear();
+            //DoResolve(body, types);
+            //return;
             if (HasResolved) return;
             DoResolve(body, types);
             HasResolved = true;
@@ -34,15 +36,21 @@ namespace MDbContext.NewExpSql.SqlFragment
                 tableContext = Tables;
             }
         }
-        internal virtual void ResolveParam() => throw new NotImplementedException();
+        internal virtual void ResolveParam(Expression body) => throw new NotImplementedException();
 
         protected abstract void DoResolve(Expression body, params Type[] types);
         //protected abstract string ConstructSql();
-        internal string AddDbParameter(object value)
+        internal string AddDbParameter(object value, string name = null)
         {
             if (SqlParameters == null) SqlParameters = new Dictionary<string, object>();
-            var name = $"{Tables.GetPrefix()}Const{SqlParameters.Count}";
-            SqlParameters.Add(name, value);
+            if (name is null)
+                name = $"{Tables.GetPrefix()}Const{SqlParameters.Count}";
+            else
+                name = $"{Tables.GetPrefix()}{name}";
+            if (SqlParameters.ContainsKey(name))
+                SqlParameters[name] = value;
+            else
+                SqlParameters.Add(name, value);
             return name;
         }
 

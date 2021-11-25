@@ -23,6 +23,7 @@ namespace MDbContext.NewExpSql.SqlFragment
 
         protected override void DoResolve(Expression body, params Type[] types)
         {
+            Tables.SetTableAlias(type);
             Sql.Append($"{joinType.ToString().ToUpper()} JOIN {Tables.GetTableName(true, type)}");
             ExpressionVisit.Join(body, this);
         }

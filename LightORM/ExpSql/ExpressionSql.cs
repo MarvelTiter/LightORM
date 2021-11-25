@@ -7,7 +7,7 @@ namespace DExpSql {
     public class ExpressionSql {
         private int DbType { get; set; }
         internal SqlCaluse SqlCaluse { get; private set; }
-        internal ExpressionSql(int dBType) {
+        public ExpressionSql(int dBType) {
             DbType = dBType;
             SqlCaluse = new SqlCaluse();
             SqlCaluse.DbType = DbType;

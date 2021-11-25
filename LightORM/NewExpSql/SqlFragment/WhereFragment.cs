@@ -8,12 +8,12 @@ namespace MDbContext.NewExpSql.SqlFragment
 {
     internal class WhereFragment : BaseFragment
     {
-
-        internal override void ResolveSql(Expression body, params Type[] types)
-        {
-            Sql.Clear();
-            DoResolve(body, types);
-        }
+        public Position Position { get; set; }
+        //internal override void ResolveSql(Expression body, params Type[] types)
+        //{
+        //    Sql.Clear();
+        //    DoResolve(body, types);
+        //}
         protected override void DoResolve(Expression body, params Type[] types)
         {
             SqlAppend("Where");
@@ -22,9 +22,9 @@ namespace MDbContext.NewExpSql.SqlFragment
             SqlAppend(" ) ");
         }
 
-        internal override void ResolveParam()
+        internal override void ResolveParam(Expression body)
         {
-
+            ExpressionParamVisit.Where(body, this);
         }
     }
 }

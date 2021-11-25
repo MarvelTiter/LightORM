@@ -7,7 +7,7 @@ namespace MDbContext.NewExpSql.ExpressionParser
 {
     internal class BinaryExpressionParser : BaseParser<BinaryExpression>
     {
-        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, StringBuilder content, bool useIs = false, bool newLine = true)
+        private static void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, StringBuilder content, bool useIs = false, bool newLine = true)
         {
             var n = newLine ? "\n" : "";
             switch (expressionNodeType)
@@ -57,15 +57,18 @@ namespace MDbContext.NewExpSql.ExpressionParser
             }
         }
 
-
         public override BaseFragment Where(BinaryExpression exp, WhereFragment fragment)
         {
+            fragment.Position = Position.Left;
             ExpressionVisit.Where(exp.Left, fragment);
             var insertIndex = fragment.Length;
+
+            fragment.Position = Position.Right;
             ExpressionVisit.Where(exp.Right, fragment);
             var endIndex = fragment.Length;
             var b = endIndex - insertIndex == 5 && fragment.EndWith("null");
             OperatorParser(exp.NodeType, insertIndex, fragment.Sql, b);
+            fragment.Position = Position.None;
             return fragment;
         }
 
