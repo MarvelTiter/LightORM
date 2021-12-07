@@ -6,7 +6,7 @@
     <AssemblyName>MT.LightORM</AssemblyName>
     <Authors>MarvelTiter</Authors>
     <Description>使用表达式树（ExpressionTree）构建Sql，仅用于学习</Description>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>

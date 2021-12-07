@@ -2,6 +2,7 @@ using DExpSql;
 using LightORM.Test.Models;
 using MDbContext;
 using Microsoft.Data.Sqlite;
+using MySql.Data.MySqlClient;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Oracle.ManagedDataAccess.Client;
@@ -76,7 +77,7 @@ namespace LightORM.Test
             //var conn = new SqliteConnection(@"DataSource=E:\GitRepositories\CGS.db");
             //return conn.DbContext();
             DbContext.Init(DbBaseType.SqlServer);
-            var conn = new SqlConnection("Data Source=172.20.10.8;Initial Catalog=APDSDB2020;User ID=sa;Password=sa");
+            var conn = new MySqlConnection("Data Source=172.18.180.41;Database=videocollection;User ID=videocollection;Password=hgbanner;charset=gbk");
             return conn.DbContext();
 
         }
@@ -130,6 +131,20 @@ namespace LightORM.Test
             var d = Regex.Replace(s, @"((?<=-|^)[^1-9]*)|((?'z'0)[0A-E]*((?=[1-9])|(?'-z'(?=[F-L\.]|$))))|((?'b'[F-L])(?'z'0)[0A-L]*((?=[1-9])|(?'-z'(?=[\.]|$))))", "${b}${z}");
             var r = Regex.Replace(d, ".", m => "¸ºÔª¿ÕÁãÒ¼·¡ÈþËÁÎéÂ½Æâ°Æ¾Á¿Õ¿Õ¿Õ¿Õ¿Õ¿Õ¿Õ·Ö½ÇÊ°°ÛÇªÍòÒÚÕ×¾©Ûòïöð¦"[m.Value[0] - '-'].ToString());
             Debug.WriteLine(r);
+        }
+
+        class p
+        {
+            public int Age { get; set; } = 11;
+            public string Name { get; set; } = "Hello";
+        }
+
+        [Test]
+        public void TestEntityParameter()
+        {
+            var db = GetContext();
+            var dt = db.QueryDataTable("select * from t_station_user where sptd=?Age", new p());
+            Console.WriteLine(dt.Rows.Count);
         }
     }
 }

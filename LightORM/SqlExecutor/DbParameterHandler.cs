@@ -11,30 +11,40 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace MDbContext.SqlExecutor {
-    internal class DbParameterHandler : IDbParameterHandle {
+namespace MDbContext.SqlExecutor
+{
+    internal class DbParameterHandler : IDbParameterHandle
+    {
         private static Dictionary<Certificate, Action<IDbCommand, object>> parameterReaderCache = new Dictionary<Certificate, Action<IDbCommand, object>>();
         private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
         private object temp;
-        public DbParameterHandler(object parameter) {
-            if (parameter is IEnumerable<KeyValuePair<string, object>>) {
+        public DbParameterHandler(object parameter)
+        {
+            if (parameter is IEnumerable<KeyValuePair<string, object>>)
+            {
                 //
                 ReadEnumerableParameter(parameter as IEnumerable<KeyValuePair<string, object>>);
-            } else {
+            }
+            else
+            {
                 //
                 temp = parameter;
             }
         }
 
-        private void ReadEnumerableParameter(IEnumerable<KeyValuePair<string, object>> enumerable) {
-            foreach (KeyValuePair<string, object> item in enumerable) {
+        private void ReadEnumerableParameter(IEnumerable<KeyValuePair<string, object>> enumerable)
+        {
+            foreach (KeyValuePair<string, object> item in enumerable)
+            {
                 Add(item.Key, item.Value, null, null, null);
             }
         }
 
 
-        private void Add(string name, object value, DbType? dbType, ParameterDirection? pd, int? size) {
-            parameters.Add(Clean(name), new ParamInfo {
+        private void Add(string name, object value, DbType? dbType, ParameterDirection? pd, int? size)
+        {
+            parameters.Add(Clean(name), new ParamInfo
+            {
                 Name = name,
                 DbType = dbType,
                 Value = value,
@@ -43,17 +53,21 @@ namespace MDbContext.SqlExecutor {
             });
         }
 
-        private string Clean(string name) {
-            if (!string.IsNullOrEmpty(name)) {
+        private string Clean(string name)
+        {
+            if (!string.IsNullOrEmpty(name))
+            {
                 char c = name[0];
-                if (c == ':' || c == '?' || c == '@') {
+                if (c == ':' || c == '?' || c == '@')
+                {
                     return name.Substring(1);
                 }
             }
             return name;
         }
 
-        struct ParamInfo {
+        struct ParamInfo
+        {
             public object Value { get; set; }
             public DbType? DbType { get; set; }
             public string Name { get; set; }
@@ -62,11 +76,15 @@ namespace MDbContext.SqlExecutor {
             public int? Size { get; set; }
         }
 
-        public void AddDbParameter(IDbCommand cmd, Certificate certificate) {
-            if (temp != null) {
-                if (!parameterReaderCache.TryGetValue(certificate, out var value)) {
+        public void AddDbParameter(IDbCommand cmd, Certificate certificate)
+        {
+            if (temp != null)
+            {
+                if (!parameterReaderCache.TryGetValue(certificate, out var value))
+                {
                     // create reader
-                    lock (parameterReaderCache) {
+                    lock (parameterReaderCache)
+                    {
                         value = CreateReader(certificate);
                         parameterReaderCache.Add(certificate, value);
                     }
@@ -75,9 +93,12 @@ namespace MDbContext.SqlExecutor {
                 // 对于 object 参数，运行Action后，参数添加到 IDbCommand 实例的 Parameters 中
                 value.Invoke(cmd, temp);
 
-                foreach (IDbDataParameter parameter in cmd.Parameters) {
-                    if (!parameters.ContainsKey(parameter.ParameterName)) {
-                        parameters.Add(parameter.ParameterName, new ParamInfo {
+                foreach (IDbDataParameter parameter in cmd.Parameters)
+                {
+                    if (!parameters.ContainsKey(parameter.ParameterName))
+                    {
+                        parameters.Add(parameter.ParameterName, new ParamInfo
+                        {
                             Parameter = parameter,
                             DbType = parameter.DbType,
                             Name = parameter.ParameterName,
@@ -89,15 +110,20 @@ namespace MDbContext.SqlExecutor {
                 }
             }
             //
-            
-            foreach (ParamInfo item in parameters.Values) {
+
+            foreach (ParamInfo item in parameters.Values)
+            {
                 IDbDataParameter p;
                 var name = item.Name;
+                if (item.Value == null) continue;
                 var dbType = GetDbType(item.Value);
                 var flag = !cmd.Parameters.Contains(name);
-                if (flag) {
+                if (flag)
+                {
                     p = cmd.CreateParameter();
-                } else {
+                }
+                else
+                {
                     p = (IDbDataParameter)cmd.Parameters[name];
                 }
                 if (dbType.HasValue && p.DbType != dbType)
@@ -105,20 +131,23 @@ namespace MDbContext.SqlExecutor {
                 p.ParameterName = item.Name;
                 p.Value = item.Value;
 
-                if (flag) {
+                if (flag)
+                {
                     cmd.Parameters.Add(p);
                 }
             }
         }
 
-        private DbType? GetDbType(object value) {
+        private DbType? GetDbType(object value)
+        {
             var t = value.GetType();
             if (typeMapDbType.TryGetValue(t, out var v))
                 return v;
             else return default;
         }
 
-        public Action<IDbCommand, object> CreateReader(Certificate certificate) {
+        public Action<IDbCommand, object> CreateReader(Certificate certificate)
+        {
             /*
              * (cmd, obj) => { 
              *    var p = cmd.CreateParameter();
@@ -134,7 +163,7 @@ namespace MDbContext.SqlExecutor {
 
             ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
             ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
-            var objType = certificate.ParameterType;;
+            var objType = certificate.ParameterType; ;
             var props = ExtractParameter(certificate, objType.GetProperties());
             // var temp
             var tempExp = Expression.Variable(typeof(IDataParameter), "temp");
@@ -144,7 +173,8 @@ namespace MDbContext.SqlExecutor {
             List<Expression> body = new List<Expression>();
             body.Add(tempExp);
             body.Add(paramExp);
-            foreach (PropertyInfo prop in props) {
+            foreach (PropertyInfo prop in props)
+            {
                 // cmd.CreateParameter()
                 var createParam = Expression.Call(cmdExp, createParameterMethodInfo);
                 // temp = cmd.CreateParameter()                
@@ -168,15 +198,19 @@ namespace MDbContext.SqlExecutor {
             return lambda.Compile();
         }
 
-        private IEnumerable<PropertyInfo> ExtractParameter(Certificate certificate, params PropertyInfo[] parameters) {
-            foreach (PropertyInfo parameter in parameters) {
-                if (Regex.IsMatch(certificate.Sql, "[?@:]" + parameter.Name + "([^\\p{L}\\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant)) {
+        private IEnumerable<PropertyInfo> ExtractParameter(Certificate certificate, params PropertyInfo[] parameters)
+        {
+            foreach (PropertyInfo parameter in parameters)
+            {
+                if (Regex.IsMatch(certificate.Sql, "[?@:]" + parameter.Name + "([^\\p{L}\\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
+                {
                     yield return parameter;
                 }
             }
         }
 
-        readonly static Dictionary<Type, DbType> typeMapDbType = new Dictionary<Type, DbType>(37) {
+        readonly static Dictionary<Type, DbType> typeMapDbType = new Dictionary<Type, DbType>(37)
+        {
             [typeof(byte)] = DbType.Byte,
             [typeof(sbyte)] = DbType.SByte,
             [typeof(short)] = DbType.Int16,
