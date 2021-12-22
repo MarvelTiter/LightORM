@@ -148,40 +148,40 @@ namespace DExpSql
         #endregion
 
         #region where part
-        public ExpressionSqlCore<T> Where(Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> Where(Expression<Func<T, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T, T1, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T1, object>> exp)
-        {
-            WhereHandle(exp.Body);
-            return this;
-        }
-
-        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T, T1, T2, object>> exp)
-        {
-            WhereHandle(exp.Body);
-            return this;
-        }
-        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T1, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T, T1, T2, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T1, T2, bool>> exp)
+        {
+            WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T1, T2, T3, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
@@ -189,46 +189,46 @@ namespace DExpSql
         #endregion
 
         #region IfWhere part
-        public ExpressionSqlCore<T> IfWhere(Func<bool> condition, Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> IfWhere(Func<bool> condition, Expression<Func<T, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T, T1, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T1, object>> exp)
-        {
-            if (condition.Invoke())
-                WhereHandle(exp.Body);
-            return this;
-        }
-
-        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T, T1, T2, object>> exp)
-        {
-            if (condition.Invoke())
-                WhereHandle(exp.Body);
-            return this;
-        }
-        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T1, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T, T1, T2, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T1, T2, bool>> exp)
+        {
+            if (condition.Invoke())
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            if (condition.Invoke())
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T1, T2, T3, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
