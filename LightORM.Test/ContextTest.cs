@@ -146,5 +146,14 @@ namespace LightORM.Test
             var dt = db.QueryDataTable("select * from t_station_user where sptd=?Age", new p());
             Console.WriteLine(dt.Rows.Count);
         }
+
+        [Test]
+        public void TestWhere123()
+        {
+            var db = GetContext();
+            db.DbSet.Select<Users>()
+                .Where(u => 1 == 1);
+            Console.WriteLine(db.DbSet);
+        }
     }
 }
