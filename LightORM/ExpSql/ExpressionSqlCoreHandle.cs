@@ -51,7 +51,7 @@ namespace DExpSql
             _sqlCaluse += "(";
             if (body?.ToString() == "True")
             {
-                _sqlCaluse += " 1 == 1 ";
+                _sqlCaluse += " 1 = 1 ";
             }
             else
             {
