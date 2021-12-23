@@ -49,7 +49,14 @@ namespace DExpSql
             else
                 _sqlCaluse += "\n AND";
             _sqlCaluse += "(";
-            ExpressionVisit.Where(body, _sqlCaluse);
+            if (body?.ToString() == "True")
+            {
+                _sqlCaluse += " 1 == 1 ";
+            }
+            else
+            {
+                ExpressionVisit.Where(body, _sqlCaluse);
+            }
             _sqlCaluse += ")";
         }
 
@@ -81,7 +88,7 @@ namespace DExpSql
         {
             if (_firstOrderby)
             {
-                _sqlCaluse += "\n ORDER BY "; 
+                _sqlCaluse += "\n ORDER BY ";
                 _firstOrderby = false;
             }
             else

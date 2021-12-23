@@ -152,7 +152,8 @@ namespace LightORM.Test
         {
             var db = GetContext();
             db.DbSet.Select<Users>()
-                .Where(u => 1 == 1);
+                .Where(u => 1 == 1)
+                .Where(u=>u.UserName.Like(null));
             Console.WriteLine(db.DbSet);
         }
     }
