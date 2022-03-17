@@ -1,4 +1,5 @@
-﻿using MDbEntity.Attributes;
+﻿using MDbContext.ExpSql.Extension;
+using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,6 +15,7 @@ namespace DExpSql
         private bool _firstWhere = true;
         private bool _firstOrderby = true;
 
+        private string template = "";
         private void SelectHandle(bool distinct, Expression body, params Type[] arr)
         {
             _sqlCaluse.Clear();
@@ -25,14 +27,26 @@ namespace DExpSql
             var mainTable = typeof(T);
             var tableName = _sqlCaluse.GetTableName(mainTable);
             sql = sql + tableName + " " + _sqlCaluse.GetTableAlias(mainTable).Replace(".", "");
+            template = sql;
             ExpressionVisit.Select(body, _sqlCaluse);
             //var selected = _sqlCaluse.SelectAll ? "*" : _sqlCaluse.SelectedFieldString;
-            _sqlCaluse.Sql.AppendFormat(sql, _sqlCaluse.SelectedFieldString);
+            _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
         }
 
         private void JoinHandle<T1>(string joinType, Expression exp)
         {
             var joinTable = typeof(T1);
+            if (_sqlCaluse.SelectAll)
+            {
+                var props = joinTable.GetProperties();
+                foreach (var prop in props)
+                {
+                    _sqlCaluse.SelectFields.Add(prop.GetColumnName(_sqlCaluse));
+                }
+                //TODO:需要优化，先硬编码 
+                _sqlCaluse.Sql.Clear();
+                _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
+            }
             _sqlCaluse.SetTableAlias(joinTable);
             var tableName = _sqlCaluse.GetTableName(joinTable);
             _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable).Replace(".", "")}";

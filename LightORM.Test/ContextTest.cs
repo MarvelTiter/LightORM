@@ -117,6 +117,8 @@ namespace LightORM.Test
             int[] arr = { 1, 2, 3, 4 };
             var d = DateTime.Now.ToString("yyyyMM");
             db.DbSet.Select<Users>()
+                .InnerJoin<Job>((u,j)=>u.Age == j.JOB_ID)
+                .Where(u=>u.Duty.Like("123"))
                 .IfWhere(() => arr.Length > 5, u => u.Age > 10)
                 .IfWhere(() => arr.Length > 2, u => u.Age > 10)
                 .IfWhere(() => arr.Length > 3, u => u.Age > 10);

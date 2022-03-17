@@ -35,18 +35,20 @@ namespace MDbContext {
         }
 
         public static IEnumerable<T> Query<T>(this DbContext self) => self.DbConnection.Query<T>(self.Sql, self.SqlParameter);
+
         public static Task<IEnumerable<T>> QueryAsync<T>(this DbContext self) {
             return RunAsync<IEnumerable<T>>(() => {
                 return self.Query<T>().ToList();
             });
         }
-
         public static T Single<T>(this DbContext self) => self.DbConnection.QuerySingle<T>(self.Sql, self.SqlParameter);
         public static Task<T> SingleAsync<T>(this DbContext self) {
             return RunAsync(() => {
                 return self.Single<T>();
             });
         }
+
+        
 
         public static int Execute(this DbContext self, string sql, object p) => self.DbConnection.Execute(sql, p);
         public static Task<int> ExecuteAsync(this DbContext self, string sql, object p) {
