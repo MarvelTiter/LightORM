@@ -117,8 +117,8 @@ namespace LightORM.Test
             int[] arr = { 1, 2, 3, 4 };
             var d = DateTime.Now.ToString("yyyyMM");
             db.DbSet.Select<Users>()
-                .InnerJoin<Job>((u,j)=>u.Age == j.JOB_ID)
-                .Where(u=>u.Duty.Like("123"))
+                .InnerJoin<Job>((u, j) => u.Age == j.JOB_ID)
+                .Where(u => u.Duty.Like("123"))
                 .IfWhere(() => arr.Length > 5, u => u.Age > 10)
                 .IfWhere(() => arr.Length > 2, u => u.Age > 10)
                 .IfWhere(() => arr.Length > 3, u => u.Age > 10);
@@ -155,7 +155,49 @@ namespace LightORM.Test
             var db = GetContext();
             db.DbSet.Select<Users>()
                 .Where(u => 1 == 1)
-                .Where(u=>u.UserName.Like(null));
+                .Where(u => u.UserName.Like(null));
+            Console.WriteLine(db.DbSet);
+        }
+
+        [Test]
+        public void TestSelectFn()
+        {
+            var db = GetContext();
+            var req = new GeneralReq();
+            db.DbSet.Select<Jobs, BasicStation>((j, s) => new
+            {
+                s.Jczbh,
+                s.Jczmc,
+                HeFaWeiShenHe = Fn.Sum(() => j.JobState == 4),
+                ZhengZaiHeFaShenHe = Fn.Sum(() => j.JobState == 5),
+                HeFaShenHeTongGuo = Fn.Sum(() => j.JobState == 6),
+                HeFaShenHeBuTongGuo = Fn.Sum(() => j.JobState == 7),
+                DaiDaYin = Fn.Sum(() => j.JobState == 8),
+                YiDaYin = Fn.Sum(() => j.JobState == 9),
+                YiQuXiao = Fn.Sum(() => j.JobState == 20)
+            })
+                .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh)
+                .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
+                .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
+                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
+
+            db.DbSet.Select<Jobs, BasicStation>((j, s) => new
+            {
+                s.Jczbh,
+                s.Jczmc,
+                HeFaWeiShenHe = Fn.Sum(() => j.JobState == 4),
+                ZhengZaiHeFaShenHe = Fn.Sum(() => j.JobState == 5),
+                HeFaShenHeTongGuo = Fn.Sum(() => j.JobState == 6),
+                HeFaShenHeBuTongGuo = Fn.Sum(() => j.JobState == 7),
+                DaiDaYin = Fn.Sum(() => j.JobState == 8),
+                YiDaYin = Fn.Sum(() => j.JobState == 9),
+                YiQuXiao = Fn.Sum(() => j.JobState == 20)
+            })
+                .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh)
+                .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
+                .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
+                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
+
             Console.WriteLine(db.DbSet);
         }
     }
