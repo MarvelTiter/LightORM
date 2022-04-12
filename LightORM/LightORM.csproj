@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;netstandard2.0;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net4.0;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <RootNamespace>MDbContext</RootNamespace>
     <AssemblyName>MT.LightORM</AssemblyName>
     <Authors>MarvelTiter</Authors>
     <Description>使用表达式树（ExpressionTree）构建Sql，仅用于学习</Description>
-    <Version>1.1.6.4-alpha</Version>
+    <Version>1.1.6.5-alpha</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<FileVersion>1.1.6.4</FileVersion>
+	<FileVersion>1.1.6.5</FileVersion>
   </PropertyGroup>
 
 </Project>

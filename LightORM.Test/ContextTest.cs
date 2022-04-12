@@ -14,6 +14,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace LightORM.Test
 {
@@ -25,15 +26,6 @@ namespace LightORM.Test
 
         }
 
-        [Test]
-        public async void SingleTest()
-        {
-            using (var db = GetContext())
-            {
-                var count= await db.DbSet.Count<NetConfig>().First<int>();
-                Assert.IsTrue(count == 4);
-            }
-        }
 
         [Test]
         public void AddTest()
@@ -199,6 +191,30 @@ namespace LightORM.Test
                 .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
 
             Console.WriteLine(db.DbSet);
+        }
+
+
+
+        private DbContext VbDbContext()
+        {
+            DbContext.Init(DbBaseType.Oracle);
+            var conn = new OracleConnection("Data Source=192.168.56.11:1521/ORCL;Persist Security Info=True;User ID=CGS;Password=CGS2020");
+            return conn.DbContext();
+        }
+        [Test]
+        public void TestExtension()
+        {
+            var list = local().Result;
+            foreach (var b in list)
+            {
+                Console.WriteLine(b.Jczmc);
+            }
+        }
+
+        private Task<IEnumerable<BasicStation>> local()
+        {
+            var db = VbDbContext();
+            return db.DbSet.Select<BasicStation>().ToListAsync<BasicStation>();
         }
     }
 }

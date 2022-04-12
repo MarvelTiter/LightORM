@@ -13,7 +13,7 @@ namespace DExpSql
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public partial class ExpressionSqlCore<T>: ExpressionSqlCore
+    public partial class ExpressionSqlCore<T> : ExpressionSqlCore
     {
         private SqlCaluse _sqlCaluse;
         private readonly DbContext _dbContext;
@@ -248,6 +248,53 @@ namespace DExpSql
                 WhereHandle(exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> IfWhere(bool condition, Expression<Func<T, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1>(bool condition, Expression<Func<T, T1, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1>(bool condition, Expression<Func<T1, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(bool condition, Expression<Func<T, T1, T2, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(bool condition, Expression<Func<T1, T2, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(bool condition, Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(bool condition, Expression<Func<T1, T2, T3, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
         #endregion
 
         #region group by

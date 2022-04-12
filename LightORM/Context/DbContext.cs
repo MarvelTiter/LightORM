@@ -55,6 +55,7 @@ namespace MDbContext {
         private bool m_disposed;
 
         protected virtual void Dispose(bool disposing) {
+            Console.WriteLine($"{DateTime.Now} => DbContext Dispose");
             if (!m_disposed) {
                 if (disposing) {
                     // Release managed resources      

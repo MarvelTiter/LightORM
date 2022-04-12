@@ -9,22 +9,28 @@ namespace MDbContext.Context.Extension
 {
     public static class ExpressionSqlEx
     {
-        public static Task<IEnumerable<T>> ToList<T>(this ExpressionSqlCore self)
+        public static Task<IEnumerable<T>> ToListAsync<T>(this ExpressionSqlCore self)
         {
-            var db = self.GetDbContext();
-            return db.QueryAsync<T>();
+            using (var db = self.GetDbContext())
+            {
+                return db.QueryAsync<T>();
+            }
         }
 
-        public static Task<DataTable> ToDataTable(this ExpressionSqlCore self)
+        public static Task<DataTable> ToDataTableAsync(this ExpressionSqlCore self)
         {
-            var db = self.GetDbContext();
-            return db.QueryDataTableAsync();
+            using (var db = self.GetDbContext())
+            {
+                return db.QueryDataTableAsync();
+            }
         }
 
-        public static Task<T> First<T>(this ExpressionSqlCore self)
+        public static Task<T> FirstAsync<T>(this ExpressionSqlCore self)
         {
-            var db = self.GetDbContext();
-            return db.SingleAsync<T>();
+            using (var db = self.GetDbContext())
+            {
+                return db.SingleAsync<T>();
+            }
         }
     }
 }
