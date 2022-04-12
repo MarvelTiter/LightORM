@@ -1,4 +1,5 @@
-﻿using MDbContext.ExpSql.Extension;
+﻿using MDbContext;
+using MDbContext.ExpSql.Extension;
 using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;

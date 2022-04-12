@@ -1,6 +1,7 @@
 using DExpSql;
 using LightORM.Test.Models;
 using MDbContext;
+using MDbContext.Context.Extension;
 using Microsoft.Data.Sqlite;
 using MySql.Data.MySqlClient;
 using NUnit.Framework;
@@ -25,12 +26,11 @@ namespace LightORM.Test
         }
 
         [Test]
-        public void SingleTest()
+        public async void SingleTest()
         {
             using (var db = GetContext())
             {
-                db.DbSet.Count<NetConfig>();
-                var count = db.Single<int>();
+                var count= await db.DbSet.Count<NetConfig>().First<int>();
                 Assert.IsTrue(count == 4);
             }
         }

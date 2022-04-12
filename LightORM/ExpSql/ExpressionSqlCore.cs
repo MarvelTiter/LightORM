@@ -1,19 +1,33 @@
-﻿using System;
+﻿using MDbContext;
+using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
 
 namespace DExpSql
 {
+    public abstract class ExpressionSqlCore
+    {
+        public abstract MDbContext.DbContext GetDbContext();
+    }
     /// <summary>
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public partial class ExpressionSqlCore<T>
+    public partial class ExpressionSqlCore<T>: ExpressionSqlCore
     {
         private SqlCaluse _sqlCaluse;
-        public ExpressionSqlCore(SqlCaluse sqlCaluse)
+        private readonly DbContext _dbContext;
+
+        public ExpressionSqlCore(SqlCaluse sqlCaluse, MDbContext.DbContext context)
         {
             this._sqlCaluse = sqlCaluse;
+            this._dbContext = context;
+        }
+
+
+        public override DbContext GetDbContext()
+        {
+            return this._dbContext;
         }
 
         #region select part

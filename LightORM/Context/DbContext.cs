@@ -38,12 +38,12 @@ namespace MDbContext {
 
         public DbContext(int type, IDbConnection connection) {
             DbConnection = connection;
-            DbSet = new ExpressionSql(type);
+            DbSet = new ExpressionSql(type,this);
         }
 
         public DbContext(IDbConnection connection) {
             DbConnection = connection;
-            DbSet = new ExpressionSql(DBType);
+            DbSet = new ExpressionSql(DBType, this);
         }
 
 
