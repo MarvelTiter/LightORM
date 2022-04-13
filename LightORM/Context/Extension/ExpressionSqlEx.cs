@@ -11,26 +11,20 @@ namespace MDbContext.Context.Extension
     {
         public static Task<IEnumerable<T>> ToListAsync<T>(this ExpressionSqlCore self)
         {
-            using (var db = self.GetDbContext())
-            {
-                return db.QueryAsync<T>();
-            }
+            var db = self.GetDbContext();
+            return db.QueryAsync<T>();
         }
 
         public static Task<DataTable> ToDataTableAsync(this ExpressionSqlCore self)
         {
-            using (var db = self.GetDbContext())
-            {
-                return db.QueryDataTableAsync();
-            }
+            var db = self.GetDbContext();
+            return db.QueryDataTableAsync();
         }
 
         public static Task<T> FirstAsync<T>(this ExpressionSqlCore self)
         {
-            using (var db = self.GetDbContext())
-            {
-                return db.SingleAsync<T>();
-            }
+            var db = self.GetDbContext();
+            return db.SingleAsync<T>();
         }
     }
 }
