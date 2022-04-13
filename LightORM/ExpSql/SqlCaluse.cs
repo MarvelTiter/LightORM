@@ -107,7 +107,7 @@ namespace DExpSql {
                 return "";
             } else {
                 var type = parameterValue.GetType();
-                string name = this.DbParamPrefix + "param" + this.SqlParam.Count;
+                string name = this.DbParamPrefix + "p" + this.SqlParam.Count;
                 switch (LikeMode) {
                     case 1:
                         this.SqlParam.Add(name, $"%{parameterValue}%");

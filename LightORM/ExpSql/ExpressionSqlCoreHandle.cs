@@ -37,17 +37,17 @@ namespace DExpSql
         private void JoinHandle<T1>(string joinType, Expression exp)
         {
             var joinTable = typeof(T1);
-            if (_sqlCaluse.SelectAll)
-            {
-                var props = joinTable.GetProperties();
-                foreach (var prop in props)
-                {
-                    _sqlCaluse.SelectFields.Add(prop.GetColumnName(_sqlCaluse));
-                }
-                //TODO:需要优化，先硬编码 
-                _sqlCaluse.Sql.Clear();
-                _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
-            }
+            //if (_sqlCaluse.SelectAll)
+            //{
+            //    var props = joinTable.GetProperties();
+            //    foreach (var prop in props)
+            //    {
+            //        _sqlCaluse.SelectFields.Add(prop.GetColumnName(_sqlCaluse));
+            //    }
+            //    //TODO:需要优化，先硬编码 
+            //    _sqlCaluse.Sql.Clear();
+            //    _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
+            //}
             _sqlCaluse.SetTableAlias(joinTable);
             var tableName = _sqlCaluse.GetTableName(joinTable);
             _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable).Replace(".", "")}";
