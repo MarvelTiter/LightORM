@@ -111,10 +111,17 @@ namespace DExpSql
             ExpressionVisit.OrderBy(exp, _sqlCaluse);
         }
 
-        private void GroupByHandle(Expression body)
+        private void GroupByHandle(Expression body, bool rollup)
         {
             ExpressionVisit.GroupBy(body, _sqlCaluse);
-            _sqlCaluse += "\n GROUP BY " + _sqlCaluse.GroupByFieldString;
+            if (rollup)
+            {
+                _sqlCaluse += $"\n GROUP BY ROLLUP ({_sqlCaluse.GroupByFieldString})";
+            }
+            else
+            {
+                _sqlCaluse += "\n GROUP BY " + _sqlCaluse.GroupByFieldString;
+            }
         }
 
         private void CountHandle()

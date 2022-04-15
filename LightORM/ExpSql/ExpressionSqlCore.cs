@@ -298,45 +298,45 @@ namespace DExpSql
         #endregion
 
         #region group by
-        public ExpressionSqlCore<T> GroupBy(Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> GroupBy(Expression<Func<T, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T1, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T1, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T1, T2, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
@@ -434,8 +434,10 @@ namespace DExpSql
         }
         #endregion
 
-        public ExpressionSqlCore<T> Paging(int from, int to)
+        public ExpressionSqlCore<T> Paging(int index, int size)
         {
+            var from = (index - 1) * size;
+            var to = index * size;
             _sqlCaluse.Paging(from, to);
             return this;
         }
