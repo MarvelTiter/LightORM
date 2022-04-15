@@ -204,16 +204,11 @@ namespace LightORM.Test
         [Test]
         public void TestExtension()
         {
-            //var list = local().Result;
-            //foreach (var b in list)
-            //{
-            //    Console.WriteLine(b.Jczmc);
-            //}
-            var db = VbDbContext();
-            db.DbSet.Select<BasicStation>()
-                .InnerJoin<Users>((b, u) => b.Cjsqbh == u.Password)
-                .InnerJoin<Job>((b, j) => b.Cjsqbh == j.USR_ID);
-            Console.WriteLine(db.DbSet);
+            var list = local().Result;
+            foreach (var b in list)
+            {
+                Console.WriteLine(b.Jczmc);
+            }
         }
 
         private Task<IEnumerable<BasicStation>> local()
