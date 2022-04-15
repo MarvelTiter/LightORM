@@ -216,5 +216,40 @@ namespace LightORM.Test
             var db = VbDbContext();
             return db.DbSet.Select<BasicStation>().ToListAsync<BasicStation>();
         }
+
+        class temp
+        {
+            public string jczbh { get; set; }
+            public string jczmc { get; set; }
+            public long lrs { get; set; }
+            public long cys { get; set; }
+            public long cytgs { get; set; }
+            public long cybtgs { get; set; }
+        }
+
+        [Test]
+        public async Task TestCount()
+        {
+            var db = VbDbContext();
+            var req = new GeneralReq();
+            req.Start = new DateTime(2018, 4, 1);
+            req.End = new DateTime(2018, 5, 5);
+            var dt = await db.DbSet.Select<InspectItemdataF1Xxxx, InspectJudgeresult, InspectLoginInfo, BasicStation>((f1, judge, login, stn) => new
+            {
+                stn.Jczbh,
+                stn.Jczmc,
+                LRS = Fn.Sum(() => stn.Jczbh),
+                CYS = Fn.Sum(() => judge.Jyjl != null),
+                CYTGS = Fn.Sum(() => judge.Jyjl == "合格"),
+                CYBTGS = Fn.Sum(() => judge.Jyjl == "不合格")
+            })
+                 .InnerJoin<InspectJudgeresult>((f1, judge) => f1.Jylsh == judge.Jylsh && f1.Jycs == judge.Jycs)
+                 .InnerJoin<InspectLoginInfo>((f1, info) => f1.Jylsh == info.Jylsh && f1.Jycs == info.Jycs)
+                 .InnerJoin<BasicStation>((f1, s) => f1.Jyjgbh == s.Jczbh)
+                 .Where<InspectLoginInfo>(i => i.Dlsj >= req.Start && i.Dlsj < req.End)
+                 .IfWhere(!string.IsNullOrEmpty(req.Keyword), f => f.Jyjgbh == req.Keyword)
+                 .GroupBy<BasicStation>((s) => new { s.Jczbh, s.Jczmc })
+                 .ToListAsync<temp>();
+        }
     }
 }

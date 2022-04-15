@@ -27,6 +27,10 @@ namespace DExpSql {
 
         public List<string> GroupByFields { get; private set; }
 
+        /// <summary>
+        /// 0 - 返回布尔值 形如(sum(case when expression then 1 else o end))， 1 - 按列统计，形如 sum(colname)
+        /// </summary>
+        public int SelectMethodType { get; set; } = 1;
         public StringBuilder SelectMethod { get; set; }
         /// <summary>
         /// 模糊查询Like  0:非模糊查询 1：like 2：leftlike 3:rightlike
@@ -101,9 +105,10 @@ namespace DExpSql {
             else SelectMethod.Clear();
         }
 
-        public string AddDbParameter(object parameterValue) {
+        public string AddDbParameter(object parameterValue, StringBuilder sql = null) {
             if (parameterValue == null || parameterValue == DBNull.Value) {
-                this.Sql.Append(" null");
+                if (sql == null) sql = Sql;
+                sql.Append(" null");
                 return "";
             } else {
                 var type = parameterValue.GetType();

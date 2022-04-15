@@ -12,11 +12,11 @@ namespace DExpSql.ExpressionHandle {
             switch (expressionNodeType) {
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
-                    content.Insert(operatorIndex, $"{n} AND");
+                    content.Insert(operatorIndex, $"{n} AND ");
                     break;
                 case ExpressionType.Equal:
                     if (useIs) {
-                        content.Insert(operatorIndex, " IS");
+                        content.Insert(operatorIndex, " IS ");
                     } else {
                         content.Insert(operatorIndex, " = ");
                     }
@@ -29,14 +29,14 @@ namespace DExpSql.ExpressionHandle {
                     break;
                 case ExpressionType.NotEqual:
                     if (useIs) {
-                        content.Insert(operatorIndex, " IS NOT");
+                        content.Insert(operatorIndex, " IS NOT ");
                     } else {
                         content.Insert(operatorIndex, " <> ");
                     }
                     break;
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    content.Insert(operatorIndex, $"{n} OR");
+                    content.Insert(operatorIndex, $"{n} OR ");
                     break;
                 case ExpressionType.LessThan:
                     content.Insert(operatorIndex, " < ");
@@ -50,6 +50,7 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse SelectMethod(BinaryExpression exp, SqlCaluse sqlCaluse) {
+            sqlCaluse.SelectMethodType = 0;
             ExpressionVisit.SelectMethod(exp.Left, sqlCaluse);
             var insertIndex = sqlCaluse.SelectMethod.Length;
             ExpressionVisit.SelectMethod(exp.Right, sqlCaluse);
@@ -71,7 +72,7 @@ namespace DExpSql.ExpressionHandle {
         }
 
         protected override SqlCaluse Join(BinaryExpression exp, SqlCaluse sqlCaluse) {
-            sqlCaluse += " ON ";
+            //sqlCaluse += " AND ";
             ExpressionVisit.Join(exp.Left, sqlCaluse);
             var insertIndex = sqlCaluse.Length;
 
