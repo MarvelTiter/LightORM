@@ -21,7 +21,7 @@ namespace DExpSql.ExpressionHandle
         {
             if (exp.Member.GetAttribute<IgnoreAttribute>() == null)
             {
-                string col = exp.Member.GetColumnName(sqlCaluse);
+                string col = exp.Member.GetSelectColumnName(sqlCaluse);
                 sqlCaluse.SelectFields.Add(col);
             }
             return sqlCaluse;

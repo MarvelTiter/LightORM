@@ -158,7 +158,7 @@ namespace LightORM.Test
             var req = new GeneralReq();
             db.DbSet.Select<Jobs, BasicStation>((j, s) => new
             {
-                s.Jczbh,
+                BH = s.Jczbh,
                 s.Jczmc,
                 HeFaWeiShenHe = Fn.Sum(() => j.JobState == 4),
                 ZhengZaiHeFaShenHe = Fn.Sum(() => j.JobState == 5),
@@ -171,24 +171,7 @@ namespace LightORM.Test
                 .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh)
                 .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
                 .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
-                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
-
-            db.DbSet.Select<Jobs, BasicStation>((j, s) => new
-            {
-                s.Jczbh,
-                s.Jczmc,
-                HeFaWeiShenHe = Fn.Sum(() => j.JobState == 4),
-                ZhengZaiHeFaShenHe = Fn.Sum(() => j.JobState == 5),
-                HeFaShenHeTongGuo = Fn.Sum(() => j.JobState == 6),
-                HeFaShenHeBuTongGuo = Fn.Sum(() => j.JobState == 7),
-                DaiDaYin = Fn.Sum(() => j.JobState == 8),
-                YiDaYin = Fn.Sum(() => j.JobState == 9),
-                YiQuXiao = Fn.Sum(() => j.JobState == 20)
-            })
-                .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh)
-                .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
-                .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
-                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
+                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });           
 
             Console.WriteLine(db.DbSet);
         }
