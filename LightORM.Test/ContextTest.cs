@@ -168,7 +168,7 @@ namespace LightORM.Test
                 YiDaYin = Fn.Sum(() => j.JobState == 9),
                 YiQuXiao = Fn.Sum(() => j.JobState == 20)
             })
-                .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh)
+                .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh && j.Jycs == 1)
                 .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
                 .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
                 .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });           

@@ -27,6 +27,10 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
-
+        protected override SqlCaluse Join(ConstantExpression exp, SqlCaluse sqlCaluse)
+        {
+            sqlCaluse += sqlCaluse.AddDbParameter(exp.Value);
+            return sqlCaluse;
+        }
     }
 }
