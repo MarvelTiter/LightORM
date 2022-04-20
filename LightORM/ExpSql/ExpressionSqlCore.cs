@@ -75,6 +75,66 @@ namespace DExpSql
             SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3));
             return this;
         }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4>(Expression<Func<T, T1, T2, T3, T4, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5) => new { t1, t2, t3, t4, t5 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5>(Expression<Func<T, T1, T2, T3, T4, T5, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6) => new { t1, t2, t3, t4, t5, t6 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6>(Expression<Func<T, T1, T2, T3, T4, T5, T6, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7) => new { t1, t2, t3, t4, t5, t6, t7 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8) => new { t1, t2, t3, t4, t5, t6, t7, t8 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7, T8>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8, t9) => new { t1, t2, t3, t4, t5, t6, t7, t8, t9 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8, t9, t0) => new { t1, t2, t3, t4, t5, t6, t7, t8, t9, t0 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9));
+            return this;
+        }
         #endregion
 
         #region update part
