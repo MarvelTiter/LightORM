@@ -54,6 +54,37 @@ namespace DExpSql
             SqlCaluse.Clear();
             return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
         }
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4>(Expression<Func<T, T1, T2, T3, T4, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4, T5>(Expression<Func<T, T1, T2, T3, T4, T5, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4, T5, T6>(Expression<Func<T, T1, T2, T3, T4, T5, T6, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4, T5, T6, T7>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
+
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4, T5, T6, T7, T8>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
+        public ExpressionSqlCore<T> Select<T, T1, T2, T3, T4, T5, T6, T7, T8, T9>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp = null, bool distinct = false)
+        {
+            SqlCaluse.Clear();
+            return new ExpressionSqlCore<T>(SqlCaluse, Context).Select(exp, distinct);
+        }
 
         public ExpressionSqlCore<T> Update<T>(Expression<Func<object>> exp, Expression<Func<T, object>> pkExp = null)
         {
