@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DExpSql
 {
-    public static class Fn
+    public static class SqlFn
     {
         public static bool Like(this object self, string keyWord)
         {
@@ -50,6 +50,10 @@ namespace DExpSql
         //}
 
         public static int Count(Expression<Func<object>> exp)
+        {
+            return 0;
+        }
+        public static int Count()
         {
             return 0;
         }

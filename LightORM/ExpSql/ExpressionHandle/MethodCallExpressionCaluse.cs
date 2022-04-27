@@ -74,15 +74,22 @@ namespace DExpSql.ExpressionHandle
 
         private static SqlCaluse SelectCount(MethodCallExpression exp, SqlCaluse sqlCaluse)
         {
-            var a = exp.Arguments[0];
-            ExpressionVisit.SelectMethod(a, sqlCaluse);
-            if (sqlCaluse.SelectMethodType == 0)
+            if (exp.Arguments.Count == 0)
             {
-                AddColumn(sqlCaluse, "\n COUNT(CASE WHEN{0} THEN 1 ELSE null END) ");
+                AddColumn(sqlCaluse, "\n COUNT(*) ");
             }
             else
             {
-                AddColumn(sqlCaluse, "\n COUNT({0}) ");
+                var a = exp.Arguments[0];
+                ExpressionVisit.SelectMethod(a, sqlCaluse);
+                if (sqlCaluse.SelectMethodType == 0)
+                {
+                    AddColumn(sqlCaluse, "\n COUNT(CASE WHEN{0} THEN 1 ELSE null END) ");
+                }
+                else
+                {
+                    AddColumn(sqlCaluse, "\n COUNT({0}) ");
+                }
             }
             return sqlCaluse;
         }

@@ -2,15 +2,11 @@ using DExpSql;
 using LightORM.Test.Models;
 using MDbContext;
 using MDbContext.Context.Extension;
-using Microsoft.Data.Sqlite;
 using MySql.Data.MySqlClient;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -160,13 +156,13 @@ namespace LightORM.Test
             {
                 BH = s.Jczbh,
                 s.Jczmc,
-                HeFaWeiShenHe = Fn.Sum(() => j.JobState == 4),
-                ZhengZaiHeFaShenHe = Fn.Sum(() => j.JobState == 5),
-                HeFaShenHeTongGuo = Fn.Sum(() => j.JobState == 6),
-                HeFaShenHeBuTongGuo = Fn.Sum(() => j.JobState == 7),
-                DaiDaYin = Fn.Sum(() => j.JobState == 8),
-                YiDaYin = Fn.Sum(() => j.JobState == 9),
-                YiQuXiao = Fn.Sum(() => j.JobState == 20)
+                HeFaWeiShenHe = SqlFn.Sum(() => j.JobState == 4),
+                ZhengZaiHeFaShenHe = SqlFn.Sum(() => j.JobState == 5),
+                HeFaShenHeTongGuo = SqlFn.Sum(() => j.JobState == 6),
+                HeFaShenHeBuTongGuo = SqlFn.Sum(() => j.JobState == 7),
+                DaiDaYin = SqlFn.Sum(() => j.JobState == 8),
+                YiDaYin = SqlFn.Sum(() => j.JobState == 9),
+                YiQuXiao = SqlFn.Sum(() => j.JobState == 20)
             })
                 .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh && j.Jycs == 1)
                 .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
@@ -221,10 +217,10 @@ namespace LightORM.Test
             {
                 stn.Jczbh,
                 stn.Jczmc,
-                LRS = Fn.Sum(() => stn.Jczbh),
-                CYS = Fn.Sum(() => judge.Jyjl != null),
-                CYTGS = Fn.Sum(() => judge.Jyjl == "合格"),
-                CYBTGS = Fn.Sum(() => judge.Jyjl == "不合格")
+                LRS = SqlFn.Sum(() => stn.Jczbh),
+                CYS = SqlFn.Sum(() => judge.Jyjl != null),
+                CYTGS = SqlFn.Sum(() => judge.Jyjl == "合格"),
+                CYBTGS = SqlFn.Sum(() => judge.Jyjl == "不合格")
             })
                  .InnerJoin<InspectJudgeresult>((f1, judge) => f1.Jylsh == judge.Jylsh && f1.Jycs == judge.Jycs)
                  .InnerJoin<InspectLoginInfo>((f1, info) => f1.Jylsh == info.Jylsh && f1.Jycs == info.Jycs)
