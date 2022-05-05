@@ -10,9 +10,9 @@ namespace DExpSql
     {
 
         private DbContext Context;
-        private int DbType { get; set; }
+        private DbBaseType DbType { get; set; }
         internal SqlCaluse SqlCaluse { get; private set; }
-        internal ExpressionSql(int dBType, DbContext context)
+        internal ExpressionSql(DbBaseType dBType, DbContext context)
         {
             DbType = dBType;
             SqlCaluse = new SqlCaluse();

@@ -10,7 +10,7 @@ namespace LightORM.Test.Models
 {
     internal class TableHeaderAttribute : Attribute
     {
-        public TableHeaderAttribute(string label, int sort)
+        public TableHeaderAttribute(string label, int sort = 0)
         {
             Label = label;
             Sort = sort;

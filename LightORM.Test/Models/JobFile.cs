@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 
 namespace LightORM.Test.Models {
-	[TableName("DQJY_JOBFILES")]
+	[TableName("JOBFILES")]
 	public class JobFile {
 		public DateTime? JFL_DATE { get; set; }
 		public int JFL_NEED { get; set; }

@@ -18,7 +18,8 @@ namespace DExpSql.ExpressionHandle
             {"In",InMethod },
             {"Sum",SelectSum },
             {"Count",SelectCount },
-            {"GroupConcat",SelectGroupConcat }
+            {"GroupConcat",SelectGroupConcat },
+            {"Coalesce",SelectCoalesce }
         };
 
 
@@ -96,7 +97,7 @@ namespace DExpSql.ExpressionHandle
 
         private static SqlCaluse SelectGroupConcat(MethodCallExpression exp, SqlCaluse sqlCaluse)
         {
-            if (sqlCaluse.DbType == 2)
+            if (sqlCaluse.DbType == MDbContext.DbBaseType.MySql)
             {
                 var a = exp.Arguments[0];
                 ExpressionVisit.SelectMethod(a, sqlCaluse);
@@ -106,6 +107,27 @@ namespace DExpSql.ExpressionHandle
             {
                 throw new Exception("GroupConcat 只支持 MySql");
             }
+            return sqlCaluse;
+        }
+
+        private static SqlCaluse SelectCoalesce(MethodCallExpression exp, SqlCaluse sqlCaluse)
+        {
+            var arg = exp.Arguments[0];
+            ExpressionVisit.SelectMethod(arg, sqlCaluse);
+            var finalName = "Coalesce";
+            if (exp.Arguments.Count > 1)
+            {
+                finalName = ((ConstantExpression)exp.Arguments[1]).Value.ToString();
+            }
+            var fields = sqlCaluse.SelectMethod.ToString().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var coalParams = new List<string>();
+            foreach (var field in fields)
+            {
+                coalParams.Add(sqlCaluse.DbHelper.ToDbString(field));
+            }
+            var col = $"COALESCE({string.Join(",", coalParams)},'{finalName}') {sqlCaluse.GetMemberName()}";
+            sqlCaluse.SelectFields.Add(col);
+            sqlCaluse.SelectMethod.Clear();
             return sqlCaluse;
         }
 

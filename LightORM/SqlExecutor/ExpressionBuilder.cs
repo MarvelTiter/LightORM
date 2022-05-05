@@ -12,8 +12,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.SqlExecutor {
-    internal class ExpressionBuilder : IDeserializer {
+namespace MDbContext.SqlExecutor
+{
+    internal class ExpressionBuilder : IDeserializer
+    {
 
         private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod("RecordFieldToBytes", BindingFlags.NonPublic | BindingFlags.Static);
 
@@ -33,7 +35,8 @@ namespace MDbContext.SqlExecutor {
         private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull", new Type[] { typeof(int) });
         private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue", new Type[] { typeof(int) });
 
-        readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37) {
+        readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37)
+        {
             [typeof(byte)] = DataRecord_GetByte,
             [typeof(sbyte)] = DataRecord_GetByte,
             [typeof(short)] = DataRecord_GetInt16,
@@ -52,7 +55,8 @@ namespace MDbContext.SqlExecutor {
             [typeof(DateTime)] = DataRecord_GetDateTime,
             [typeof(byte[])] = Helper_GetBytes
         };
-        private static byte[] RecordFieldToBytes(IDataRecord Reader, int Column) {
+        private static byte[] RecordFieldToBytes(IDataRecord Reader, int Column)
+        {
             long BlobSize = Reader.GetBytes(Column, 0, null, 0, 0);
             if (BlobSize > int.MaxValue)
                 throw new ArgumentOutOfRangeException("MemoryStream cannot be larger than " + int.MaxValue);
@@ -61,7 +65,8 @@ namespace MDbContext.SqlExecutor {
             Reader.GetBytes(Column, 0, Buffer, 0, Buffer.Length);
             return Buffer;
         }
-        public Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader) {
+        public Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader)
+        {
             return BuildFunc<T>(reader, CultureInfo.CurrentCulture, false);
         }
 
@@ -81,14 +86,16 @@ namespace MDbContext.SqlExecutor {
         /// <param name="Culture"></param>
         /// <param name="MustMapAllProperties"></param>
         /// <returns></returns>
-        private Func<IDataRecord, object> BuildFunc<Target>(IDataRecord RecordInstance, CultureInfo Culture, bool MustMapAllProperties) {
+        private Func<IDataRecord, object> BuildFunc<Target>(IDataRecord RecordInstance, CultureInfo Culture, bool MustMapAllProperties)
+        {
             ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataRecord), "Record");
             Type TargetType = typeof(Target);
             DataTable SchemaTable = ((IDataReader)RecordInstance).GetSchemaTable();
             Expression Body = default(Expression);
 
             // 元组处理
-            if (TargetType.FullName.StartsWith("System.Tuple`")) {
+            if (TargetType.FullName.StartsWith("System.Tuple`"))
+            {
                 ConstructorInfo[] Constructors = TargetType.GetConstructors();
                 if (Constructors.Count() != 1)
                     throw new ArgumentException("Tuple must have one Constructor");
@@ -99,12 +106,16 @@ namespace MDbContext.SqlExecutor {
                     throw new NotSupportedException("Nested Tuples are not supported");
 
                 Expression[] TargetValueExpressions = new Expression[Parameters.Length];
-                for (int Ordinal = 0; Ordinal < Parameters.Length; Ordinal++) {
+                for (int Ordinal = 0; Ordinal < Parameters.Length; Ordinal++)
+                {
                     var ParameterType = Parameters[Ordinal].ParameterType;
-                    if (Ordinal >= RecordInstance.FieldCount) {
+                    if (Ordinal >= RecordInstance.FieldCount)
+                    {
                         if (MustMapAllProperties) { throw new ArgumentException("Tuple has more fields than the DataReader"); }
                         TargetValueExpressions[Ordinal] = Expression.Default(ParameterType);
-                    } else {
+                    }
+                    else
+                    {
                         TargetValueExpressions[Ordinal] = GetTargetValueExpression(
                                                         RecordInstance,
                                                         Culture,
@@ -117,7 +128,8 @@ namespace MDbContext.SqlExecutor {
                 Body = Expression.New(Constructor, TargetValueExpressions);
             }
             // 基础类型处理 eg: IEnumable<int>  IEnumable<string>
-            else if (TargetType.IsElementaryType()) {
+            else if (TargetType.IsElementaryType())
+            {
                 const int Ordinal = 0;
                 Expression TargetValueExpression = GetTargetValueExpression(
                                                         RecordInstance,
@@ -131,14 +143,19 @@ namespace MDbContext.SqlExecutor {
                 Body = Expression.Block(converted);
             }
             // 其他
-            else {
+            else
+            {
                 SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
                 // 字段处理 Field
-                foreach (FieldInfo TargetMember in TargetType.GetFields(BindingFlags.Public | BindingFlags.Instance)) {
-                    Action work = delegate {
-                        for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++) {
+                foreach (FieldInfo TargetMember in TargetType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    Action work = delegate
+                    {
+                        for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++)
+                        {
                             //Check if the RecordFieldName matches the TargetMember
-                            if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal))) {
+                            if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal)))
+                            {
                                 Expression TargetValueExpression = GetTargetValueExpression(
                                                                         RecordInstance,
                                                                         Culture,
@@ -154,19 +171,25 @@ namespace MDbContext.SqlExecutor {
                             }
                         }
                         //If we reach this code the targetmember did not get mapped
-                        if (MustMapAllProperties) {
+                        if (MustMapAllProperties)
+                        {
                             throw new ArgumentException(String.Format("TargetField {0} is not matched by any field in the DataReader", TargetMember.Name));
                         }
                     };
                     work();
                 }
                 // 属性处理 Property
-                foreach (PropertyInfo TargetMember in TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
-                    if (TargetMember.CanWrite) {
-                        Action work = delegate {
-                            for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++) {
+                foreach (PropertyInfo TargetMember in TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (TargetMember.CanWrite)
+                    {
+                        Action work = delegate
+                        {
+                            for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++)
+                            {
                                 //Check if the RecordFieldName matches the TargetMember
-                                if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal))) {
+                                if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal)))
+                                {
                                     Expression TargetValueExpression = GetTargetValueExpression(
                                                                             RecordInstance,
                                                                             Culture,
@@ -182,8 +205,9 @@ namespace MDbContext.SqlExecutor {
                                 }
                             }
                             //If we reach this code the targetmember did not get mapped
-                            if (MustMapAllProperties) {
-                                throw new ArgumentException(String.Format("TargetProperty {0} is not matched by any Field in the DataReader", TargetMember.Name));
+                            if (MustMapAllProperties)
+                            {
+                                throw new ArgumentException(string.Format("TargetProperty {0} is not matched by any Field in the DataReader", TargetMember.Name));
                             }
                         };
                         work();
@@ -194,17 +218,23 @@ namespace MDbContext.SqlExecutor {
 
             }
             //Compile as Delegate
-            return Expression.Lambda<Func<IDataRecord, object>>(Body, recordInstanceExp).Compile();
+            var lambdaExp = Expression.Lambda<Func<IDataRecord, object>>(Body, recordInstanceExp);
+            return lambdaExp.Compile();
         }
 
-        private static bool MemberMatchesName(MemberInfo Member, string Name) {
+        private static bool MemberMatchesName(MemberInfo Member, string Name)
+        {
             string FieldnameAttribute = GetColumnNameAttribute();
             return FieldnameAttribute.ToLower() == Name.ToLower() || Member.Name.ToLower() == Name.ToLower();
 
-            string GetColumnNameAttribute() {
-                if (Member.GetCustomAttributes(typeof(ColumnNameAttribute), true).Count() > 0) {
+            string GetColumnNameAttribute()
+            {
+                if (Member.GetCustomAttributes(typeof(ColumnNameAttribute), true).Count() > 0)
+                {
                     return ((ColumnNameAttribute)Member.GetCustomAttributes(typeof(ColumnNameAttribute), true)[0]).Name;
-                } else {
+                }
+                else
+                {
                     return string.Empty;
                 }
             }
@@ -216,7 +246,8 @@ namespace MDbContext.SqlExecutor {
             ParameterExpression recordInstanceExp,
             DataTable SchemaTable,
             int Ordinal,
-            Type TargetMemberType) {
+            Type TargetMemberType)
+        {
             Type RecordFieldType = RecordInstance.GetFieldType(Ordinal);
             var columnAllowDbNull = SchemaTable.Rows[Ordinal]["AllowDBNull"];
             bool AllowDBNull = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
@@ -224,82 +255,112 @@ namespace MDbContext.SqlExecutor {
             Expression ConvertedRecordFieldExpression = GetConversionExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
             MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
 
-            //Create an expression that assigns the converted value to the target
             Expression TargetValueExpression;
-            if (AllowDBNull) {
+            if (AllowDBNull)
+            {
                 TargetValueExpression = Expression.Condition(
-                    NullCheckExpression,
-                    Expression.Default(TargetMemberType),
-                    ConvertedRecordFieldExpression,
-                    TargetMemberType
-                    );
-            } else {
+                NullCheckExpression,
+                Expression.Default(TargetMemberType),
+                ConvertedRecordFieldExpression,
+                TargetMemberType
+                );
+            }
+            else
+            {
                 TargetValueExpression = ConvertedRecordFieldExpression;
             }
             return TargetValueExpression;
         }
 
-        private static Expression GetRecordFieldExpression(ParameterExpression recordInstanceExp, int Ordinal, Type RecordFieldType) {
+        private static Expression GetRecordFieldExpression(ParameterExpression recordInstanceExp, int Ordinal, Type RecordFieldType)
+        {
             //MethodInfo GetValueMethod = default(MethodInfo);
             typeMapMethod.TryGetValue(RecordFieldType, out var GetValueMethod);
             if (GetValueMethod == null)
                 GetValueMethod = DataRecord_GetValue;
 
             Expression RecordFieldExpression;
-            if (object.ReferenceEquals(RecordFieldType, typeof(byte[]))) {
+            if (object.ReferenceEquals(RecordFieldType, typeof(byte[])))
+            {
                 RecordFieldExpression = Expression.Call(GetValueMethod, new Expression[] { recordInstanceExp, Expression.Constant(Ordinal, typeof(int)) });
-            } else {
+            }
+            else
+            {
                 RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, Expression.Constant(Ordinal, typeof(int)));
             }
             return RecordFieldExpression;
         }
 
-        private static MethodCallExpression GetNullCheckExpression(ParameterExpression RecordInstance, int Ordinal) {
+        private static MethodCallExpression GetNullCheckExpression(ParameterExpression RecordInstance, int Ordinal)
+        {
             MethodCallExpression NullCheckExpression = Expression.Call(RecordInstance, DataRecord_IsDBNull, Expression.Constant(Ordinal, typeof(int)));
             return NullCheckExpression;
         }
 
-        private static Expression GetConversionExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture) {
+        private static Expression GetConversionExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture)
+        {
             Expression TargetExpression;
-            if (ReferenceEquals(TargetType, SourceType)) {
+            if (ReferenceEquals(TargetType, SourceType))
+            {
                 TargetExpression = SourceExpression;
-            } else if (ReferenceEquals(SourceType, typeof(string))) {
+            }
+            else if (ReferenceEquals(SourceType, typeof(string)))
+            {
                 TargetExpression = GetParseExpression(SourceExpression, TargetType, Culture);
-            } else if (ReferenceEquals(TargetType, typeof(string))) {
+            }
+            else if (ReferenceEquals(TargetType, typeof(string)))
+            {
                 TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes));
-            } else if (ReferenceEquals(TargetType, typeof(bool))) {
+            }
+            else if (ReferenceEquals(TargetType, typeof(bool)))
+            {
                 MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", new[] { SourceType });
                 TargetExpression = Expression.Call(ToBooleanMethod, SourceExpression);
-            } else if (ReferenceEquals(SourceType, typeof(Byte[]))) {
+            }
+            else if (ReferenceEquals(SourceType, typeof(Byte[])))
+            {
                 TargetExpression = GetArrayHandlerExpression(SourceExpression, TargetType);
-            } else {
+            }
+            else
+            {
                 TargetExpression = Expression.Convert(SourceExpression, TargetType);
             }
             return TargetExpression;
         }
 
-        private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType) {
+        private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType)
+        {
             Expression TargetExpression = default(Expression);
-            if (object.ReferenceEquals(targetType, typeof(byte[]))) {
+            if (object.ReferenceEquals(targetType, typeof(byte[])))
+            {
                 TargetExpression = sourceExpression;
-            } else if (object.ReferenceEquals(targetType, typeof(MemoryStream))) {
+            }
+            else if (object.ReferenceEquals(targetType, typeof(MemoryStream)))
+            {
                 ConstructorInfo ConstructorInfo = targetType.GetConstructor(new[] { typeof(byte[]) });
                 TargetExpression = Expression.New(ConstructorInfo, sourceExpression);
-            } else {
+            }
+            else
+            {
                 throw new ArgumentException("Cannot convert a byte array to " + targetType.Name);
             }
             return TargetExpression;
         }
 
-        private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture) {
+        private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture)
+        {
             Type UnderlyingType = GetUnderlyingType(TargetType);
-            if (UnderlyingType.IsEnum) {
+            if (UnderlyingType.IsEnum)
+            {
                 MethodCallExpression ParsedEnumExpression = GetEnumParseExpression(SourceExpression, UnderlyingType);
                 //Enum.Parse returns an object that needs to be unboxed
                 return Expression.Unbox(ParsedEnumExpression, TargetType);
-            } else {
+            }
+            else
+            {
                 Expression ParseExpression = default(Expression);
-                switch (UnderlyingType.FullName) {
+                switch (UnderlyingType.FullName)
+                {
                     case "System.Byte":
                     case "System.UInt16":
                     case "System.UInt32":
@@ -322,26 +383,32 @@ namespace MDbContext.SqlExecutor {
                     default:
                         throw new ArgumentException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType));
                 }
-                if (Nullable.GetUnderlyingType(TargetType) == null) {
+                if (Nullable.GetUnderlyingType(TargetType) == null)
+                {
                     return ParseExpression;
-                } else {
+                }
+                else
+                {
                     //Convert to nullable if necessary
                     return Expression.Convert(ParseExpression, TargetType);
                 }
             }
-            Expression GetGenericParseExpression(Expression sourceExpression, Type type) {
+            Expression GetGenericParseExpression(Expression sourceExpression, Type type)
+            {
                 MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string) });
                 MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression });
                 return CallExpression;
             }
-            Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture) {
+            Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+            {
                 MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string), typeof(DateTimeFormatInfo) });
                 ConstantExpression ProviderExpression = Expression.Constant(culture.DateTimeFormat, typeof(DateTimeFormatInfo));
                 MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression, ProviderExpression });
                 return CallExpression;
             }
 
-            MethodCallExpression GetEnumParseExpression(Expression sourceExpression, Type type) {
+            MethodCallExpression GetEnumParseExpression(Expression sourceExpression, Type type)
+            {
                 //Get the MethodInfo for parsing an Enum
                 MethodInfo EnumParseMethod = typeof(Enum).GetMethod("Parse", new[] { typeof(Type), typeof(string), typeof(bool) });
                 ConstantExpression TargetMemberTypeExpression = Expression.Constant(type);
@@ -351,7 +418,8 @@ namespace MDbContext.SqlExecutor {
                 return CallExpression;
             }
 
-            MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture) {
+            MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+            {
                 MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string), typeof(NumberFormatInfo) });
                 ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
                 MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression, ProviderExpression });
@@ -359,21 +427,25 @@ namespace MDbContext.SqlExecutor {
             }
         }
 
-        private static Type GetUnderlyingType(Type targetType) {
+        private static Type GetUnderlyingType(Type targetType)
+        {
             return Nullable.GetUnderlyingType(targetType) ?? targetType;
         }
     }
-    public static class Ex {
+    public static class Ex
+    {
         /// <summary>
         /// 检查是否为基础类型
         /// </summary>
         /// <param name="t"></param>
         /// <returns></returns>
-        public static bool IsElementaryType(this Type t) {
+        public static bool IsElementaryType(this Type t)
+        {
             return ElementaryTypes.Contains(t);
         }
         readonly static HashSet<Type> ElementaryTypes = LoadElementaryTypes();
-        private static HashSet<Type> LoadElementaryTypes() {
+        private static HashSet<Type> LoadElementaryTypes()
+        {
             HashSet<Type> TypeSet = new HashSet<Type> {
                     typeof(string),
                     typeof(byte),

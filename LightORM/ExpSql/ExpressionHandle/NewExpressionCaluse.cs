@@ -26,6 +26,16 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
+        protected override SqlCaluse SelectMethod(NewExpression exp, SqlCaluse sqlCaluse)
+        {
+            for (int i = 0; i < exp.Arguments.Count; i++)
+            {
+                var argExp = exp.Arguments[i];
+                ExpressionVisit.SelectMethod(argExp, sqlCaluse);
+            }
+            return sqlCaluse;
+        }
+
         protected override SqlCaluse GroupBy(NewExpression exp, SqlCaluse sqlCaluse)
         {
             for (int i = 0; i < exp.Arguments.Count; i++)

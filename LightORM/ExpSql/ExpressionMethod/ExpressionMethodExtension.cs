@@ -58,6 +58,16 @@ namespace DExpSql
             return 0;
         }
 
+        public static string Coalesce(Expression<Func<object>> exp)
+        {
+            return "Coalesce";
+        }
+
+        public static string Coalesce(Expression<Func<object>> exp, string p)
+        {
+            return p;
+        }
+
         public static int GroupConcat(Expression<Func<object>> exp)
         {
             return 0;
