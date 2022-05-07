@@ -18,45 +18,48 @@ namespace MDbContext.SqlExecutor
 
         public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             return InternalExecute(self, command);
         }
 
         public static object ExecuteScale(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             return InternalScale(self, command);
         }
 
         public static DataTable ExecuteTable(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             return InternalExecuteTable(self, command);
         }
 
         public static IDataReader ExecuteReader(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            throw new NotImplementedException();
+            CommandDefinition command = new(sql, param, trans, commandType);
+            return InternalReader(self, command, (reader, cacheinfo) =>
+             {
+                 return reader;
+             });
         }
 
         public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             var result = InternalQuery<T>(self, command);
             return result;
         }
 
         public static IEnumerable<dynamic> Query(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             var result = InternalQuery<MapperRow>(self, command);
             return result;
         }
 
         public static T QuerySingle<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
         {
-            CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
+            CommandDefinition command = new(sql, param, trans, commandType);
             return InternalSingle<T>(self, command);
         }
 
@@ -93,7 +96,7 @@ namespace MDbContext.SqlExecutor
         {
             // 缓存
             var parameter = command.Parameters;
-            Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
+            Certificate certificate = new(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
             IDbCommand cmd = null;
@@ -173,7 +176,7 @@ namespace MDbContext.SqlExecutor
         {
             return InternalReader(conn, command, (reader, cacheInfo) =>
             {
-                DataTable dt = new DataTable();
+                DataTable dt = new();
                 dt.Load(reader);
                 return dt;
             });
@@ -201,7 +204,7 @@ namespace MDbContext.SqlExecutor
         {
             // 缓存
             var parameter = command.Parameters;
-            Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
+            Certificate certificate = new(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
             var wasClosed = conn.State == ConnectionState.Closed;
@@ -249,7 +252,7 @@ namespace MDbContext.SqlExecutor
         {
             // 缓存
             var parameter = command.Parameters;
-            Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(object), parameter?.GetType());
+            Certificate certificate = new(command.CommandText, command.CommandType, conn, typeof(object), parameter?.GetType());
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
             var wasClosed = conn.State == ConnectionState.Closed;

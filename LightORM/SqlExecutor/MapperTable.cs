@@ -72,7 +72,7 @@ namespace MDbContext.SqlExecutor
 
         private sealed class DeadValue
         {
-            public static readonly DeadValue Default = new DeadValue();
+            public static readonly DeadValue Default = new();
             private DeadValue() { /* hiding constructor */ }
         }
 

@@ -34,6 +34,11 @@ namespace MDbContext.Context.Extension
             return db.QueryDataTableAsync();
         }
 
+        public static async Task ExecuteDataReaderAsync(this ExpressionSqlCore self, Func<IDataReader, Task> taskFunc)
+        {
+            await self.ExecuteDataReaderAsync(taskFunc);
+        }
+
         public static Task<T> FirstAsync<T>(this ExpressionSqlCore self)
         {
             var db = self.GetDbContext();

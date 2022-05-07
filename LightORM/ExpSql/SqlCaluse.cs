@@ -72,7 +72,7 @@ namespace DExpSql
         public string GroupByFieldString { get => string.Join(",", GroupByFields); }
         #endregion
 
-        Dictionary<DbBaseType, DbHelper> DbHelperDic = new Dictionary<DbBaseType, DbHelper>();
+        Dictionary<DbBaseType, DbHelper> DbHelperDic = new();
 
         public DbHelper DbHelper
         {
