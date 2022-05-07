@@ -27,7 +27,7 @@ namespace MDbContext {
             });
         }
 
-        public static DataTable QueryDataTable(this DbContext self) => self.DbConnection.ExecuteReader(self.Sql, self.SqlParameter);
+        public static DataTable QueryDataTable(this DbContext self) => self.DbConnection.ExecuteTable(self.Sql, self.SqlParameter);
         public static Task<DataTable> QueryDataTableAsync(this DbContext self) {
             return RunAsync(() => {
                 return self.QueryDataTable();
@@ -57,7 +57,7 @@ namespace MDbContext {
             });
         }
 
-        public static DataTable QueryDataTable(this DbContext self, string sql, object p) => self.DbConnection.ExecuteReader(sql, p);
+        public static DataTable QueryDataTable(this DbContext self, string sql, object p) => self.DbConnection.ExecuteTable(sql, p);
         public static Task<DataTable> QueryDataTableAsync(this DbContext self, string sql, object p) {
             return RunAsync(() => {
                 return self.QueryDataTable(sql, p);
