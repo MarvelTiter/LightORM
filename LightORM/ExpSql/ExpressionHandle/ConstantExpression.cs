@@ -15,7 +15,8 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
-        protected override SqlCaluse SelectMethod(ConstantExpression exp, SqlCaluse sqlCaluse) {
+        protected override SqlCaluse SelectMethod(ConstantExpression exp, SqlCaluse sqlCaluse)
+        {
             var p = sqlCaluse.AddDbParameter(exp.Value, sqlCaluse.SelectMethod);
             sqlCaluse.SelectMethod.Append(p);
             return sqlCaluse;

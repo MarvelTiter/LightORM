@@ -271,12 +271,21 @@ namespace DExpSql
                 var diff = AddDbParameter(max - min);
                 MySqlPaging(minParam, diff);
 
+            }else if (DbType == DbBaseType.Sqlite)
+            {
+                var diff = AddDbParameter(max - min);
+                SqlitePaging(minParam, diff);
             }
             else
                 throw new NotImplementedException("其余数据库分页查询未实现");
         }
 
         private void MySqlPaging(string min, string diff)
+        {
+            Sql.AppendLine($" LIMIT {min},{diff}");
+        }
+
+        private void SqlitePaging(string min, string diff)
         {
             Sql.AppendLine($" LIMIT {min},{diff}");
         }
