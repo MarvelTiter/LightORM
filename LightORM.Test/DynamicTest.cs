@@ -20,11 +20,15 @@ namespace LightORM.Test
             return conn.DbContext();
         }
         [Test]
-        public void DynamicResult()
+        public async Task DynamicResult()
         {
-            //var db = VbDbContext();
-            //db.DbSet.Select<CgsUsers>()
-            //    .Top(10).ToListAsync();
+            var db = VbDbContext();
+            var result = await db.DbSet.Select<CgsUsers>()
+                .Top(10).ToListAsync();
+            foreach (var item in result)
+            {
+                Console.WriteLine($"{item.UsrId}-{item.UsrName}");
+            }
         }
     }
 }

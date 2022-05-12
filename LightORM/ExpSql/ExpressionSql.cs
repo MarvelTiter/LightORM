@@ -140,7 +140,7 @@ namespace DExpSql
 
         private string paramString()
         {
-            StringBuilder sb = new();
+            StringBuilder sb = new StringBuilder();
             foreach (KeyValuePair<string, object> item in SqlCaluse.SqlParam)
             {
                 sb.AppendLine($"[{item.Key},{item.Value}]");

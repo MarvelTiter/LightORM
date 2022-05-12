@@ -31,8 +31,8 @@ namespace MDbContext.SqlExecutor
         }
 
         internal int IndexOfName(string name)
-        {
-            return (name != null && fieldNameLookup.TryGetValue(name, out int result)) ? result : -1;
+        {            
+            return (name != null && fieldNameLookup.TryGetValue(name.ToUpper(), out int result)) ? result : -1;
         }
 
         internal int AddField(string name)
@@ -72,7 +72,7 @@ namespace MDbContext.SqlExecutor
 
         private sealed class DeadValue
         {
-            public static readonly DeadValue Default = new();
+            public static readonly DeadValue Default = new DeadValue();
             private DeadValue() { /* hiding constructor */ }
         }
 

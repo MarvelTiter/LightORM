@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
     internal struct CommandDefinition {
-        private static Dictionary<Type, Action<IDbCommand>> commandInitCache = new();
+        private static Dictionary<Type, Action<IDbCommand>> commandInitCache = new Dictionary<Type, Action<IDbCommand>>();
 
         public string CommandText { get; }
 
@@ -84,7 +84,7 @@ namespace MDbContext.SqlExecutor {
                 var lambda = Expression.Lambda<Action<IDbCommand>>(Expression.Block(body), cmdExp);
                 value = lambda.Compile();
 #else
-                DynamicMethod dynamicMethod = new(commandType.Name + "_init", null, new Type[1]
+                DynamicMethod dynamicMethod = new DynamicMethod(commandType.Name + "_init", null, new Type[1]
                 {
                     typeof(IDbCommand)
                 });

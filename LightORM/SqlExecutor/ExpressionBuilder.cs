@@ -35,7 +35,7 @@ namespace MDbContext.SqlExecutor
         private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull", new Type[] { typeof(int) });
         private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue", new Type[] { typeof(int) });
 
-        readonly static Dictionary<Type, MethodInfo> typeMapMethod = new(37)
+        readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37)
         {
             [typeof(byte)] = DataRecord_GetByte,
             [typeof(sbyte)] = DataRecord_GetByte,
@@ -145,7 +145,7 @@ namespace MDbContext.SqlExecutor
             // 其他
             else
             {
-                SortedDictionary<int, MemberBinding> Bindings = new();
+                SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
                 // 字段处理 Field
                 foreach (FieldInfo TargetMember in TargetType.GetFields(BindingFlags.Public | BindingFlags.Instance))
                 {
@@ -446,7 +446,7 @@ namespace MDbContext.SqlExecutor
         readonly static HashSet<Type> ElementaryTypes = LoadElementaryTypes();
         private static HashSet<Type> LoadElementaryTypes()
         {
-            HashSet<Type> TypeSet = new()
+            HashSet<Type> TypeSet = new HashSet<Type>()
             {
                     typeof(string),
                     typeof(byte),

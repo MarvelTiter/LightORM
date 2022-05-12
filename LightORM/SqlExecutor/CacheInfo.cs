@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor {
     internal class CacheInfo {
-        internal static Dictionary<Certificate, CacheInfo> cache = new();
+        internal static Dictionary<Certificate, CacheInfo> cache = new Dictionary<Certificate, CacheInfo>();
 
         public Action<IDbCommand, object> ParameterReader { get; set; }
 
@@ -19,7 +19,7 @@ namespace MDbContext.SqlExecutor {
             if (cache.TryGetValue(certificate, out CacheInfo value))
                 return value;
 
-            CacheInfo info = new();
+            CacheInfo info = new CacheInfo();
             if (certificate.ParameterType != null) {
                 Action<IDbCommand, object> action;
                 // IDictionary, Object
