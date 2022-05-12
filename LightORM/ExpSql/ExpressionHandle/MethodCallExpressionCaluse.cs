@@ -9,7 +9,7 @@ namespace DExpSql.ExpressionHandle
 {
     internal class MethodCallExpressionCaluse : BaseExpressionSql<MethodCallExpression>
     {
-        Dictionary<string, Func<MethodCallExpression, SqlCaluse, SqlCaluse>> methodDic = new Dictionary<string, Func<MethodCallExpression, SqlCaluse, SqlCaluse>>()
+        Dictionary<string, Func<MethodCallExpression, SqlCaluse, SqlCaluse>> methodDic = new()
         {
             {"Like",LikeMethod },
             {"NotLike",NotLikeMethod },

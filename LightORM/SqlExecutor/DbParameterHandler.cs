@@ -15,8 +15,8 @@ namespace MDbContext.SqlExecutor
 {
     internal class DbParameterHandler : IDbParameterHandle
     {
-        private static Dictionary<Certificate, Action<IDbCommand, object>> parameterReaderCache = new Dictionary<Certificate, Action<IDbCommand, object>>();
-        private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
+        private static Dictionary<Certificate, Action<IDbCommand, object>> parameterReaderCache = new();
+        private readonly Dictionary<string, ParamInfo> parameters = new();
         private object temp;
         public DbParameterHandler(object parameter)
         {
@@ -170,7 +170,7 @@ namespace MDbContext.SqlExecutor
             // var p = (Type)obj;
             var p1 = Expression.Variable(objType, "p");
             var paramExp = Expression.Assign(p1, Expression.Convert(objExp, objType));
-            List<Expression> body = new List<Expression>();
+            List<Expression> body = new();
             body.Add(tempExp);
             body.Add(paramExp);
             foreach (PropertyInfo prop in props)
@@ -209,7 +209,7 @@ namespace MDbContext.SqlExecutor
             }
         }
 
-        readonly static Dictionary<Type, DbType> typeMapDbType = new Dictionary<Type, DbType>(37)
+        readonly static Dictionary<Type, DbType> typeMapDbType = new(37)
         {
             [typeof(byte)] = DbType.Byte,
             [typeof(sbyte)] = DbType.SByte,
