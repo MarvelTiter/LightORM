@@ -292,13 +292,20 @@ namespace DExpSql
 
         private void OraclePaging(string max, string min)
         {
-            var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            Sql.AppendLine($" WHERE ROWNUM <= {max}");
+            //var sql = " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n {0} \n) SubMax";
+            //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            //Sql.AppendLine($" WHERE ROWNUM <= {max}");
 
-            sql = " SELECT * FROM (\n {0} \n) SubMin";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
+            //sql = " SELECT * FROM (\n {0} \n) SubMin";
+            //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            //Sql.AppendLine($" WHERE SubMin.ROWNO > {min}");
+            Sql.Insert(0, " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n ");
+            Sql.Append(" \n) SubMax WHERE ROWNUM <= ");
+            Sql.Append(max);
+            Sql.Insert(0, " SELECT * FROM (\n ");
+            Sql.Append(" \n) SubMin WHERE SubMin.ROWNO > ");
+            Sql.Append(min);
+            
         }
 
         private void SqlServerPaging(string max, string min)
@@ -307,12 +314,21 @@ namespace DExpSql
                 throw new Exception("SqlServer分页查询，子查询中无法使用OrderBy！");
             var orderByField = SelectFields[0].Remove(0, 2);
             // 子查询，获得ROWNO
-            var sql = $"SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-
+            //var sql = $" SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
+            //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            
             // 子查询筛选 ROWNO
-            sql = " SELECT * FROM (\n {0} \n ) Paging";
-            Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            //sql = " SELECT * FROM (\n {0} \n ) Paging";
+            //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
+            //Sql.Append($"\n WHERE Paging.ROWNO > {min}");
+            //Sql.Append($" AND Paging.ROWNO <= {max}");
+
+            // 子查询，获得ROWNO
+            Sql.Insert(0, $" SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO, Sub.* FROM (\n ");
+            Sql.Append(" \n ) Sub");
+            // 子查询筛选 ROWNO
+            Sql.Insert(0, " SELECT * FROM (\n ");
+            Sql.Append(" \n ) Paging");
             Sql.Append($"\n WHERE Paging.ROWNO > {min}");
             Sql.Append($" AND Paging.ROWNO <= {max}");
         }
