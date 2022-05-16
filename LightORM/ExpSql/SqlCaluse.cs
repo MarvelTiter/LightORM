@@ -11,7 +11,34 @@ using System.Threading.Tasks;
 
 namespace DExpSql
 {
+    public struct DbFieldInfo:IEquatable<DbFieldInfo>
+    {
+        /// <summary>
+        /// 表别名
+        /// </summary>
+        public string TableAlias { get; set; }
+        /// <summary>
+        /// 列名
+        /// </summary>
+        public string ColumnName { get; set; }
+        /// <summary>
+        /// 列别名
+        /// </summary>
+        public string ColumnAlias { get; set; }
 
+        public bool Equals(DbFieldInfo other)
+        {
+            return TableAlias.Equals(other.TableAlias) && ColumnName.Equals(other.ColumnName);
+        }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(ColumnAlias))
+                return $"[{TableAlias}].[{ColumnName}]";
+            else
+                return $"[{TableAlias}].[{ColumnName}] [{ColumnAlias}]";
+        }
+    }
     public struct DbHelper
     {
         public string Prefix { get; set; }
@@ -38,9 +65,9 @@ namespace DExpSql
 
         public Dictionary<string, object> SqlParam { get; private set; }
 
-        public List<string> SelectFields { get; private set; }
+        public List<DbFieldInfo> SelectFields { get; private set; }
 
-        public List<string> GroupByFields { get; private set; }
+        public List<DbFieldInfo> GroupByFields { get; private set; }
 
         /// <summary>
         /// 0 - 返回布尔值 形如(sum(case when expression then 1 else o end))， 1 - 按列统计，形如 sum(colname)
@@ -271,7 +298,8 @@ namespace DExpSql
                 var diff = AddDbParameter(max - min);
                 MySqlPaging(minParam, diff);
 
-            }else if (DbType == DbBaseType.Sqlite)
+            }
+            else if (DbType == DbBaseType.Sqlite)
             {
                 var diff = AddDbParameter(max - min);
                 SqlitePaging(minParam, diff);
@@ -305,7 +333,7 @@ namespace DExpSql
             Sql.Insert(0, " SELECT * FROM (\n ");
             Sql.Append(" \n) SubMin WHERE SubMin.ROWNO > ");
             Sql.Append(min);
-            
+
         }
 
         private void SqlServerPaging(string max, string min)
@@ -316,7 +344,7 @@ namespace DExpSql
             // 子查询，获得ROWNO
             //var sql = $" SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
             //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            
+
             // 子查询筛选 ROWNO
             //sql = " SELECT * FROM (\n {0} \n ) Paging";
             //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));

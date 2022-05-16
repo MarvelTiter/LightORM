@@ -33,22 +33,28 @@ namespace MDbContext.ExpSql.Extension
             else
                 return $"{alias}{colAlias}";
         }
-        public static string GetColumnName(this MemberInfo self, SqlCaluse sqlCaluse, bool aliaRequest = true)
+        public static DbFieldInfo GetColumnName(this MemberInfo self, SqlCaluse sqlCaluse, bool aliaRequest = true)
         {
             var table = self.DeclaringType;
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             var attr = self.GetAttribute<ColumnNameAttribute>();
-            var colAlias = self.Name;            
+            var colAlias = self.Name;
+            DbFieldInfo info = new DbFieldInfo();
+            info.TableAlias = alias;
             if (attr != null)
             {
+                info.ColumnName = attr.Name;
                 if (aliaRequest)
-                    return $"{alias}{attr.Name} {colAlias}";
-                else
-                    return $"{alias}{attr.Name}";
+                {
+                    info.ColumnAlias = colAlias;
+                }
             }
             else
-                return $"{alias}{colAlias}";
+            {
+                info.ColumnName = colAlias;
+            }
+            return info;
         }
     }
 }

@@ -29,7 +29,7 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse Max(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            var col = exp.Member.GetColumnName(sqlCaluse);
+            var col = exp.Member.GetColumnName(sqlCaluse, false);
             sqlCaluse.SelectMethod.Append($"MAX({col})");
             return sqlCaluse;
         }
@@ -43,22 +43,22 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse Join(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            string col = exp.Member.GetColumnName(sqlCaluse, false);
-            sqlCaluse += col;
+            var col = exp.Member.GetColumnName(sqlCaluse, false);
+            sqlCaluse += col.ToString();
             return sqlCaluse;
         }
 
         protected override SqlCaluse OrderBy(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            string col = exp.Member.GetColumnName(sqlCaluse, false);
-            sqlCaluse += col;
+            var col = exp.Member.GetColumnName(sqlCaluse, false);
+            sqlCaluse += col.ToString();
             sqlCaluse.HasOrderBy = true;
             return sqlCaluse;
         }
 
         protected override SqlCaluse GroupBy(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            string col = exp.Member.GetColumnName(sqlCaluse, false);
+            var col = exp.Member.GetColumnName(sqlCaluse, false);
             if (!sqlCaluse.GroupByFields.Contains(col))
                 sqlCaluse.GroupByFields.Add(col);
             return sqlCaluse;
