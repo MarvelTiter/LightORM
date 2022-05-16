@@ -89,6 +89,15 @@ namespace DExpSql
         public SqlCaluse()
         {
             Init();
+            charAlia = new Queue<char>();
+            for (int i = 97; i < 123; i++)
+            {
+                // a - z
+                charAlia.Enqueue((char)i);
+            }
+            tableAlia = new Dictionary<Type, char>();
+            //if (tableAlia == null) tableAlia = new Dictionary<Type, char>();
+            //else tableAlia.Clear();
             var sqlserver = new DbHelper("@", value => $"CASE({value} as VARCHAR)");
             var oracle = new DbHelper(":", value => $"TO_CHAR({value})");
             var mysql = new DbHelper("?", value => $"CONVERT(VARCHAR, {value})");
@@ -101,15 +110,6 @@ namespace DExpSql
 
         private void Init()
         {
-            charAlia = new Queue<char>();
-            for (int i = 97; i < 123; i++)
-            {
-                // a - z
-                charAlia.Enqueue((char)i);
-            }
-            if (tableAlia == null) tableAlia = new Dictionary<Type, char>();
-            else tableAlia.Clear();
-
             if (SqlParam == null) SqlParam = new Dictionary<string, object>();
             else SqlParam.Clear();
 
@@ -271,7 +271,8 @@ namespace DExpSql
                 var diff = AddDbParameter(max - min);
                 MySqlPaging(minParam, diff);
 
-            }else if (DbType == DbBaseType.Sqlite)
+            }
+            else if (DbType == DbBaseType.Sqlite)
             {
                 var diff = AddDbParameter(max - min);
                 SqlitePaging(minParam, diff);
@@ -305,7 +306,7 @@ namespace DExpSql
             Sql.Insert(0, " SELECT * FROM (\n ");
             Sql.Append(" \n) SubMin WHERE SubMin.ROWNO > ");
             Sql.Append(min);
-            
+
         }
 
         private void SqlServerPaging(string max, string min)
@@ -316,7 +317,7 @@ namespace DExpSql
             // 子查询，获得ROWNO
             //var sql = $" SELECT ROW_NUMBER() OVER(ORDER BY Sub.{orderByField}) ROWNO," + " Sub.* FROM (\n {0} \n ) Sub";
             //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
-            
+
             // 子查询筛选 ROWNO
             //sql = " SELECT * FROM (\n {0} \n ) Paging";
             //Sql = new StringBuilder(string.Format(sql, Sql.ToString()));
