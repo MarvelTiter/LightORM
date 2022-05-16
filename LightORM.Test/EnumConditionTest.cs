@@ -1,5 +1,6 @@
 ﻿using LightORM.Test.Models;
 using MDbContext;
+using Microsoft.Data.Sqlite;
 using NUnit.Framework;
 using Oracle.ManagedDataAccess.Client;
 using System;
@@ -25,6 +26,13 @@ namespace LightORM.Test
             return conn.DbContext();
         }
 
+        private DbContext SqliteDbContext()
+        {
+            DbContext.Init(DbBaseType.Oracle);
+            var conn = new SqliteConnection(@"Data Source=E:\GitRepositories\BlazorWebAdmin\Demo.db");
+            return conn.DbContext();
+        }
+
         [Test]
         public void EnumCondition()
         {
@@ -39,6 +47,32 @@ namespace LightORM.Test
                 //.Where(u=>u.UsrEnable == YesOrNo.Yes);
                 .Where(whereExp);
             Console.WriteLine(db.DbSet);
+        }
+
+        [Test]
+        public void EnumValueInsertOracleTest()
+        {
+            var db = VbDbContext();
+            var p = new Power();
+            p.PowerId = "ROOT";
+            p.PowerName = "/";
+            p.PowerType = PowerType.Page;
+            db.DbSet.Insert(p);
+            Console.WriteLine(db.DbSet);
+            db.Execute();
+        }
+
+        [Test]
+        public void EnumValueInsertSqliteTest()
+        {
+            var db = SqliteDbContext();
+            var p = new Power();
+            p.PowerId = "ROOT";
+            p.PowerName = "/";
+            p.PowerType = PowerType.Page;
+            db.DbSet.Insert(p);
+            Console.WriteLine(db.DbSet);
+            db.Execute();
         }
     }
 }

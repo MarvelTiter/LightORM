@@ -141,6 +141,10 @@ namespace MDbContext.SqlExecutor
         private DbType? GetDbType(object value)
         {
             var t = value.GetType();
+            if (t.IsEnum)
+            {
+                t = Enum.GetUnderlyingType(t);
+            }
             if (typeMapDbType.TryGetValue(t, out var v))
                 return v;
             else return default;
