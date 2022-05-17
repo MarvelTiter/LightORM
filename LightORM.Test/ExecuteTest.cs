@@ -44,5 +44,21 @@ namespace LightORM.Test
             db.DbSet.Update<Power>(p);
             System.Console.WriteLine(db.DbSet);
         }
+
+        [Test]
+        public void InsertNew()
+        {
+            var db = SqliteDbContext();
+            var p = new Power();
+            p.PowerId = "TEST";
+            p.PowerName = "Test";
+            db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
+            System.Console.WriteLine(db.DbSet);
+
+            db.DbSet.Select<Power, Users>();
+            System.Console.WriteLine(db.DbSet);
+            db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
+            System.Console.WriteLine(db.DbSet);
+        }
     }
 }

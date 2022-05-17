@@ -127,6 +127,8 @@ namespace DExpSql
 
             if (SelectMethod == null) SelectMethod = new StringBuilder();
             else SelectMethod.Clear();
+
+            MainTableType = default;
         }
 
         public string AddDbParameter(object parameterValue, StringBuilder sql = null)
@@ -204,10 +206,11 @@ namespace DExpSql
             }
             return "";
         }
-
+        public Type MainTableType { get; private set; }
         public string GetTableName(Type t)
         {
             var attrs = t.GetCustomAttributes(false);
+            if (MainTableType == default) MainTableType = t;
             if (attrs.Length > 0)
             {
                 foreach (var item in attrs)

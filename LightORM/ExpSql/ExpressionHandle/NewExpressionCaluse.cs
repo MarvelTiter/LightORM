@@ -1,4 +1,6 @@
-﻿using MDbEntity.Attributes;
+﻿using MDbContext.ExpSql.Extension;
+using MDbContext.Utils;
+using MDbEntity.Attributes;
 using Shared.ExpSql.Extension;
 using System;
 using System.Collections.Generic;
@@ -61,13 +63,14 @@ namespace DExpSql.ExpressionHandle
             for (int i = 0; i < exp.Members.Count; i++)
             {
                 var member = exp.Members[i];
+                var colName = sqlCaluse.MainTableType.GetColumnNameFromType(member.Name);
                 var arg = exp.Arguments[i];
                 //var name = member.GetAttribute<ColumnNameAttribute>()?.Name ?? member.Name;
                 var func = Expression.Lambda(arg).Compile();
                 var value = func.DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
-                sqlCaluse += $" {member.Name} = ";
+                sqlCaluse += $" {colName} = ";
                 sqlCaluse += sqlCaluse.AddDbParameter(value);
                 sqlCaluse += ",\n";
             }
