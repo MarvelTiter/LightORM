@@ -20,6 +20,7 @@ namespace DExpSql
         private void SelectHandle(bool distinct, Expression body, params Type[] arr)
         {
             _sqlCaluse.Clear();
+            _sqlCaluse.EnableTableAlia = true;
             var sql = distinct ? " SELECT DISTINCT {0}\n FROM " : " SELECT {0}\n FROM ";
             foreach (Type item in arr)
             {
@@ -75,14 +76,12 @@ namespace DExpSql
             if (null != pkExp)
                 ExpressionVisit.PrimaryKey(pkExp, _sqlCaluse);
             ExpressionVisit.Update(body, _sqlCaluse);
-            _sqlCaluse.EnableTableAlia = true;
         }
 
         private string InsertHandle()
         {
             _sqlCaluse.EnableTableAlia = false;
             var tableName = _sqlCaluse.GetTableName(typeof(T));
-            _sqlCaluse.EnableTableAlia = true;
             return $" INSERT INTO {tableName} ({{0}}) \n VALUES ({{1}})";
         }
 
@@ -90,7 +89,6 @@ namespace DExpSql
         {
             _sqlCaluse.EnableTableAlia = false;
             var tableName = _sqlCaluse.GetTableName(typeof(T));
-            _sqlCaluse.EnableTableAlia = true;
             return $" DELETE FROM {tableName} \n";
         }
 

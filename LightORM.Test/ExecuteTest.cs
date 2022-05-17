@@ -32,5 +32,17 @@ namespace LightORM.Test
                 System.Console.WriteLine(item.PowerName);
             }
         }
+        [Test]
+        public void Exec2()
+        {
+            var db = SqliteDbContext();
+            var p = new Power();
+            db.DbSet.Insert(p);
+            System.Console.WriteLine(db.DbSet);
+            db.DbSet.Select<Power>();
+            System.Console.WriteLine(db.DbSet);
+            db.DbSet.Update<Power>(p);
+            System.Console.WriteLine(db.DbSet);
+        }
     }
 }
