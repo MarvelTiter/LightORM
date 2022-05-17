@@ -140,6 +140,10 @@ namespace DExpSql
             else
             {
                 var type = parameterValue.GetType();
+                if (type == typeof(string))
+                {
+                    parameterValue = parameterValue.ToString().Trim();
+                }
                 string name = DbHelper.Prefix + "p" + SqlParam.Count;
                 switch (LikeMode)
                 {
