@@ -29,7 +29,7 @@ namespace DExpSql.ExpressionHandle
 
         protected override SqlCaluse Max(MemberExpression exp, SqlCaluse sqlCaluse)
         {
-            var col = exp.Member.GetColumnName(sqlCaluse);
+            var col = exp.Member.GetColumnName(sqlCaluse, false);
             sqlCaluse.SelectMethod.Append($"MAX({col})");
             return sqlCaluse;
         }
