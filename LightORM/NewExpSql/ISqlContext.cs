@@ -1,30 +1,20 @@
-﻿using MDbContext.Extension;
-using MDbContext.NewExpSql.SqlFragment;
-using MDbEntity.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace MDbContext.NewExpSql
 {
-    public enum Position
+    internal interface ISqlContext : ITableContext
     {
-        None,
-        Left,
-        Right
-    }
-
-    public enum LikeMode
-    {
-        None,
-        Like,
-        LeftLike,
-        RightLike,
-    }
-    internal interface ISqlContext
-    {
-        string BuildSql(out Dictionary<string, object> keyValues);
-        void AddFragment<F>(F fragment) where F : BaseFragment;
+        List<EntityField> Fields { get; set; }
+        void Append(string sql);
+        int Length { get; }
+        void AppendDbParameter(object value);
+        void AddEntityField(string name, object value);
+        bool EndWith(string end);
+        void Insert(int index, string content);
+        void Remove(int index, int count);
+        void Clear();
+        string Sql();
     }
 }

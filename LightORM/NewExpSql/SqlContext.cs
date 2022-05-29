@@ -1,43 +1,111 @@
-﻿using MDbContext.NewExpSql.SqlFragment;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace MDbContext.NewExpSql
 {
+    internal struct EntityField
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+    }
+    internal static class SqlContextExtend
+    {
+        public static string UpdateSql(this ISqlContext self)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (EntityField item in self.Fields)
+            {
+                sb.AppendLine($"[{item.Name} = {item.Value}]");
+            }
+            return sb.ToString();
+        }
+
+        public static string InsertSql(this ISqlContext self)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (EntityField item in self.Fields)
+            {
+                sb.AppendLine($"{item.Name}, {item.Value}");
+            }
+            return sb.ToString();
+        }
+
+        public static string Store(this ISqlContext self)
+        {
+            var sql = self.Sql();
+            self.Clear();
+            return sql;
+        }
+    }
     internal class SqlContext : ISqlContext
     {
-        List<BaseFragment> fragments;
-        Dictionary<string, object> parameters;
-
-        public SqlContext()
+        StringBuilder @string = new StringBuilder();
+        Dictionary<string, object> values = new Dictionary<string, object>();
+        public List<EntityField> Fields { get; set; } = new List<EntityField>();
+        private readonly ITableContext tableContext;
+        public SqlContext(ITableContext tableContext)
         {
-            fragments = new List<BaseFragment>();
-            parameters = new Dictionary<string, object>();
+            this.tableContext = tableContext;
+        }
+        public int Length => @string.Length;
+        public bool EndWith(string end) => @string.ToString().EndsWith(end);
+        public void Insert(int index, string content) => @string.Insert(index, content);
+
+        public void AppendDbParameter(object value)
+        {
+            var name = $"{GetPrefix()}p{values.Count}";
+            @string.Append(name);
+            values[name] = value;
+        }
+        public void AddEntityField(string name, object value)
+        {
+            var valueName = $"{GetPrefix()}p{values.Count}";
+            Fields.Add(new EntityField { Name = name, Value = valueName });
+            values[valueName] = value;
         }
 
-        public void AddFragment<F>(F fragment) where F : BaseFragment
+        public void Append(string sql) => @string.Append(sql);
+        public void Remove(int index, int count) => @string.Remove(index, count);
+        public string Sql() => @string.ToString();
+        public void Clear() => @string.Clear();
+
+        #region ITableContext
+        public bool SetTableAlias(Type tableName)
         {
-            fragments.Add(fragment);
+            return tableContext.SetTableAlias(tableName);
         }
 
-        public string BuildSql(out Dictionary<string, object> keyValues)
+        public string GetTableAlias(Type tableName)
         {
-            StringBuilder sql = new StringBuilder();
-            foreach (var item in fragments)
+            return tableContext.GetTableAlias(tableName);
+        }
+
+        public string GetTableName(bool withAlias, Type t = null)
+        {
+            return tableContext.GetTableName(withAlias, t);
+        }
+
+        public string GetPrefix()
+        {
+            return tableContext.GetPrefix();
+        }
+        #endregion
+        public override string ToString()
+        {
+            var sql = @string.ToString();
+            return sql + "\n" + paramString();
+
+            string paramString()
             {
-                foreach (var kv in item.SqlParameters)
+                StringBuilder sb = new StringBuilder();
+                foreach (KeyValuePair<string, object> item in values)
                 {
-                    if (parameters.ContainsKey(kv.Key))
-                    {
-                        if (parameters[kv.Key]?.ToString() == kv.Value?.ToString())
-                            continue;
-                    }
-                    parameters.Add(kv.Key, kv.Value);
+                    sb.AppendLine($"[{item.Key},{item.Value}]");
                 }
-                sql.AppendLine(item.ToString());
+                return sb.ToString();
             }
-            keyValues = parameters;
-            return sql.ToString();
         }
+
     }
 }

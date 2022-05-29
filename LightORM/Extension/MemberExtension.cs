@@ -1,5 +1,6 @@
 ﻿using DExpSql;
 using MDbContext.Extension;
+using MDbContext.NewExpSql;
 using MDbEntity.Attributes;
 using System.Reflection;
 
@@ -35,7 +36,7 @@ namespace MDbContext.ExpSql.Extension
             sqlCaluse.SetTableAlias(table);
             var alias = sqlCaluse.GetTableAlias(table);
             var attr = self.GetAttribute<ColumnNameAttribute>();
-            var colAlias = self.Name;            
+            var colAlias = self.Name;
             if (attr != null)
             {
                 if (aliaRequest)
@@ -45,6 +46,29 @@ namespace MDbContext.ExpSql.Extension
             }
             else
                 return $"{alias}{colAlias}";
+        }
+        public static string GetColumnName(this MemberInfo self, ISqlContext
+            context, bool columnAliasRequired, bool tableAliasRequest)
+        {
+            var table = self.DeclaringType;
+            context.SetTableAlias(table);
+            var alias = context.GetTableAlias(table);
+            var attr = self.GetAttribute<ColumnNameAttribute>();
+            var colAlias = self.Name;
+            if (columnAliasRequired && attr != null)
+            {
+                if (tableAliasRequest)
+                    return $"[{alias}].[{attr.Name}] {colAlias}";
+                else
+                    return $"{attr.Name} {colAlias}";
+            }
+            else
+            {
+                if (tableAliasRequest)
+                    return $"{alias}.{colAlias}";
+                else
+                    return colAlias;
+            }
         }
     }
 }

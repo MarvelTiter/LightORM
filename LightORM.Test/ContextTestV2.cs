@@ -24,7 +24,7 @@ namespace LightORM.Test
         {
             Watch(sql =>
             {
-                sql.Select<Users, Job>().Where<Job>(j => j.BNS_ID > p.Bns);
+                sql.Select<Users, Job>().Where<Job>(j => j.BNS_ID > p.Bns && j.USR_ID == "h").Where(u => u.Age > 5);
             });
 
         }
@@ -33,8 +33,35 @@ namespace LightORM.Test
         {
             Watch(sql =>
             {
-                sql.Select<Users>()
-                .InnerJoin<Job>((u, j) => u.Duty == j.CLSBDH);
+                sql.Select<Users>().InnerJoin<Job>((u, j) => u.Duty == j.STN_ID).Where<Job>(j => j.BNS_ID > p.Bns && j.USR_ID == "h");
+
+            });
+        }
+
+        [Test]
+        public void UpdateTest()
+        {
+            Watch(sql =>
+            {
+                var u = new Users();
+                u.UserName = "Hello";
+                u.IsUse = true;
+                u.Age = 18;
+                sql.Update(u);
+
+            });
+        }
+
+        [Test]
+        public void InsertTest()
+        {
+            Watch(sql =>
+            {
+                var u = new Users();
+                u.UserName = "Hello";
+                u.IsUse = true;
+                u.Age = 18;
+                sql.Insert(u);
 
             });
         }

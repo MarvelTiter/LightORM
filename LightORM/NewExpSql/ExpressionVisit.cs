@@ -1,47 +1,57 @@
-﻿using MDbContext.NewExpSql.ExpressionParser;
-using MDbContext.NewExpSql.SqlFragment;
+﻿using MDbContext.NewExpSql.ExpressionVisitor;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace MDbContext.NewExpSql
 {
     internal class ExpressionVisit
     {
-
-        public static void Select(Expression exp, BaseFragment fragment) => GetParser(exp).Select(exp, fragment);
-        public static void Join(Expression exp, BaseFragment fragment) => GetParser(exp).Join(exp, fragment);
-        public static void Where(Expression exp, BaseFragment fragment) => GetParser(exp).Where(exp, fragment);
+        public static void Visit(Expression exp, SqlConfig config, ISqlContext context)
+            => GetVisitor(exp).Visit(exp, config, context);
 
 
-        private static IExpressionParser GetParser(Expression exp)
+        private static IExpressionVisitor GetVisitor(Expression exp)
         {
-            IExpressionParser _i;
+            IExpressionVisitor _i;
             var expType = exp.GetType();
             if (exp == null)
                 throw new ArgumentNullException("Expression", "不能为null");
-            else if (exp is BinaryExpression)
-                _i = new BinaryExpressionParser();
+            //_i = exp switch
+            //{
+            //    BinaryExpression => new BinaryExpVisitor(),
+            //    ConstantExpression => new ConstantExpVisitor(),
+            //    MemberExpression => new MemberExpVisitor(),
+            //    MethodCallExpression => new MethodCallExpVisitor(),
+            //    NewArrayExpression => new NewArrayExpVisitor(),
+            //    NewExpression => new NewExpVisitor(),
+            //    UnaryExpression => new UnaryExpVisitor(),
+            //    ParameterExpression => new ParameterExpVisitor(),
+            //    LambdaExpression => new LambdaExpVisitor(),
+            //    MemberInitExpression => new MemberInitExpVisitor(),
+            //    _ => throw new ArgumentException("不支持的Expression")
+            //};
+
+            if (exp is BinaryExpression)
+                _i = new BinaryExpVisitor();
             else if (exp is ConstantExpression)
-                _i = new ConstantExpressionParser();
+                _i = new ConstantExpVisitor();
             else if (exp is MemberExpression)
-                _i = new MemberExpressionParser();
-            else if (exp is MethodCallExpression)
-                _i = new MethodCallExpressionParser();
-            else if (exp is NewArrayExpression)
-                _i = new NewArrayExpressionParser();
-            else if (exp is NewExpression)
-                _i = new NewExpressionParser();
+                _i = new MemberExpVisitor();
+            //else if (exp is MethodCallExpression)
+            //    _i = new MethodCallExpVisitor();
+            //else if (exp is NewArrayExpression)
+            //    _i = new NewArrayExpVisitor();
+            //else if (exp is NewExpression)
+            //    _i = new NewExpVisitor();
             else if (exp is UnaryExpression)
-                _i = new UnaryExpressionParser();
-            else if (exp is ParameterExpression)
-                _i = new ParameterExpressionParser();
-            else if (exp is LambdaExpression)
-                _i = new LambdaExpressionParser();
-            else if (exp is MemberInitExpression)
-                _i = new MemberInitExpressionParser();
+                _i = new UnaryExpVisitor();
+            //else if (exp is ParameterExpression)
+            //    _i = new ParameterExpVisitor();
+            //else if (exp is MemberInitExpression)
+            //    _i = new MemberInitExpVisitor();
             else
-                throw new ArgumentException("不支持的Expression");
+                throw new ArgumentException($"不支持的Expression => {expType}");
 
             return _i;
         }

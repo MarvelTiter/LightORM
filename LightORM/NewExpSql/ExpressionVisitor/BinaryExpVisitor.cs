@@ -1,25 +1,25 @@
-﻿using MDbContext.NewExpSql.SqlFragment;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.NewExpSql.ExpressionParser
+namespace MDbContext.NewExpSql.ExpressionVisitor
 {
-    internal class BinaryExpressionParser : BaseParser<BinaryExpression>
+    internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
     {
-        private static void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, StringBuilder content, bool useIs = false, bool newLine = true)
+        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, ISqlContext content, bool useIs = false, bool newLine = true)
         {
             var n = newLine ? "\n" : "";
             switch (expressionNodeType)
             {
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
-                    content.Insert(operatorIndex, $"{n} AND");
+                    content.Insert(operatorIndex, $"{n} AND ");
                     break;
                 case ExpressionType.Equal:
                     if (useIs)
                     {
-                        content.Insert(operatorIndex, " IS");
+                        content.Insert(operatorIndex, " IS ");
                     }
                     else
                     {
@@ -35,7 +35,7 @@ namespace MDbContext.NewExpSql.ExpressionParser
                 case ExpressionType.NotEqual:
                     if (useIs)
                     {
-                        content.Insert(operatorIndex, " IS NOT");
+                        content.Insert(operatorIndex, " IS NOT ");
                     }
                     else
                     {
@@ -44,7 +44,7 @@ namespace MDbContext.NewExpSql.ExpressionParser
                     break;
                 case ExpressionType.Or:
                 case ExpressionType.OrElse:
-                    content.Insert(operatorIndex, $"{n} OR");
+                    content.Insert(operatorIndex, $"{n} OR ");
                     break;
                 case ExpressionType.LessThan:
                     content.Insert(operatorIndex, " < ");
@@ -56,32 +56,18 @@ namespace MDbContext.NewExpSql.ExpressionParser
                     throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
             }
         }
-
-        public override BaseFragment Where(BinaryExpression exp, WhereFragment fragment)
+        public override void DoVisit(BinaryExpression exp, SqlConfig config, ISqlContext context)
         {
-            fragment.Position = Position.Left;
-            ExpressionVisit.Where(exp.Left, fragment);
-            var insertIndex = fragment.Length;
+            config.BinaryPosition = BinaryPosition.Left;
+            ExpressionVisit.Visit(exp.Left, config, context);
+            var insertIndex = context.Length;
 
-            fragment.Position = Position.Right;
-            ExpressionVisit.Where(exp.Right, fragment);
-            var endIndex = fragment.Length;
-            var b = endIndex - insertIndex == 5 && fragment.EndWith("null");
-            OperatorParser(exp.NodeType, insertIndex, fragment.Sql, b);
-            fragment.Position = Position.None;
-            return fragment;
+            config.BinaryPosition = BinaryPosition.Right;
+            ExpressionVisit.Visit(exp.Right, config, context);
+
+            var endIndex = context.Length;
+            var b = endIndex - insertIndex == 5 && context.EndWith("null");
+            OperatorParser(exp.NodeType, insertIndex, context, b);
         }
-
-        public override BaseFragment Join(BinaryExpression exp, JoinFragment fragment)
-        {
-            fragment.SqlAppend(" ON ");
-            ExpressionVisit.Join(exp.Left, fragment);
-            var insertIndex = fragment.Length;
-            ExpressionVisit.Join(exp.Right, fragment);
-            OperatorParser(exp.NodeType, insertIndex, fragment.Sql, false);
-            return fragment;
-        }
-
-
     }
 }
