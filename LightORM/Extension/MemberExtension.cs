@@ -1,11 +1,7 @@
 ﻿using DExpSql;
+using MDbContext.Extension;
 using MDbEntity.Attributes;
-using Shared.ExpSql.Extension;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace MDbContext.ExpSql.Extension
 {
