@@ -1,4 +1,6 @@
-﻿using MDbEntity.Attributes;
+﻿using MDbContext;
+using MDbContext.ExpSql.Extension;
+using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,9 +16,11 @@ namespace DExpSql
         private bool _firstWhere = true;
         private bool _firstOrderby = true;
 
+        private string template = "";
         private void SelectHandle(bool distinct, Expression body, params Type[] arr)
         {
             _sqlCaluse.Clear();
+            _sqlCaluse.EnableTableAlia = true;
             var sql = distinct ? " SELECT DISTINCT {0}\n FROM " : " SELECT {0}\n FROM ";
             foreach (Type item in arr)
             {
@@ -25,18 +29,20 @@ namespace DExpSql
             var mainTable = typeof(T);
             var tableName = _sqlCaluse.GetTableName(mainTable);
             sql = sql + tableName + " " + _sqlCaluse.GetTableAlias(mainTable).Replace(".", "");
+            template = sql;
             ExpressionVisit.Select(body, _sqlCaluse);
             //var selected = _sqlCaluse.SelectAll ? "*" : _sqlCaluse.SelectedFieldString;
-            _sqlCaluse.Sql.AppendFormat(sql, _sqlCaluse.SelectedFieldString);
+            _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
         }
 
         private void JoinHandle<T1>(string joinType, Expression exp)
         {
-            var joinTable = typeof(T1);
+            var joinTable = typeof(T1);           
             _sqlCaluse.SetTableAlias(joinTable);
             var tableName = _sqlCaluse.GetTableName(joinTable);
-            _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable).Replace(".", "")}";
+            _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable).Replace(".", "")} ON (";
             ExpressionVisit.Join(exp, _sqlCaluse);
+            _sqlCaluse += ")";
         }
 
         private void WhereHandle(Expression body)
@@ -47,9 +53,18 @@ namespace DExpSql
                 _firstWhere = false;
             }
             else
+            {
                 _sqlCaluse += "\n AND";
+            }
             _sqlCaluse += "(";
-            ExpressionVisit.Where(body, _sqlCaluse);
+            if (body?.ToString() == "True")
+            {
+                _sqlCaluse += " 1 = 1 ";
+            }
+            else
+            {
+                ExpressionVisit.Where(body, _sqlCaluse);
+            }
             _sqlCaluse += ")";
         }
 
@@ -81,7 +96,7 @@ namespace DExpSql
         {
             if (_firstOrderby)
             {
-                _sqlCaluse += "\n ORDER BY "; 
+                _sqlCaluse += "\n ORDER BY ";
                 _firstOrderby = false;
             }
             else
@@ -89,10 +104,17 @@ namespace DExpSql
             ExpressionVisit.OrderBy(exp, _sqlCaluse);
         }
 
-        private void GroupByHandle(Expression body)
+        private void GroupByHandle(Expression body, bool rollup)
         {
             ExpressionVisit.GroupBy(body, _sqlCaluse);
-            _sqlCaluse += "\n GROUP BY " + _sqlCaluse.GroupByFieldString;
+            if (rollup)
+            {
+                _sqlCaluse += $"\n GROUP BY ROLLUP ({_sqlCaluse.GroupByFieldString})";
+            }
+            else
+            {
+                _sqlCaluse += "\n GROUP BY " + _sqlCaluse.GroupByFieldString;
+            }
         }
 
         private void CountHandle()

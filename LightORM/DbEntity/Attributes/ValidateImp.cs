@@ -17,32 +17,32 @@ namespace MDbEntity.Attributes {
 #if NET40
             
 #else
-            if (entity == null)
-                return false;
-            string outMsgTemplate = "{0}:{1}";
-            var props = typeof(T).GetProperties();
-            var type = typeof(IValidateAttribute);
+            //if (entity == null)
+            //    return false;
+            //string outMsgTemplate = "{0}:{1}";
+            //var props = typeof(T).GetProperties();
+            //var type = typeof(IValidateAttribute);
 
-            foreach (PropertyInfo propInfo in props) {
-                var name = propInfo.GetCustomAttribute<DisplayAttribute>();
-                var displayName = name == null ? propInfo.Name : name.DisplayName;
-                var propValue = propInfo.GetValue(entity);
+            //foreach (PropertyInfo propInfo in props) {
+            //    var name = propInfo.GetCustomAttribute<DisplayAttribute>();
+            //    var displayName = name == null ? propInfo.Name : name.DisplayName;
+            //    var propValue = propInfo.GetValue(entity);
 
-                foreach (CustomAttributeData cusAttr in propInfo.CustomAttributes) {
-                    var atrType = cusAttr.AttributeType;
-                    if (type.IsAssignableFrom(atrType) && !atrType.IsAbstract) {
-                        var vat = propInfo.GetCustomAttribute(atrType);
-                        if (vat is IValidateAttribute) {
-                            var va = vat as IValidateAttribute;
-                            var match = va?.Check(propValue);
-                            if (!match.HasValue || !match.Value) {
-                                outMsg.Add(string.Format(outMsgTemplate, displayName, va.ErrorMsg()));
-                            }
-                        }
-                    }
+            //    foreach (CustomAttributeData cusAttr in propInfo.CustomAttributes) {
+            //        var atrType = cusAttr.AttributeType;
+            //        if (type.IsAssignableFrom(atrType) && !atrType.IsAbstract) {
+            //            var vat = propInfo.GetCustomAttribute(atrType);
+            //            if (vat is IValidateAttribute) {
+            //                var va = vat as IValidateAttribute;
+            //                var match = va?.Check(propValue);
+            //                if (!match.HasValue || !match.Value) {
+            //                    outMsg.Add(string.Format(outMsgTemplate, displayName, va.ErrorMsg()));
+            //                }
+            //            }
+            //        }
 
-                }
-            }
+            //    }
+            //}
 #endif
             return outMsg.Count == 0;
         }

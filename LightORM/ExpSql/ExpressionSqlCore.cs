@@ -1,19 +1,33 @@
-﻿using System;
+﻿using MDbContext;
+using System;
 using System.ComponentModel;
 using System.Linq.Expressions;
 
 namespace DExpSql
 {
+    public abstract class ExpressionSqlCore
+    {
+        public abstract MDbContext.DbContext GetDbContext();
+    }
     /// <summary>
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public partial class ExpressionSqlCore<T>
+    public partial class ExpressionSqlCore<T> : ExpressionSqlCore
     {
         private SqlCaluse _sqlCaluse;
-        public ExpressionSqlCore(SqlCaluse sqlCaluse)
+        private readonly DbContext _dbContext;
+
+        public ExpressionSqlCore(SqlCaluse sqlCaluse, MDbContext.DbContext context)
         {
             this._sqlCaluse = sqlCaluse;
+            this._dbContext = context;
+        }
+
+
+        public override DbContext GetDbContext()
+        {
+            return this._dbContext;
         }
 
         #region select part
@@ -59,6 +73,66 @@ namespace DExpSql
                 exp = (t1, t2, t3, t4) => new { t1, t2, t3, t4 };
             }
             SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4>(Expression<Func<T, T1, T2, T3, T4, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5) => new { t1, t2, t3, t4, t5 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5>(Expression<Func<T, T1, T2, T3, T4, T5, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6) => new { t1, t2, t3, t4, t5, t6 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6>(Expression<Func<T, T1, T2, T3, T4, T5, T6, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7) => new { t1, t2, t3, t4, t5, t6, t7 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8) => new { t1, t2, t3, t4, t5, t6, t7, t8 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7, T8>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8, t9) => new { t1, t2, t3, t4, t5, t6, t7, t8, t9 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8));
+            return this;
+        }
+        public ExpressionSqlCore<T> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Expression<Func<T, T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp, bool distinct)
+        {
+            if (exp == null)
+            {
+                _sqlCaluse.SelectAll = true;
+                exp = (t1, t2, t3, t4, t5, t6, t7, t8, t9, t0) => new { t1, t2, t3, t4, t5, t6, t7, t8, t9, t0 };
+            }
+            SelectHandle(distinct, exp.Body, typeof(T), typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9));
             return this;
         }
         #endregion
@@ -148,40 +222,40 @@ namespace DExpSql
         #endregion
 
         #region where part
-        public ExpressionSqlCore<T> Where(Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> Where(Expression<Func<T, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T, T1, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T1, object>> exp)
-        {
-            WhereHandle(exp.Body);
-            return this;
-        }
-
-        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T, T1, T2, object>> exp)
-        {
-            WhereHandle(exp.Body);
-            return this;
-        }
-        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> Where<T1>(Expression<Func<T1, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T, T1, T2, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> Where<T1, T2>(Expression<Func<T1, T2, bool>> exp)
+        {
+            WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> Where<T1, T2, T3>(Expression<Func<T1, T2, T3, bool>> exp)
         {
             WhereHandle(exp.Body);
             return this;
@@ -189,93 +263,140 @@ namespace DExpSql
         #endregion
 
         #region IfWhere part
-        public ExpressionSqlCore<T> IfWhere(Func<bool> condition, Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> IfWhere(Func<bool> condition, Expression<Func<T, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T, T1, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T1, object>> exp)
-        {
-            if (condition.Invoke())
-                WhereHandle(exp.Body);
-            return this;
-        }
-
-        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T, T1, T2, object>> exp)
-        {
-            if (condition.Invoke())
-                WhereHandle(exp.Body);
-            return this;
-        }
-        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1>(Func<bool> condition, Expression<Func<T1, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
 
-        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T, T1, T2, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
-        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(Func<bool> condition, Expression<Func<T1, T2, bool>> exp)
         {
             if (condition.Invoke())
                 WhereHandle(exp.Body);
             return this;
         }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            if (condition.Invoke())
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(Func<bool> condition, Expression<Func<T1, T2, T3, bool>> exp)
+        {
+            if (condition.Invoke())
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere(bool condition, Expression<Func<T, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1>(bool condition, Expression<Func<T, T1, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1>(bool condition, Expression<Func<T1, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(bool condition, Expression<Func<T, T1, T2, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2>(bool condition, Expression<Func<T1, T2, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(bool condition, Expression<Func<T, T1, T2, T3, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+        public ExpressionSqlCore<T> IfWhere<T1, T2, T3>(bool condition, Expression<Func<T1, T2, T3, bool>> exp)
+        {
+            if (condition)
+                WhereHandle(exp.Body);
+            return this;
+        }
+
         #endregion
 
         #region group by
-        public ExpressionSqlCore<T> GroupBy(Expression<Func<T, object>> exp)
+        public ExpressionSqlCore<T> GroupBy(Expression<Func<T, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T, T1, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T1, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1>(Expression<Func<T1, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T, T1, T2, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T1, T2, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2>(Expression<Func<T1, T2, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T, T1, T2, T3, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
-        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp)
+        public ExpressionSqlCore<T> GroupBy<T1, T2, T3>(Expression<Func<T1, T2, T3, object>> exp, bool rollup = false)
         {
-            GroupByHandle(exp.Body);
+            GroupByHandle(exp.Body, rollup);
             return this;
         }
 
@@ -373,8 +494,10 @@ namespace DExpSql
         }
         #endregion
 
-        public ExpressionSqlCore<T> Paging(int from, int to)
+        public ExpressionSqlCore<T> Paging(int index, int size)
         {
+            var from = (index - 1) * size;
+            var to = index * size;
             _sqlCaluse.Paging(from, to);
             return this;
         }

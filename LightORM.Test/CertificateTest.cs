@@ -1,14 +1,12 @@
 ﻿using MDbContext.SqlExecutor;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Text;
-using System.Data.SqlClient;
-using Microsoft.Data.Sqlite;
 using LightORM.Test.Models;
+using Microsoft.Data.Sqlite;
 
-namespace LightORM.Test {
+namespace LightORM.Test
+{
     public class CertificateTest {
         Dictionary<Certificate, string> cache;
         [SetUp]

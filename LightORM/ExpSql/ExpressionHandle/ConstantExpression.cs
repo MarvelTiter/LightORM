@@ -15,8 +15,9 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
-        protected override SqlCaluse SelectMethod(ConstantExpression exp, SqlCaluse sqlCaluse) {
-            var p = sqlCaluse.AddDbParameter(exp.Value);
+        protected override SqlCaluse SelectMethod(ConstantExpression exp, SqlCaluse sqlCaluse)
+        {
+            var p = sqlCaluse.AddDbParameter(exp.Value, sqlCaluse.SelectMethod);
             sqlCaluse.SelectMethod.Append(p);
             return sqlCaluse;
         }
@@ -27,6 +28,10 @@ namespace DExpSql.ExpressionHandle
             return sqlCaluse;
         }
 
-
+        protected override SqlCaluse Join(ConstantExpression exp, SqlCaluse sqlCaluse)
+        {
+            sqlCaluse += sqlCaluse.AddDbParameter(exp.Value);
+            return sqlCaluse;
+        }
     }
 }
