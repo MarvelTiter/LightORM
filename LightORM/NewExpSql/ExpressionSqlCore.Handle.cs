@@ -13,40 +13,26 @@ namespace MDbContext.NewExpSql
         }
         void JoinHandle(string joinType, Expression body)
         {
-            var context = new SqlContext(tableContext);
-            context.Append("(");
-            ExpressionVisit.Visit(body, SqlConfig.Join, context);
-            context.Append(")");
-#if DEBUG
-            Console.WriteLine($"JoinHandle: body\n{body} => \n{context}");
-#endif
+            sqlContext.Append("(");
+            ExpressionVisit.Visit(body, SqlConfig.Join, sqlContext);
+            sqlContext.Append(")");
             StoreFragment(SqlPartial.Join);
         }
         void UpdateHandle(Expression body, Expression ignore)
         {
-            var context = new SqlContext(tableContext);
             if (ignore != null)
             {
-                ExpressionVisit.Visit(ignore, SqlConfig.Update, context);
-#if DEBUG
-                Console.WriteLine($"UpdateHandle: ignore\n{ignore} => \n{context}");
-#endif
+                ExpressionVisit.Visit(ignore, SqlConfig.Update, sqlContext);
             }
-            ExpressionVisit.Visit(body, SqlConfig.Update, context);
-#if DEBUG
-            Console.WriteLine($"UpdateHandle: body\n{body} => \n{context}");
-            Console.WriteLine(context.UpdateSql());
-#endif
+            ExpressionVisit.Visit(body, SqlConfig.Update, sqlContext);
+            sqlContext.Append($"UPDATE {tableContext.GetTableName(false)} SET \n{sqlContext.UpdateSql()}");
             StoreFragment(SqlPartial.Update);
         }
         void InsertHandle(Expression body)
         {
-            var context = new SqlContext(tableContext);
-            ExpressionVisit.Visit(body, SqlConfig.Update, context);
-#if DEBUG
-            Console.WriteLine($"InsertHandle: body\n{body} => \n{context}");
-            Console.WriteLine(context.InsertSql());
-#endif
+            ExpressionVisit.Visit(body, SqlConfig.Update, sqlContext);
+            var sql = sqlContext.InsertSql();//("", "");//
+            sqlContext.Append($"INSERT INTO ({sql.Item1}) \nVALUES ({sql.Item2})");
             StoreFragment(SqlPartial.Insert);
         }
         void WhereHandle(Expression body)
@@ -54,9 +40,6 @@ namespace MDbContext.NewExpSql
             sqlContext.Append("(");
             ExpressionVisit.Visit(body, SqlConfig.Where, sqlContext);
             sqlContext.Append(")");
-#if DEBUG
-            Console.WriteLine($"WhereHandle: body\n{body} => \n{sqlContext}");
-#endif
             StoreFragment(SqlPartial.Where);
         }
 
@@ -71,8 +54,9 @@ namespace MDbContext.NewExpSql
             StringBuilder builder = new StringBuilder();
             foreach (var item in sqls)
             {
-                builder.AppendLine($"{item.Item1}: {item.Item2}");
+                builder.AppendLine($"{item.Item1}: \n{item.Item2}");
             }
+            builder.Append(sqlContext.ToString());
             return builder.ToString();
         }
     }

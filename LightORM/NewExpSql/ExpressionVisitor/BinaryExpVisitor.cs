@@ -7,7 +7,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
 {
     internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
     {
-        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, ISqlContext content, bool useIs = false, bool newLine = true)
+        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, SqlContext content, bool useIs = false, bool newLine = true)
         {
             var n = newLine ? "\n" : "";
             switch (expressionNodeType)
@@ -56,7 +56,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                     throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
             }
         }
-        public override void DoVisit(BinaryExpression exp, SqlConfig config, ISqlContext context)
+        public override void DoVisit(BinaryExpression exp, SqlConfig config, SqlContext context)
         {
             config.BinaryPosition = BinaryPosition.Left;
             ExpressionVisit.Visit(exp.Left, config, context);

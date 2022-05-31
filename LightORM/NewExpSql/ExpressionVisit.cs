@@ -7,14 +7,12 @@ namespace MDbContext.NewExpSql
 {
     internal class ExpressionVisit
     {
-        public static void Visit(Expression exp, SqlConfig config, ISqlContext context)
+        public static void Visit(Expression exp, SqlConfig config, SqlContext context)
             => GetVisitor(exp).Visit(exp, config, context);
-
 
         private static IExpressionVisitor GetVisitor(Expression exp)
         {
             IExpressionVisitor _i;
-            var expType = exp.GetType();
             if (exp == null)
                 throw new ArgumentNullException("Expression", "不能为null");
             //_i = exp switch
@@ -51,7 +49,7 @@ namespace MDbContext.NewExpSql
             //else if (exp is MemberInitExpression)
             //    _i = new MemberInitExpVisitor();
             else
-                throw new ArgumentException($"不支持的Expression => {expType}");
+                throw new ArgumentException($"不支持的Expression => {exp}");
 
             return _i;
         }

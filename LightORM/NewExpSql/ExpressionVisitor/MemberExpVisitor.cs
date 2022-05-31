@@ -9,7 +9,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
 {
     internal class MemberExpVisitor : BaseVisitor<MemberExpression>
     {
-        public override void DoVisit(MemberExpression exp, SqlConfig config, ISqlContext context)
+        public override void DoVisit(MemberExpression exp, SqlConfig config, SqlContext context)
         {
             if (exp.Type.IsClass && exp.Type != typeof(string))
             {
@@ -31,7 +31,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             }
         }
 
-        private void ResolveEntity(MemberExpression exp, SqlConfig config, ISqlContext context)
+        private void ResolveEntity(MemberExpression exp, SqlConfig config, SqlContext context)
         {
             var e = Expression.Lambda(exp).Compile().DynamicInvoke();
             var eType = e.GetType();
@@ -39,12 +39,10 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             for (int i = 0; i < props.Length; i++)
             {
                 var p = props[i];
-                object value = e.AccessValue(exp.Type, p.Name);
+                object value = p.GetValue(e, null);//e.AccessValue(exp.Type, p.Name);//
                 if (value == null || value == default || value == DBNull.Value)
                     continue;
                 if (p.GetAttribute<IgnoreAttribute>() != null)
-                    continue;
-                if (p.GetAttribute<PrimaryKeyAttribute>() != null)
                     continue;
                 var name = p.GetAttribute<ColumnNameAttribute>()?.Name ?? p.Name;
                 context.AddEntityField(name, value);

@@ -47,7 +47,7 @@ namespace MDbContext.ExpSql.Extension
             else
                 return $"{alias}{colAlias}";
         }
-        public static string GetColumnName(this MemberInfo self, ISqlContext
+        public static string GetColumnName(this MemberInfo self, SqlContext
             context, bool columnAliasRequired, bool tableAliasRequest)
         {
             var table = self.DeclaringType;

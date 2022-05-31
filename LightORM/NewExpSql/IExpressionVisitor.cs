@@ -5,6 +5,6 @@ namespace MDbContext.NewExpSql
 {
     internal interface IExpressionVisitor
     {
-        void Visit(Expression expression, SqlConfig config, ISqlContext context);
+        void Visit(Expression expression, SqlConfig config, SqlContext context);
     }
 }

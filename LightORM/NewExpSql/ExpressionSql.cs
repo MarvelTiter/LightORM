@@ -57,11 +57,9 @@ namespace MDbContext.NewExpSql
             return (ExpressionSqlCore<T>)sqlCore;
         }
 
-#if DEBUG
         public override string ToString()
         {
-            return sqlCore.ToString();
+            return sqlCore?.ToString();
         }
-#endif
     }
 }

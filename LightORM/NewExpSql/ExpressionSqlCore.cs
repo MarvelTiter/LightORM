@@ -11,7 +11,7 @@ namespace MDbContext.NewExpSql
     {
         private readonly DbBaseType type;
         private ITableContext tableContext;
-        private ISqlContext sqlContext;
+        private SqlContext sqlContext;
         List<(SqlPartial, string)> sqls;
         public ExpressionSqlCore(DbBaseType type, params Type[] tables)
         {

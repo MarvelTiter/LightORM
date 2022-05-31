@@ -6,7 +6,6 @@ namespace MDbContext.NewExpSql
 {
     internal interface ISqlContext : ITableContext
     {
-        List<EntityField> Fields { get; set; }
         void Append(string sql);
         int Length { get; }
         void AppendDbParameter(object value);

@@ -1,48 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MDbContext.NewExpSql
-{
-    internal struct EntityField
-    {
-        public string Name { get; set; }
-        public string Value { get; set; }
-    }
+{    
     internal static class SqlContextExtend
     {
-        public static string UpdateSql(this ISqlContext self)
+        public static string UpdateSql(this SqlContext self)
         {
             StringBuilder sb = new StringBuilder();
-            foreach (EntityField item in self.Fields)
+            for (int i = 0; i < self.Names.Count; i++)
             {
-                sb.AppendLine($"[{item.Name} = {item.Value}]");
+                sb.AppendLine($"{self.Names[i]} = {self.Values[i]},");
             }
+            sb.Remove(sb.Length - 1, 1);
             return sb.ToString();
         }
 
-        public static string InsertSql(this ISqlContext self)
+        public static (string, string) InsertSql(this SqlContext self)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (EntityField item in self.Fields)
-            {
-                sb.AppendLine($"{item.Name}, {item.Value}");
-            }
-            return sb.ToString();
+            return (string.Join(",", self.Names), string.Join(",", self.Values));
         }
 
-        public static string Store(this ISqlContext self)
+        public static string Store(this SqlContext self)
         {
             var sql = self.Sql();
             self.Clear();
+            self.Names.Clear();
+            self.Values.Clear();
             return sql;
         }
     }
-    internal class SqlContext : ISqlContext
+
+    internal class SqlContext : ITableContext
     {
         StringBuilder @string = new StringBuilder();
         Dictionary<string, object> values = new Dictionary<string, object>();
-        public List<EntityField> Fields { get; set; } = new List<EntityField>();
+        public List<string> Names { get; set; } = new List<string>();
+        public List<string> Values { get; set; } = new List<string>();
         private readonly ITableContext tableContext;
         public SqlContext(ITableContext tableContext)
         {
@@ -61,7 +57,8 @@ namespace MDbContext.NewExpSql
         public void AddEntityField(string name, object value)
         {
             var valueName = $"{GetPrefix()}p{values.Count}";
-            Fields.Add(new EntityField { Name = name, Value = valueName });
+            Names.Add(name);
+            Values.Add(valueName);
             values[valueName] = value;
         }
 
@@ -93,8 +90,7 @@ namespace MDbContext.NewExpSql
         #endregion
         public override string ToString()
         {
-            var sql = @string.ToString();
-            return sql + "\n" + paramString();
+            return "\n" + paramString();
 
             string paramString()
             {

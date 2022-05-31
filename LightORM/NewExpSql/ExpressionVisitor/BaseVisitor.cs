@@ -9,11 +9,11 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
 {
     internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
     {
-        public void Visit(Expression expression, SqlConfig config, ISqlContext context)
+        public void Visit(Expression expression, SqlConfig config, SqlContext context)
         {
             DoVisit((T)expression, config, context);
         }
 
-        public abstract void DoVisit(T exp, SqlConfig config, ISqlContext context);
+        public abstract void DoVisit(T exp, SqlConfig config, SqlContext context);
     }
 }

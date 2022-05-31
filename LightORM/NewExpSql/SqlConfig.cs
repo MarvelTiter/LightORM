@@ -28,10 +28,10 @@
         public bool RequiredValue { get; set; }
         public BinaryPosition BinaryPosition { get; set; }
         public SqlPartial SqlType { get; set; }
-        public static SqlConfig Select => new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true };
-        public static SqlConfig Join => new SqlConfig() { RequiredTableAlias = true };
-        public static SqlConfig Where => new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true, RequiredValue = true };
-        public static SqlConfig Insert => new SqlConfig() { RequiredValue = true };
-        public static SqlConfig Update => new SqlConfig() { RequiredValue = true };
+        public static SqlConfig Select = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true };
+        public static SqlConfig Join = new SqlConfig() { RequiredTableAlias = true };
+        public static SqlConfig Where = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true, RequiredValue = true };
+        public static SqlConfig Insert = new SqlConfig() { RequiredValue = true };
+        public static SqlConfig Update = new SqlConfig() { RequiredValue = true };
     }
 }

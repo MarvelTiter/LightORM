@@ -19,7 +19,10 @@ namespace LightORM.Test
         [SetUp]
         public void Setup()
         {
+            Watch(sql =>
+            {
 
+            });
         }
 
 
@@ -98,6 +101,32 @@ namespace LightORM.Test
             db.DbSet.Select<Users>()
                 .Where(u => u.Duty == d);
         }
+
+        [Test]
+        public void TestUpdate()
+        {
+            Watch(sql =>
+            {
+                var u = new Users();
+                u.UserName = "Hello";
+                u.IsUse = true;
+                u.Age = 18;
+                sql.Update(u).Where(u => u.Age > 10 && u.Duty == "321").Where(u => u.Sex == "ÄÐ");
+            });
+        }
+
+        private void Watch(Action<ExpressionSql> action)
+        {
+            ExpressionSql eSql = new ExpressionSql(DbBaseType.SqlServer, null);
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            action(eSql);
+            stopwatch.Stop();
+            Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine(eSql);
+            Console.WriteLine("====================================");
+        }
+
         [Test]
         public void TestIfWhere()
         {
@@ -167,7 +196,7 @@ namespace LightORM.Test
                 .InnerJoin<BasicStation>((j, s) => j.StnId == s.Jczbh && j.Jycs == 1)
                 .IfWhere(() => !string.IsNullOrEmpty(req.Keyword), j => j.StnId == req.Keyword)
                 .Where(j => j.JobDate > req.Start && j.JobDate < req.End)
-                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });           
+                .GroupBy<BasicStation>(s => new { s.Jczbh, s.Jczmc });
 
             Console.WriteLine(db.DbSet);
         }

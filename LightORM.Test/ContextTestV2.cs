@@ -17,7 +17,10 @@ namespace LightORM.Test
         [SetUp]
         public void Setup()
         {
+            Watch(sql =>
+            {
 
+            });
         }
         [Test]
         public void SelectTest()
@@ -47,8 +50,7 @@ namespace LightORM.Test
                 u.UserName = "Hello";
                 u.IsUse = true;
                 u.Age = 18;
-                sql.Update(u);
-
+                sql.Update(u).Where(u => u.Age > 10 && u.Duty == "321").Where(u => u.Sex == "男");
             });
         }
 
@@ -68,7 +70,7 @@ namespace LightORM.Test
 
         private void Watch(Action<ExpressionSql> action)
         {
-            ExpressionSql eSql = new ExpressionSql((int)DbBaseType.SqlServer);
+            ExpressionSql eSql = new ExpressionSql(DbBaseType.SqlServer);
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             action(eSql);
