@@ -23,15 +23,15 @@
     }
     public class SqlConfig
     {
-        public bool RequiredColumnAlias { get; set; }
-        public bool RequiredTableAlias { get; set; }
-        public bool RequiredValue { get; set; }
+        public bool RequiredColumnAlias { get; private set; }
+        public bool RequiredTableAlias { get; private set; }
+        public bool RequiredValue { get; private set; }
         public BinaryPosition BinaryPosition { get; set; }
-        public SqlPartial SqlType { get; set; }
-        public static SqlConfig Select = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true };
-        public static SqlConfig Join = new SqlConfig() { RequiredTableAlias = true };
-        public static SqlConfig Where = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true, RequiredValue = true };
-        public static SqlConfig Insert = new SqlConfig() { RequiredValue = true };
-        public static SqlConfig Update = new SqlConfig() { RequiredValue = true };
+        public SqlPartial SqlType { get; private set; }
+        public static SqlConfig Select = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true, SqlType = SqlPartial.Select };
+        public static SqlConfig Join = new SqlConfig() { RequiredTableAlias = true, SqlType = SqlPartial.Join };
+        public static SqlConfig Where = new SqlConfig() { RequiredTableAlias = true, RequiredValue = true, SqlType = SqlPartial.Where };
+        public static SqlConfig Insert = new SqlConfig() { RequiredValue = true, SqlType = SqlPartial.Insert };
+        public static SqlConfig Update = new SqlConfig() { RequiredValue = true, SqlType = SqlPartial.Update };
     }
 }

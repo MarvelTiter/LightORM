@@ -15,15 +15,15 @@ namespace MDbContext.NewExpSql
         List<(SqlPartial, string)> sqls;
         public ExpressionSqlCore(DbBaseType type, params Type[] tables)
         {
-            this.type = type;
-            tableContext = new TableContext<T>(type);
-            tableContext.SetTableAlias(typeof(T));
-            foreach (var t in tables)
-            {
-                tableContext.SetTableAlias(t);
-            }
-            sqlContext = new SqlContext(tableContext);
-            sqls = new List<(SqlPartial, string)>();
+            //this.type = type;
+            //tableContext = new TableContext<T>(type);
+            //tableContext.SetTableAlias(typeof(T));
+            //foreach (var t in tables)
+            //{
+            //    tableContext.SetTableAlias(t);
+            //}
+            //sqlContext = new SqlContext(tableContext);
+            //sqls = new List<(SqlPartial, string)>();
         }
 
         #region Select

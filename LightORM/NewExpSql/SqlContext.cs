@@ -4,38 +4,19 @@ using System.Linq;
 using System.Text;
 
 namespace MDbContext.NewExpSql
-{    
-    internal static class SqlContextExtend
+{
+    internal interface ISqlContext
     {
-        public static string UpdateSql(this SqlContext self)
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < self.Names.Count; i++)
-            {
-                sb.AppendLine($"{self.Names[i]} = {self.Values[i]},");
-            }
-            sb.Remove(sb.Length - 1, 1);
-            return sb.ToString();
-        }
-
-        public static (string, string) InsertSql(this SqlContext self)
-        {
-            return (string.Join(",", self.Names), string.Join(",", self.Values));
-        }
-
-        public static string Store(this SqlContext self)
-        {
-            var sql = self.Sql();
-            self.Clear();
-            self.Names.Clear();
-            self.Values.Clear();
-            return sql;
-        }
+        int Length { get; }
+        bool EndWith(string end);
+        void Insert(int index, string content);
+        void AppendDbParameter(object value);
+        void AddEntityField(string name, object value);
+        void Append(string sql);
     }
-
     internal class SqlContext : ITableContext
     {
-        StringBuilder @string = new StringBuilder();
+        StringBuilder? @string;
         Dictionary<string, object> values = new Dictionary<string, object>();
         public List<string> Names { get; set; } = new List<string>();
         public List<string> Values { get; set; } = new List<string>();
@@ -44,16 +25,22 @@ namespace MDbContext.NewExpSql
         {
             this.tableContext = tableContext;
         }
-        public int Length => @string.Length;
-        public bool EndWith(string end) => @string.ToString().EndsWith(end);
-        public void Insert(int index, string content) => @string.Insert(index, content);
+        public void SetStringBuilder(StringBuilder builder)
+        {
+            @string = builder;
+        }
+        public int Length => @string?.Length ?? 0;
+
+        public bool EndWith(string end) => @string?.ToString().EndsWith(end) ?? false;
+        public void Insert(int index, string content) => @string?.Insert(index, content);
 
         public void AppendDbParameter(object value)
         {
             var name = $"{GetPrefix()}p{values.Count}";
-            @string.Append(name);
+            @string?.Append(name);
             values[name] = value;
         }
+
         public void AddEntityField(string name, object value)
         {
             var valueName = $"{GetPrefix()}p{values.Count}";
@@ -62,25 +49,35 @@ namespace MDbContext.NewExpSql
             values[valueName] = value;
         }
 
-        public void Append(string sql) => @string.Append(sql);
-        public void Remove(int index, int count) => @string.Remove(index, count);
-        public string Sql() => @string.ToString();
-        public void Clear() => @string.Clear();
+        public void Append(string sql) => @string?.Append(sql);
+        public void Remove(int index, int count) => @string?.Remove(index, count);
+        //public string? Sql() => @string?.ToString();
+        public void Clear() => @string?.Clear();
 
         #region ITableContext
-        public bool SetTableAlias(Type tableName)
+        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.FROM)
         {
-            return tableContext.SetTableAlias(tableName);
+            return tableContext.AddTable(table, tableLinkType);
         }
 
-        public string GetTableAlias(Type tableName)
+        public string? GetTableAlias(string csName)
         {
-            return tableContext.GetTableAlias(tableName);
+            return tableContext.GetTableAlias(csName);
         }
 
-        public string GetTableName(bool withAlias, Type t = null)
+        public string GetTableName(string csName)
         {
-            return tableContext.GetTableName(withAlias, t);
+            return tableContext.GetTableName(csName);
+        }
+
+        public string? GetTableAlias<T>()
+        {
+            return tableContext.GetTableAlias<T>();
+        }
+
+        public string GetTableName<T>()
+        {
+            return tableContext.GetTableName<T>();
         }
 
         public string GetPrefix()
@@ -101,6 +98,18 @@ namespace MDbContext.NewExpSql
                 }
                 return sb.ToString();
             }
+        }
+
+        public static SqlContext operator +(SqlContext self, string sql)
+        {
+            self.Append(sql);
+            return self;
+        }
+        public static SqlContext operator -(SqlContext self, string sql)
+        {
+            var start = self.Length - sql.Length;
+            self.Remove(start, sql.Length);
+            return self;
         }
 
     }

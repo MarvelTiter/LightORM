@@ -1,6 +1,7 @@
 using LightORM.Test2.Models;
 using MDbContext;
 using MDbContext.NewExpSql;
+using MDbContext.NewExpSql.Interface;
 using System.Diagnostics;
 
 namespace LightORM.Test2
@@ -12,31 +13,28 @@ namespace LightORM.Test2
         [TestMethod]
         public void V2Insert()
         {
-            Watch(sql =>
-            {
-                var u = new Users();
-                u.UserName = "Hello";
-                u.IsUse = true;
-                u.Age = 18;
-                sql.Insert(u);
-            });
+
         }
 
         [TestMethod]
         public void V2Select()
         {
-            Watch(sql =>
+            Watch(db =>
             {
-                Watch(sql =>
-                {
-                    sql.Select<Users, Job>().Where<Job>(j => j.BNS_ID > p.Bns && j.USR_ID == "h").Where(u => u.Age > 5);
-                });
+                var sql = db.Select<Users>()
+                    .InnerJoin<BasicStation>((u, b) => b.Cjsqbh == "12")
+                    .Count(out var total)
+                    .Where(u => u.Password == "321" && u.Tel == "123")
+                    .Where<BasicStation>(b => b.Znsh > 5).ToSql();
+                Console.WriteLine(sql);
             });
         }
 
-        private void Watch(Action<ExpressionSql> action)
+        private void Watch(Action<IExpSql> action)
         {
-            ExpressionSql eSql = new ExpressionSql(DbBaseType.SqlServer);
+            IExpSql eSql = new ExpSqlBuilder()
+                .SetDatabase(DbBaseType.Sqlite, () => null)
+                .Build();
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             action(eSql);

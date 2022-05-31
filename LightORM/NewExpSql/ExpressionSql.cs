@@ -1,4 +1,5 @@
-﻿using MDbContext.NewExpSql.Providers;
+﻿using MDbContext.NewExpSql.Interface;
+using MDbContext.NewExpSql.Providers;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -33,10 +34,7 @@ namespace MDbContext.NewExpSql
 
         public IExpSelect<T> Select<T>() => new SelectProvider<T>(dbKey, GetDbInfos);
 
-        public IExpInsert<T> Insert<T>()
-        {
-            throw new NotImplementedException();
-        }
+        public IExpInsert<T> Insert<T>() => new InsertProvider<T>(dbKey, GetDbInfos);
 
         public IExpUpdate<T> Update<T>()
         {
@@ -46,11 +44,6 @@ namespace MDbContext.NewExpSql
         public IExpDelete<T> Delete<T>()
         {
             throw new NotImplementedException();
-        }
-
-        public override string ToString()
-        {
-            return sqlCore?.ToString();
         }
     }
 }

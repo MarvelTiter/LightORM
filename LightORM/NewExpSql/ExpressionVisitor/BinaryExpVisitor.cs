@@ -7,7 +7,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
 {
     internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
     {
-        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, SqlContext content, bool useIs = false, bool newLine = true)
+        private void OperatorParser(ExpressionType expressionNodeType, int operatorIndex, SqlContext content, bool useIs = false, bool newLine = false)
         {
             var n = newLine ? "\n" : "";
             switch (expressionNodeType)

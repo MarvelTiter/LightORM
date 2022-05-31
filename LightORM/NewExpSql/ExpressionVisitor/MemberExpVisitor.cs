@@ -39,7 +39,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             for (int i = 0; i < props.Length; i++)
             {
                 var p = props[i];
-                object value = p.GetValue(e, null);//e.AccessValue(exp.Type, p.Name);//
+                object value = e.AccessValue(exp.Type, p.Name);//p.GetValue(e, null);//
                 if (value == null || value == default || value == DBNull.Value)
                     continue;
                 if (p.GetAttribute<IgnoreAttribute>() != null)

@@ -1,9 +1,8 @@
-﻿using MDbContext.NewExpSql.ExpressionVisitor;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace MDbContext.NewExpSql
+namespace MDbContext.NewExpSql.ExpressionVisitor
 {
     internal class ExpressionVisit
     {

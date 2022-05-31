@@ -4,9 +4,11 @@ namespace MDbContext.NewExpSql
 {
     internal interface ITableContext
     {
-        bool SetTableAlias(Type tableName);
-        string GetTableAlias(Type tableName);
-        string GetTableName(bool withAlias, Type t = null);
+        TableInfo AddTable(Type table, TableLinkType tableLinkType);
+        string? GetTableAlias(string csName);
+        string GetTableName(string csName);
+        string? GetTableAlias<T>();
+        string GetTableName<T>();
         string GetPrefix();
     }
 }

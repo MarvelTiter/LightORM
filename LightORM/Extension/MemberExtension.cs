@@ -51,14 +51,13 @@ namespace MDbContext.ExpSql.Extension
             context, bool columnAliasRequired, bool tableAliasRequest)
         {
             var table = self.DeclaringType;
-            context.SetTableAlias(table);
-            var alias = context.GetTableAlias(table);
+            var alias = context.GetTableAlias(table.Name);
             var attr = self.GetAttribute<ColumnNameAttribute>();
             var colAlias = self.Name;
             if (columnAliasRequired && attr != null)
             {
                 if (tableAliasRequest)
-                    return $"[{alias}].[{attr.Name}] {colAlias}";
+                    return $"{alias}.{attr.Name} {colAlias}";
                 else
                     return $"{attr.Name} {colAlias}";
             }
