@@ -1,60 +1,51 @@
-﻿using System;
+﻿using MDbContext.NewExpSql.Providers;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
 namespace MDbContext.NewExpSql
 {
-    public class ExpressionSql
+    public class ExpressionSql : IExpSql
     {
-        private readonly DbBaseType dbType;
-
-        public ExpressionSql(DbBaseType dbType)
+        private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
+        private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories = new ConcurrentDictionary<string, DbConnectInfo>();
+        private string dbKey = "MainDb";
+        internal ExpressionSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
         {
-            this.dbType = dbType;
-        }
-        ExpressionSqlCore sqlCore;
-
-        public ExpressionSqlCore<T> Select<T>(Expression<Func<T, object>> exp = null, bool distanct = false)
-        {
-            sqlCore = new ExpressionSqlCore<T>(dbType).Select(distanct);
-            return (ExpressionSqlCore<T>)sqlCore;
+            this.dbFactories = dbFactories;
         }
 
-        public ExpressionSqlCore<T> Select<T, T1>(Expression<Func<T, T1, object>> exp = null, bool distanct = false)
+        (ITableContext context, DbConnectInfo info) GetDbInfos(string key)
         {
-            sqlCore = new ExpressionSqlCore<T>(dbType, typeof(T1)).Select(distanct);
-            return (ExpressionSqlCore<T>)sqlCore;
+            if (dbFactories.TryGetValue(key, out var dbInfo))
+            {
+                if (!tableContexts.TryGetValue(key, out var dbContext))
+                {
+                    dbContext = new TableContext(dbInfo.DbBaseType);
+                    tableContexts[key] = dbContext;
+                }
+                return (dbContext, dbInfo);
+            }
+            throw new ArgumentException($"{key}异常");
         }
 
-        public ExpressionSqlCore<T> Update<T>(Expression<Func<object>> exp, Expression<Func<T, object>> ignore = null)
+        public IExpSelect<T> Select<T>() => new SelectProvider<T>(dbKey, GetDbInfos);
+
+        public IExpInsert<T> Insert<T>()
         {
-            sqlCore = new ExpressionSqlCore<T>(dbType).Update(exp, ignore);
-            return (ExpressionSqlCore<T>)sqlCore;
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// 更新实体
-        /// </summary>
-        /// <typeparam name="T">更新的实体类型</typeparam>
-        /// <param name="entity">实体实例</param>
-        /// <param name="ingore">忽略的列</param>
-        /// <returns></returns>
-        public ExpressionSqlCore<T> Update<T>(T entity, Expression<Func<T, object>> ingore = null)
+        public IExpUpdate<T> Update<T>()
         {
-            return Update<T>(() => entity, ingore);
+            throw new NotImplementedException();
         }
 
-        public ExpressionSqlCore<T> Insert<T>(Expression<Func<object>> exp)
+        public IExpDelete<T> Delete<T>()
         {
-            sqlCore = new ExpressionSqlCore<T>(dbType).Insert(exp);            
-            return (ExpressionSqlCore<T>)sqlCore;
-        }
-
-        public ExpressionSqlCore<T> Insert<T>(T entity)
-        {
-            sqlCore = Insert<T>(() => entity);
-            return (ExpressionSqlCore<T>)sqlCore;
+            throw new NotImplementedException();
         }
 
 #if DEBUG

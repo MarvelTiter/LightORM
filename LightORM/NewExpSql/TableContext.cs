@@ -101,4 +101,33 @@ namespace MDbContext.NewExpSql
             }
         }
     }
+
+    internal class TableContext : ITableContext
+    {
+        public DbBaseType DbType { get; private set; }
+
+        public TableContext(DbBaseType baseType)
+        {
+            DbType = baseType;
+        }
+        public string GetPrefix()
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetTableAlias(Type tableName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string GetTableName(bool withAlias, Type t = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool SetTableAlias(Type tableName)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

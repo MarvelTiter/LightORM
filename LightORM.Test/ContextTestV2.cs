@@ -18,64 +18,6 @@ namespace LightORM.Test
         public void Setup()
         {
 
-        }
-        [Test]
-        public void SelectTest()
-        {
-            Watch(sql =>
-            {
-                sql.Select<Users, Job>().Where<Job>(j => j.BNS_ID > p.Bns && j.USR_ID == "h").Where(u => u.Age > 5);
-            });
-
-        }
-        [Test]
-        public void JoinTest()
-        {
-            Watch(sql =>
-            {
-                sql.Select<Users>().InnerJoin<Job>((u, j) => u.Duty == j.STN_ID).Where<Job>(j => j.BNS_ID > p.Bns && j.USR_ID == "h");
-
-            });
-        }
-
-        [Test]
-        public void UpdateTest()
-        {
-            Watch(sql =>
-            {
-                var u = new Users();
-                u.UserName = "Hello";
-                u.IsUse = true;
-                u.Age = 18;
-                sql.Update(u);
-
-            });
-        }
-
-        [Test]
-        public void InsertTest()
-        {
-            Watch(sql =>
-            {
-                var u = new Users();
-                u.UserName = "Hello";
-                u.IsUse = true;
-                u.Age = 18;
-                sql.Insert(u);
-
-            });
-        }
-
-        private void Watch(Action<ExpressionSql> action)
-        {
-            ExpressionSql eSql = new ExpressionSql((int)DbBaseType.SqlServer);
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            action(eSql);
-            stopwatch.Stop();
-            Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
-            Console.WriteLine(eSql);
-            Console.WriteLine("====================================");
-        }
+        }       
     }
 }
