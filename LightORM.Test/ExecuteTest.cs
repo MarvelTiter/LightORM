@@ -22,7 +22,6 @@ namespace LightORM.Test
             Power power = new Power();
             power.PowerId = "TEST001";
             power.PowerName = "测试001";
-            db.DbSet.Insert(power);
             System.Console.WriteLine(db.DbSet);
             db.DbSet.Select<Power>();
             System.Console.WriteLine(db.DbSet);
