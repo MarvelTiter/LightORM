@@ -56,6 +56,46 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                     throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
             }
         }
+        //private string OperatorParser(ExpressionType expressionNodeType, int operatorIndex, bool useIs = false)
+        //{
+        //    switch (expressionNodeType)
+        //    {
+        //        case ExpressionType.And:
+        //        case ExpressionType.AndAlso:
+        //            return " AND ";
+        //        case ExpressionType.Equal:
+        //            if (useIs)
+        //            {
+        //                return " IS ";
+        //            }
+        //            else
+        //            {
+        //                return " = ";
+        //            }
+        //        case ExpressionType.GreaterThan:
+        //            return " > ";
+        //        case ExpressionType.GreaterThanOrEqual:
+        //            return " >= ";
+        //        case ExpressionType.NotEqual:
+        //            if (useIs)
+        //            {
+        //                return " IS NOT ";
+        //            }
+        //            else
+        //            {
+        //                return " <> ";
+        //            }
+        //        case ExpressionType.Or:
+        //        case ExpressionType.OrElse:
+        //           return " OR ";
+        //        case ExpressionType.LessThan:
+        //           return " < ";
+        //        case ExpressionType.LessThanOrEqual:
+        //           return " <= ";
+        //        default:
+        //            throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
+        //    }
+        //}
         public override void DoVisit(BinaryExpression exp, SqlConfig config, SqlContext context)
         {
             config.BinaryPosition = BinaryPosition.Left;

@@ -1,23 +1,25 @@
 ﻿using MDbContext.NewExpSql.Interface;
+using MDbContext.NewExpSql.Interface.Select;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace MDbContext.NewExpSql.Providers
 {
-    internal class BasicProvider<T>
+    internal class BasicProvider<T1>
     {
         protected readonly SqlContext context;
         protected readonly List<TableInfo> tables;
         protected readonly DbConnectInfo dbConnect;
 
-        public BasicProvider(string key, Func<string, (ITableContext context, DbConnectInfo info)> getDbInfos)
+        public BasicProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
         {
-            var result = getDbInfos.Invoke(key);
-            context = new SqlContext(result.context);
+            var tbContext = getContext.Invoke(key);
+            dbConnect = connectInfos;
+            context = new SqlContext(tbContext);
             tables = new List<TableInfo>();
-            var main = context.AddTable(typeof(T));
+            var main = context.AddTable(typeof(T1));
             tables.Add(main);
-            dbConnect = result.info;
         }
     }
 }

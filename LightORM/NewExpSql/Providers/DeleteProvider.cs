@@ -7,8 +7,8 @@ namespace MDbContext.NewExpSql.Providers
 {
     internal partial class DeleteProvider<T> :BasicProvider<T>, IExpDelete<T>
     {
-        public DeleteProvider(string key, Func<string, (ITableContext context, DbConnectInfo info)> getDbInfos)
-        : base(key, getDbInfos) { }
+        public DeleteProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
+      : base(key, getContext, connectInfos) { }
         public int Execute()
         {
             throw new NotImplementedException();

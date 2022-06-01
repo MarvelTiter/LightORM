@@ -13,7 +13,24 @@ namespace MDbContext.NewExpSql
         void AppendDbParameter(object value);
         void AddEntityField(string name, object value);
         void Append(string sql);
+        void AddField(string fieldName, string parameterName, string tableAlias = "", string FieldAlias = "");
+        string ToSql();
     }
+    internal class SqlFieldInfo
+    {
+        public string FieldName { get; set; }
+        public string TableAlias { get; set; }
+        public string FieldAlias { get; set; }
+        public string ParameterName { get; set; }
+        public string Compare { get; set; }
+    }
+
+    internal class SqlFragment
+    {
+        public TableInfo Table { get; set; }
+        public Stack<SqlFieldInfo> Fields { get; set; }
+    }
+
     internal class SqlContext : ITableContext
     {
         StringBuilder? @string;
@@ -54,8 +71,10 @@ namespace MDbContext.NewExpSql
         //public string? Sql() => @string?.ToString();
         public void Clear() => @string?.Clear();
 
+        public object GetParameters() => values;
+
         #region ITableContext
-        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.FROM)
+        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.From)
         {
             return tableContext.AddTable(table, tableLinkType);
         }

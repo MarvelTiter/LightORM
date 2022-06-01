@@ -18,7 +18,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                 return;
             }
             //resolve member name
-            var col = exp.Member.GetColumnName(context, config.RequiredColumnAlias, config.RequiredTableAlias);
+            var col = exp.Member.GetColumnName(context, config);
             if (config.RequiredValue && config.BinaryPosition == BinaryPosition.Right)
             {
                 //resolve value

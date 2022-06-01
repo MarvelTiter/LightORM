@@ -1,5 +1,8 @@
-﻿using MDbContext.NewExpSql.Interface;
+﻿using MDbContext.NewExpSql.Ado;
+using MDbContext.NewExpSql.Interface;
+using MDbContext.NewExpSql.Interface.Select;
 using MDbContext.NewExpSql.Providers;
+using MDbContext.NewExpSql.Providers.Select;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,17 +11,20 @@ using System.Text;
 
 namespace MDbContext.NewExpSql
 {
-    public class ExpressionSql : IExpSql
+    internal class ExpressionSql : IExpSql
     {
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
-        private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories = new ConcurrentDictionary<string, DbConnectInfo>();
-        private string dbKey = "MainDb";
+        private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+        private IAdo ado;
+        public IAdo Ado => ado;
+
         internal ExpressionSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
         {
             this.dbFactories = dbFactories;
+            ado = new AdoImpl(dbFactories);
         }
-
-        (ITableContext context, DbConnectInfo info) GetDbInfos(string key)
+        
+        internal ITableContext GetContext(string key)
         {
             if (dbFactories.TryGetValue(key, out var dbInfo))
             {
@@ -27,23 +33,34 @@ namespace MDbContext.NewExpSql
                     dbContext = new TableContext(dbInfo.DbBaseType);
                     tableContexts[key] = dbContext;
                 }
-                return (dbContext, dbInfo);
+                return dbContext;
             }
             throw new ArgumentException($"{key}异常");
         }
 
-        public IExpSelect<T> Select<T>() => new SelectProvider<T>(dbKey, GetDbInfos);
+        internal DbConnectInfo GetDbInfo(string key)
+        {
+            if (dbFactories.TryGetValue(key, out var dbInfo))
+            {
+                return dbInfo;
+            }
+            throw new ArgumentException($"{key}异常");
+        }
 
-        public IExpInsert<T> Insert<T>() => new InsertProvider<T>(dbKey, GetDbInfos);
+        public IExpSelect<T> Select<T>(string key = "MainDb") => new SelectProvider1<T>(key, GetContext, GetDbInfo(key));
 
-        public IExpUpdate<T> Update<T>()
+        public IExpInsert<T> Insert<T>(string key = "MainDb") => new InsertProvider<T>(key, GetContext, GetDbInfo(key));
+
+        public IExpUpdate<T> Update<T>(string key = "MainDb")
         {
             throw new NotImplementedException();
         }
 
-        public IExpDelete<T> Delete<T>()
+        public IExpDelete<T> Delete<T>(string key = "MainDb")
         {
             throw new NotImplementedException();
         }
+
+
     }
 }

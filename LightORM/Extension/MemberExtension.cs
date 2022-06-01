@@ -48,25 +48,26 @@ namespace MDbContext.ExpSql.Extension
                 return $"{alias}{colAlias}";
         }
         public static string GetColumnName(this MemberInfo self, SqlContext
-            context, bool columnAliasRequired, bool tableAliasRequest)
+            context, SqlConfig config)
         {
             var table = self.DeclaringType;
             var alias = context.GetTableAlias(table.Name);
             var attr = self.GetAttribute<ColumnNameAttribute>();
             var colAlias = self.Name;
-            if (columnAliasRequired && attr != null)
+            var comma = config.RequiredComma ? "," : "";
+            if (config.RequiredColumnAlias && attr != null)
             {
-                if (tableAliasRequest)
-                    return $"{alias}.{attr.Name} {colAlias}";
+                if (config.RequiredTableAlias)
+                    return $"{alias}.{attr.Name} {colAlias}{comma}";
                 else
-                    return $"{attr.Name} {colAlias}";
+                    return $"{attr.Name} {colAlias}{comma}";
             }
             else
             {
-                if (tableAliasRequest)
-                    return $"{alias}.{colAlias}";
+                if (config.RequiredTableAlias)
+                    return $"{alias}.{colAlias}{comma}";
                 else
-                    return colAlias;
+                    return $"{colAlias}{comma}";
             }
         }
     }

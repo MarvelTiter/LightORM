@@ -2,6 +2,7 @@ using LightORM.Test2.Models;
 using MDbContext;
 using MDbContext.NewExpSql;
 using MDbContext.NewExpSql.Interface;
+using MDbContext.NewExpSql.Interface.Select;
 using System.Diagnostics;
 
 namespace LightORM.Test2
@@ -21,12 +22,11 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var sql = db.Select<Users>()
-                    .InnerJoin<BasicStation>((u, b) => b.Cjsqbh == "12")
+                var sql = db.Select<Users, BasicStation>()
                     .Count(out var total)
-                    .Where(u => u.Password == "321" && u.Tel == "123")
-                    .Where<BasicStation>(b => b.Znsh > 5).ToSql();
-                Console.WriteLine(sql);
+                    .Where<Users>(u => u.Password == "321" && u.Tel == "123")
+                    .Where<BasicStation>(b => b.Znsh > 5).ToList(set => new { set.Tb1.Tel, set.Tb2.Bz });
+                //Console.WriteLine(sql);
             });
         }
 

@@ -102,13 +102,34 @@ namespace MDbContext.NewExpSql
             }
         }
     }
+
+    internal static class TableLinkTypeEx
+    {
+        internal static string ToLabel(this TableLinkType self)
+        {
+            switch (self)
+            {
+                case TableLinkType.From:
+                    return "FROM";
+                case TableLinkType.LeftJoin:
+                    return "LEFT JOIN";
+                case TableLinkType.InnerJoin:
+                    return "INNER JOIN";
+                case TableLinkType.RightJoin:
+                    return "RIGHT JOIN";
+                default:
+                    throw new ArgumentException($"未知的TableLinkType {self}");
+            }
+        }
+    }
     internal enum TableLinkType
     {
-        FROM,
-        LEFTJOIN,
-        INNERJOIN,
-        RIGHTJOIN,
+        From,
+        LeftJoin,
+        InnerJoin,
+        RightJoin,
     }
+
     internal class TableInfo
     {
         public string? TableName { get; set; }
@@ -169,7 +190,7 @@ namespace MDbContext.NewExpSql
             return GetTableName(typeof(T).Name);
         }
 
-        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.FROM)
+        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.From)
         {
             if (!tables.TryGetValue(table.Name, out var info))
             {

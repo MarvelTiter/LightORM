@@ -39,14 +39,14 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             //    _i = new MethodCallExpVisitor();
             //else if (exp is NewArrayExpression)
             //    _i = new NewArrayExpVisitor();
-            //else if (exp is NewExpression)
-            //    _i = new NewExpVisitor();
+            else if (exp is NewExpression)
+                _i = new NewExpVisitor();
             else if (exp is UnaryExpression)
                 _i = new UnaryExpVisitor();
-            //else if (exp is ParameterExpression)
-            //    _i = new ParameterExpVisitor();
-            //else if (exp is MemberInitExpression)
-            //    _i = new MemberInitExpVisitor();
+            else if (exp is ParameterExpression)
+                _i = new ParameterExpVisitor();
+            else if (exp is MemberInitExpression)
+                _i = new MemberInitExpVisitor();
             else
                 throw new ArgumentException($"不支持的Expression => {exp}");
 

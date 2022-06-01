@@ -7,8 +7,8 @@ namespace MDbContext.NewExpSql.Providers
 {
     internal partial class UpdateProvider<T> :BasicProvider<T>, IExpUpdate<T>
     {
-        public UpdateProvider(string key, Func<string, (ITableContext context, DbConnectInfo info)> getDbInfos)
-        : base(key, getDbInfos) { }
+        public UpdateProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
+      : base(key, getContext, connectInfos) { }
         public IExpUpdate<T> AppendData(T item)
         {
             throw new NotImplementedException();
