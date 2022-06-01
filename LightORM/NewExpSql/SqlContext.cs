@@ -36,6 +36,11 @@ namespace MDbContext.NewExpSql
     {
         StringBuilder? @string;
         Dictionary<string, object> values = new Dictionary<string, object>();
+        internal Dictionary<string, TableInfo> Tables { get; set; } = new Dictionary<string, TableInfo>();
+        /// <summary>
+        /// 本次构建Sql中的字段
+        /// </summary>            
+        Dictionary<string, SqlFieldInfo> allFields = new Dictionary<string, SqlFieldInfo>();
         public List<string> Names { get; set; } = new List<string>();
         public List<string> Values { get; set; } = new List<string>();
         private readonly ITableContext tableContext;
@@ -74,10 +79,25 @@ namespace MDbContext.NewExpSql
 
         public object GetParameters() => values;
 
-        #region ITableContext
-        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.From)
+        public SqlFieldInfo GetColumn(string csName)
         {
-            return tableContext.AddTable(table, tableLinkType);
+            if (allFields.TryGetValue(csName, out var field))
+            {
+                return field;
+            }
+            return null;
+        }
+
+        #region ITableContext
+        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.None)
+        {
+            var ti = tableContext.AddTable(table, tableLinkType);
+            Tables[table.Name] = ti;
+            foreach (var item in ti.Fields)
+            {
+                allFields[item.Key] = item.Value;
+            }
+            return ti;
         }
 
         public string? GetTableAlias(string csName)
@@ -104,11 +124,7 @@ namespace MDbContext.NewExpSql
         {
             return tableContext.GetPrefix();
         }
-
-        public SqlFieldInfo GetColumn(string csName)
-        {
-            return tableContext.GetColumn(csName);
-        }
+                
 
         #endregion
         public override string ToString()
@@ -125,8 +141,7 @@ namespace MDbContext.NewExpSql
                 return sb.ToString();
             }
         }
-
-        
+               
 
         public static SqlContext operator +(SqlContext self, string sql)
         {

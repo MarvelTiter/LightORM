@@ -4,6 +4,7 @@ using MDbContext.NewExpSql.Interface.Select;
 using MDbContext.SqlExecutor;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -36,7 +37,7 @@ namespace MDbContext.NewExpSql.Providers.Select
 
         protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
         {
-            tables.Add(context.AddTable(typeof(TAnother), tableLinkType));
+            context.AddTable(typeof(TAnother), tableLinkType);
             join ??= new StringBuilder();
             context.SetStringBuilder(join);
             ExpressionVisit.Visit(body, SqlConfig.Join, context);
@@ -140,13 +141,15 @@ namespace MDbContext.NewExpSql.Providers.Select
 
         public string ToSql()
         {
+            var tables = context.Tables.Values.ToArray();
             var main = tables[0];
             StringBuilder sql = new StringBuilder();
             select.Remove(select.Length - 1, 1);
             sql.Append($"SELECT {select} FROM {main.TableName} {main.Alias}");
-            for (int i = 1; i < tables.Count; i++)
+            for (int i = 1; i < context.Tables.Count; i++)
             {
                 var temp = tables[i];
+                if (temp.TableType == TableLinkType.None) continue;
                 sql.Append($"\n{temp.TableType.ToLabel()} {temp.TableName} {temp.Alias} ON {join}");
             }
             sql.Append($"\nWHERE {where}");

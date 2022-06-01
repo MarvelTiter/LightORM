@@ -9,7 +9,7 @@ namespace MDbContext.NewExpSql.Providers
     internal class BasicProvider<T1>
     {
         protected readonly SqlContext context;
-        protected readonly List<TableInfo> tables;
+        //protected readonly List<TableInfo> tables;
         protected readonly DbConnectInfo dbConnect;
         protected readonly Dictionary<string, SqlFieldInfo> SessionFields = new Dictionary<string, SqlFieldInfo>();
 
@@ -18,9 +18,8 @@ namespace MDbContext.NewExpSql.Providers
             var tbContext = getContext.Invoke(key);
             dbConnect = connectInfos;
             context = new SqlContext(tbContext);
-            tables = new List<TableInfo>();
+            //tables = new List<TableInfo>();
             var main = context.AddTable(typeof(T1));
-            tables.Add(main);
         }
     }
 }

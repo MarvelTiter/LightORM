@@ -28,10 +28,12 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var sql = db.Select<Users, BasicStation>()
+                var sql = db.Select<Users, BasicStation, Job>()
+                    .InnerJoin<BasicStation>((u, b) => u.Sex == b.Sflw)
                     .Count(out var total)
                     .Where<Users>(u => u.Password == "321" && u.Tel == "123")
-                    .Where<BasicStation>(b => b.Znsh > 5).ToList<ReturnType>();
+                    .Where<BasicStation>(b => b.Znsh > 5)
+                    .ToList(set => new ReturnType{});
                 //Console.WriteLine(sql);
             });
         }

@@ -12,9 +12,7 @@ namespace MDbContext.NewExpSql
         internal static string ToLabel(this TableLinkType self)
         {
             switch (self)
-            {
-                case TableLinkType.From:
-                    return "FROM";
+            {                
                 case TableLinkType.LeftJoin:
                     return "LEFT JOIN";
                 case TableLinkType.InnerJoin:
@@ -28,7 +26,7 @@ namespace MDbContext.NewExpSql
     }
     internal enum TableLinkType
     {
-        From,
+        None,
         LeftJoin,
         InnerJoin,
         RightJoin,
@@ -95,16 +93,7 @@ namespace MDbContext.NewExpSql
             return GetTableName(typeof(T).Name);
         }
 
-        public SqlFieldInfo GetColumn(string csName)
-        {
-            if (allFields.TryGetValue(csName, out var field))
-            {
-                return field;
-            }
-            return null;
-        }
-
-        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.From)
+        public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.None)
         {
             if (!tables.TryGetValue(table.Name, out var info))
             {
