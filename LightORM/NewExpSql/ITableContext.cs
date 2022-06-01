@@ -10,5 +10,6 @@ namespace MDbContext.NewExpSql
         string? GetTableAlias<T>();
         string GetTableName<T>();
         string GetPrefix();
+        SqlFieldInfo GetColumn(string csName);
     }
 }

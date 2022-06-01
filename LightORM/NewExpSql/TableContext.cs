@@ -7,102 +7,6 @@ using System.Linq;
 
 namespace MDbContext.NewExpSql
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T">MainTable</typeparam>
-    internal class TableContext<T>
-    {
-        private Dictionary<Type, char> tableAlia;
-        private Queue<char> charAlia;
-
-        public DbBaseType DbType { get; private set; }
-
-        public TableContext(DbBaseType baseType)
-        {
-            DbType = baseType;
-            Init();
-        }
-        private void Init()
-        {
-            charAlia = new Queue<char>();
-            for (int i = 97; i < 123; i++)
-            {
-                // a - z
-                charAlia.Enqueue((char)i);
-            }
-            if (tableAlia == null) tableAlia = new Dictionary<Type, char>();
-            else tableAlia.Clear();
-        }
-        private bool CheckAssign(Type newType, out Type registedType)
-        {
-            foreach (var item in tableAlia.Keys)
-            {
-                if (item.IsAssignableFrom(newType) || newType.IsAssignableFrom(item))
-                {
-                    registedType = item;
-                    return true;
-                }
-            }
-            registedType = null;
-            return false;
-        }
-
-        public string GetTableAlias(Type tableName)
-        {
-            if (CheckAssign(tableName, out Type registed))
-            {
-                return tableAlia[registed].ToString();
-            }
-            else if (tableAlia.Keys.Contains(tableName))
-            {
-                return tableAlia[tableName].ToString();
-            }
-            return "";
-        }
-
-        public string GetTableName(bool withAlias, Type t = null)
-        {
-            if (t == null) t = typeof(T);
-            var attrs = t.GetAttribute<TableNameAttribute>();
-            var tbName = attrs is null ? t.Name : attrs.TableName;
-            if (withAlias)
-            {
-                return tbName + " " + GetTableAlias(t);
-            }
-            else
-            {
-                return tbName;
-            }
-        }
-
-        public bool SetTableAlias(Type tableName)
-        {
-            if (!CheckAssign(tableName, out _) && !tableAlia.Keys.Contains(tableName))
-            {
-                tableAlia.Add(tableName, charAlia.Dequeue());
-                return true;
-            }
-            return false;
-        }
-
-        public string GetPrefix()
-        {
-            switch (DbType)
-            {
-                case DbBaseType.SqlServer:
-                case DbBaseType.Sqlite:
-                    return "@";
-                case DbBaseType.Oracle:
-                    return ":";
-                case DbBaseType.MySql:
-                    return "?";
-                default:
-                    return "@";
-            }
-        }
-    }
-
     internal static class TableLinkTypeEx
     {
         internal static string ToLabel(this TableLinkType self)
@@ -137,6 +41,7 @@ namespace MDbContext.NewExpSql
         public string? Alias { get; set; }
         public Type? Type { get; set; }
         public TableLinkType TableType { get; set; }
+        public Dictionary<string, SqlFieldInfo> Fields { get; set; }
     }
     internal class TableContext : ITableContext
     {
@@ -190,6 +95,15 @@ namespace MDbContext.NewExpSql
             return GetTableName(typeof(T).Name);
         }
 
+        public SqlFieldInfo GetColumn(string csName)
+        {
+            if (allFields.TryGetValue(csName, out var field))
+            {
+                return field;
+            }
+            return null;
+        }
+
         public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.From)
         {
             if (!tables.TryGetValue(table.Name, out var info))
@@ -199,6 +113,8 @@ namespace MDbContext.NewExpSql
                 info.TableName = (Attribute.GetCustomAttribute(table, typeof(TableAttribute)) as TableAttribute)?.Name ?? table.Name;
                 info.Alias = $"a{tables.Count}";
                 info.TableType = tableLinkType;
+                info.Type = table;
+                info.Fields = InitColumns(info);
                 tables[info.CsName] = info;
             }
             else
@@ -207,5 +123,26 @@ namespace MDbContext.NewExpSql
             }
             return info;
         }
+
+        private Dictionary<string, SqlFieldInfo> InitColumns(TableInfo table)
+        {
+            Dictionary<string, SqlFieldInfo> info = new Dictionary<string, SqlFieldInfo>();
+            var props = table.Type.GetProperties();
+            foreach (var prop in props)
+            {
+                if (prop.HasAttribute<IgnoreAttribute>()) continue;
+                var attr = prop.GetAttribute<ColumnAttribute>();
+                var field = new SqlFieldInfo
+                {
+                    FieldAlias = prop.Name,
+                    FieldName = attr?.Name ?? prop.Name,
+                    Table = table
+                };
+                info.Add(prop.Name, field);
+            }
+            return info;
+        }
+
+
     }
 }

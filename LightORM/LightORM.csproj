@@ -15,4 +15,10 @@
 		<FileVersion>1.1.7.0</FileVersion>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <None Update="NewExpSql\Interface\Select\select.js">
+	    <SubType>Code</SubType>
+	  </None>
+	</ItemGroup>
+
 </Project>

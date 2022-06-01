@@ -17,6 +17,12 @@ namespace LightORM.Test2
 
         }
 
+        public class ReturnType
+        {
+            public string UserName { get; set; }
+            public string Password { get; set; }
+        }
+
         [TestMethod]
         public void V2Select()
         {
@@ -25,7 +31,7 @@ namespace LightORM.Test2
                 var sql = db.Select<Users, BasicStation>()
                     .Count(out var total)
                     .Where<Users>(u => u.Password == "321" && u.Tel == "123")
-                    .Where<BasicStation>(b => b.Znsh > 5).ToList(set => new { set.Tb1.Tel, set.Tb2.Bz });
+                    .Where<BasicStation>(b => b.Znsh > 5).ToList<ReturnType>();
                 //Console.WriteLine(sql);
             });
         }

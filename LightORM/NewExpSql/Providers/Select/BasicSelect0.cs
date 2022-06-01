@@ -67,6 +67,12 @@ namespace MDbContext.NewExpSql.Providers.Select
             return conn.Query<T1>(ToSql(), context.GetParameters());
         }
 
+        protected IEnumerable<TReturn> InternalQuery<TReturn>(string sql, object param)
+        {
+            var conn = dbConnect.CreateConnection();
+            return conn.Query<TReturn>(sql, param);
+        }
+
         public int Execute()
         {
             var conn = dbConnect.CreateConnection();

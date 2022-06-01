@@ -11,17 +11,14 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
         {
             var t = exp.Type;
             var props = t.GetProperties();
-            var alia = context.GetTableAlias(t.Name);
             foreach (PropertyInfo item in props)
             {
-                if (item.GetAttribute<IgnoreAttribute>() != null)
-                    continue;
-                var col = item.GetAttribute<ColumnNameAttribute>();
-                if (config.RequiredColumnAlias && col != null)
-                    context += ($"{alia}.{col.Name} {item.Name},");
+                var field = context.GetColumn(item.Name);
+                if (field == null) continue;
+                if (config.RequiredColumnAlias)
+                    context += ($"{field.TableAlias}.{field.FieldName} {field.FieldAlias},");
                 else
-                    context += ($"{alia}.{item.Name},");
-
+                    context += ($"{field.TableAlias}.{field.FieldName},");
             }
         }
     }

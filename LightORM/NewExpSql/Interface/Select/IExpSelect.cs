@@ -58,13 +58,63 @@ namespace MDbContext.NewExpSql.Interface.Select
         IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, TReturn>> exp);
         IExpSelect<T1, T2, T3, T4> Where(Expression<Func<TypeSet<T1, T2, T3, T4>, bool>> exp);
     }
-    public interface IExpSelect<T1, T2, T3, T4, T5> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> { }
-    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> { }
+    public interface IExpSelect<T1, T2, T3, T4, T5>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<T1, T2, T3, T4, T5, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<T1, T2, T3, T4, T5, T6, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> exp);
+    }
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, bool>> exp);
+    }
+
+    public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>
+    {
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, bool>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, TReturn>> exp);
+        IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, bool>> exp);
+    }
 
     public static class SelectExtension
     {
@@ -73,10 +123,65 @@ namespace MDbContext.NewExpSql.Interface.Select
             var ins = self as ExpressionSql;
             return new SelectProvider2<T1, T2>(key, ins.GetContext, ins.GetDbInfo(key));
         }
+
         public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpSql self, string key = "MainDb") where T1 : class, new()
         {
             var ins = self as ExpressionSql;
             return new SelectProvider3<T1, T2, T3>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4> Select<T1, T2, T3, T4>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider4<T1, T2, T3, T4>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5> Select<T1, T2, T3, T4, T5>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider5<T1, T2, T3, T4, T5>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6> Select<T1, T2, T3, T4, T5, T6>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider6<T1, T2, T3, T4, T5, T6>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7> Select<T1, T2, T3, T4, T5, T6, T7>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider7<T1, T2, T3, T4, T5, T6, T7>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Select<T1, T2, T3, T4, T5, T6, T7, T8>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider8<T1, T2, T3, T4, T5, T6, T7, T8>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(key, ins.GetContext, ins.GetDbInfo(key));
+        }
+
+        public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+        {
+            var ins = self as ExpressionSql;
+            return new SelectProvider12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(key, ins.GetContext, ins.GetDbInfo(key));
         }
     }
 }

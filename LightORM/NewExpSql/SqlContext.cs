@@ -19,10 +19,11 @@ namespace MDbContext.NewExpSql
     internal class SqlFieldInfo
     {
         public string FieldName { get; set; }
-        public string TableAlias { get; set; }
+        public string? TableAlias => Table?.Alias;
         public string FieldAlias { get; set; }
         public string ParameterName { get; set; }
         public string Compare { get; set; }
+        public TableInfo Table { get; set; }
     }
 
     internal class SqlFragment
@@ -103,6 +104,12 @@ namespace MDbContext.NewExpSql
         {
             return tableContext.GetPrefix();
         }
+
+        public SqlFieldInfo GetColumn(string csName)
+        {
+            return tableContext.GetColumn(csName);
+        }
+
         #endregion
         public override string ToString()
         {
@@ -118,6 +125,8 @@ namespace MDbContext.NewExpSql
                 return sb.ToString();
             }
         }
+
+        
 
         public static SqlContext operator +(SqlContext self, string sql)
         {
