@@ -40,7 +40,7 @@ namespace MDbContext.NewExpSql
         /// <summary>
         /// 本次构建Sql中的字段
         /// </summary>            
-        Dictionary<string, SqlFieldInfo> allFields = new Dictionary<string, SqlFieldInfo>();
+        List<Dictionary<string, SqlFieldInfo>> allFields = new List<Dictionary<string, SqlFieldInfo>>();
         public List<string> Names { get; set; } = new List<string>();
         public List<string> Values { get; set; } = new List<string>();
         private readonly ITableContext tableContext;
@@ -81,11 +81,9 @@ namespace MDbContext.NewExpSql
 
         public SqlFieldInfo GetColumn(string csName)
         {
-            if (allFields.TryGetValue(csName, out var field))
-            {
-                return field;
-            }
-            return null;
+            SqlFieldInfo field = null;
+            allFields.FirstOrDefault(dic => dic.TryGetValue(csName, out field));
+            return field;
         }
 
         #region ITableContext
@@ -93,10 +91,7 @@ namespace MDbContext.NewExpSql
         {
             var ti = tableContext.AddTable(table, tableLinkType);
             Tables[table.Name] = ti;
-            foreach (var item in ti.Fields)
-            {
-                allFields[item.Key] = item.Value;
-            }
+            allFields.Add(ti.Fields);
             return ti;
         }
 
@@ -124,7 +119,7 @@ namespace MDbContext.NewExpSql
         {
             return tableContext.GetPrefix();
         }
-                
+
 
         #endregion
         public override string ToString()
@@ -141,7 +136,7 @@ namespace MDbContext.NewExpSql
                 return sb.ToString();
             }
         }
-               
+
 
         public static SqlContext operator +(SqlContext self, string sql)
         {

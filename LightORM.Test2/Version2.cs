@@ -33,7 +33,7 @@ namespace LightORM.Test2
                     .Count(out var total)
                     .Where<Users>(u => u.Password == "321" && u.Tel == "123")
                     .Where<BasicStation>(b => b.Znsh > 5)
-                    .ToList(set => new ReturnType{});
+                    .ToList();
                 //Console.WriteLine(sql);
             });
         }

@@ -8,7 +8,6 @@ namespace MDbContext.ExpSql.Extension
 {
     internal static class MemberExtension
     {
-
         public static string GetSelectColumnName(this MemberInfo self, SqlCaluse sqlCaluse, bool aliaRequest = true)
         {
             var table = self.DeclaringType;
@@ -47,27 +46,27 @@ namespace MDbContext.ExpSql.Extension
             else
                 return $"{alias}{colAlias}";
         }
-        public static string GetColumnName(this MemberInfo self, SqlContext
-            context, SqlConfig config)
+        public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
         {
-            var table = self.DeclaringType;
-            var alias = context.GetTableAlias(table.Name);
-            var attr = self.GetAttribute<ColumnNameAttribute>();
-            var colAlias = self.Name;
+            var column = context.GetColumn(self.Name);
             var comma = config.RequiredComma ? "," : "";
-            if (config.RequiredColumnAlias && attr != null)
+            if (config.RequiredColumnAlias)
             {
                 if (config.RequiredTableAlias)
-                    return $"{alias}.{attr.Name} {colAlias}{comma}";
+                {
+                    return $"{column.TableAlias}.{column.FieldName} {column.FieldAlias}{comma}";
+                }
                 else
-                    return $"{attr.Name} {colAlias}{comma}";
+                {
+                    return $"{column.FieldName} {column.FieldAlias}{comma}";
+                }
             }
             else
             {
                 if (config.RequiredTableAlias)
-                    return $"{alias}.{colAlias}{comma}";
+                    return $"{column.TableAlias}.{column.FieldName}{comma}";
                 else
-                    return $"{colAlias}{comma}";
+                    return $"{column.FieldName}{comma}";
             }
         }
     }
