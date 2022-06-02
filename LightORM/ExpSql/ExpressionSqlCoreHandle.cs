@@ -15,29 +15,31 @@ namespace DExpSql
     {
         private bool _firstWhere = true;
         private bool _firstOrderby = true;
-
-        private string template = "";
+        int selectContentIndexStart = 0;
+        int selectContentIndexEnd = 0;
         private void SelectHandle(bool distinct, Expression body, params Type[] arr)
         {
             _sqlCaluse.Clear();
             _sqlCaluse.EnableTableAlia = true;
-            var sql = distinct ? " SELECT DISTINCT {0}\n FROM " : " SELECT {0}\n FROM ";
             foreach (Type item in arr)
             {
                 _sqlCaluse.SetTableAlias(item);
             }
             var mainTable = typeof(T);
-            var tableName = _sqlCaluse.GetTableName(mainTable);
-            sql = sql + tableName + " " + _sqlCaluse.GetTableAlias(mainTable).Replace(".", "");
-            template = sql;
+            var tableName = _sqlCaluse.GetTableName(mainTable) + " " + _sqlCaluse.GetTableAlias(mainTable).Replace(".", "");
             ExpressionVisit.Select(body, _sqlCaluse);
-            //var selected = _sqlCaluse.SelectAll ? "*" : _sqlCaluse.SelectedFieldString;
-            _sqlCaluse.Sql.AppendFormat(template, _sqlCaluse.SelectedFieldString);
+            _sqlCaluse += " SELECT ";
+            if (distinct) _sqlCaluse += "DISTINCT ";
+            selectContentIndexStart = _sqlCaluse.Length;
+            _sqlCaluse += _sqlCaluse.SelectedFieldString;
+            selectContentIndexEnd = _sqlCaluse.Length;
+            _sqlCaluse += "\n FROM ";
+            _sqlCaluse += tableName;
         }
 
         private void JoinHandle<T1>(string joinType, Expression exp)
         {
-            var joinTable = typeof(T1);           
+            var joinTable = typeof(T1);
             _sqlCaluse.SetTableAlias(joinTable);
             var tableName = _sqlCaluse.GetTableName(joinTable);
             _sqlCaluse += $"{joinType} JOIN {tableName} {_sqlCaluse.GetTableAlias(joinTable).Replace(".", "")} ON (";
@@ -103,7 +105,6 @@ namespace DExpSql
                 _sqlCaluse += " ,";
             ExpressionVisit.OrderBy(exp, _sqlCaluse);
         }
-
         private void GroupByHandle(Expression body, bool rollup)
         {
             ExpressionVisit.GroupBy(body, _sqlCaluse);

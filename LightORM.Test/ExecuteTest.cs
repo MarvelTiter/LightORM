@@ -3,6 +3,7 @@ using MDbContext;
 using Microsoft.Data.Sqlite;
 using NUnit.Framework;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace LightORM.Test
 {
@@ -46,19 +47,21 @@ namespace LightORM.Test
         }
 
         [Test]
-        public void InsertNew()
+        public async Task InsertNew()
         {
             var db = SqliteDbContext();
             var p = new Power();
             p.PowerId = "TEST";
             p.PowerName = "Test";
-            db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
-            System.Console.WriteLine(db.DbSet);
+            var list = await db.DbSet.Select<Power>().Count(out var total).QueryAsync();
+            System.Console.WriteLine($"total:{total}");
+            //db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
+            //System.Console.WriteLine(db.DbSet);
 
-            db.DbSet.Select<Power, Users>();
-            System.Console.WriteLine(db.DbSet);
-            db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
-            System.Console.WriteLine(db.DbSet);
+            //db.DbSet.Select<Power, Users>();
+            //System.Console.WriteLine(db.DbSet);
+            //db.DbSet.Update<Power>(() => new { p.PowerName, p.PowerType }).Where(p => p.PowerId == "TEST");
+            //System.Console.WriteLine(db.DbSet);
         }
     }
 }
