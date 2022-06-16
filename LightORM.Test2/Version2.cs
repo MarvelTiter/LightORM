@@ -22,7 +22,11 @@ namespace LightORM.Test2
             public string UserName { get; set; }
             public string Password { get; set; }
         }
-
+        class M
+        {
+            public string Tel { get; set; }
+            public string Bz { get; set; }
+        }
         [TestMethod]
         public void V2Select()
         {
@@ -33,8 +37,8 @@ namespace LightORM.Test2
                     .Count(out var total)
                     .Where<Users>(u => u.Password == "321" && u.Tel == "123")
                     .Where<BasicStation>(b => b.Znsh > 5)
-                    .ToList();
-                //Console.WriteLine(sql);
+                    .ToList<M>(w => new { w.Tb1.Tel, w.Tb2.Bz });
+                Console.WriteLine(sql);
             });
         }
 

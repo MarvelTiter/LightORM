@@ -21,7 +21,8 @@ namespace MDbContext.NewExpSql.Providers
 
         public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
         {
-            throw new NotImplementedException();
+
+            return this;
         }
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp)

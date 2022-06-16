@@ -58,18 +58,18 @@ namespace MDbContext.NewExpSql.Providers.Select
         {
             Expression<Func<TReturn, object>> exp = r => new { r };
             SelectHandle(exp.Body);
-            var conn = dbConnect.CreateConnection();
-            return conn.Query<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
         public IEnumerable<T1> ToList(Expression<Func<T1, object>> exp)
         {
             SelectHandle(exp.Body);
-            var conn = dbConnect.CreateConnection();
-            return conn.Query<T1>(ToSql(), context.GetParameters());
+            return InternalQuery<T1>();
         }
 
-        protected IEnumerable<TReturn> InternalQuery<TReturn>(string sql, object param)
+        protected IEnumerable<TReturn> InternalQuery<TReturn>()
         {
+            var sql = ToSql();
+            var param = context.GetParameters();
             var conn = dbConnect.CreateConnection();
             return conn.Query<TReturn>(sql, param);
         }
@@ -191,7 +191,6 @@ namespace MDbContext.NewExpSql.Providers.Select
         {
             throw new NotImplementedException();
         }
-
 
     }
 }

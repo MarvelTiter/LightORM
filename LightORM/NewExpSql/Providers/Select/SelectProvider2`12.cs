@@ -18,16 +18,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T2));
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp)
@@ -50,18 +50,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T2));
             context.AddTable(typeof(T3));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, object>> exp)
         {
             SelectHandle(exp.Body);
-            var conn = dbConnect.CreateConnection();
-            return conn.Query<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3>, object>> exp)
         {
             SelectHandle(exp.Body);
-            var conn = dbConnect.CreateConnection();
-            return conn.Query<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3> Where(Expression<Func<T1, T2, T3, bool>> exp)
@@ -85,16 +83,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T3));
             context.AddTable(typeof(T4));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4> Where(Expression<Func<T1, T2, T3, T4, bool>> exp)
@@ -119,16 +117,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T4));
             context.AddTable(typeof(T5));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<T1, T2, T3, T4, T5, bool>> exp)
@@ -154,16 +152,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T5));
             context.AddTable(typeof(T6));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<T1, T2, T3, T4, T5, T6, bool>> exp)
@@ -190,16 +188,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T6));
             context.AddTable(typeof(T7));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, bool>> exp)
@@ -227,16 +225,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T7));
             context.AddTable(typeof(T8));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, bool>> exp)
@@ -265,16 +263,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T8));
             context.AddTable(typeof(T9));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, bool>> exp)
@@ -304,16 +302,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T9));
             context.AddTable(typeof(T10));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, bool>> exp)
@@ -344,16 +342,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T10));
             context.AddTable(typeof(T11));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, bool>> exp)
@@ -385,16 +383,16 @@ namespace MDbContext.NewExpSql.Providers.Select
             context.AddTable(typeof(T11));
             context.AddTable(typeof(T12));
         }
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, object>> exp)
         {
             SelectHandle(exp.Body);
-            return InternalQuery<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, bool>> exp)

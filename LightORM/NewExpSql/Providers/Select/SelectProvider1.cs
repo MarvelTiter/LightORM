@@ -14,11 +14,10 @@ namespace MDbContext.NewExpSql.Providers.Select
       : base(key, getContext, connectInfos) { }
 
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
         {
             SelectHandle(exp.Body);
-            var conn = dbConnect.CreateConnection();
-            return conn.Query<TReturn>(ToSql(), context.GetParameters());
+            return InternalQuery<TReturn>();
         }
 
         public IExpSelect<T1> Where(Expression<Func<T1, bool>> exp)

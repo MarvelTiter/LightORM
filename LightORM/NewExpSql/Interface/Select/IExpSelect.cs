@@ -34,85 +34,85 @@ namespace MDbContext.NewExpSql.Interface.Select
     }
     public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
         IExpSelect<T1> Where(Expression<Func<T1, bool>> exp);
     }
     public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
         IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
         IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3> : IExpSelect0<IExpSelect<T1, T2, T3>, T1>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, object>> exp);
         IExpSelect<T1, T2, T3> Where(Expression<Func<T1, T2, T3, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3>, object>> exp);
         IExpSelect<T1, T2, T3> Where(Expression<Func<TypeSet<T1, T2, T3>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4> : IExpSelect0<IExpSelect<T1, T2, T3, T4>, T1>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, object>> exp);
         IExpSelect<T1, T2, T3, T4> Where(Expression<Func<T1, T2, T3, T4, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, object>> exp);
         IExpSelect<T1, T2, T3, T4> Where(Expression<Func<TypeSet<T1, T2, T3, T4>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<T1, T2, T3, T4, T5, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<T1, T2, T3, T4, T5, T6, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> exp);
     }
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, bool>> exp);
     }
 
     public interface IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>
     {
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Where(Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, bool>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, TReturn>> exp);
+        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, object>> exp);
         IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, bool>> exp);
     }
 
