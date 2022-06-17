@@ -219,10 +219,10 @@ namespace LightORM.Test
             }
         }
 
-        private Task<IEnumerable<BasicStation>> local()
+        private async Task<IEnumerable<BasicStation>> local()
         {
             var db = VbDbContext();
-            return db.DbSet.Select<BasicStation>().ToListAsync<BasicStation>();
+            return await db.DbSet.Select<BasicStation>().ToListAsync<BasicStation>();
         }
 
         class temp

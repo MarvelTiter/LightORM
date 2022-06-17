@@ -1,5 +1,6 @@
 ﻿using MDbContext;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq.Expressions;
 
@@ -508,6 +509,12 @@ namespace DExpSql
             return this;
         }
 
+        public ExpressionSqlCore<T> Count(out long total)
+        {
+            total = GetTotal();
+            return this;
+        }
+
         public ExpressionSqlCore<T> Max(Expression<Func<T, object>> exp)
         {
             MaxHandle(exp.Body);
@@ -516,9 +523,7 @@ namespace DExpSql
 
         public ExpressionSqlCore<T> Top(int count)
         {
-
-            return this;
+            throw new NotImplementedException("ExpressionSqlCore<>.Top");
         }
-
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -13,8 +14,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor
-{
-    public static class SqlExecutor
+{    
+    public static partial class SqlExecutor
     {
 
         public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
