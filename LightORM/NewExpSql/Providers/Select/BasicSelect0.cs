@@ -12,14 +12,14 @@ namespace MDbContext.NewExpSql.Providers.Select
 {
     internal class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class
     {
-        protected StringBuilder select;
-        protected StringBuilder join;
-        protected StringBuilder where;
+        protected SqlFragment select;
+        protected SqlFragment join;
+        protected SqlFragment where;
         public BasicSelect0(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
       : base(key, getContext, connectInfos) { }
         public TSelect Count(out long total)
         {
-            select ??= new StringBuilder();
+            select ??= new SqlFragment();
             select.Append("COUNT(1)");
             total = 0;
             return this as TSelect;
@@ -27,10 +27,10 @@ namespace MDbContext.NewExpSql.Providers.Select
 
         protected void WhereHandle(Expression body)
         {
-            where ??= new StringBuilder();
+            where ??= new SqlFragment();
             if (where.Length > 0) where.Append("\nAND ");
             where.Append("(");
-            context.SetStringBuilder(where);
+            context.SetFragment(where);
             ExpressionVisit.Visit(body, SqlConfig.Where, context);
             where.Append(")");
         }
@@ -38,16 +38,16 @@ namespace MDbContext.NewExpSql.Providers.Select
         protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
         {
             context.AddTable(typeof(TAnother), tableLinkType);
-            join ??= new StringBuilder();
-            context.SetStringBuilder(join);
+            join ??= new SqlFragment();
+            context.SetFragment(join);
             ExpressionVisit.Visit(body, SqlConfig.Join, context);
         }
 
         protected void SelectHandle(Expression body)
         {
-            select ??= new StringBuilder();
+            select ??= new SqlFragment();
             select.Clear();
-            context.SetStringBuilder(select);
+            context.SetFragment(select);
             ExpressionVisit.Visit(body, SqlConfig.Select, context);
         }
         public IEnumerable<T1> ToList()

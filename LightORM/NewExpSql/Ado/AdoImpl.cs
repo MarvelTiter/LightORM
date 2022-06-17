@@ -72,6 +72,8 @@ namespace MDbContext.NewExpSql.Ado
         }
         public IAdo SetDb(string key)
         {
+            if (!dbFactories.ContainsKey(key))
+                throw new System.ArgumentException($"未注册的数据库:{key}");
             currentDb = key;
             return this;
         }

@@ -28,54 +28,73 @@ namespace MDbContext.NewExpSql
 
     internal class SqlFragment
     {
-        public TableInfo Table { get; set; }
-        public Stack<SqlFieldInfo> Fields { get; set; }
+        public StringBuilder Sql { get; set; } = new StringBuilder();
+        public List<string> Names { get; set; } = new List<string>();
+        public List<string> Values { get; set; } = new List<string>();
+
+        public int Length => Sql.Length;
+        public StringBuilder Append(string content) => Sql.Append(content);
+        public StringBuilder Clear() => Sql.Clear();
+        public StringBuilder Remove(int startIndex, int length) => Sql.Remove(startIndex, length);
+        public StringBuilder Insert(int index, string content) => Sql.Insert(index, content);
+        public override string ToString()
+        {
+            return Sql.ToString();
+        }
     }
 
     internal class SqlContext : ITableContext
     {
-        StringBuilder? @string;
+        SqlFragment? fragment;
         Dictionary<string, object> values = new Dictionary<string, object>();
         internal Dictionary<string, TableInfo> Tables { get; set; } = new Dictionary<string, TableInfo>();
         /// <summary>
         /// 本次构建Sql中的字段
         /// </summary>            
         List<Dictionary<string, SqlFieldInfo>> allFields = new List<Dictionary<string, SqlFieldInfo>>();
-        public List<string> Names { get; set; } = new List<string>();
-        public List<string> Values { get; set; } = new List<string>();
         private readonly ITableContext tableContext;
         public SqlContext(ITableContext tableContext)
         {
             this.tableContext = tableContext;
         }
-        public void SetStringBuilder(StringBuilder builder)
-        {
-            @string = builder;
-        }
-        public int Length => @string?.Length ?? 0;
 
-        public bool EndWith(string end) => @string?.ToString().EndsWith(end) ?? false;
-        public void Insert(int index, string content) => @string?.Insert(index, content);
+        public void SetFragment(SqlFragment fragment)
+        {
+            this.fragment = fragment;
+        }
+        public int Length => fragment?.Length ?? 0;
+
+        public bool EndWith(string end) => fragment?.Sql.ToString().EndsWith(end) ?? false;
+        public void Insert(int index, string content) => fragment?.Insert(index, content);
 
         public void AppendDbParameter(object value)
         {
             var name = $"{GetPrefix()}p{values.Count}";
-            @string?.Append(name);
+            fragment?.Append(name);
             values[name] = value;
+            if (fragment?.Names.Count - fragment?.Values.Count == 1)
+            {
+                fragment?.Values.Add(name);
+            }
         }
 
         public void AddEntityField(string name, object value)
         {
             var valueName = $"{GetPrefix()}p{values.Count}";
-            Names.Add(name);
-            Values.Add(valueName);
+            fragment?.Names.Add(name);
+            fragment?.Values.Add(valueName);
             values[valueName] = value;
         }
 
-        public void Append(string sql) => @string?.Append(sql);
-        public void Remove(int index, int count) => @string?.Remove(index, count);
+        public void AddFieldName(string name)
+        {
+            fragment?.Names.Add(name);
+        }
+
+        public void Append(string sql) => fragment?.Append(sql);
+        public void Remove(int index, int count) => fragment?.Remove(index, count);
         //public string? Sql() => @string?.ToString();
-        public void Clear() => @string?.Clear();
+        public void Clear() => fragment?.Clear();
 
         public object GetParameters() => values;
 

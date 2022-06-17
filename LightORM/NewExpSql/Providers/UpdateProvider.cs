@@ -1,4 +1,5 @@
-﻿using MDbContext.NewExpSql.Interface;
+﻿using MDbContext.NewExpSql.ExpressionVisitor;
+using MDbContext.NewExpSql.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -7,6 +8,9 @@ namespace MDbContext.NewExpSql.Providers
 {
     internal partial class UpdateProvider<T> :BasicProvider<T>, IExpUpdate<T>
     {
+        SqlFragment ignore;
+        SqlFragment update;
+        SqlFragment where;
         public UpdateProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
       : base(key, getContext, connectInfos) { }
         public IExpUpdate<T> AppendData(T item)
@@ -21,18 +25,23 @@ namespace MDbContext.NewExpSql.Providers
 
         public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
         {
-
+            ignore ??= new SqlFragment();
+            context.SetFragment(ignore);
+            ExpressionVisit.Visit(columns.Body, SqlConfig.Update, context);
+            return this;
+        }
+        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp)
+        {
+            update ??= new SqlFragment();
+            context.SetFragment(update);
+            ExpressionVisit.Visit(exp.Body, SqlConfig.Update, context);
             return this;
         }
 
-        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp)
+        public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp)
         {
-            throw new NotImplementedException();
-        }
-
-        public IExpUpdate<T> SetIf<TField>(bool confition, Expression<Func<T, TField>> exp)
-        {
-            throw new NotImplementedException();
+            if (condition) return Set(exp);
+            return this;
         }
 
         public string ToSql()
@@ -40,9 +49,12 @@ namespace MDbContext.NewExpSql.Providers
             throw new NotImplementedException();
         }
 
-        public IExpInsert<T> UpdateColumns(Expression<Func<T, object>> columns)
+        public IExpUpdate<T> UpdateColumns(Expression<Func<T, object>> columns)
         {
-            throw new NotImplementedException();
+            update ??= new SqlFragment();
+            context.SetFragment(update);
+            ExpressionVisit.Visit(columns.Body, SqlConfig.Update, context);
+            return this;
         }
 
         public IExpUpdate<T> Where(T item)

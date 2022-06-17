@@ -28,6 +28,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             else
             {
                 context.Append(col);
+                context.AddFieldName(col);
             }
         }
 
