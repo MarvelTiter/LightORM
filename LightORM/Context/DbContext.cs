@@ -7,7 +7,7 @@ namespace MDbContext
 {
     public class DbContext : IDisposable
     {
-        public ExpressionSql DbSet { get; private set; }
+        public DExpSql.ExpressionSql DbSet { get; private set; }
         internal IDbConnection DbConnection { get; private set; }
         public string Sql => DbSet.SqlCaluse.Sql.ToString();
         public object SqlParameter
@@ -47,13 +47,13 @@ namespace MDbContext
         public DbContext(DbBaseType type, IDbConnection connection)
         {
             DbConnection = connection;
-            DbSet = new ExpressionSql(type, this);
+            DbSet = new DExpSql.ExpressionSql(type, this);
         }
 
         public DbContext(IDbConnection connection)
         {
             DbConnection = connection;
-            DbSet = new ExpressionSql(DBType, this);
+            DbSet = new DExpSql.ExpressionSql(DBType, this);
         }
 
 

@@ -1,3 +1,11 @@
+# DbContext Version2
+## 创建IExpSql对象
+``` csharp
+static IExpSql eSql = new ExpressionSqlBuilder()
+                .SetDatabase(DbBaseType.Sqlite, Func<IDbConnection>)
+                .Build();
+```
+
 # DBManage
 
 #### 解析表达式树转换 SQL
@@ -78,3 +86,5 @@ IEnumerable<M> result = await db.DbSet.Select<T>().Where(whereExpression).ToList
 M result = await db.DbSet.Select<T>().Where(whereExpression).FirstAsync<M>();
 DataTable dt = await db.DbSet.Select<T>().Where(whereExpression).ToDataTableAsync();
 ```
+
+

@@ -1,8 +1,10 @@
 using LightORM.Test2.Models;
 using MDbContext;
-using MDbContext.NewExpSql;
-using MDbContext.NewExpSql.Interface;
-using MDbContext.NewExpSql.Interface.Select;
+using MDbContext.ExpressionSql;
+using MDbContext.ExpressionSql.Interface;
+using MDbContext.ExpressionSql.Interface.Select;
+using Microsoft.Data.Sqlite;
+using System.Data;
 using System.Diagnostics;
 
 namespace LightORM.Test2
@@ -11,21 +13,16 @@ namespace LightORM.Test2
     public class Version2
     {
         P p = new P { Age = 5, Bns = 10 };
-        [TestMethod]
-        public void V2Insert()
-        {
-
-        }
 
         public class ReturnType
         {
-            public string UserName { get; set; }
-            public string Password { get; set; }
+            public string? UserName { get; set; }
+            public string? Password { get; set; }
         }
         class M
         {
-            public string Tel { get; set; }
-            public string Bz { get; set; }
+            public string? Tel { get; set; }
+            public string? Bz { get; set; }
         }
         [TestMethod]
         public void V2Select()
@@ -42,10 +39,95 @@ namespace LightORM.Test2
             });
         }
 
+        [TestMethod]
+        public void V2SelectFunc()
+        {
+            Watch(db =>
+            {
+                var s = "sss";
+                db.Select<Users>().ToList(w => new
+                {
+                    UM = SqlFn.Count(() => w.Age > 10),
+                    UM2 = SqlFn.Count(() => w.Duty == s),
+                });
+            });
+        }
+
+        [TestMethod]
+        public void V2Update()
+        {
+            Watch(db =>
+            {
+                var u = new Users();
+                db.Update<Users>().AppendData(u).IgnoreColumns(u => new { u.Tel }).Where(u => u.Age == 10).ExecuteAsync();
+            });
+        }
+
+        [TestMethod]
+        public void V2Insert()
+        {
+            Watch(db =>
+            {
+                var u = new Users();
+                db.Insert<Users>().AppendData(u).ExecuteAsync();
+            });
+        }
+        [TestMethod]
+        public void V2Delete()
+        {
+            Watch(db =>
+            {
+                var u = new Users();
+                db.Delete<Users>().Where(u => u.Age > 10).ExecuteAsync();
+            });
+        }
+
+        [TestMethod]
+        public void V2Max()
+        {
+            Watch(db =>
+            {
+                db.Select<Users>().Max(u => u.Age);
+            });
+        }
+
+        [TestMethod]
+        public void V2Sum()
+        {
+            Watch(db =>
+            {
+                db.Select<Users>().Sum(u => u.Age);
+            });
+        }
+
+        [TestMethod]
+        public void WhereLike()
+        {
+            Watch(db =>
+            {
+                db.Select<Users>().Where(u => u.Duty.Like("HH"));
+            });
+        }
+        [TestMethod]
+        public void DynamicTest()
+        {
+            Watch(db =>
+            {
+                var result = db.Select<Power>().ToDynamicList(u => new { u.PowerName, u.PowerId });
+                foreach (var item in result)
+                {
+                    var dic = item as IDictionary<string, object>;
+                    var vs = dic.Values;
+                    var ns = dic.Keys;
+                    Console.WriteLine($"{item.PowerId} - {item.PowerName}");
+                }
+            });
+        }
+
         private void Watch(Action<IExpSql> action)
         {
-            IExpSql eSql = new ExpSqlBuilder()
-                .SetDatabase(DbBaseType.Sqlite, () => null)
+            IExpSql eSql = new ExpressionSqlBuilder()
+                .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
                 .Build();
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -55,7 +137,13 @@ namespace LightORM.Test2
             Console.WriteLine(eSql);
             Console.WriteLine("====================================");
         }
-
+        private IDbConnection SqliteDbContext()
+        {
+            DbContext.Init(DbBaseType.Sqlite);
+            var path = Path.GetFullPath("../../../Demo.db");
+            var conn = new SqliteConnection($"DataSource={path}");
+            return conn;
+        }
         class P
         {
             public int Age { get; set; }

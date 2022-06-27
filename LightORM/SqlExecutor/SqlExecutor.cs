@@ -14,7 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor
-{    
+{
     public static partial class SqlExecutor
     {
 
@@ -299,20 +299,20 @@ namespace MDbContext.SqlExecutor
                 {
                     if (table == null)
                     {
-                        Type entityType = typeof(T);
-                        PropertyInfo[] props = entityType.GetProperties();
-                        Dictionary<string, string> nameMap = new Dictionary<string, string>();
-                        foreach (PropertyInfo prop in props)
-                        {
-                            var attr = prop.GetCustomAttribute<ColumnNameAttribute>();
-                            var field = attr?.Name ?? prop.Name;
-                            nameMap.Add(field, prop.Name);
-                        }
+                        //Type entityType = typeof(T);
+                        //PropertyInfo[] props = entityType.GetProperties();
+                        //Dictionary<string, string> nameMap = new Dictionary<string, string>();
+                        //foreach (PropertyInfo prop in props)
+                        //{
+                        //    var attr = prop.GetCustomAttribute<ColumnNameAttribute>();
+                        //    var field = attr?.Name ?? prop.Name;
+                        //    nameMap.Add(field, prop.Name);
+                        //}
                         string[] names = new string[fieldCount];
                         for (int i = 0; i < fieldCount; i++)
                         {
-                            string rawName = r.GetName(i);
-                            names[i] = nameMap.ContainsKey(rawName) ? nameMap[rawName] : rawName;
+                            string rawName = r.GetName(i).ToUpper();
+                            names[i] = rawName;//(nameMap.ContainsKey(rawName) ? nameMap[rawName] : rawName);
                         }
                         table = new MapperTable(names);
                     }

@@ -1,10 +1,13 @@
 ﻿using LightORM.Test.Models;
 using MDbContext;
 using MDbContext.Context.Extension;
+using Microsoft.Data.Sqlite;
 using NUnit.Framework;
 using Oracle.ManagedDataAccess.Client;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,12 +26,20 @@ namespace LightORM.Test
         public async Task DynamicResult()
         {
             var db = VbDbContext();
-            var result = await db.DbSet.Select<CgsUsers>()
-                .Top(10).ToListAsync();
+            var result = await db.DbSet.Select<CgsUsers>().ToListAsync();
             foreach (var item in result)
             {
+                //Console.WriteLine($"{item.PowerId}-{item.PowerName}");
                 Console.WriteLine($"{item.UsrId}-{item.UsrName}");
             }
+        }
+
+        private DbContext SqliteDbContext()
+        {
+            DbContext.Init(DbBaseType.Sqlite);
+            var path = Path.GetFullPath("../../../Demo.db");
+            var conn = new SqliteConnection($"DataSource={path}");
+            return conn.DbContext();
         }
     }
 }

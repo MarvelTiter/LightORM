@@ -8,11 +8,11 @@ namespace LightORM.Test2.Models
 {
     public class Users
     {
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public string Tel { get; set; }
-        public string Sex { get; set; }
-        public int? Age { get; set; }
+        public string UserName { get; set; } = "Hello";
+        public string Password { get; set; } = "12345";
+        public string Tel { get; set; } = "13414";
+        public string Sex { get; set; } = "男";
+        public int? Age { get; set; } = 10;
         public string Duty { get; set; }
         [ColumnName("IS_USE")]
         public bool? IsUse { get; set; }
