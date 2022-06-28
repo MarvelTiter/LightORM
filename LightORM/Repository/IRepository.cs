@@ -15,6 +15,7 @@ public interface IRepository<T>
     int Delete(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
     T? GetSingle(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
     IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
+    IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
 
     #region Async 
     Task<T?> InsertAsync(T item, string key = ConstString.Main);
@@ -23,5 +24,6 @@ public interface IRepository<T>
     Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
     Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
     Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
+    Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
     #endregion
 }

@@ -40,6 +40,16 @@ public class RepositoryImpl<T> : IRepository<T>
         return select.Count(out total).ToList();
     }
 
+    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    {
+        var select = context.Select<T>(key);
+        if (whereExpression != null)
+            select = select.Where(whereExpression);
+        if (orderByExpression != null)
+            select = select.OrderBy(orderByExpression, asc);
+        return select.ToList();
+    }
+
     public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
     {
         var select = context.Select<T>(key);
@@ -50,6 +60,16 @@ public class RepositoryImpl<T> : IRepository<T>
         if (orderByExpression != null)
             select = select.OrderBy(orderByExpression, asc);
         return select.Count(out total).ToListAsync();
+    }
+
+    public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    {
+        var select = context.Select<T>(key);
+        if (whereExpression != null)
+            select = select.Where(whereExpression);
+        if (orderByExpression != null)
+            select = select.OrderBy(orderByExpression, asc);
+        return select.ToListAsync();
     }
 
     public T? GetSingle(Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
