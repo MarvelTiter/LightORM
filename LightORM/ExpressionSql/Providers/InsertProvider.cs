@@ -15,8 +15,8 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 {
     SqlFragment? ignore;
     SqlFragment? insert;
-    public InsertProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
-  : base(key, getContext, connectInfos) { }
+    public InsertProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(key, getContext, connectInfos,life) { }
 
     protected override SqlConfig WhereConfig => throw new NotImplementedException();
 
@@ -84,12 +84,13 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             sql.Insert(vIndex, $"{p},");
             vIndex += p.Length + 1;
         }
-        // 移除最后面的逗号
-        sql.Remove(fIndex - 1, 1);
-        sql.Remove(vIndex - 2, 1);
-#if DEBUG
-        Console.WriteLine(sql.ToString());
-#endif
+        if (insert.Names.Count > 0)
+        {
+            // 移除最后面的逗号
+            sql.Remove(fIndex - 1, 1);
+            sql.Remove(vIndex - 2, 1);
+        }
+        Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
 

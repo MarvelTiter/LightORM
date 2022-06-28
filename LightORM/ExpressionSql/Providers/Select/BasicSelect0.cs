@@ -19,8 +19,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     protected SqlFragment? orderBy;
     protected override SqlConfig WhereConfig => SqlConfig.Where;
 
-    public BasicSelect0(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
-  : base(key, getContext, connectInfos) { }
+    public BasicSelect0(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(key, getContext, connectInfos, life) { }
     public TSelect Count(out long total)
     {
         var sql = BuildCountSql();
@@ -162,9 +162,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         }
         if (where != null)
             sql.Append($"\nWHERE {where}");
-#if DEBUG
-        Console.WriteLine(sql.ToString());
-#endif
+        Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
 
@@ -196,9 +194,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
             context.DbHandler.DbPaging(context, select, sql, index, size);
         }
 
-#if DEBUG
-        Console.WriteLine(sql.ToString());
-#endif
+        Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
 

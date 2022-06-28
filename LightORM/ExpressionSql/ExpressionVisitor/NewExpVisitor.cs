@@ -33,6 +33,8 @@ internal class NewExpVisitor : BaseVisitor<NewExpression>
                 var argExp = exp.Arguments[i];
                 var member = exp.Members[i];
                 ExpressionVisit.Visit(argExp, config, context);
+                if (argExp.Type.IsClass && argExp.Type != typeof(string)) 
+                    continue;
                 if (config.RequiredColumnAlias)
                 {
                     context.Append(" ");

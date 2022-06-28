@@ -15,8 +15,8 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 {
     SqlFragment? ignore;
     SqlFragment? update;
-    public UpdateProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
-  : base(key, getContext, connectInfos) { }
+    public UpdateProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(key, getContext, connectInfos, life) { }
 
     protected override SqlConfig WhereConfig => SqlConfig.UpdateWhere;
 
@@ -78,9 +78,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         }
         sql.Remove(sql.Length - 1, 1);
         sql.Append($"\nWHERE {where}");
-#if DEBUG
-        Console.WriteLine(sql.ToString());
-#endif
+        Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
 

@@ -12,8 +12,8 @@ namespace MDbContext.ExpressionSql.Providers;
 
 internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
 {
-    public DeleteProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
-  : base(key, getContext, connectInfos) { }
+    public DeleteProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(key, getContext, connectInfos, life) { }
 
     protected override SqlConfig WhereConfig => SqlConfig.DeleteWhere;
 
@@ -37,9 +37,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         var table = context.Tables.Values.First();
         sql.Append($"DELETE FROM {table.TableName} ");
         sql.Append($"WHERE {where}");
-#if DEBUG
-        Console.WriteLine(sql.ToString());
-#endif
+        Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
 

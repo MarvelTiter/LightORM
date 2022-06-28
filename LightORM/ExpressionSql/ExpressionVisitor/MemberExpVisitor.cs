@@ -18,8 +18,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
             return;
         }
         //resolve member name
-        var field = context.GetColumn(exp.Member.Name);
-        if ((config.RequiredValue && config.BinaryPosition == BinaryPosition.Right))
+        if ((config.RequiredValue && config.BinaryPosition == BinaryPosition.Right) || exp.Expression.NodeType != ExpressionType.Parameter)
         {
             //resolve value
             var v = Expression.Lambda(exp).Compile().DynamicInvoke();
@@ -46,7 +45,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
                 continue;
             if (p.GetAttribute<IgnoreAttribute>() != null)
                 continue;
-            var name = p.GetAttribute<ColumnNameAttribute>()?.Name ?? p.Name;
+            var name = context.GetColumn(p.Name).FieldName!;
             context.AddEntityField(name, value);
         }
     }

@@ -1,4 +1,4 @@
-﻿using MDbContext.ExpressionSql.Interface;
+﻿using MDbContext.ExpressionSql;
 using System;
 using System.Collections.Generic;
 using System.Text;

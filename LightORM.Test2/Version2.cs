@@ -1,8 +1,8 @@
 using LightORM.Test2.Models;
 using MDbContext;
 using MDbContext.ExpressionSql;
-using MDbContext.ExpressionSql.Interface;
 using MDbContext.ExpressionSql.Interface.Select;
+using MDbContext.Repository;
 using Microsoft.Data.Sqlite;
 using System.Data;
 using System.Diagnostics;
@@ -29,14 +29,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var sql = db.Select<Users, BasicStation, Job>()
-                    .InnerJoin<BasicStation>((u, b) => u.Sex == b.Sflw)
-                    .Where<Users>(u => u.Password == "321" && u.Tel == "123")
-                    .Where<BasicStation>(b => b.Znsh > 5)
-                    //.Count(out var total)
-                    .Paging(1, 5)
-                    .ToList<M>(w => new { w.Tb1.Tel, w.Tb2.Bz }).ToList();
-                Console.WriteLine(sql);
+                db.Repository<User>().GetList(e => true, out var count, 1, 5).ToList();
             });
         }
 
@@ -69,8 +62,11 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var u = new Users();
-                db.Insert<Users>().AppendData(u).ExecuteAsync();
+                var u = new User();
+                u.UserId = "User001";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                db.Insert<User>().AppendData(u).ExecuteAsync();
             });
         }
         [TestMethod]
@@ -88,7 +84,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                db.Select<Users>().Max(u => u.Age);
+                db.Select<User>().Max(u => u.UserId);
             });
         }
 
@@ -97,7 +93,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                db.Select<Users>().Sum(u => u.Age);
+                db.Select<User>().Sum(u => u.UserId);
             });
         }
 
@@ -106,7 +102,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                db.Select<Users>().Where(u => u.Duty.Like("HH"));
+                db.Select<User>().Where(u => u.UserName.Like("HH"));
             });
         }
         [TestMethod]
@@ -139,6 +135,14 @@ namespace LightORM.Test2
         {
             IExpSql eSql = new ExpressionSqlBuilder()
                 .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
+                .SetWatcher(option =>
+                {
+                    option.BeforeExecute = sqlString =>
+                    {
+                        Console.Write(DateTime.Now);
+                        Console.WriteLine(" Sql => \n" + sqlString);
+                    };
+                })
                 .Build();
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();

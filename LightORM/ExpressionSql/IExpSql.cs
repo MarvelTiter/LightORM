@@ -1,7 +1,8 @@
 ﻿using MDbContext.ExpressionSql.Ado;
+using MDbContext.ExpressionSql.Interface;
 using MDbContext.ExpressionSql.Interface.Select;
 
-namespace MDbContext.ExpressionSql.Interface
+namespace MDbContext.ExpressionSql
 {
     public interface IExpSql
     {

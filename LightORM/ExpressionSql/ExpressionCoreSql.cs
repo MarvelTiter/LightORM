@@ -12,12 +12,14 @@ namespace MDbContext.ExpressionSql
     {
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
         private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+        internal readonly SqlExecuteLife Life;
         private IAdo ado;
         public IAdo Ado => ado;
 
-        internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
+        internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life)
         {
             this.dbFactories = dbFactories;
+            this.Life = life;
             ado = new AdoImpl(dbFactories);
         }
 
@@ -44,13 +46,13 @@ namespace MDbContext.ExpressionSql
             throw new ArgumentException($"{key}异常");
         }
 
-        public IExpSelect<T> Select<T>(string key = ConstString.Main) => new SelectProvider1<T>(key, GetContext, GetDbInfo(key));
+        public IExpSelect<T> Select<T>(string key = ConstString.Main) => new SelectProvider1<T>(key, GetContext, GetDbInfo(key), Life);
 
-        public IExpInsert<T> Insert<T>(string key = ConstString.Main) => new InsertProvider<T>(key, GetContext, GetDbInfo(key));
+        public IExpInsert<T> Insert<T>(string key = ConstString.Main) => new InsertProvider<T>(key, GetContext, GetDbInfo(key), Life);
 
-        public IExpUpdate<T> Update<T>(string key = ConstString.Main) => new UpdateProvider<T>(key, GetContext, GetDbInfo(key));
+        public IExpUpdate<T> Update<T>(string key = ConstString.Main) => new UpdateProvider<T>(key, GetContext, GetDbInfo(key), Life);
 
-        public IExpDelete<T> Delete<T>(string key = ConstString.Main) => new DeleteProvider<T>(key, GetContext, GetDbInfo(key));
+        public IExpDelete<T> Delete<T>(string key = ConstString.Main) => new DeleteProvider<T>(key, GetContext, GetDbInfo(key), Life);
 
     }
 }
