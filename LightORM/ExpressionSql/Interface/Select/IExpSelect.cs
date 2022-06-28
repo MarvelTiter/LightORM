@@ -38,6 +38,7 @@ namespace MDbContext.ExpressionSql.Interface.Select
         double Sum(Expression<Func<T1, object>> exp);
         int Count(Expression<Func<T1, object>> exp);
         TSelect RollUp();
+        TSelect Distinct();
     }
     public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     {
@@ -51,15 +52,15 @@ namespace MDbContext.ExpressionSql.Interface.Select
     public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     {
         IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
-        IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
+        //IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
         Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp);
-        Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
+        //Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
         IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp, bool asc = true);
-        IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp, bool asc = true);
+        //IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp, bool asc = true);
         IExpSelect<T1, T2> GroupBy(Expression<Func<T1, T2, object>> exp);
-        IExpSelect<T1, T2> GroupBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
+        //IExpSelect<T1, T2> GroupBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
         IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp);
-        IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
+        //IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
     }
 
     public interface IExpSelect<T1, T2, T3> : IExpSelect0<IExpSelect<T1, T2, T3>, T1>

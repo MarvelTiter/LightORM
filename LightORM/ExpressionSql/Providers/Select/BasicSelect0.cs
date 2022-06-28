@@ -147,6 +147,12 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         rollup = true;
         return (this as TSelect)!;
     }
+    bool distanct = false;
+    public TSelect Distinct()
+    {
+        distanct = true;
+        return (this as TSelect)!;
+    }
 
     private string BuildCountSql()
     {
@@ -172,7 +178,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
         select!.Remove(select.Length - 1, 1);
-        sql.Append($"SELECT {select} FROM {main.TableName} {main.Alias}");
+        sql.Append($"SELECT {(distanct ? "DISTINCT ":"")}{select} FROM {main.TableName} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
         {
             var temp = tables[i];
