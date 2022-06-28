@@ -37,6 +37,7 @@ namespace MDbContext.ExpressionSql.Interface.Select
         TMember Max<TMember>(Expression<Func<T1, TMember>> exp);
         double Sum(Expression<Func<T1, object>> exp);
         int Count(Expression<Func<T1, object>> exp);
+        TSelect RollUp();
     }
     public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     {

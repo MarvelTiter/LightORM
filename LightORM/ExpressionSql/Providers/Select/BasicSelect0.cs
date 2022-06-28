@@ -63,7 +63,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         JoinHandle<TAnother1>(TableLinkType.LeftJoin, exp.Body);
         return (this as TSelect)!;
     }
-    
+
     public TSelect RightJoin<TAnother>(Expression<Func<T1, TAnother, bool>> exp)
     {
         JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body);
@@ -141,13 +141,18 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select.Append("))");
         return InternalExecute<int>();
     }
+    bool rollup = false;
+    public TSelect RollUp()
+    {
+        rollup = true;
+        return (this as TSelect)!;
+    }
 
     private string BuildCountSql()
     {
         var tables = context.Tables.Values.ToArray();
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
-        select!.Remove(select.Length - 1, 1);
         sql.Append($"SELECT COUNT(1) FROM {main.TableName} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
         {
@@ -179,9 +184,16 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         if (where != null)
             sql.Append($"\nWHERE {where}");
 
+        if (groupBy != null)
+            sql.Append($"\nGROUP BY {groupBy}");
+
+        if (orderBy != null)
+            sql.Append($"\nORDER BY {orderBy} {(isAsc ? "ASC" : "DESC")}");
+
         if (index * size > 0)
         {
             //分页处理
+            context.DbHandler.DbPaging(context, select, sql, index, size);
         }
 
 #if DEBUG

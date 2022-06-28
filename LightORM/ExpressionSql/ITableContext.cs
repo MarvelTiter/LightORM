@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MDbContext.ExpressionSql.DbHandle;
+using System;
 
 namespace MDbContext.ExpressionSql;
 
@@ -9,5 +10,6 @@ internal interface ITableContext
     string GetTableName(string csName);
     string? GetTableAlias<T>();
     string GetTableName<T>();
-    string GetPrefix();
+    //string GetPrefix();
+    IDbHelper DbHandler { get; }
 }

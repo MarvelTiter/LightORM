@@ -1,8 +1,9 @@
 ﻿namespace MDbContext {
     public enum DbBaseType {
         SqlServer = 0,
-        Oracle = 1,
-        MySql = 2,
-        Sqlite = 3
+        SqlServer2012 = 1,
+        Oracle = 2,
+        MySql = 3,
+        Sqlite = 4,
     }
 }

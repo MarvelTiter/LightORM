@@ -30,7 +30,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     {
         groupBy ??= new SqlFragment();
         context.SetFragment(groupBy);
-        ExpressionVisit.Visit(body, SqlConfig.Select, context);
+        ExpressionVisit.Visit(body, SqlConfig.Group, context);
     }
     bool isAsc;
     internal void OrderByHandle(Expression body, bool asc)
@@ -38,6 +38,6 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         isAsc = asc;
         orderBy ??= new SqlFragment();
         context.SetFragment(orderBy);
-        ExpressionVisit.Visit(body, SqlConfig.Select, context);
+        ExpressionVisit.Visit(body, SqlConfig.Order, context);
     }
 }

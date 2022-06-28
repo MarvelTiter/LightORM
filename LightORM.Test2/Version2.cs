@@ -31,10 +31,11 @@ namespace LightORM.Test2
             {
                 var sql = db.Select<Users, BasicStation, Job>()
                     .InnerJoin<BasicStation>((u, b) => u.Sex == b.Sflw)
-                    .Count(out var total)
                     .Where<Users>(u => u.Password == "321" && u.Tel == "123")
                     .Where<BasicStation>(b => b.Znsh > 5)
-                    .ToList<M>(w => new { w.Tb1.Tel, w.Tb2.Bz });
+                    //.Count(out var total)
+                    .Paging(1, 5)
+                    .ToList<M>(w => new { w.Tb1.Tel, w.Tb2.Bz }).ToList();
                 Console.WriteLine(sql);
             });
         }
@@ -116,11 +117,21 @@ namespace LightORM.Test2
                 var result = db.Select<Power>().ToDynamicList(u => new { u.PowerName, u.PowerId });
                 foreach (var item in result)
                 {
-                    var dic = item as IDictionary<string, object>;
-                    var vs = dic.Values;
-                    var ns = dic.Keys;
                     Console.WriteLine($"{item.PowerId} - {item.PowerName}");
                 }
+            });
+        }
+
+        [TestMethod]
+        public void GroupByTest()
+        {
+            Watch(db =>
+            {
+                var result = db.Select<Power>().GroupBy(p => p.PowerId).ToList<int>(p => new
+                {
+                    G = SqlFn.Count(() => p.PowerId.Like("2"))
+                });
+                Console.WriteLine(result.Count());
             });
         }
 

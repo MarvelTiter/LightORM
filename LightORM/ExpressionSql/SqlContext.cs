@@ -1,74 +1,11 @@
-﻿using System;
+﻿using MDbContext.ExpressionSql.DbHandle;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace MDbContext.ExpressionSql;
-
-internal interface ISqlContext
-{
-    int Length { get; }
-    bool EndWith(string end);
-    void Insert(int index, string content);
-    void AppendDbParameter(object value);
-    void AddEntityField(string name, object value);
-    void Append(string sql);
-    void AddField(string fieldName, string parameterName, string tableAlias = "", string FieldAlias = "");
-    string ToSql();
-}
-internal class SqlFieldInfo
-{
-    public string? FieldName { get; set; }
-    public string? TableAlias => Table?.Alias;
-    public string? FieldAlias { get; set; }
-    public string? ParameterName { get; set; }
-    public string? Compare { get; set; }
-    public TableInfo? Table { get; set; }
-}
-
-internal struct SelectColumn
-{
-    public string? TableAlias { get; set; }
-    public string? ColumnName { get; set; }
-    public string? ColumnAlias { get; set; }
-    public string? ValueName { get; set; }
-}
-
-internal class SqlFragment
-{
-    public StringBuilder Sql { get; set; } = new StringBuilder();
-    public List<string> Names { get; set; } = new List<string>();
-    public List<string> Values { get; set; } = new List<string>();
-    public Dictionary<string, SelectColumn> Columns { get; set; } = new Dictionary<string, SelectColumn>();
-    public int Length => Sql.Length;
-    public StringBuilder Append(string content) => Sql.Append(content);
-    public StringBuilder Clear() => Sql.Clear();
-    public StringBuilder Remove(int startIndex, int length) => Sql.Remove(startIndex, length);
-    public StringBuilder Insert(int index, string content) => Sql.Insert(index, content);
-    public override string ToString()
-    {
-        return Sql.ToString();
-    }
-
-    public bool Has(string name)
-    {
-        return Names.Contains(name);
-    }
-
-    public SqlFragment AddColumn(SqlFieldInfo info, string val)
-    {
-        Columns.Add(info.FieldAlias ?? info.FieldName!, new SelectColumn
-        {
-            TableAlias = info.TableAlias,
-            ColumnName = info.FieldName,
-            ColumnAlias = info.FieldAlias,
-            ValueName = val
-        });
-        return this;
-    }
-}
-
-internal class SqlContext : ITableContext
+internal partial class SqlContext : ITableContext
 {
     SqlFragment? fragment;
     Dictionary<string, object> values = new Dictionary<string, object>();
@@ -99,7 +36,7 @@ internal class SqlContext : ITableContext
 
     public void AppendDbParameter(object value)
     {
-        var name = $"{GetPrefix()}p{values.Count}";
+        var name = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Append(name);
         values[name] = CheckLike(value);
         if (fragment?.Names.Count - fragment?.Values.Count == 1)
@@ -133,7 +70,7 @@ internal class SqlContext : ITableContext
 
     public void AddEntityField(string name, object value)
     {
-        var valueName = $"{GetPrefix()}p{values.Count}";
+        var valueName = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Names.Add(name);
         fragment?.Values.Add(valueName);
         values[valueName] = value;
@@ -189,10 +126,7 @@ internal class SqlContext : ITableContext
         return tableContext.GetTableName<T>();
     }
 
-    public string GetPrefix()
-    {
-        return tableContext.GetPrefix();
-    }
+    public IDbHelper DbHandler => tableContext.DbHandler;
 
 
     #endregion

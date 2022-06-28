@@ -32,6 +32,8 @@ public class SqlConfig
     public SqlPartial SqlType { get; private set; }
     public static SqlConfig Select = new SqlConfig() { RequiredColumnAlias = true, RequiredTableAlias = true, RequiredComma = true, SqlType = SqlPartial.Select };
     public static SqlConfig SelectFunc = new SqlConfig() { RequiredTableAlias = true, SqlType = SqlPartial.SelectFunc };
+    public static SqlConfig Group = new SqlConfig() { RequiredTableAlias = true, RequiredComma = true, SqlType = SqlPartial.GroupBy };
+    public static SqlConfig Order = new SqlConfig() { RequiredTableAlias = true, RequiredComma = true, SqlType = SqlPartial.OrderBy };
     public static SqlConfig Join = new SqlConfig() { RequiredTableAlias = true, SqlType = SqlPartial.Join };
     public static SqlConfig Where = new SqlConfig() { RequiredTableAlias = true, RequiredValue = true, SqlType = SqlPartial.Where };
     public static SqlConfig Insert = new SqlConfig() { RequiredValue = true, SqlType = SqlPartial.Insert };

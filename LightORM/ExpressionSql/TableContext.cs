@@ -1,4 +1,5 @@
-﻿using MDbContext.Extension;
+﻿using MDbContext.ExpressionSql.DbHandle;
+using MDbContext.Extension;
 using MDbEntity.Attributes;
 using System;
 using System.Collections.Concurrent;
@@ -46,25 +47,26 @@ internal class TableContext : ITableContext
 {
     public DbBaseType DbType { get; private set; }
     ConcurrentDictionary<string, TableInfo> tables = new ConcurrentDictionary<string, TableInfo>();
+    public IDbHelper DbHandler { get; }
     public TableContext(DbBaseType baseType)
     {
         DbType = baseType;
+        DbHandler = DbType.GetDbHelper();
     }
-    public string GetPrefix()
-    {
-        switch (DbType)
-        {
-            case DbBaseType.SqlServer:
-            case DbBaseType.Sqlite:
-                return "@";
-            case DbBaseType.Oracle:
-                return ":";
-            case DbBaseType.MySql:
-                return "?";
-            default:
-                return "@";
-        }
-    }
+    //{
+    //switch (DbType)
+    //{
+    //    case DbBaseType.SqlServer:
+    //    case DbBaseType.Sqlite:
+    //        return "@";
+    //    case DbBaseType.Oracle:
+    //        return ":";
+    //    case DbBaseType.MySql:
+    //        return "?";
+    //    default:
+    //        return "@";
+    //}
+    //}
 
     public string? GetTableAlias(string csName)
     {

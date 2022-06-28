@@ -108,6 +108,24 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
     }
     public static void SelectCoalesce(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
-
+        var arg = exp.Arguments[0];
+        var current = context.GetCurrentFragment();
+        context.SetFragment(new SqlFragment());
+        ExpressionVisit.Visit(arg, config, context);
+        var temp = context.GetCurrentFragment();
+        var finalName = "Coalesce";
+        if (exp.Arguments.Count > 1)
+        {
+            finalName = ((ConstantExpression)exp.Arguments[1]).Value.ToString();
+        }
+        var fields = temp.Sql.ToString().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var coalParams = new List<string>();
+        foreach (var field in fields)
+        {
+            coalParams.Add(context.DbHandler.DbStringConvert(field));
+        }
+        var newLine = current.Length > 0 ? "\n" : "";
+        current.Append($"{newLine}COALESCE({string.Join(",", coalParams)},'{finalName}')");
+        context.SetFragment(current);
     }
 }

@@ -19,7 +19,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         }
         //resolve member name
         var field = context.GetColumn(exp.Member.Name);
-        if ((config.RequiredValue && config.BinaryPosition == BinaryPosition.Right) || config.BinaryPosition == BinaryPosition.Right)
+        if ((config.RequiredValue && config.BinaryPosition == BinaryPosition.Right))
         {
             //resolve value
             var v = Expression.Lambda(exp).Compile().DynamicInvoke();
