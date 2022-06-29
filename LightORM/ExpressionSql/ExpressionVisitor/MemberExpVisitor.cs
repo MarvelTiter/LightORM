@@ -3,6 +3,7 @@ using MDbContext.Extension;
 using MDbContext.Utils;
 using MDbEntity.Attributes;
 using System;
+using System.Collections;
 using System.Linq.Expressions;
 
 namespace MDbContext.ExpressionSql.ExpressionVisitor;
@@ -11,7 +12,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
 {
     public override void DoVisit(MemberExpression exp, SqlConfig config, SqlContext context)
     {
-        if (exp.Type.IsClass && exp.Type != typeof(string))
+        if (config.RequiredResolveEntity)
         {
             // 更新实体/插入实体
             ResolveEntity(exp, config, context);
@@ -22,7 +23,20 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         {
             //resolve value
             var v = Expression.Lambda(exp).Compile().DynamicInvoke();
-            context.AppendDbParameter(v);
+            if (v is IEnumerable array)
+            {
+                foreach (var item in array)
+                {
+                    //context += $"'{item}', ";
+                    context.AppendDbParameter(item);
+                    context += ", ";
+                }
+                context -= ", ";
+            }
+            else
+            {
+                context.AppendDbParameter(v);
+            }
         }
         else
         {
@@ -45,7 +59,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
                 continue;
             if (p.GetAttribute<IgnoreAttribute>() != null)
                 continue;
-            var name = context.GetColumn(eType.Name, p.Name).FieldName!;
+            var name = context.GetColumn(eType.Name, p.Name)!.FieldName!;
             context.AddEntityField(name, value);
         }
     }

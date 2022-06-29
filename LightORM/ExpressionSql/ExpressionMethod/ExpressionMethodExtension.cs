@@ -29,7 +29,12 @@ public static class SqlFn
         return true;
     }
 
-    public static bool In(this object self, params object[] array)
+    public static bool In(this string self, params object[] array)
+    {
+        return true;
+    }
+
+    public static bool In<T>(this T self, params object[] array) where T : struct
     {
         return true;
     }

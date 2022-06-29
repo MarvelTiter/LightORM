@@ -57,7 +57,13 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
     }
     public static void InMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
-
+        // Where 条件中 In
+        if (config.SqlType != SqlPartial.Where) throw new InvalidOperationException("In函数仅能用于Where子句中");
+        ExpressionVisit.Visit(exp.Arguments[0], config, context);
+        context.Append(" IN (");
+        config.BinaryPosition = BinaryPosition.Right;
+        ExpressionVisit.Visit(exp.Arguments[1], config, context);
+        context.Append(")");
     }
     public static void SelectSum(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
@@ -116,7 +122,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         var finalName = "Coalesce";
         if (exp.Arguments.Count > 1)
         {
-            finalName = ((ConstantExpression)exp.Arguments[1]).Value.ToString();
+            finalName = ((ConstantExpression)exp.Arguments[1]!).Value!.ToString();
         }
         var fields = temp.Sql.ToString().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         var coalParams = new List<string>();

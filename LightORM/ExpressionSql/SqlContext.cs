@@ -34,7 +34,7 @@ internal partial class SqlContext : ITableContext
     public bool EndWith(string end) => fragment?.Sql.ToString().EndsWith(end) ?? false;
     public void Insert(int index, string content) => fragment?.Insert(index, content);
 
-    public void AppendDbParameter(object value)
+    public string AppendDbParameter(object value)
     {
         var name = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Append(name);
@@ -44,6 +44,7 @@ internal partial class SqlContext : ITableContext
             fragment?.Values.Add(name);
         }
         LikeMode = 0;
+        return name;
     }
 
     private object CheckLike(object value)
@@ -90,16 +91,12 @@ internal partial class SqlContext : ITableContext
 
     public object GetParameters() => values;
 
-    public SqlFieldInfo GetColumn(string tbName, string csName)
+    public SqlFieldInfo? GetColumn(string tbName, string csName)
     {
-        SqlFieldInfo field = null;
-        //allFields.FirstOrDefault(dic => dic.TryGetValue(csName, out field));
+        SqlFieldInfo? field = null;
         if (Tables.TryGetValue(tbName, out var tableInfo))
         {
-            if (!tableInfo!.Fields?.TryGetValue(csName, out field) ?? false)
-            {
-                throw new ArgumentException($"SqlFieldInfo [{tbName}].[{csName}] Not Found");
-            }
+            tableInfo!.Fields?.TryGetValue(csName, out field);
         }
         return field;
     }
@@ -109,7 +106,6 @@ internal partial class SqlContext : ITableContext
     {
         var ti = tableContext.AddTable(table, tableLinkType);
         Tables[table.Name] = ti;
-        //allFields.Add(ti.Fields);
         return ti;
     }
 

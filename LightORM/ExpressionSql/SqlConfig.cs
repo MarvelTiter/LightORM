@@ -29,7 +29,7 @@ public class SqlConfig
     public bool RequiredColumnAlias { get; private set; }
     public bool RequiredTableAlias { get; private set; }
     public bool RequiredValue => CheckRequiredValue();
-
+    public bool RequiredResolveEntity => SqlType == SqlPartial.Update || SqlType == SqlPartial.Insert;
     public bool RequiredComma { get; private set; }
     public BinaryPosition BinaryPosition { get; set; }
     public SqlPartial SqlType { get; private set; }

@@ -152,6 +152,20 @@ namespace LightORM.Test2
             });
         }
 
+        [TestMethod]
+        public void InWhereTest()
+        {
+            Watch(db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                string[] sss = new[] { "123", "321" };
+                db.Update<User>().UpdateColumns(() => new { u.Password }).Where(u => u.UserId.In(sss)).ToSql();
+            });
+        }
+
         private void Watch(Action<IExpSql> action)
         {
             IExpSql eSql = new ExpressionSqlBuilder()
@@ -161,7 +175,7 @@ namespace LightORM.Test2
                     option.BeforeExecute = sqlString =>
                     {
                         Console.Write(DateTime.Now);
-                        Console.WriteLine(" Sql => \n" + sqlString);
+                        Console.WriteLine(" Sql => \n" + sqlString + "\n");
                     };
                 })
                 .Build();
