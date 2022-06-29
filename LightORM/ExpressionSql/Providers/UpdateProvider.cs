@@ -20,6 +20,11 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 
     protected override SqlConfig WhereConfig => SqlConfig.UpdateWhere;
 
+    public void AddToTransaction()
+    {
+        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
+    }
+
     public IExpUpdate<T> AppendData(T item)
     {
         update ??= new SqlFragment();

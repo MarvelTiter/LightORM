@@ -14,16 +14,33 @@ let genericInit = function (count) {
     return types.join("\n");
 };
 
-function Generate(count) {
+function GenerateProvider(count) {
     let template = `
 internal partial class SelectProvider${count}<${genericType(count)}> : BasicSelect0<IExpSelect<${genericType(count)}>, T1>, IExpSelect<${genericType(count)}>
 {
-    public SelectProvider${count}(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos)
-     : base(key, getContext, connectInfos)
+    public SelectProvider${count}(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+     : base(key, getContext, connectInfos, life)
     {
         ${genericInit(count)}
     }
-    
+
+    public IExpSelect<${genericType(count)}> InnerJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    {
+        JoinHandle<TAnother>(TableLinkType.InnerJoin, exp.Body);
+        return this;
+    }
+
+    public IExpSelect<${genericType(count)}> LeftJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    {
+        JoinHandle<TAnother>(TableLinkType.LeftJoin, exp.Body);
+        return this;
+    }
+    public IExpSelect<${genericType(count)}> RightJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    {
+        JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body);
+        return this;
+    }
+
     public IExpSelect<${genericType(count)}> GroupBy(Expression<Func<TypeSet<${genericType(count)}>, object>> exp)
     {
         GroupByHandle(exp.Body);
@@ -58,12 +75,12 @@ internal partial class SelectProvider${count}<${genericType(count)}> : BasicSele
     output.innerText += template
 }
 
-function GenerateSelectExtension(count) {
+function Generate(count) {//SelectExtension
     let template = `
 public static IExpSelect<${genericType(count)}> Select<${genericType(count)}>(this IExpSql self, string key = "MainDb") where T1 : class, new()
 {
-    var ins = self as ExpressionSql;
-    return new SelectProvider${count}<${genericType(count)}>(key, ins.GetContext, ins.GetDbInfo(key));
+    var ins = self as ExpressionCoreSql;
+    return new SelectProvider${count}<${genericType(count)}>(key, ins!.GetContext, ins!.GetDbInfo(key), ins!.Life);
 }
 `;
     output.innerText += template
@@ -78,6 +95,9 @@ public interface IExpSelect<${genericType(count)}> : IExpSelect0<IExpSelect<${ge
      IExpSelect<${genericType(count)}> Where(Expression<Func<TypeSet<${genericType(count)}>, bool>> exp);
      IExpSelect<${genericType(count)}> OrderBy(Expression<Func<TypeSet<${genericType(count)}>, object>> exp, bool asc = true);
      IExpSelect<${genericType(count)}> GroupBy(Expression<Func<TypeSet<${genericType(count)}>, object>> exp);
+     IExpSelect<${genericType(count)}> InnerJoin<TAnother>(Expression<Func<TypeSet<TAnother,${genericType(count)}>, bool>> exp);
+     IExpSelect<${genericType(count)}> LeftJoin<TAnother>(Expression<Func<TypeSet<TAnother,${genericType(count)}>, bool>> exp);
+     IExpSelect<${genericType(count)}> RightJoin<TAnother>(Expression<Func<TypeSet<TAnother,${genericType(count)}>, bool>> exp);
 }
 `;
     output.innerText += template

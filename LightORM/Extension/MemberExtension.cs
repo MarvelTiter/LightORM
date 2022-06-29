@@ -48,7 +48,7 @@ namespace MDbContext.ExpSql.Extension
         }
         public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
         {
-            var column = context.GetColumn(self.Name);
+            var column = context.GetColumn(self.DeclaringType.Name, self.Name);
             //var comma = config.RequiredComma ? "," : "";
             //if (config.RequiredColumnAlias)
             //{

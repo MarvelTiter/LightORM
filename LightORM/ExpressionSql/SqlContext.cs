@@ -13,7 +13,7 @@ internal partial class SqlContext : ITableContext
     /// <summary>
     /// 本次构建Sql中的字段
     /// </summary>            
-    List<Dictionary<string, SqlFieldInfo>> allFields = new List<Dictionary<string, SqlFieldInfo>>();
+    //List<Dictionary<string, SqlFieldInfo>> allFields = new List<Dictionary<string, SqlFieldInfo>>();
     private readonly ITableContext tableContext;
     public SqlContext(ITableContext tableContext)
     {
@@ -90,10 +90,17 @@ internal partial class SqlContext : ITableContext
 
     public object GetParameters() => values;
 
-    public SqlFieldInfo GetColumn(string csName)
+    public SqlFieldInfo GetColumn(string tbName, string csName)
     {
         SqlFieldInfo field = null;
-        allFields.FirstOrDefault(dic => dic.TryGetValue(csName, out field));
+        //allFields.FirstOrDefault(dic => dic.TryGetValue(csName, out field));
+        if (Tables.TryGetValue(tbName, out var tableInfo))
+        {
+            if (!tableInfo!.Fields?.TryGetValue(csName, out field) ?? false)
+            {
+                throw new ArgumentException($"SqlFieldInfo [{tbName}].[{csName}] Not Found");
+            }
+        }
         return field;
     }
 
@@ -102,7 +109,7 @@ internal partial class SqlContext : ITableContext
     {
         var ti = tableContext.AddTable(table, tableLinkType);
         Tables[table.Name] = ti;
-        allFields.Add(ti.Fields);
+        //allFields.Add(ti.Fields);
         return ti;
     }
 

@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace MDbContext.ExpressionSql.Interface
 {
-    public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>
+    public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>, ITransactionable
     {
         IExpUpdate<T> AppendData(T item);
         IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns);

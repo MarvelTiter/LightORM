@@ -13,11 +13,14 @@ internal abstract class BasicProvider<T1>
     protected readonly DbConnectInfo dbConnect;
     protected readonly Dictionary<string, SqlFieldInfo> SessionFields = new Dictionary<string, SqlFieldInfo>();
     protected SqlFragment? where;
+
+    public string DbKey { get; }
     public SqlExecuteLife Life { get; }
 
     public BasicProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
     {
         var tbContext = getContext.Invoke(key);
+        DbKey = key;
         dbConnect = connectInfos;
         Life = life;
         context = new SqlContext(tbContext);

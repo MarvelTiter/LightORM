@@ -1,6 +1,8 @@
 ﻿using MDbContext.ExpressionSql.Ado;
 using MDbContext.ExpressionSql.Interface;
 using MDbContext.ExpressionSql.Interface.Select;
+using System.Data;
+using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql
 {
@@ -10,6 +12,9 @@ namespace MDbContext.ExpressionSql
         IExpInsert<T> Insert<T>(string key = ConstString.Main);
         IExpUpdate<T> Update<T>(string key = ConstString.Main);
         IExpDelete<T> Delete<T>(string key = ConstString.Main);
+        IExpSql BeginTransaction();
+        bool CommitTransaction();
+        Task<bool> CommitTransactionAsync();
         IAdo Ado { get; }
     }
 

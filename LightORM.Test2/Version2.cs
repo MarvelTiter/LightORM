@@ -1,3 +1,4 @@
+using LightORM.Test2.DemoModel;
 using LightORM.Test2.Models;
 using MDbContext;
 using MDbContext.ExpressionSql;
@@ -29,7 +30,11 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                db.Repository<User>().GetList(e => true, out var count, 1, 5).ToList();
+                db.Select<Power, RolePower, UserRole>()
+                .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
+                .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+                .Where(w => w.Tb3.UserId == "admin")
+                .ToList();
             });
         }
 
@@ -128,6 +133,22 @@ namespace LightORM.Test2
                     G = SqlFn.Count(() => p.PowerId.Like("2"))
                 });
                 Console.WriteLine(result.Count());
+            });
+        }
+
+        [TestMethod]
+        public void TransactionTest()
+        {
+            Watch(db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                var trans = db.BeginTransaction();
+                trans.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").AddToTransaction();
+                trans.Insert<User>().AppendData(u).AddToTransaction();
+                trans.CommitTransaction();
             });
         }
 

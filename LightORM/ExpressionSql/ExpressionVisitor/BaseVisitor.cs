@@ -16,7 +16,6 @@ internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
     }
 
     public abstract void DoVisit(T exp, SqlConfig config, SqlContext context);
-    #region select
     public void Select(Expression exp, SqlContext context) => Select((T)exp, context);
     public virtual void Select(T exp, SqlContext context) =>
         throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Select)}");
@@ -25,9 +24,7 @@ internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
     public virtual void DbFunc(T exp, SqlContext context) =>
         throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(DbFunc)}");
 
-    #endregion
 
-    #region update
     public void Update(Expression exp, SqlContext context) => Update((T)exp, context);
     public virtual void Update(T exp, SqlContext context) =>
        throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Update)}");
@@ -35,5 +32,17 @@ internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
     public virtual void UpdateIgnore(T exp, SqlContext context) =>
        throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(UpdateIgnore)}");
 
-    #endregion
+
+    public void Join(Expression exp, SqlContext context) => Join((T)exp, context);
+    public virtual void Join(T exp, SqlContext context) =>
+        throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Join)}");
+
+    public void Insert(Expression exp, SqlContext context) => Insert((T)exp, context);
+    public virtual void Insert(T exp, SqlContext context) =>
+        throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Insert)}");
+
+    public void Where(Expression exp, SqlContext context) => Where((T)exp, context);
+    public virtual void Where(T exp, SqlContext context) =>
+        throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Where)}");
+
 }

@@ -11,8 +11,13 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 {
     protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
     {
-        var table = context.AddTable(typeof(TAnother), tableLinkType);
+        //var table = context.AddTable(typeof(TAnother), tableLinkType);        
+        if (!context.Tables.TryGetValue(typeof(TAnother).Name, out var table))
+        {
+            throw new InvalidOperationException();
+        }
         var join = new SqlFragment();
+        table.TableType = tableLinkType;
         context.SetFragment(join);
         ExpressionVisit.Visit(body, SqlConfig.Join, context);
         table.Fragment = join;

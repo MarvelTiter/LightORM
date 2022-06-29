@@ -1,4 +1,5 @@
-﻿using MDbEntity.Attributes;
+﻿using LightORM.Test2.Models;
+using MDbEntity.Attributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.Test2.Models
+namespace LightORM.Test2.DemoModel
 {
     public enum PowerType
     {

@@ -12,16 +12,16 @@ internal class NewExpVisitor : BaseVisitor<NewExpression>
         {
             // update =>  () => new { xxxx }
             // insert 
-            for (int i = 0; i < exp.Members.Count; i++)
+            for (int i = 0; i < exp.Members!.Count; i++)
             {
                 var member = exp.Members[i];
-                var colName = context.MainTable.Type?.GetColumnNameFromType(member.Name);
+                var colName = context.GetColumn(context.MainTable.CsName!, member.Name);
                 var arg = exp.Arguments[i];
                 var func = Expression.Lambda(arg).Compile();
                 var value = func.DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
-                context.AddEntityField(colName, value);
+                context.AddEntityField(colName.FieldName!, value);
             }
         }
         else
@@ -31,14 +31,14 @@ internal class NewExpVisitor : BaseVisitor<NewExpression>
             for (int i = 0; i < len; i++)
             {
                 var argExp = exp.Arguments[i];
-                var member = exp.Members[i];
+                var member = exp.Members?[i];
                 ExpressionVisit.Visit(argExp, config, context);
                 if (argExp.Type.IsClass && argExp.Type != typeof(string)) 
                     continue;
                 if (config.RequiredColumnAlias)
                 {
                     context.Append(" ");
-                    context.Append(member.Name);
+                    context.Append(member?.Name ?? "");
                 }
                 if (config.RequiredComma)
                 {

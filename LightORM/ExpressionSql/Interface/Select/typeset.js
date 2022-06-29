@@ -93,5 +93,5 @@ function Generate(
     )}
                                       }
                                   `;
-    output.innerText = template
+    output.innerText += template
 }

@@ -1,6 +1,6 @@
 ﻿using MDbEntity.Attributes;
 
-namespace LightORM.Test2.Models
+namespace LightORM.Test2.DemoModel
 {
     [Table(Name = "USER")]
     public class User

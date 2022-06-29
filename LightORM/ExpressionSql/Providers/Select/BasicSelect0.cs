@@ -28,7 +28,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return (this as TSelect)!;
     }
 
-    public TSelect InnerJoin<TAnother>(Expression<Func<T1, TAnother, bool>> exp)
+    public TSelect InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
         JoinHandle<TAnother>(TableLinkType.InnerJoin, exp.Body);
         return (this as TSelect)!;
@@ -46,7 +46,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return (this as TSelect)!;
     }
 
-    public TSelect LeftJoin<TAnother>(Expression<Func<T1, TAnother, bool>> exp)
+    public TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
         JoinHandle<TAnother>(TableLinkType.LeftJoin, exp.Body);
         return (this as TSelect)!;
@@ -64,7 +64,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return (this as TSelect)!;
     }
 
-    public TSelect RightJoin<TAnother>(Expression<Func<T1, TAnother, bool>> exp)
+    public TSelect RightJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
         JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body);
         return (this as TSelect)!;
@@ -178,7 +178,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
         select!.Remove(select.Length - 1, 1);
-        sql.Append($"SELECT {(distanct ? "DISTINCT ":"")}{select} FROM {main.TableName} {main.Alias}");
+        sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
         {
             var temp = tables[i];

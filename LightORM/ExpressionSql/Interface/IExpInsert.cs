@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Interface
 {
-    public interface IExpInsert<T>
+    public interface IExpInsert<T>: ITransactionable
     {
         IExpInsert<T> AppendData(T item);
         IExpInsert<T> AppendData(IEnumerable<T> items);

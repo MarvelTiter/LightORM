@@ -2,7 +2,7 @@
 
 namespace MDbContext.ExpressionSql.Interface
 {
-    public interface IExpDelete<T> : ISql<IExpDelete<T>, T>
+    public interface IExpDelete<T> : ISql<IExpDelete<T>, T>, ITransactionable
     {
         IExpDelete<T> Where(T item);
         IExpDelete<T> Where(IEnumerable<T> items);

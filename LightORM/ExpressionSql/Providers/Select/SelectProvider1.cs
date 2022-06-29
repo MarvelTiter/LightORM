@@ -33,7 +33,8 @@ internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, I
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
     {
-        throw new NotImplementedException();
+        SelectHandle(exp.Body);
+        return InternalQueryAsync<TReturn>();
     }
 
     public IExpSelect<T1> Where(Expression<Func<T1, bool>> exp)

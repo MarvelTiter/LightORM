@@ -14,6 +14,7 @@ public class ConstString
 public class SqlExecuteLife
 {
     public Action<string>? BeforeExecute { get; set; }
+    internal ExpressionCoreSql? Core { get; set; }
 }
 
 public partial class ExpressionSqlBuilder

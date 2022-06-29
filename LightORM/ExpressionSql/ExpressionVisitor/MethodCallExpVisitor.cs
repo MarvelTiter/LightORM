@@ -64,7 +64,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         var a = exp.Arguments[0];
         var current = context.GetCurrentFragment();
         context.SetFragment(new SqlFragment());
-        ExpressionVisit.Visit(a, config, context);
+        ExpressionVisit.Visit(a, SqlConfig.SelectFunc, context);
         var temp = context.GetCurrentFragment();
         var newLine = current.Length > 0 ? "\n" : "";
         if (a is UnaryExpression)
@@ -88,7 +88,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
             var a = exp.Arguments[0];
             var current = context.GetCurrentFragment();
             context.SetFragment(new SqlFragment());
-            ExpressionVisit.Visit(a, config, context);
+            ExpressionVisit.Visit(a, SqlConfig.SelectFunc, context);
             var temp = context.GetCurrentFragment();
             var newLine = current.Length > 0 ? "\n" : "";
             if (a is UnaryExpression)
@@ -111,7 +111,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         var arg = exp.Arguments[0];
         var current = context.GetCurrentFragment();
         context.SetFragment(new SqlFragment());
-        ExpressionVisit.Visit(arg, config, context);
+        ExpressionVisit.Visit(arg, SqlConfig.SelectFunc, context);
         var temp = context.GetCurrentFragment();
         var finalName = "Coalesce";
         if (exp.Arguments.Count > 1)
