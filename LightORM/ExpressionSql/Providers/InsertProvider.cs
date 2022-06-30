@@ -20,7 +20,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 
     protected override SqlConfig WhereConfig => throw new NotImplementedException();
 
-    public void AddToTransaction()
+    public void AttachTransaction()
     {
         Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
     }

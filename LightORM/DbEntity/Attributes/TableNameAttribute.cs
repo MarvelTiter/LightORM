@@ -14,7 +14,7 @@ namespace MDbEntity.Attributes
             TableName = name;
         }
     }
-
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class TableAttribute : Attribute
     {
         public string? Name { get; set; }

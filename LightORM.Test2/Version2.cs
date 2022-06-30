@@ -146,8 +146,8 @@ namespace LightORM.Test2
                 u.UserName = "≤‚ ‘001";
                 u.Password = "0000";
                 var trans = db.BeginTransaction();
-                trans.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").AddToTransaction();
-                trans.Insert<User>().AppendData(u).AddToTransaction();
+                trans.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").AttachTransaction();
+                trans.Insert<User>().AppendData(u).AttachTransaction();
                 trans.CommitTransaction();
             });
         }
@@ -163,6 +163,19 @@ namespace LightORM.Test2
                 u.Password = "0000";
                 string[] sss = new[] { "123", "321" };
                 db.Update<User>().UpdateColumns(() => new { u.Password }).Where(u => u.UserId.In(sss)).ToSql();
+            });
+        }
+
+        [TestMethod]
+        public void AdoTest()
+        {
+            Watch(db =>
+            {
+                var users = db.Ado.Query<User>("select * from user", null).ToList();
+                foreach (var u in users)
+                {
+                    Console.WriteLine($"{u.UserId} - {u.UserName}");
+                }
             });
         }
 

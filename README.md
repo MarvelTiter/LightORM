@@ -1,12 +1,118 @@
-# DbContext Version2
+# DbContext 新版本用法
+## 该库本质是使用IDbConnection对象执行Sql语句，IExpSql的调用，尽量还原原生sql的写法逻辑。
 ## 创建IExpSql对象
 ``` csharp
-static IExpSql eSql = new ExpressionSqlBuilder()
+static IExpSql db = new ExpressionSqlBuilder()
                 .SetDatabase(DbBaseType.Sqlite, Func<IDbConnection>)
                 .Build();
 ```
-
-# DBManage
+## 使用事务
+```csharp
+private void Watch(Action<IExpSql> action)
+{
+    IExpSql db = new ExpressionSqlBuilder()
+        .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
+        .SetWatcher(option =>
+        {
+            option.BeforeExecute = sqlString =>
+            {
+                Console.Write(DateTime.Now);
+                Console.WriteLine(" Sql => \n" + sqlString + "\n");
+            };
+        })
+        .Build();
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.Start();
+    action(db);
+    stopwatch.Stop();
+    Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
+    Console.WriteLine("====================================");
+}
+public void TransactionTest()
+{
+    Watch(db =>
+    {
+        var u = new User();
+        u.UserId = "User002";
+        u.UserName = "测试001";
+        u.Password = "0000";
+        // 返回独立的 IExpSql 对象
+        var trans = db.BeginTransaction();
+        trans.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").AttachTransaction();
+        trans.Insert<User>().AppendData(u).AttachTransaction();
+        trans.CommitTransaction();
+    });
+}
+```
+## 查询
+```csharp
+public void V2Select()
+{
+    Watch(db =>
+    {
+        db.Select<Power, RolePower, UserRole>()
+        .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
+        .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+        .Where(w => w.Tb3.UserId == "admin")
+        .ToList();
+    });
+}
+```
+## 查询 Count、Max等
+```csharp
+public void V2SelectFunc()
+{
+    Watch(db =>
+    {
+        var s = "sss";
+        db.Select<Users>().ToList(w => new
+        {
+            UM = SqlFn.Count(() => w.Age > 10),
+            UM2 = SqlFn.Count(() => w.Duty == s),
+        });
+    });
+}
+```
+## 插入
+```csharp
+public void V2Insert()
+{
+    Watch(db =>
+    {
+        var u = new User();
+        u.UserId = "User001";
+        u.UserName = "测试001";
+        u.Password = "0000";
+        db.Insert<User>().AppendData(u).ExecuteAsync();
+    });
+}
+```
+## 更新
+```csharp
+public void V2Update()
+{
+    Watch(db =>
+    {
+        var u = new Users();
+        db.Update<Users>().AppendData(u).IgnoreColumns(u => new { u.Tel }).Where(u => u.Age == 10).ExecuteAsync();
+    });
+}
+```
+## ADO对象
+```csharp
+public void AdoTest()
+{
+    Watch(db =>
+    {
+        var users = db.Ado.Query("select * from user", null).ToList();
+        foreach (var u in users)
+        {
+            Console.WriteLine($"{u.User_Id} - {u.User_Name}");
+        }
+    });
+}
+```
+# DBManage初始版本用法
 
 #### 解析表达式树转换 SQL
 

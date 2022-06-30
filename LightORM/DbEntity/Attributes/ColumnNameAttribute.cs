@@ -9,7 +9,7 @@ namespace MDbEntity.Attributes {
             Name = name;
         }
     }
-
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class ColumnAttribute : Attribute
     {
         public string? Name { get; set; }

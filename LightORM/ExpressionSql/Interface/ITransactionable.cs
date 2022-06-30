@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace MDbContext.ExpressionSql.Interface;
 public interface ITransactionable
 {
-    void AddToTransaction();
+    void AttachTransaction();
 }

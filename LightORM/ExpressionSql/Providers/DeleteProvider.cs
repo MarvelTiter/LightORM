@@ -17,7 +17,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
 
     protected override SqlConfig WhereConfig => SqlConfig.DeleteWhere;
 
-    public void AddToTransaction()
+    public void AttachTransaction()
     {
         Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
     }
