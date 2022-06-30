@@ -1,4 +1,5 @@
 ﻿using MDbContext;
+using MDbContext.ExpressionSql.ExpressionVisitor;
 using MDbContext.ExpressionSql.Interface;
 using MDbContext.SqlExecutor;
 using System;
@@ -40,16 +41,35 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
     {
         StringBuilder sql = new StringBuilder();
         var table = context.Tables.Values.First();
+        var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
+        bool deleteKey = false;
+        if (where == null)
+        {
+            deleteKey = true;
+            where = new SqlFragment();
+        }
         sql.Append($"DELETE FROM {table.TableName} ");
+        if (deleteKey)
+        {
+            foreach (var p in primary)
+            {
+                var i = delete?.Names.IndexOf(p.FieldName!) ?? -1;
+                if (i < 0) continue;
+                if (where.Length > 0) where.Append("AND ");
+                where.Append($"{p.FieldName} = {delete?.Values[i]}");
+            }
+        }
         sql.Append($"WHERE {where}");
         Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
-
-    public IExpDelete<T> Where(T item)
+    SqlFragment? delete;
+    public IExpDelete<T> AppendData(T item)
     {
         Expression<Func<object>> exp = () => item;
-        WhereHandle(exp.Body);
+        delete ??= new SqlFragment();
+        context.SetFragment(delete);
+        ExpressionVisit.Visit(exp.Body, SqlConfig.Delete, context);
         return this;
     }
 

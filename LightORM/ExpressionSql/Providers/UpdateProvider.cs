@@ -28,7 +28,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
     public IExpUpdate<T> AppendData(T item)
     {
         update ??= new SqlFragment();
-        Expression<Func<object>> exp = () => item;
+        Expression<Func<object>> exp = () => item!;
         context.SetFragment(update);
         ExpressionVisit.Visit(exp.Body, SqlConfig.Update, context);
         return this;
@@ -73,15 +73,32 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
     {
         StringBuilder sql = new StringBuilder();
         var table = context.Tables.Values.First();
+        var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
+        bool updateKey = false;
+        if (where == null)
+        {
+            updateKey = true;
+            where = new SqlFragment();
+        }
         sql.Append($"UPDATE {table.TableName} SET");
-        for (int i = 0; i < update.Names.Count; i++)
+        for (int i = 0; i < update!.Names.Count; i++)
         {
             var f = update.Names[i];
+            if (primary.Any(sqlf => sqlf.FieldName == f))
+            {
+                if (updateKey)
+                {
+                    if (where.Length > 0) where.Append("AND ");
+                    where.Append($"{f} = {update.Values[i]}");
+                }
+                continue;
+            }
             if (ignore?.Has(f) ?? false)
                 continue;
             sql.Append($"\n{f} = {update.Values[i]},");
         }
-        sql.Remove(sql.Length - 1, 1);
+        if (update!.Names.Count > 0)
+            sql.Remove(sql.Length - 1, 1);
         sql.Append($"\nWHERE {where}");
         Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();

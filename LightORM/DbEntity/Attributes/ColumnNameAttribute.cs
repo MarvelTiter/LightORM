@@ -13,6 +13,6 @@ namespace MDbEntity.Attributes {
     public class ColumnAttribute : Attribute
     {
         public string? Name { get; set; }
-        public bool? PrimaryKey { get; set; }
+        public bool PrimaryKey { get; set; }
     }
 }

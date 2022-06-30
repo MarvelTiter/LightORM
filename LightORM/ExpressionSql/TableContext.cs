@@ -128,6 +128,7 @@ internal class TableContext : ITableContext
             {
                 FieldAlias = prop.Name,
                 FieldName = attr?.Name ?? prop.Name,
+                IsPrimaryKey = attr?.PrimaryKey ?? false,
                 Table = table
             };
             info.Add(prop.Name, field);

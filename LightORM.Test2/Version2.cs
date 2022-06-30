@@ -57,8 +57,11 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var u = new Users();
-                db.Update<Users>().AppendData(u).IgnoreColumns(u => new { u.Tel }).Where(u => u.Age == 10).ExecuteAsync();
+                var u = new User();
+                u.UserId = "User001";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                db.Update<User>().AppendData(u).IgnoreColumns(u => new { u.Password }).ToSql();
             });
         }
 
@@ -79,8 +82,11 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var u = new Users();
-                db.Delete<Users>().Where(u => u.Age > 10).ExecuteAsync();
+                var u = new User();
+                u.UserId = "User001";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                db.Delete<User>().AppendData(u).ToSql();
             });
         }
 
@@ -171,7 +177,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var users = db.Ado.Query<User>("select * from user", null).ToList();
+                var users = db.Ado.Query<User>("select * from user").ToList();
                 foreach (var u in users)
                 {
                     Console.WriteLine($"{u.UserId} - {u.UserName}");

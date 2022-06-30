@@ -28,7 +28,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     public IExpInsert<T> AppendData(T item)
     {
         insert ??= new SqlFragment();
-        Expression<Func<object>> exp = () => item;
+        Expression<Func<object>> exp = () => item!;
         context.SetFragment(insert);
         ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
         return this;
@@ -74,9 +74,9 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         StringBuilder sql = new StringBuilder();
         var table = context.Tables.Values.First();
         sql.Append($"INSERT INTO {table.TableName} () VALUES ()");
-        var fIndex = 11 + table.TableName.Length + 3;
+        var fIndex = 11 + table.TableName!.Length + 3;
         var vIndex = fIndex + 10;
-        for (int i = 0; i < insert.Names.Count; i++)
+        for (int i = 0; i < insert!.Names.Count; i++)
         {
             var f = insert.Names[i];
             if (ignore?.Has(f) ?? false)

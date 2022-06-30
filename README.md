@@ -1,5 +1,5 @@
 # DbContext 新版本用法
-## 该库本质是使用IDbConnection对象执行Sql语句，IExpSql的调用，尽量还原原生sql的写法逻辑。
+## 该库本质是使用`IDbConnection`对象执行Sql语句，`IExpSql`的调用，尽量还原原生sql的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`ColumnAttribute`匹配）。
 ## 创建IExpSql对象
 ``` csharp
 static IExpSql db = new ExpressionSqlBuilder()
@@ -104,10 +104,10 @@ public void AdoTest()
 {
     Watch(db =>
     {
-        var users = db.Ado.Query("select * from user", null).ToList();
+        var users = db.Ado.Query<User>("select * from user").ToList();
         foreach (var u in users)
         {
-            Console.WriteLine($"{u.User_Id} - {u.User_Name}");
+            Console.WriteLine($"{u.UserId} - {u.UserName}");
         }
     });
 }
