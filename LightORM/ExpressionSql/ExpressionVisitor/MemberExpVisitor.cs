@@ -23,7 +23,12 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         {
             //resolve value
             var v = Expression.Lambda(exp).Compile().DynamicInvoke();
-            if (v is IEnumerable array)
+            // string特殊处理，否则会进入IEnumerable分支
+            if (v is string str)
+            {
+                context.AppendDbParameter(str);
+            }
+            else if (v is IEnumerable array)
             {
                 foreach (var item in array)
                 {

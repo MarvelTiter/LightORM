@@ -28,13 +28,23 @@ namespace LightORM.Test2
         [TestMethod]
         public void V2Select()
         {
-            Watch(db =>
+            Watch(async db =>
             {
-                db.Select<Power, RolePower, UserRole>()
-                .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
-                .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-                .Where(w => w.Tb3.UserId == "admin")
-                .ToList();
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                await db.Delete<User>().AppendData(u).ExecuteAsync();
+                await db.Insert<User>().AppendData(u).ExecuteAsync();
+                var usrId = "admin";
+                var powers = await db.Select<Power, RolePower, UserRole>()
+                                      .Distinct()
+                                      .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
+                                      .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+                                      .Where(w => w.Tb3.UserId == usrId)
+                                      .OrderBy(w => w.Tb1.Sort)
+                                      .ToListAsync();
+                Console.WriteLine(powers.Count);
             });
         }
 
