@@ -7,7 +7,7 @@ using System.Text;
 
 namespace MDbContext.ExpressionSql.Providers.Select;
 
-internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class
+internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {
     protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
     {

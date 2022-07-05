@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql
 {
-    internal class ExpressionCoreSql : IExpSql, IDisposable
+    internal class ExpressionCoreSql : IExpressionContext, IDisposable
     {
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
         private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
@@ -78,7 +78,7 @@ namespace MDbContext.ExpressionSql
             });
         }
 
-        public IExpSql BeginTransaction()
+        public IExpressionContext BeginTransaction()
         {
             return new ExpressionCoreSql(dbFactories, Life, ado);
         }

@@ -9,9 +9,9 @@ namespace MDbContext.Repository;
 
 public class RepositoryImpl<T> : IRepository<T>
 {
-    private readonly IExpSql context;
+    private readonly IExpressionContext context;
 
-    public RepositoryImpl(IExpSql context)
+    public RepositoryImpl(IExpressionContext context)
     {
         this.context = context;
     }

@@ -38,7 +38,7 @@ public partial class ExpressionSqlBuilder
         return this;
     }
 
-    public IExpSql Build()
+    public IExpressionContext Build()
     {
         if ((dbFactories?.Count ?? 0) < 1)
         {

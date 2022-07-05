@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers.Select;
 
-internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class
+internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {
     public Task<IList<T1>> ToListAsync(Expression<Func<T1, object>> exp)
     {

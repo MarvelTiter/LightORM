@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers.Select;
 
-internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class
+internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {
     protected SqlFragment? select;
     protected SqlFragment? groupBy;
@@ -153,6 +153,13 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         distanct = true;
         return (this as TSelect)!;
     }
+    TSelect? subQuery;
+    public TSelect From(Func<IExpressionContext, TSelect> sub)
+    {
+        throw new NotImplementedException();
+        subQuery = sub(Life.Core!);
+        return (this as TSelect)!;
+    }
 
     private string BuildCountSql()
     {
@@ -180,7 +187,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select!.Remove(select.Length - 1, 1);
         sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
-        {
+        { 
             var temp = tables[i];
             if (temp.TableType == TableLinkType.None) continue;
             sql.Append($"\n{temp.TableType.ToLabel()} {temp.TableName} {temp.Alias} ON {temp.Fragment}");
@@ -203,5 +210,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
     }
+
+    public object GetParameters() => context.GetParameters();
 
 }

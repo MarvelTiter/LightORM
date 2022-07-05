@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Interface.Select;
 
-public interface IExpSelect0 { }
-public interface IExpSelect0<TSelect, T1> : IExpSelect0
+public interface IExpSelect0
+{
+    string ToSql();
+    object GetParameters();
+}
+public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSelect0
 {
     TSelect InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
     TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
@@ -32,13 +36,14 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0
     #endregion
     //int Execute();
     //Task<int> ExecuteAsync();
-    string ToSql();
+
     TSelect Paging(int pageIndex, int pageSize);
     TMember Max<TMember>(Expression<Func<T1, TMember>> exp);
     double Sum(Expression<Func<T1, object>> exp);
     int Count(Expression<Func<T1, object>> exp);
     TSelect RollUp();
     TSelect Distinct();
+    TSelect From(Func<IExpressionContext, TSelect> sub);
 }
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 {

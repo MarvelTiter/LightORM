@@ -38,13 +38,22 @@ namespace LightORM.Test2
                 await db.Insert<User>().AppendData(u).ExecuteAsync();
                 var usrId = "admin";
                 var powers = await db.Select<Power, RolePower, UserRole>()
-                                      .Distinct()
-                                      .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
-                                      .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-                                      .Where(w => w.Tb3.UserId == usrId)
-                                      .OrderBy(w => w.Tb1.Sort)
-                                      .ToListAsync();
+                                     .Distinct()
+                                     .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
+                                     .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+                                     .Where(w => w.Tb3.UserId == usrId)
+                                     .OrderBy(w => w.Tb1.Sort)
+                                     .ToListAsync();
                 Console.WriteLine(powers.Count);
+            });
+        }
+
+        [TestMethod]
+        public void V2SelectSub()
+        {
+            Watch(db =>
+            {
+                //db.Select<User>().From(sub=>sub.Select<>)
             });
         }
 
@@ -195,9 +204,9 @@ namespace LightORM.Test2
             });
         }
 
-        private void Watch(Action<IExpSql> action)
+        private void Watch(Action<IExpressionContext> action)
         {
-            IExpSql eSql = new ExpressionSqlBuilder()
+            IExpressionContext eSql = new ExpressionSqlBuilder()
                 .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
                 .SetWatcher(option =>
                 {

@@ -7,7 +7,7 @@ namespace MDbContext.Repository
 {
     public static class RepositoryExtension
     {
-        public static IRepository<T> Repository<T>(this IExpSql sql)
+        public static IRepository<T> Repository<T>(this IExpressionContext sql)
         {
             return new RepositoryImpl<T>(sql);
         }
