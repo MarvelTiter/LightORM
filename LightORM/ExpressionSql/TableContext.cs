@@ -33,7 +33,7 @@ internal enum TableLinkType
     RightJoin,
 }
 
-internal class TableInfo
+internal class TableInfo : ICloneable
 {
     public string? TableName { get; set; }
     public string? CsName { get; set; }
@@ -42,11 +42,28 @@ internal class TableInfo
     public TableLinkType TableType { get; set; }
     public Dictionary<string, SqlFieldInfo>? Fields { get; set; }
     public SqlFragment? Fragment { get; set; }
+    public bool Compare(Type type)
+    {
+        return this.Type!.IsAssignableFrom(type)
+            || type.IsAssignableFrom(this.Type)
+            || type.Equals(this.Type);
+    }
+    public object Clone()
+    {
+        return new TableInfo()
+        {
+            TableName = TableName,
+            CsName = CsName,
+            Alias = Alias,
+            Type = Type,
+            Fields = Fields
+        };
+    }
 }
 internal class TableContext : ITableContext
 {
     public DbBaseType DbType { get; private set; }
-    ConcurrentDictionary<string, TableInfo> tables = new ConcurrentDictionary<string, TableInfo>();
+    ConcurrentDictionary<Type, TableInfo> tables = new ConcurrentDictionary<Type, TableInfo>();
     public IDbHelper DbHandler { get; }
     public TableContext(DbBaseType baseType)
     {
@@ -68,58 +85,55 @@ internal class TableContext : ITableContext
     //}
     //}
 
-    public string? GetTableAlias(string csName)
+    public string? GetTableAlias(Type table)
     {
-        if (tables.TryGetValue(csName, out var table))
+        if (tables.TryGetValue(table, out var t))
         {
-            return table.Alias;
+            return t.Alias;
         }
-        throw new ArgumentException($"TableInfo[{csName}]不存在");
+        throw new ArgumentException($"TableInfo[{table.Name}]不存在");
     }
 
-    public string GetTableName(string csName)
+    public string GetTableName(Type table)
     {
-        if (tables.TryGetValue(csName, out var table))
+        if (tables.TryGetValue(table, out var t))
         {
-            return table.TableName!;
+            return t.TableName!;
         }
-        throw new ArgumentException($"TableInfo[{csName}]不存在");
+        throw new ArgumentException($"TableInfo[{table.Name}]不存在");
     }
 
     public string? GetTableAlias<T>()
     {
-        return GetTableAlias(typeof(T).Name);
+        return GetTableAlias(typeof(T));
     }
 
     public string GetTableName<T>()
     {
-        return GetTableName(typeof(T).Name);
+        return GetTableName(typeof(T));
     }
 
     public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.None)
     {
-        if (!tables.TryGetValue(table.Name, out var info))
+        if (!tables.TryGetValue(table, out var info))
         {
             info = new TableInfo();
             info.CsName = table.Name;
             info.TableName = (Attribute.GetCustomAttribute(table, typeof(TableAttribute)) as TableAttribute)?.Name ?? table.Name;
             info.Alias = $"a{tables.Count}";
-            info.TableType = tableLinkType;
             info.Type = table;
             info.Fields = InitColumns(info);
-            tables[info.CsName] = info;
+            tables[table] = info;
         }
-        else
-        {
-            info.TableType = tableLinkType;
-        }
-        return info;
+        var n = info.Clone() as TableInfo;
+        n!.TableType = tableLinkType;
+        return n;
     }
 
     private Dictionary<string, SqlFieldInfo> InitColumns(TableInfo table)
     {
         Dictionary<string, SqlFieldInfo> info = new Dictionary<string, SqlFieldInfo>();
-        var props = table.Type.GetProperties();
+        var props = table.Type!.GetProperties();
         foreach (var prop in props)
         {
             if (prop.HasAttribute<IgnoreAttribute>()) continue;

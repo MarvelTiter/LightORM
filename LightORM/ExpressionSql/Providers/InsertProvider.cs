@@ -72,7 +72,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     public string ToSql()
     {
         StringBuilder sql = new StringBuilder();
-        var table = context.Tables.Values.First();
+        var table = context.Tables.First();
         sql.Append($"INSERT INTO {table.TableName} () VALUES ()");
         var fIndex = 11 + table.TableName!.Length + 3;
         var vIndex = fIndex + 10;

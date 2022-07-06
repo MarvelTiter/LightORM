@@ -9,7 +9,8 @@ internal partial class SqlContext : ITableContext
 {
     SqlFragment? fragment;
     Dictionary<string, object> values = new Dictionary<string, object>();
-    internal Dictionary<string, TableInfo> Tables { get; set; } = new Dictionary<string, TableInfo>();
+    //internal Dictionary<string, TableInfo> Tables { get; set; } = new Dictionary<string, TableInfo>();
+    internal List<TableInfo> Tables { get; set; } = new List<TableInfo>();
     /// <summary>
     /// 本次构建Sql中的字段
     /// </summary>            
@@ -25,7 +26,7 @@ internal partial class SqlContext : ITableContext
         this.fragment = fragment;
     }
     public SqlFragment GetCurrentFragment() => fragment!;
-    public TableInfo MainTable => Tables.First().Value;
+    public TableInfo MainTable => Tables.First();
     public int Length => fragment?.Length ?? 0;
     /// <summary>
     ///  1 - like ; 2 - left like ; 3 - right like
@@ -91,13 +92,15 @@ internal partial class SqlContext : ITableContext
 
     public object GetParameters() => values;
 
-    public SqlFieldInfo? GetColumn(string tbName, string csName)
+    public SqlFieldInfo? GetColumn(Type tbType, string csName)
     {
         SqlFieldInfo? field = null;
-        if (Tables.TryGetValue(tbName, out var tableInfo))
-        {
-            tableInfo!.Fields?.TryGetValue(csName, out field);
-        }
+        //if (Tables.TryGetValue(tbName, out var tableInfo))
+        //{
+        //    tableInfo!.Fields?.TryGetValue(csName, out field);
+        //}
+        var tb = Tables.FirstOrDefault(t => t.Compare(tbType));
+        tb?.Fields?.TryGetValue(csName, out field);
         return field;
     }
 
@@ -105,16 +108,17 @@ internal partial class SqlContext : ITableContext
     public TableInfo AddTable(Type table, TableLinkType tableLinkType = TableLinkType.None)
     {
         var ti = tableContext.AddTable(table, tableLinkType);
-        Tables[table.Name] = ti;
+        //Tables[table.Name] = ti;
+        Tables.Add(ti);
         return ti;
     }
 
-    public string? GetTableAlias(string csName)
+    public string? GetTableAlias(Type csName)
     {
         return tableContext.GetTableAlias(csName);
     }
 
-    public string GetTableName(string csName)
+    public string GetTableName(Type csName)
     {
         return tableContext.GetTableName(csName);
     }

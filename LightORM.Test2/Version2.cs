@@ -25,6 +25,10 @@ namespace LightORM.Test2
             public string? Tel { get; set; }
             public string? Bz { get; set; }
         }
+        class InheritTest : M
+        {
+
+        }
         [TestMethod]
         public void V2Select()
         {
@@ -47,7 +51,14 @@ namespace LightORM.Test2
                 Console.WriteLine(powers.Count);
             });
         }
-
+        [TestMethod]
+        public void V2SelectInherit()
+        {
+            Watch(db =>
+            {
+                db.Repository<InheritTest>().GetListAsync(i => i.Tel == "123");
+            });
+        }
         [TestMethod]
         public void V2SelectSub()
         {

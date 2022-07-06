@@ -40,7 +40,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
     public string ToSql()
     {
         StringBuilder sql = new StringBuilder();
-        var table = context.Tables.Values.First();
+        var table = context.Tables.First();
         var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
         bool deleteKey = false;
         if (where == null)

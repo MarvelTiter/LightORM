@@ -72,7 +72,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
     public string ToSql()
     {
         StringBuilder sql = new StringBuilder();
-        var table = context.Tables.Values.First();
+        var table = context.Tables.First();
         var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
         bool updateKey = false;
         if (where == null)

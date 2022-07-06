@@ -2,6 +2,7 @@
 using MDbContext.ExpressionSql.Interface.Select;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -11,8 +12,9 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 {
     protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
     {
-        //var table = context.AddTable(typeof(TAnother), tableLinkType);        
-        if (!context.Tables.TryGetValue(typeof(TAnother).Name, out var table))
+        //var table = context.AddTable(typeof(TAnother), tableLinkType);
+        var table = context.Tables.FirstOrDefault(t => t.Compare(typeof(TAnother)));
+        if (table is null)
         {
             throw new InvalidOperationException();
         }

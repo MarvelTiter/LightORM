@@ -163,7 +163,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 
     private string BuildCountSql()
     {
-        var tables = context.Tables.Values.ToArray();
+        var tables = context.Tables;
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
         sql.Append($"SELECT COUNT(1) FROM {main.TableName} {main.Alias}");
@@ -181,7 +181,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 
     public string ToSql()
     {
-        var tables = context.Tables.Values.ToArray();
+        var tables = context.Tables;
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
         select!.Remove(select.Length - 1, 1);

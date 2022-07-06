@@ -64,7 +64,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
                 continue;
             if (p.GetAttribute<IgnoreAttribute>() != null)
                 continue;
-            var name = context.GetColumn(eType.Name, p.Name)!.FieldName!;
+            var name = context.GetColumn(eType, p.Name)!.FieldName!;
             context.AddEntityField(name, value);
         }
     }

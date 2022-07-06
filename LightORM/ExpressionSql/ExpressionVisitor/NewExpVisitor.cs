@@ -15,7 +15,7 @@ internal class NewExpVisitor : BaseVisitor<NewExpression>
             for (int i = 0; i < exp.Members!.Count; i++)
             {
                 var member = exp.Members[i];
-                var colName = context.GetColumn(context.MainTable.CsName!, member.Name);
+                var colName = context.GetColumn(context.MainTable!.Type!, member.Name);
                 var arg = exp.Arguments[i];
                 var func = Expression.Lambda(arg).Compile();
                 var value = func.DynamicInvoke();

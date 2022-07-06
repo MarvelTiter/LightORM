@@ -28,7 +28,7 @@ internal class MemberInitExpVisitor : BaseVisitor<MemberInitExpression>
             var props = t.GetProperties();
             foreach (PropertyInfo item in props)
             {
-                var field = context.GetColumn(t.Name, item.Name);
+                var field = context.GetColumn(t, item.Name);
                 if (field == null) continue;
                 if (config.RequiredColumnAlias)
                     context += $"{field.TableAlias}.{field.FieldName} {field.FieldAlias},";
