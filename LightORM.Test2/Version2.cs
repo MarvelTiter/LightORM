@@ -216,7 +216,20 @@ namespace LightORM.Test2
                 }
             });
         }
-
+        [TestMethod]
+        public void IgnoreTest()
+        {
+            Watch(db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                db.Select<User>().ToList();
+                db.Insert<User>().AppendData(u).ToSql();
+                db.Update<User>().AppendData(u).ToSql();
+            });
+        }
         private void Watch(Action<IExpressionContext> action)
         {
             IExpressionContext eSql = new ExpressionSqlBuilder()
