@@ -55,17 +55,18 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         ExpressionVisit.Visit(columns.Body, SqlConfig.UpdateIgnore, context);
         return this;
     }
-    public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp)
+    public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, object value)
     {
         update ??= new SqlFragment();
         context.SetFragment(update);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Update, context);
+        ExpressionVisit.Visit(exp.Body, SqlConfig.UpdatePartial, context);
+        context.AppendDbParameter(value);
         return this;
     }
 
-    public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp)
+    public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, object value)
     {
-        if (condition) return Set(exp);
+        if (condition) return Set(exp, value);
         return this;
     }
 
@@ -77,6 +78,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         bool updateKey = false;
         if (where == null)
         {
+            if (!primary.Any()) throw new InvalidOperationException($"Where Condition is null and Model of [{table.CsName}] do not has a PrimaryKey");
             updateKey = true;
             where = new SqlFragment();
         }
@@ -89,16 +91,17 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
                 if (updateKey)
                 {
                     if (where.Length > 0) where.Append("AND ");
-                    where.Append($"{f} = {update.Values[i]}");
+                    where.Append($"[{f}] = {update.Values[i]}");
                 }
                 continue;
             }
             if (ignore?.Has(f) ?? false)
                 continue;
-            sql.Append($"\n{f} = {update.Values[i]},");
+            sql.Append($"\n[{f}] = {update.Values[i]},");
         }
         if (update!.Names.Count > 0)
             sql.Remove(sql.Length - 1, 1);
+        if (where!.Length == 0) throw new InvalidOperationException($"Where Condition is null");
         sql.Append($"\nWHERE {where}");
         Life.BeforeExecute?.Invoke(sql.ToString());
         return sql.ToString();
@@ -114,7 +117,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 
     public IExpUpdate<T> Where(T item)
     {
-        Expression<Func<object>> exp = () => item;
+        Expression<Func<object>> exp = () => item!;
         WhereHandle(exp.Body);
         return this;
     }

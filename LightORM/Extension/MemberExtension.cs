@@ -49,25 +49,20 @@ namespace MDbContext.ExpSql.Extension
         public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
         {
             var column = context.GetColumn(self.DeclaringType, self.Name);
-            //var comma = config.RequiredComma ? "," : "";
-            //if (config.RequiredColumnAlias)
-            //{
-            //    if (config.RequiredTableAlias)
-            //    {
-            //        return $"{column.TableAlias}.{column.FieldName} {column.FieldAlias}{comma}";
-            //    }
-            //    else
-            //    {
-            //        return $"{column.FieldName} {column.FieldAlias}{comma}";
-            //    }
-            //}
-            //else
-            //{
-            if (config.RequiredTableAlias)
-                return $"{column.TableAlias}.{column.FieldName}";
+            if (config.RequiredBracket)
+            {
+                if (config.RequiredTableAlias)
+                    return $"[{column?.TableAlias}].[{column?.FieldName}]";
+                else
+                    return $"[{column?.FieldName}]";
+            }
             else
-                return $"{column.FieldName}";
-            //}
+            {
+                if (config.RequiredTableAlias)
+                    return $"{column?.TableAlias}.{column?.FieldName}";
+                else
+                    return $"{column?.FieldName}";
+            }
         }
     }
 }

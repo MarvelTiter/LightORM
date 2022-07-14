@@ -51,12 +51,13 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         sql.Append($"DELETE FROM {table.TableName} ");
         if (deleteKey)
         {
+            if (!primary.Any()) throw new InvalidOperationException($"Where Condition is null and Model of [{table.CsName}] do not has a PrimaryKey");
             foreach (var p in primary)
             {
                 var i = delete?.Names.IndexOf(p.FieldName!) ?? -1;
                 if (i < 0) continue;
                 if (where.Length > 0) where.Append("AND ");
-                where.Append($"{p.FieldName} = {delete?.Values[i]}");
+                where.Append($"[{delete!.Names[i]}] = {delete?.Values[i]}");
             }
         }
         sql.Append($"WHERE {where}");

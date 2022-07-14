@@ -9,11 +9,14 @@ public enum BinaryPosition
 }
 public enum SqlPartial
 {
+    Default,
     Select,
     SelectFunc,
     Insert,
     Update,
     Delete,
+    UpdatePartial,
+    Ignore,
     Join,
     Where,
     GroupBy,
@@ -29,7 +32,11 @@ public class SqlConfig
     public bool RequiredColumnAlias { get; private set; }
     public bool RequiredTableAlias { get; private set; }
     public bool RequiredValue => CheckRequiredValue();
-    public bool RequiredResolveEntity => SqlType == SqlPartial.Update || SqlType == SqlPartial.Insert||SqlType == SqlPartial.Delete;
+    /// <summary>
+    /// 是否需要中括号 [ColumnName]
+    /// </summary>
+    public bool RequiredBracket { get; set; } = true;
+    public bool RequiredResolveEntity => SqlType == SqlPartial.Update || SqlType == SqlPartial.Insert || SqlType == SqlPartial.Delete;
     public bool RequiredComma { get; private set; }
     public BinaryPosition BinaryPosition { get; set; }
     public SqlPartial SqlType { get; private set; }
@@ -52,9 +59,10 @@ public class SqlConfig
     public static SqlConfig Where = new SqlConfig() { RequiredTableAlias = true, SqlType = SqlPartial.Where };
     public static SqlConfig Insert = new SqlConfig() { SqlType = SqlPartial.Insert };
     public static SqlConfig Update = new SqlConfig() { SqlType = SqlPartial.Update };
+    public static SqlConfig UpdatePartial = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.UpdatePartial };
     public static SqlConfig Delete = new SqlConfig() { SqlType = SqlPartial.Delete };
     public static SqlConfig UpdateWhere = new SqlConfig() { SqlType = SqlPartial.Where };
     public static SqlConfig DeleteWhere = new SqlConfig() { SqlType = SqlPartial.Where };
-    public static SqlConfig UpdateIgnore = new SqlConfig();
-    public static SqlConfig InsertIgnore = new SqlConfig();
+    public static SqlConfig UpdateIgnore = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.Ignore };
+    public static SqlConfig InsertIgnore = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.Ignore };
 }
