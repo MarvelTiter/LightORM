@@ -9,7 +9,7 @@ internal class ConstantExpVisitor : BaseVisitor<ConstantExpression>
         var value = exp.Value;
         if (value == null)
         {
-            context.Append("null");
+            context.Append(" null");
         }
         else
             context.AppendDbParameter(value);
