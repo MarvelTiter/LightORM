@@ -230,6 +230,19 @@ namespace LightORM.Test2
                 db.Update<User>().AppendData(u).ToSql();
             });
         }
+
+        [TestMethod]
+        public void WhereNullCondition()
+        {
+            Watch(db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                db.Update<User>().AppendData(u).Where(p => p.UserId != null).ToSql();
+            });
+        }
         private void Watch(Action<IExpressionContext> action)
         {
             IExpressionContext eSql = new ExpressionSqlBuilder()

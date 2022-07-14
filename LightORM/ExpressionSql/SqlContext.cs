@@ -36,7 +36,7 @@ internal partial class SqlContext : ITableContext
     public void Insert(int index, string content) => fragment?.Insert(index, content);
 
     public string AppendDbParameter(object value)
-    {
+    {        
         var name = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Append(name);
         values[name] = CheckLike(value);

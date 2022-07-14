@@ -7,6 +7,11 @@ internal class ConstantExpVisitor : BaseVisitor<ConstantExpression>
     public override void DoVisit(ConstantExpression exp, SqlConfig config, SqlContext context)
     {
         var value = exp.Value;
-        context.AppendDbParameter(value);
+        if (value == null)
+        {
+            context.Append("null");
+        }
+        else
+            context.AppendDbParameter(value);
     }
 }
