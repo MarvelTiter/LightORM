@@ -264,7 +264,7 @@ namespace LightORM.Test2
             Console.WriteLine(eSql);
             Console.WriteLine("====================================");
         }
-        private IDbConnection SqliteDbContext()
+        private IDbConnection SqliteDbContext() 
         {
             DbContext.Init(DbBaseType.Sqlite);
             var path = Path.GetFullPath("../../../Demo.db");

@@ -1,16 +1,16 @@
 # DbContext 新版本用法
-## 该库本质是使用`IDbConnection`对象执行Sql语句，`IExpSql`的调用，尽量还原原生sql的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`ColumnAttribute`匹配）。
-## 创建IExpSql对象
+## 该库本质是使用`IDbConnection`对象执行Sql语句，`IExpressionContext`的调用，尽量还原原生sql的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`ColumnAttribute`匹配）。
+## 创建IExpressionContext对象
 ``` csharp
-static IExpSql db = new ExpressionSqlBuilder()
+static IExpressionContext db = new ExpressionSqlBuilder()
                 .SetDatabase(DbBaseType.Sqlite, Func<IDbConnection>)
                 .Build();
 ```
 ## 使用事务
 ```csharp
-private void Watch(Action<IExpSql> action)
+private void Watch(Action<IExpressionContext> action)
 {
-    IExpSql db = new ExpressionSqlBuilder()
+    IExpressionContext db = new ExpressionSqlBuilder()
         .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
         .SetWatcher(option =>
         {
@@ -36,7 +36,7 @@ public void TransactionTest()
         u.UserId = "User002";
         u.UserName = "测试001";
         u.Password = "0000";
-        // 返回独立的 IExpSql 对象
+        // 返回独立的 IExpressionContext 对象
         var trans = db.BeginTransaction();
         trans.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").AttachTransaction();
         trans.Insert<User>().AppendData(u).AttachTransaction();
