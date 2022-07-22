@@ -92,7 +92,7 @@ namespace LightORM.Test2
                 u.UserName = "≤‚ ‘001";
                 u.Password = "0000";
                 db.Update<User>().AppendData(u).IgnoreColumns(u => new { u.Password }).ToSql();
-                db.Update<User>().UpdateColumns(() => new { u.UserName, u.Password }).Where(u => u.UserId == "000").ToSql();
+                db.Update<User>().UpdateColumns(() => new { u.UserName, u.Password }).Where(u => u.UserId == "000").Execute();
                 db.Update<User>().Set(p => p.Password, u.Password).Set(p => p.UserName, "123").Where(u => u.UserId == "000").ToSql();
             });
         }

@@ -81,7 +81,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             var f = insert.Names[i];
             if (ignore?.Has(f) ?? false)
                 continue;
-            sql.Insert(fIndex, $"[{f}],");
+            sql.Insert(fIndex, $"`{f}`,");
             // 逗号、中括号 Length + 3;
             fIndex += f.Length + 3;
             vIndex += f.Length + 3;

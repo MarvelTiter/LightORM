@@ -10,7 +10,6 @@ namespace LightORM.Test2.DemoModel
         [Column(Name = "USER_NAME")]
         public string UserName { get; set; }
         [Column(Name = "PASSWORD")]
-        [MDbEntity.Attributes.Ignore]
         public string Password { get; set; }
     }
 }

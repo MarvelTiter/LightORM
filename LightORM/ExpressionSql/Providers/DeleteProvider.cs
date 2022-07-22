@@ -57,7 +57,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
                 var i = delete?.Names.IndexOf(p.FieldName!) ?? -1;
                 if (i < 0) continue;
                 if (where.Length > 0) where.Append("AND ");
-                where.Append($"[{delete!.Names[i]}] = {delete?.Values[i]}");
+                where.Append($"`{delete!.Names[i]}` = {delete?.Values[i]}");
             }
         }
         sql.Append($"WHERE {where}");
@@ -67,7 +67,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
     SqlFragment? delete;
     public IExpDelete<T> AppendData(T item)
     {
-        Expression<Func<object>> exp = () => item;
+        Expression<Func<object>> exp = () => item!;
         delete ??= new SqlFragment();
         context.SetFragment(delete);
         ExpressionVisit.Visit(exp.Body, SqlConfig.Delete, context);
