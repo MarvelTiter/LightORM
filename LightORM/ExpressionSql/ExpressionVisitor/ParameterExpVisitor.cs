@@ -18,9 +18,9 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                 var field = context.GetColumn(t, item.Name);
                 if (field == null) continue;
                 if (config.RequiredColumnAlias)
-                    context += ($"{field.TableAlias}.`{field.FieldName}` {field.FieldAlias},");
+                    context += $"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")} {field?.FieldAlias},";
                 else
-                    context += ($"{field.TableAlias}.`{field.FieldName}`,");
+                    context += ($"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")},");
             }
         }
     }

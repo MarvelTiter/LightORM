@@ -52,7 +52,7 @@ namespace MDbContext.ExpSql.Extension
             if (config.RequiredBracket)
             {
                 if (config.RequiredTableAlias)
-                    return $"{column?.TableAlias}.`{column?.FieldName}`";
+                    return $"{column?.TableAlias}.{context.DbHandler.ColumnEmphasis(column?.FieldName ?? "")}";
                 else
                     return $"`{column?.FieldName}`";
             }

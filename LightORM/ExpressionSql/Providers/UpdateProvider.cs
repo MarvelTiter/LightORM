@@ -91,13 +91,13 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
                 if (updateKey)
                 {
                     if (where.Length > 0) where.Append("AND ");
-                    where.Append($"`{f}` = {update.Values[i]}");
+                    where.Append($"{context.DbHandler.ColumnEmphasis(f)} = {update.Values[i]}");
                 }
                 continue;
             }
             if (ignore?.Has(f) ?? false)
                 continue;
-            sql.Append($"\n`{f}` = {update.Values[i]},");
+            sql.Append($"\n{context.DbHandler.ColumnEmphasis(f)} = {update.Values[i]},");
         }
         if (update!.Names.Count > 0)
             sql.Remove(sql.Length - 1, 1);

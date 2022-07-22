@@ -30,12 +30,16 @@ internal class SqlServerDb : SqlSerberDbBase
 }
 internal abstract class SqlSerberDbBase : IDbHelper
 {
+    public string ColumnEmphasis(string columnName) => $"[{columnName}]";
+
     public virtual void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size)
     {
         throw new NotImplementedException();
     }
 
     public string DbStringConvert(string content) => $"CASE({content} as VARCHAR)";
+
+    public string GetColumnEmphasis(bool isLeft) => isLeft ? "[" : "]";
 
     public string GetPrefix() => "@";
 }

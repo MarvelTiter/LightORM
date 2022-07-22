@@ -3,6 +3,9 @@
 namespace MDbContext.ExpressionSql.DbHandle;
 internal class OracleDb : IDbHelper
 {
+    // oracle用""，字段名需要大写
+    public string ColumnEmphasis(string columnName) => $"\"{columnName.ToUpper()}\"";
+
     public void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size)
     {
         sql.Insert(0, " SELECT ROWNUM as ROWNO, SubMax.* FROM (\n ");
@@ -14,6 +17,8 @@ internal class OracleDb : IDbHelper
     }
 
     public string DbStringConvert(string content) => $"TO_CHAR({content})";
+
+    public string GetColumnEmphasis(bool isLeft) => "\"";
 
     public string GetPrefix() => ":";
 }

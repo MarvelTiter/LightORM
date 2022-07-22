@@ -57,7 +57,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
                 var i = delete?.Names.IndexOf(p.FieldName!) ?? -1;
                 if (i < 0) continue;
                 if (where.Length > 0) where.Append("AND ");
-                where.Append($"`{delete!.Names[i]}` = {delete?.Values[i]}");
+                where.Append($"{context.DbHandler.ColumnEmphasis(delete!.Names[i])} = {delete?.Values[i]}");
             }
         }
         sql.Append($"WHERE {where}");
