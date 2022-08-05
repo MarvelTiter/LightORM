@@ -10,10 +10,13 @@ public class ConstString
 {
     public const string Main = "MainDb";
 }
-
+public class SqlArgs : EventArgs
+{
+    public string? Sql { get; set; }
+}
 public class SqlExecuteLife
 {
-    public Action<string>? BeforeExecute { get; set; }
+    public Action<SqlArgs>? BeforeExecute { get; set; }
     internal ExpressionCoreSql? Core { get; set; }
 }
 

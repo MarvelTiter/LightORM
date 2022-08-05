@@ -252,7 +252,7 @@ namespace LightORM.Test2
                     option.BeforeExecute = sqlString =>
                     {
                         Console.Write(DateTime.Now);
-                        Console.WriteLine(" Sql => \n" + sqlString + "\n");
+                        Console.WriteLine(" Sql => \n" + sqlString.Sql + "\n");
                     };
                 })
                 .Build();

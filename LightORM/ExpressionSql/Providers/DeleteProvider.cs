@@ -61,7 +61,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
             }
         }
         sql.Append($"WHERE {where}");
-        Life.BeforeExecute?.Invoke(sql.ToString());
+        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
     SqlFragment? delete;

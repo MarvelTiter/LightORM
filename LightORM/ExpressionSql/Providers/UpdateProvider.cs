@@ -103,7 +103,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
             sql.Remove(sql.Length - 1, 1);
         if (where!.Length == 0) throw new InvalidOperationException($"Where Condition is null");
         sql.Append($"\nWHERE {where}");
-        Life.BeforeExecute?.Invoke(sql.ToString());
+        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 

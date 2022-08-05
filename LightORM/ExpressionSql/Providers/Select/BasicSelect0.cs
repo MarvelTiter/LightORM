@@ -175,7 +175,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         }
         if (where != null)
             sql.Append($"\nWHERE {where}");
-        Life.BeforeExecute?.Invoke(sql.ToString());
+        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 
@@ -207,7 +207,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
             context.DbHandler.DbPaging(context, select, sql, index, size);
         }
 
-        Life.BeforeExecute?.Invoke(sql.ToString());
+        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 

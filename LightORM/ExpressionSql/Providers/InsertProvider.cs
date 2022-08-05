@@ -95,7 +95,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             sql.Remove(fIndex - 1, 1);
             sql.Remove(vIndex - 2, 1);
         }
-        Life.BeforeExecute?.Invoke(sql.ToString());
+        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 
