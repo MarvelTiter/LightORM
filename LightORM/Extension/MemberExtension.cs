@@ -54,7 +54,7 @@ namespace MDbContext.ExpSql.Extension
                 if (config.RequiredTableAlias)
                     return $"{column?.TableAlias}.{context.DbHandler.ColumnEmphasis(column?.FieldName ?? "")}";
                 else
-                    return $"`{column?.FieldName}`";
+                    return context.DbHandler.ColumnEmphasis(column?.FieldName ?? "");
             }
             else
             {
