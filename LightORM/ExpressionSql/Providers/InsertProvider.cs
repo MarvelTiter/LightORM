@@ -15,14 +15,17 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 {
     SqlFragment? ignore;
     SqlFragment? insert;
-    public InsertProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-  : base(key, getContext, connectInfos,life) { }
+    public InsertProvider(string key, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(getContext, connectInfos, life)
+    {
+        DbKey = key;
+    }
 
     protected override SqlConfig WhereConfig => throw new NotImplementedException();
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
+        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public IExpInsert<T> AppendData(T item)

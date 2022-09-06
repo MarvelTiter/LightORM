@@ -15,14 +15,17 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 {
     SqlFragment? ignore;
     SqlFragment? update;
-    public UpdateProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-  : base(key, getContext, connectInfos, life) { }
+    public UpdateProvider(string key, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(getContext, connectInfos, life)
+    {
+        DbKey = key;
+    }
 
     protected override SqlConfig WhereConfig => SqlConfig.UpdateWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
+        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public IExpUpdate<T> AppendData(T item)

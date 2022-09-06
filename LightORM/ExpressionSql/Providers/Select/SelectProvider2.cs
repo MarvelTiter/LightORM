@@ -9,8 +9,8 @@ namespace MDbContext.ExpressionSql.Providers.Select;
 
 internal partial class SelectProvider2<T1, T2> : BasicSelect0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
 {
-    public SelectProvider2(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-    : base(key, getContext, connectInfos, life)
+    public SelectProvider2(Expression body, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+    : base(body, getContext, connectInfos, life)
     {
         context.AddTable(typeof(T2));
     }
@@ -53,7 +53,7 @@ internal partial class SelectProvider2<T1, T2> : BasicSelect0<IExpSelect<T1, T2>
         OrderByHandle(exp.Body, asc);
         return this;
     }
-       
+
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
     {

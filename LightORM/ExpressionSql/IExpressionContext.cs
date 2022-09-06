@@ -1,17 +1,21 @@
 ﻿using MDbContext.ExpressionSql.Ado;
 using MDbContext.ExpressionSql.Interface;
 using MDbContext.ExpressionSql.Interface.Select;
+using System;
 using System.Data;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql
 {
     public interface IExpressionContext
     {
-        IExpSelect<T> Select<T>(string key = ConstString.Main);
-        IExpInsert<T> Insert<T>(string key = ConstString.Main);
-        IExpUpdate<T> Update<T>(string key = ConstString.Main);
-        IExpDelete<T> Delete<T>(string key = ConstString.Main);
+        IExpressionContext SwitchDatabase(string key);
+        IExpSelect<T> Select<T>();
+        IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
+        IExpInsert<T> Insert<T>();
+        IExpUpdate<T> Update<T>();
+        IExpDelete<T> Delete<T>();
         IExpressionContext BeginTransaction();
         bool CommitTransaction();
         Task<bool> CommitTransactionAsync();

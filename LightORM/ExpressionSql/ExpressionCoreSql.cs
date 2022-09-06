@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql
@@ -52,14 +53,38 @@ namespace MDbContext.ExpressionSql
             }
             throw new ArgumentException($"{key}异常");
         }
+        private readonly string MainDb = ConstString.Main;
+        private string? _dbKey = null;
+        internal string CurrentKey
+        {
+            get
+            {
+                var k = _dbKey ?? MainDb;
+                _dbKey = null;
+                return k;
+            }
+        }
+        public IExpressionContext SwitchDatabase(string key)
+        {
+            _dbKey = key;
+            return this;
+        }
+        public IExpSelect<T> Select<T>() => Select<T>(t => new { t });
 
-        public IExpSelect<T> Select<T>(string key = ConstString.Main) => new SelectProvider1<T>(key, GetContext, GetDbInfo(key), Life);
+        public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
 
-        public IExpInsert<T> Insert<T>(string key = ConstString.Main) => new InsertProvider<T>(key, GetContext, GetDbInfo(key), Life);
+        IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) => new SelectProvider1<T>(body, GetContext(key), GetDbInfo(key), Life);
 
-        public IExpUpdate<T> Update<T>(string key = ConstString.Main) => new UpdateProvider<T>(key, GetContext, GetDbInfo(key), Life);
+        public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
+        IExpInsert<T> CreateInsertProvider<T>(string key) => new InsertProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
 
-        public IExpDelete<T> Delete<T>(string key = ConstString.Main) => new DeleteProvider<T>(key, GetContext, GetDbInfo(key), Life);
+        public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
+        IExpUpdate<T> CreateUpdateProvider<T>(string key) => new UpdateProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
+
+        public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
+        IExpDelete<T> CreateDeleteProvider<T>(string key) => new DeleteProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
+
+
 
         private struct TransactionInfo
         {
@@ -184,5 +209,6 @@ namespace MDbContext.ExpressionSql
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
     }
 }

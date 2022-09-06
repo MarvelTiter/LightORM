@@ -47,7 +47,7 @@ namespace LightORM.Test2
                                      .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
                                      .Where(w => w.Tb3.UserId == usrId)
                                      .OrderBy(w => w.Tb1.Sort)
-                                     .ToListAsync();
+                                     .ToListAsync<Power>();
                 Console.WriteLine(powers.Count);
             });
         }
@@ -74,11 +74,11 @@ namespace LightORM.Test2
             Watch(db =>
             {
                 var s = "sss";
-                db.Select<Users>().ToList(w => new
+                db.Select<Users>(w => new
                 {
                     UM = SqlFn.Count(() => w.Age > 10),
                     UM2 = SqlFn.Count(() => w.Duty == s),
-                });
+                }).ToList();
             });
         }
 
@@ -166,10 +166,10 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var result = db.Select<Power>().GroupBy(p => p.PowerId).ToList<int>(p => new
+                var result = db.Select<Power>(p => new
                 {
                     G = SqlFn.Count(() => p.PowerId.Like("2"))
-                });
+                }).GroupBy(p => p.PowerId).ToList<int>();
                 Console.WriteLine(result.Count());
             });
         }
@@ -243,6 +243,11 @@ namespace LightORM.Test2
                 db.Update<User>().AppendData(u).Where(p => p.UserId != null).ToSql();
             });
         }
+        [TestMethod]
+        public void DataTableResultTest()
+        {
+
+        }
         private void Watch(Action<IExpressionContext> action)
         {
             IExpressionContext eSql = new ExpressionSqlBuilder()
@@ -264,7 +269,7 @@ namespace LightORM.Test2
             Console.WriteLine(eSql);
             Console.WriteLine("====================================");
         }
-        private IDbConnection SqliteDbContext() 
+        private IDbConnection SqliteDbContext()
         {
             DbContext.Init(DbBaseType.Sqlite);
             var path = Path.GetFullPath("../../../Demo.db");

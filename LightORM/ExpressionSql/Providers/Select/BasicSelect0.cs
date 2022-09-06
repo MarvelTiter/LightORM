@@ -17,10 +17,14 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     protected SqlFragment? select;
     protected SqlFragment? groupBy;
     protected SqlFragment? orderBy;
+    private readonly Expression selectBody;
     protected override SqlConfig WhereConfig => SqlConfig.Where;
 
-    public BasicSelect0(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-  : base(key, getContext, connectInfos, life) { }
+    public BasicSelect0(Expression body, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(getContext, connectInfos, life)
+    {
+        this.selectBody = body;
+    }
     public TSelect Count(out long total)
     {
         var sql = BuildCountSql();
@@ -28,59 +32,61 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return (this as TSelect)!;
     }
 
+    #region jion
     public TSelect InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.InnerJoin, exp.Body);
+        JoinHandle<TAnother>(TableLinkType.InnerJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.InnerJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.InnerJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.InnerJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.InnerJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.LeftJoin, exp.Body);
+        JoinHandle<TAnother>(TableLinkType.LeftJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.LeftJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.LeftJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.LeftJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.LeftJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect RightJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body);
+        JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.RightJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.RightJoin, exp.Body, false);
         return (this as TSelect)!;
     }
 
     public TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
     {
-        JoinHandle<TAnother1>(TableLinkType.RightJoin, exp.Body);
+        JoinHandle<TAnother1>(TableLinkType.RightJoin, exp.Body, false);
         return (this as TSelect)!;
     }
+    #endregion
 
     int index = 0;
     int size = 0;
@@ -141,6 +147,42 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select.Append("))");
         return InternalExecute<int>();
     }
+
+
+    public Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        select ??= new SqlFragment();
+        context.SetFragment(select);
+        select.Append("MAX(");
+        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        // tosql去掉最后一个字符
+        select.Append("))");
+        return InternalExecuteAsync<TMember>();
+    }
+
+    public Task<double> SumAsync(Expression<Func<T1, object>> exp)
+    {
+        select ??= new SqlFragment();
+        context.SetFragment(select);
+        select.Append("SUM(");
+        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        // tosql去掉最后一个字符
+        select.Append("))");
+        return InternalExecuteAsync<double>();
+    }
+
+    public Task<int> CountAsync(Expression<Func<T1, object>> exp)
+    {
+        select ??= new SqlFragment();
+        context.SetFragment(select);
+        select.Append("COUNT(");
+        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        // tosql去掉最后一个字符
+        select.Append("))");
+        return InternalExecuteAsync<int>();
+    }
+
+
     bool rollup = false;
     public TSelect RollUp()
     {
@@ -153,13 +195,13 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         distanct = true;
         return (this as TSelect)!;
     }
-    TSelect? subQuery;
-    public TSelect From(Func<IExpressionContext, TSelect> sub)
-    {
-        throw new NotImplementedException();
-        subQuery = sub(Life.Core!);
-        return (this as TSelect)!;
-    }
+    //TSelect? subQuery;
+    //public TSelect From(Func<IExpressionContext, TSelect> sub)
+    //{
+    //    throw new NotImplementedException();
+    //    subQuery = sub(Life.Core!);
+    //    return (this as TSelect)!;
+    //}
 
     private string BuildCountSql()
     {
@@ -187,7 +229,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select!.Remove(select.Length - 1, 1);
         sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
-        { 
+        {
             var temp = tables[i];
             if (temp.TableType == TableLinkType.None) continue;
             sql.Append($"\n{temp.TableType.ToLabel()} {temp.TableName} {temp.Alias} ON {temp.Fragment}");

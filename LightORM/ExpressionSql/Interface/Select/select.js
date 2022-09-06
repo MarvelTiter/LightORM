@@ -6,6 +6,14 @@
     return types.join();
 };
 
+let genericParam = function (count) {
+    let types = [];
+    for (let index = 0; index < count; index++) {
+        types.push(`t${index + 1}`);
+    }
+    return types.join();
+};
+
 let genericInit = function (count) {
     let types = [];
     for (let index = 1; index < count; index++) {
@@ -18,7 +26,7 @@ function GenerateProvider(count) {
     let template = `
 internal partial class SelectProvider${count}<${genericType(count)}> : BasicSelect0<IExpSelect<${genericType(count)}>, T1>, IExpSelect<${genericType(count)}>
 {
-    public SelectProvider${count}(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+    public SelectProvider${count}(string key, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
      : base(key, getContext, connectInfos, life)
     {
         ${genericInit(count)}
@@ -77,11 +85,23 @@ internal partial class SelectProvider${count}<${genericType(count)}> : BasicSele
 
 function Generate(count) {//SelectExtension
     let template = `
-public static IExpSelect<${genericType(count)}> Select<${genericType(count)}>(this IExpSql self, string key = "MainDb") where T1 : class, new()
+#region ${count}个类型参数
+public static IExpSelect<${genericType(count)}> Select<${genericType(count)}>(this IExpressionContext self) where T1 : class, new()
+{
+    return Select<${genericType(count)}>(self, (${genericParam(count)}) => new { ${genericParam(count)} });
+}
+public static IExpSelect<${genericType(count)}> Select<${genericType(count)}>(this IExpressionContext self, Expression<Func<${genericType(count)}, object>> exp) where T1 : class, new()
 {
     var ins = self as ExpressionCoreSql;
-    return new SelectProvider${count}<${genericType(count)}>(key, ins!.GetContext, ins!.GetDbInfo(key), ins!.Life);
+    return CreateProvider<${genericType(count)}>(ins!.CurrentKey, ins, exp.Body);
 }
+public static IExpSelect<${genericType(count)}> Select<${genericType(count)}>(this IExpressionContext self, Expression<Func<TypeSet<${genericType(count)}>, object>> exp) where T1 : class, new()
+{
+    var ins = self as ExpressionCoreSql;
+    return CreateProvider<${genericType(count)}>(ins!.CurrentKey, ins, exp.Body);
+}
+static IExpSelect<${genericType(count)}> CreateProvider<${genericType(count)}>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider${count}<${genericType(count)}>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+#endregion
 `;
     output.innerText += template
 }

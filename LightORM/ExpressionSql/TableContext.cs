@@ -44,9 +44,9 @@ internal class TableInfo : ICloneable
     public SqlFragment? Fragment { get; set; }
     public bool Compare(Type type)
     {
-        return this.Type!.IsAssignableFrom(type)
-            || type.IsAssignableFrom(this.Type)
-            || type.Equals(this.Type);
+        return Type!.IsAssignableFrom(type)
+            || type.IsAssignableFrom(Type)
+            || type.Equals(Type);
     }
     public object Clone()
     {

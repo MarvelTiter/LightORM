@@ -82,7 +82,7 @@ namespace MDbContext.ExpressionSql.Ado
             return CurrentConnection.QuerySingleAsync<T>(sql, param);
         }
 
-        public IAdo SetDb(string key)
+        public IAdo SwitchDatabase(string key)
         {
             if (!dbFactories.ContainsKey(key))
                 throw new ArgumentException($"未注册的数据库:{key}");

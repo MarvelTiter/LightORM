@@ -9,21 +9,22 @@ namespace MDbContext.Repository;
 
 public interface IRepository<T>
 {
-    T? Insert(T item, string key = ConstString.Main);
-    int Update(T item, Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    int Delete(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    T? GetSingle(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
-    IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
+    IRepository<T> SwitchDatabase(string key);
+    T? Insert(T item);
+    int Update(T item, Expression<Func<T, bool>>? whereExpression);
+    int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression);
+    int Delete(Expression<Func<T, bool>>? whereExpression);
+    T? GetSingle(Expression<Func<T, bool>>? whereExpression);
+    IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);
+    IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);
 
     #region Async 
-    Task<T?> InsertAsync(T item, string key = ConstString.Main);
-    Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression, string key = ConstString.Main);
-    Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
-    Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = ConstString.Main);
+    Task<T?> InsertAsync(T item);
+    Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression);
+    Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression);
+    Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression);
+    Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression);
+    Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);
+    Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);
     #endregion
 }

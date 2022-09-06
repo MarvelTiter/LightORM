@@ -9,23 +9,26 @@ namespace MDbContext.ExpressionSql.Providers;
 internal abstract class BasicProvider<T1>
 {
     protected readonly SqlContext context;
+    //private readonly ITableContext tableContext;
+
     //protected readonly List<TableInfo> tables;
     protected readonly DbConnectInfo dbConnect;
     protected readonly Dictionary<string, SqlFieldInfo> SessionFields = new Dictionary<string, SqlFieldInfo>();
     protected SqlFragment? where;
 
-    public string DbKey { get; }
+    public string? DbKey { get; set; }
     public SqlExecuteLife Life { get; }
 
-    public BasicProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+    public BasicProvider(ITableContext tableContext, DbConnectInfo connectInfos, SqlExecuteLife life)
     {
-        var tbContext = getContext.Invoke(key);
-        DbKey = key;
+        //var tbContext = getContext.Invoke(key);
+
+        //this.tableContext = tableContext;
         dbConnect = connectInfos;
         Life = life;
-        context = new SqlContext(tbContext);
+        context = new SqlContext(tableContext);
         //tables = new List<TableInfo>();
-        var main = context.AddTable(typeof(T1));
+        context.AddTable(typeof(T1));
     }
 
     protected abstract SqlConfig WhereConfig { get; }

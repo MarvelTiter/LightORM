@@ -10,114 +10,122 @@ namespace MDbContext.Repository;
 public class RepositoryImpl<T> : IRepository<T>
 {
     private readonly IExpressionContext context;
-
+    private string _dbKey = ConstString.Main;
     public RepositoryImpl(IExpressionContext context)
     {
         this.context = context;
     }
 
-    public int Delete(Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public IRepository<T> SwitchDatabase(string key)
     {
-        if (whereExpression == null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Delete<T>(key).Where(whereExpression).Execute();
+        _dbKey = key;
+        context.SwitchDatabase(key);
+        return this;
     }
 
-    public Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public int Delete(Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression == null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Delete<T>(key).Where(whereExpression).ExecuteAsync();
+        return context.Delete<T>().Where(whereExpression).Execute();
     }
 
-    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    public Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression)
     {
-        var select = context.Select<T>(key);
+        if (whereExpression == null) throw new ArgumentNullException(nameof(whereExpression));
+        return context.Delete<T>().Where(whereExpression).ExecuteAsync();
+    }
+
+    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
+    {
+        var select = context.Select<T>();
         if (whereExpression != null)
             select = select.Where(whereExpression);
         if (index * size > 0)
             select = select.Paging(index, size);
         if (orderByExpression != null)
             select = select.OrderBy(orderByExpression, asc);
-        return select.Count(out total).ToList();
+        return select.Count(out total).ToList<T>();
     }
 
-    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
     {
-        var select = context.Select<T>(key);
+        var select = context.Select<T>();
         if (whereExpression != null)
             select = select.Where(whereExpression);
         if (orderByExpression != null)
             select = select.OrderBy(orderByExpression, asc);
-        return select.ToList();
+        return select.ToList<T>();
     }
 
-    public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
     {
-        var select = context.Select<T>(key);
+        var select = context.Select<T>();
         if (whereExpression != null)
             select = select.Where(whereExpression);
         if (index * size > 0)
             select = select.Paging(index, size);
         if (orderByExpression != null)
             select = select.OrderBy(orderByExpression, asc);
-        return select.Count(out total).ToListAsync();
+        return select.Count(out total).ToListAsync<T>();
     }
 
-    public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true, string key = "MainDb")
+    public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
     {
-        var select = context.Select<T>(key);
+        var select = context.Select<T>();
         if (whereExpression != null)
             select = select.Where(whereExpression);
         if (orderByExpression != null)
             select = select.OrderBy(orderByExpression, asc);
-        return select.ToListAsync();
+        return select.ToListAsync<T>();
     }
 
-    public T? GetSingle(Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public T? GetSingle(Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Select<T>(key).Where(whereExpression).ToList().FirstOrDefault();
-    }
-
-    public async Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        var list = await context.Select<T>(key).Where(whereExpression).ToListAsync();
+        var list = context.Select<T>().Where(whereExpression).ToList<T>();
         return list.FirstOrDefault();
     }
 
-    public T? Insert(T item, string key = "MainDb")
+    public async Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression)
     {
-        var flag = context.Insert<T>(key).AppendData(item).Execute();
+        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
+        var list = await context.Select<T>().Where(whereExpression).ToListAsync<T>();
+        return list.FirstOrDefault();
+    }
+
+    public T? Insert(T item)
+    {
+        var flag = context.Insert<T>().AppendData(item).Execute();
         return flag > 0 ? item : default;
     }
 
-    public async Task<T?> InsertAsync(T item, string key = "MainDb")
+    public async Task<T?> InsertAsync(T item)
     {
-        var flag = await context.Insert<T>(key).AppendData(item).ExecuteAsync();
+        var flag = await context.Insert<T>().AppendData(item).ExecuteAsync();
         return flag > 0 ? item : default;
     }
 
-    public int Update(T item, Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public int Update(T item, Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>(key).AppendData(item).Where(whereExpression).Execute();
+        return context.Update<T>().AppendData(item).Where(whereExpression).Execute();
     }
 
-    public int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>(key).UpdateColumns(updateExpression).Where(whereExpression).Execute();
+        return context.Update<T>().UpdateColumns(updateExpression).Where(whereExpression).Execute();
     }
 
-    public Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>(key).AppendData(item).Where(whereExpression).ExecuteAsync();
+        return context.Update<T>().AppendData(item).Where(whereExpression).ExecuteAsync();
     }
 
-    public Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression, string key = "MainDb")
+    public Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression)
     {
         if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>(key).UpdateColumns(updateExpression).Where(whereExpression).ExecuteAsync();
+        return context.Update<T>().UpdateColumns(updateExpression).Where(whereExpression).ExecuteAsync();
     }
 }

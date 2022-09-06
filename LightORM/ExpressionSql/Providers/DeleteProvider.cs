@@ -13,14 +13,17 @@ namespace MDbContext.ExpressionSql.Providers;
 
 internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
 {
-    public DeleteProvider(string key, Func<string, ITableContext> getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-  : base(key, getContext, connectInfos, life) { }
+    public DeleteProvider(string key, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
+  : base(getContext, connectInfos, life)
+    {
+        DbKey = key;
+    }
 
     protected override SqlConfig WhereConfig => SqlConfig.DeleteWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey);
+        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public int Execute()

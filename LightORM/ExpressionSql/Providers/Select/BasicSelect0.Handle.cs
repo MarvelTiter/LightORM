@@ -10,16 +10,21 @@ namespace MDbContext.ExpressionSql.Providers.Select;
 
 internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {
-    protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body)
+    protected void JoinHandle<TAnother>(TableLinkType tableLinkType, Expression body, bool checkTable = true)
     {
         //var table = context.AddTable(typeof(TAnother), tableLinkType);
         var table = context.Tables.FirstOrDefault(t => t.Compare(typeof(TAnother)));
         if (table is null)
         {
-            throw new InvalidOperationException();
+            if (checkTable)
+                throw new InvalidOperationException();
+            else
+            {
+                table = context.AddTable(typeof(TAnother));
+            }
         }
         var join = new SqlFragment();
-        table.TableType = tableLinkType;
+        table!.TableType = tableLinkType;
         context.SetFragment(join);
         ExpressionVisit.Visit(body, SqlConfig.Join, context);
         table.Fragment = join;

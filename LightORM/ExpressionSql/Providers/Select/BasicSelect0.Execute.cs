@@ -2,6 +2,7 @@
 using MDbContext.SqlExecutor;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -17,47 +18,48 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return InternalQueryAsync<T1>();
     }
 
-    public Task<IList<T1>> ToListAsync()
+    public Task<IList<dynamic>> ToListAsync()
     {
-        return ToListAsync(t1 => new { t1 });
+        SelectHandle(selectBody);
+        return InternalQueryAsync();
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>()
     {
-        Expression<Func<TReturn, object>> exp = r => new { r };
-        SelectHandle(exp.Body);
+        //Expression<Func<TReturn, object>> exp = r => new { r };
+        //SelectHandle(exp.Body);
+        SelectHandle(selectBody);
         return InternalQueryAsync<TReturn>();
     }
 
-    public IEnumerable<T1> ToList()
+    public IEnumerable<dynamic> ToList()
     {
-        return ToList(t1 => new { t1 });
+        SelectHandle(selectBody);
+        return InternalQuery();
     }
     public IEnumerable<TReturn> ToList<TReturn>()
     {
-        Expression<Func<TReturn, object>> exp = r => new { r };
-        SelectHandle(exp.Body);
+        //Expression<Func<TReturn, object>> exp = r => new { r };
+        SelectHandle(selectBody);
         return InternalQuery<TReturn>();
     }
-    public IEnumerable<T1> ToList(Expression<Func<T1, object>> exp)
+    //public IEnumerable<T1> ToList(Expression<Func<T1, object>> exp)
+    //{
+    //    SelectHandle(exp.Body);
+    //    return InternalQuery<T1>();
+    //}
+
+    public DataTable ToDataTable()
     {
-        SelectHandle(exp.Body);
-        return InternalQuery<T1>();
+        throw new NotImplementedException();
     }
 
-    //public int Execute()
-    //{
-    //    using var conn = dbConnect.CreateConnection();
-    //    return conn.Execute(ToSql(), context.GetParameters());
-    //}
-    //public async Task<int> ExecuteAsync()
-    //{
-    //    using var conn = dbConnect.CreateConnection();
-    //    var result = await conn.ExecuteAsync(ToSql(), context.GetParameters());
-    //    return result;
-    //}
+    public Task<DataTable> ToDataTableAsync()
+    {
+        throw new NotImplementedException();
+    }
 
-    protected TReturn InternalExecute<TReturn>()
+    internal TReturn InternalExecute<TReturn>()
     {
         var sql = ToSql();
         var param = context.GetParameters();
@@ -65,13 +67,21 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return conn.QuerySingle<TReturn>(sql, param);
     }
 
-    protected TReturn InternalExecute<TReturn>(string sql, object param)
+    internal Task<TReturn> InternalExecuteAsync<TReturn>()
+    {
+        var sql = ToSql();
+        var param = context.GetParameters();
+        using var conn = dbConnect.CreateConnection();
+        return conn.QuerySingleAsync<TReturn>(sql, param);
+    }
+
+    internal TReturn InternalExecute<TReturn>(string sql, object param)
     {
         using var conn = dbConnect.CreateConnection();
         return conn.QuerySingle<TReturn>(sql, param);
     }
 
-    protected IEnumerable<TReturn> InternalQuery<TReturn>()
+    internal IEnumerable<TReturn> InternalQuery<TReturn>()
     {
         var sql = ToSql();
         var param = context.GetParameters();
@@ -87,7 +97,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         return conn.Query(sql, param);
     }
 
-    protected async Task<IList<TReturn>> InternalQueryAsync<TReturn>()
+    internal async Task<IList<TReturn>> InternalQueryAsync<TReturn>()
     {
         var sql = ToSql();
         var param = context.GetParameters();
@@ -103,4 +113,6 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var list = await conn.QueryAsync(sql, param);
         return list.ToList();
     }
+
+    
 }
