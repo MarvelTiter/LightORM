@@ -14,10 +14,10 @@ private void Watch(Action<IExpressionContext> action)
         .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
         .SetWatcher(option =>
         {
-            option.BeforeExecute = sqlString =>
+            option.BeforeExecute = e =>
             {
                 Console.Write(DateTime.Now);
-                Console.WriteLine(" Sql => \n" + sqlString + "\n");
+                Console.WriteLine(" Sql => \n" + e.Sql + "\n");
             };
         })
         .Build();
@@ -65,11 +65,11 @@ public void V2SelectFunc()
     Watch(db =>
     {
         var s = "sss";
-        db.Select<Users>().ToList(w => new
+        db.Select<Users>(w => new
         {
             UM = SqlFn.Count(() => w.Age > 10),
             UM2 = SqlFn.Count(() => w.Duty == s),
-        });
+        }).ToDynamicList();
     });
 }
 ```
