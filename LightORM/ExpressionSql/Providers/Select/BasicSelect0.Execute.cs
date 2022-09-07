@@ -49,30 +49,35 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     //    return InternalQuery<T1>();
     //}
 
+    internal string Sql => ToSql();
+    internal object SqlParameters => context.GetParameters();
+
     public DataTable ToDataTable()
     {
-        throw new NotImplementedException();
+        using var conn = dbConnect.CreateConnection();
+        return conn.ExecuteTable(Sql, SqlParameters);
     }
 
     public Task<DataTable> ToDataTableAsync()
     {
-        throw new NotImplementedException();
+        using var conn = dbConnect.CreateConnection();
+        return conn.ExecuteTableAsync(Sql, SqlParameters);
     }
 
     internal TReturn InternalExecute<TReturn>()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         using var conn = dbConnect.CreateConnection();
-        return conn.QuerySingle<TReturn>(sql, param);
+        return conn.QuerySingle<TReturn>(Sql, SqlParameters);
     }
 
     internal Task<TReturn> InternalExecuteAsync<TReturn>()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         using var conn = dbConnect.CreateConnection();
-        return conn.QuerySingleAsync<TReturn>(sql, param);
+        return conn.QuerySingleAsync<TReturn>(Sql, SqlParameters);
     }
 
     internal TReturn InternalExecute<TReturn>(string sql, object param)
@@ -83,36 +88,34 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 
     internal IEnumerable<TReturn> InternalQuery<TReturn>()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         var conn = dbConnect.CreateConnection();
-        return conn.Query<TReturn>(sql, param);
+        return conn.Query<TReturn>(Sql, SqlParameters);
     }
 
     internal IEnumerable<dynamic> InternalQuery()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         var conn = dbConnect.CreateConnection();
-        return conn.Query(sql, param);
+        return conn.Query(Sql, SqlParameters);
     }
 
     internal async Task<IList<TReturn>> InternalQueryAsync<TReturn>()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         using var conn = dbConnect.CreateConnection();
-        var list = await conn.QueryAsync<TReturn>(sql, param);
+        var list = await conn.QueryAsync<TReturn>(Sql, SqlParameters);
         return list;
     }
     internal async Task<IList<dynamic>> InternalQueryAsync()
     {
-        var sql = ToSql();
-        var param = context.GetParameters();
+        //var sql = ToSql();
+        //var param = context.GetParameters();
         using var conn = dbConnect.CreateConnection();
-        var list = await conn.QueryAsync(sql, param);
+        var list = await conn.QueryAsync(Sql, SqlParameters);
         return list.ToList();
     }
-
-    
 }
