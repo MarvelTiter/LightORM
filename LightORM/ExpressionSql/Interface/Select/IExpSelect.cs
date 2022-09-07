@@ -28,13 +28,13 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
     TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp);
     //IEnumerable<T1> ToList(Expression<Func<T1, object>> exp);
-    //IEnumerable<T1> ToList();
-    IEnumerable<dynamic> ToList();
+    IEnumerable<T1> ToList();
+    IEnumerable<dynamic> ToDynamicList();
     IEnumerable<TReturn> ToList<TReturn>();
     DataTable ToDataTable();
     #region async
-    //Task<IList<T1>> ToListAsync(Expression<Func<T1, object>> exp);
-    Task<IList<dynamic>> ToListAsync();
+    Task<IList<T1>> ToListAsync();
+    Task<IList<dynamic>> ToDynamicListAsync();
     Task<IList<TReturn>> ToListAsync<TReturn>();
     Task<DataTable> ToDataTableAsync();
     #endregion

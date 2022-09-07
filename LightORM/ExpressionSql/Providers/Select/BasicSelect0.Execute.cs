@@ -17,8 +17,12 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         SelectHandle(exp.Body);
         return InternalQueryAsync<T1>();
     }
-
-    public Task<IList<dynamic>> ToListAsync()
+    public Task<IList<T1>> ToListAsync()
+    {
+        SelectHandle(selectBody);
+        return InternalQueryAsync<T1>();
+    }
+    public Task<IList<dynamic>> ToDynamicListAsync()
     {
         SelectHandle(selectBody);
         return InternalQueryAsync();
@@ -31,8 +35,12 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         SelectHandle(selectBody);
         return InternalQueryAsync<TReturn>();
     }
-
-    public IEnumerable<dynamic> ToList()
+    public IEnumerable<T1> ToList()
+    {
+        SelectHandle(selectBody);
+        return InternalQuery<T1>();
+    }
+    public IEnumerable<dynamic> ToDynamicList()
     {
         SelectHandle(selectBody);
         return InternalQuery();
