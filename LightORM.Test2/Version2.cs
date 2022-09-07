@@ -153,7 +153,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                var result = db.Select<Power>().ToDynamicList(u => new { u.PowerName, u.PowerId });
+                var result = db.Select<Power>(u => new { u.PowerName, u.PowerId }).ToList();
                 foreach (var item in result)
                 {
                     Console.WriteLine($"{item.PowerId} - {item.PowerName}");
