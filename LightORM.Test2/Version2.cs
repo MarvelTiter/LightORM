@@ -11,7 +11,7 @@ using System.Diagnostics;
 namespace LightORM.Test2
 {
     [TestClass]
-    public class Version2
+    public class Version2 : TestBase
     {
         P p = new P { Age = 5, Bns = 10 };
 
@@ -248,34 +248,7 @@ namespace LightORM.Test2
         {
 
         }
-        private void Watch(Action<IExpressionContext> action)
-        {
-            IExpressionContext eSql = new ExpressionSqlBuilder()
-                .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
-                .SetWatcher(option =>
-                {
-                    option.BeforeExecute = sqlString =>
-                    {
-                        Console.Write(DateTime.Now);
-                        Console.WriteLine(" Sql => \n" + sqlString.Sql + "\n");
-                    };
-                })
-                .Build();
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-            action(eSql);
-            stopwatch.Stop();
-            Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
-            Console.WriteLine(eSql);
-            Console.WriteLine("====================================");
-        }
-        private IDbConnection SqliteDbContext()
-        {
-            DbContext.Init(DbBaseType.Sqlite);
-            var path = Path.GetFullPath("../../../Demo.db");
-            var conn = new SqliteConnection($"DataSource={path}");
-            return conn;
-        }
+
         class P
         {
             public int Age { get; set; }

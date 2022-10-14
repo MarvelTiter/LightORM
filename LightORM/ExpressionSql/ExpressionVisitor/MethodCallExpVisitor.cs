@@ -29,30 +29,38 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
 
     public static void LikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
+        config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
         context += " LIKE ";
         context.LikeMode = 1;
+        config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
     public static void NotLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
+        config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
         context += " NOT LIKE ";
         context.LikeMode = 1;
+        config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
     public static void LeftLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
+        config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
         context += " LIKE ";
         context.LikeMode = 2;
+        config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
     public static void RightLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
     {
+        config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
         context += " LIKE ";
         context.LikeMode = 3;
+        config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
     public static void InMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
