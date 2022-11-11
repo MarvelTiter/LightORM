@@ -28,16 +28,30 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
 
     public int Execute()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return conn.Execute(ToSql(), param);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+        //return conn.Execute(ToSql(), param);
+        SqlArgs args = new SqlArgs
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Delete,
+        };
+        return InternalExecute(args);
     }
 
-    public async Task<int> ExecuteAsync()
+    public Task<int> ExecuteAsync()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return await conn.ExecuteAsync(ToSql(), param);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+        //return await conn.ExecuteAsync(ToSql(), param);
+        SqlArgs args = new SqlArgs
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Delete,
+        };
+        return InternalExecuteAsync(args);
     }
 
     public string ToSql()
@@ -64,7 +78,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
             }
         }
         sql.Append($"WHERE {where}");
-        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
+        //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Delete });
         return sql.ToString();
     }
     SqlFragment? delete;

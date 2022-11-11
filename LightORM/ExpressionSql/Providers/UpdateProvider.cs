@@ -39,16 +39,31 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 
     public int Execute()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return conn.Execute(ToSql(), param);
+        SqlArgs args = new SqlArgs()
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Update,
+        };
+        return InternalExecute(args);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+
+        //return conn.Execute(ToSql(), param);
     }
 
-    public async Task<int> ExecuteAsync()
+    public Task<int> ExecuteAsync()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return await conn.ExecuteAsync(ToSql(), param);
+        SqlArgs args = new SqlArgs()
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Update,
+        };
+        return InternalExecuteAsync(args);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+        //return await conn.ExecuteAsync(ToSql(), param);
     }
 
     public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
@@ -106,7 +121,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
             sql.Remove(sql.Length - 1, 1);
         if (where!.Length == 0) throw new InvalidOperationException($"Where Condition is null");
         sql.Append($"\nWHERE {where}");
-        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
+        //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Update });
         return sql.ToString();
     }
 
@@ -141,4 +156,5 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         if (condition) Where(exp);
         return this;
     }
+
 }

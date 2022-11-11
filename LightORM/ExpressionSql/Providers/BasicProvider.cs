@@ -1,8 +1,11 @@
 ﻿using MDbContext.ExpressionSql.ExpressionVisitor;
 using MDbContext.ExpressionSql.Interface;
+using MDbContext.SqlExecutor;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers;
 
@@ -47,5 +50,92 @@ internal abstract class BasicProvider<T1>
             ExpressionVisit.Visit(body, WhereConfig, context);
         }
         where.Append(")");
+    }
+
+    internal TReturn InternalSingle<TReturn>(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        using var conn = dbConnect.CreateConnection();
+        var ret = conn.QuerySingle<TReturn>(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    internal async Task<TReturn> InternalSingleAsync<TReturn>(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        using var conn = dbConnect.CreateConnection();
+        var ret = await conn.QuerySingleAsync<TReturn>(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    internal int InternalExecute(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        using var conn = dbConnect.CreateConnection();
+        var ret = conn.Execute(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    internal async Task<int> InternalExecuteAsync(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        using var conn = dbConnect.CreateConnection();
+        var ret = await conn.ExecuteAsync(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    //internal TReturn InternalExecute<TReturn>(string sql, object param)
+    //{
+    //    using var conn = dbConnect.CreateConnection();
+    //    return conn.QuerySingle<TReturn>(sql, param);
+    //}
+
+    internal  IEnumerable<TReturn> InternalQuery<TReturn>(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        var conn = dbConnect.CreateConnection();
+        var ret = conn.Query<TReturn>(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    internal IEnumerable<dynamic> InternalQuery(SqlArgs args)
+    {
+        //var sql = ToSql();
+        //var param = context.GetParameters();
+        Life.BeforeExecute?.Invoke(args);
+        var conn = dbConnect.CreateConnection();
+        var ret = conn.Query(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+
+    internal async Task<IList<TReturn>> InternalQueryAsync<TReturn>(SqlArgs args)
+    {        
+        Life.BeforeExecute?.Invoke(args);
+        var conn = dbConnect.CreateConnection();
+        var ret = await conn.QueryAsync<TReturn>(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }
+    internal async Task<IList<dynamic>> InternalQueryAsync(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        using var conn = dbConnect.CreateConnection();
+        var list = await conn.QueryAsync(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return list.ToList();
     }
 }

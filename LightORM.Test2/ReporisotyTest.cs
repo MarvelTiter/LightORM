@@ -14,7 +14,7 @@ namespace LightORM.Test2
             {
                 var username = "admin";
                 var u = await db.Repository<User>().GetSingleAsync(u => u.UserId.RightLike(username));
-                Console.WriteLine(u.Password);
+                Console.WriteLine(u?.Password);
             });
         }
     }

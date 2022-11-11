@@ -58,25 +58,29 @@ internal partial class SelectProvider2<T1, T2> : BasicSelect0<IExpSelect<T1, T2>
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQuery<TReturn>();
+        var args = BuildArgs();
+        return InternalQuery<TReturn>(args);
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQuery<TReturn>();
+        var args = BuildArgs();
+        return InternalQuery<TReturn>(args);
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQueryAsync<TReturn>();
+        var args = BuildArgs();
+        return InternalQueryAsync<TReturn>(args);
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQueryAsync<TReturn>();
+        var args = BuildArgs();
+        return InternalQueryAsync<TReturn>(args);
     }
 
     public IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp)

@@ -28,13 +28,15 @@ internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, I
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQuery<TReturn>();
+        var args = BuildArgs();
+        return InternalQuery<TReturn>(args);
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
     {
         SelectHandle(exp.Body);
-        return InternalQueryAsync<TReturn>();
+        var args = BuildArgs();
+        return InternalQueryAsync<TReturn>(args);
     }
 
     public IExpSelect<T1> Where(Expression<Func<T1, bool>> exp)

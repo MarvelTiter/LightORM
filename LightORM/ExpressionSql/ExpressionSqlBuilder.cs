@@ -6,17 +6,29 @@ using System.Data;
 
 namespace MDbContext.ExpressionSql;
 
+public enum SqlAction
+{
+    Select,
+    Update,
+    Insert,
+    Delete,
+}
+
 public class ConstString
 {
     public const string Main = "MainDb";
 }
 public class SqlArgs : EventArgs
 {
+    public object? SqlParameter { get; set; }
+    public SqlAction Action { get; set; }
     public string? Sql { get; set; }
+    public bool Done { get; set; } = false;
 }
 public class SqlExecuteLife
 {
     public Action<SqlArgs>? BeforeExecute { get; set; }
+    public Action<SqlArgs>? AfterExecute { get; set; }
     internal ExpressionCoreSql? Core { get; set; }
 }
 

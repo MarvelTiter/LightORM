@@ -10,7 +10,7 @@ namespace MDbContext.ExpressionSql.Interface.Select;
 public interface IExpSelect0
 {
     string ToSql();
-    object GetParameters();
+    //object GetParameters();
 }
 public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSelect0
 {

@@ -28,7 +28,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     public TSelect Count(out long total)
     {
         var sql = BuildCountSql();
-        total = InternalExecute<long>(sql, context.GetParameters());
+        var args = BuildArgs(sql);
+        total = InternalSingle<long>(args);
         return (this as TSelect)!;
     }
 
@@ -123,7 +124,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecute<TMember>();
+        SqlArgs args = BuildArgs();
+        return InternalSingle<TMember>(args);
     }
 
     public double Sum(Expression<Func<T1, object>> exp)
@@ -134,7 +136,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecute<double>();
+        SqlArgs args = BuildArgs();
+        return InternalSingle<double>(args);
     }
 
     public int Count(Expression<Func<T1, object>> exp)
@@ -145,9 +148,11 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecute<int>();
+        SqlArgs args = BuildArgs();
+        return InternalSingle<int>(args);
     }
 
+    
 
     public Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
@@ -157,7 +162,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecuteAsync<TMember>();
+        SqlArgs args = BuildArgs();
+        return InternalSingleAsync<TMember>(args);
     }
 
     public Task<double> SumAsync(Expression<Func<T1, object>> exp)
@@ -168,7 +174,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecuteAsync<double>();
+        SqlArgs args = BuildArgs();
+        return InternalSingleAsync<double>(args);
     }
 
     public Task<int> CountAsync(Expression<Func<T1, object>> exp)
@@ -179,7 +186,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
         // tosql去掉最后一个字符
         select.Append("))");
-        return InternalExecuteAsync<int>();
+        SqlArgs args = BuildArgs();
+        return InternalSingleAsync<int>(args);
     }
 
 
@@ -217,7 +225,6 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         }
         if (where != null)
             sql.Append($"\nWHERE {where}");
-        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 
@@ -248,11 +255,16 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
             //分页处理
             context.DbHandler.DbPaging(context, select, sql, index, size);
         }
-
-        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
         return sql.ToString();
     }
 
-    public object GetParameters() => context.GetParameters();
-
+    protected SqlArgs BuildArgs(string? sql = null)
+    {
+        return new SqlArgs()
+        {
+            Sql = sql ?? ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Select,
+        };
+    }
 }

@@ -44,16 +44,30 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 
     public int Execute()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return conn.Execute(ToSql(), param);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+        //return conn.Execute(ToSql(), param);
+        SqlArgs args = new SqlArgs
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Insert,
+        };
+        return InternalExecute(args);
     }
 
-    public async Task<int> ExecuteAsync()
+    public Task<int> ExecuteAsync()
     {
-        using var conn = dbConnect.CreateConnection();
-        var param = context.GetParameters();
-        return await conn.ExecuteAsync(ToSql(), param);
+        SqlArgs args = new SqlArgs
+        {
+            Sql = ToSql(),
+            SqlParameter = context.GetParameters(),
+            Action = SqlAction.Insert,
+        };
+        return InternalExecuteAsync(args);
+        //using var conn = dbConnect.CreateConnection();
+        //var param = context.GetParameters();
+        //return await conn.ExecuteAsync(ToSql(), param);
     }
 
     public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
@@ -98,7 +112,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             sql.Remove(fIndex - 1, 1);
             sql.Remove(vIndex - 2, 1);
         }
-        Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString() });
+        //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Insert });
         return sql.ToString();
     }
 
