@@ -13,6 +13,7 @@ namespace LightORM.Test2
         {
             IExpressionContext eSql = new ExpressionSqlBuilder()
                 .SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
+                .SetSalveDatabase("Mysql", DbBaseType.MySql, () => new SqliteConnection())
                 .SetWatcher(option =>
                 {
                     option.BeforeExecute = e =>

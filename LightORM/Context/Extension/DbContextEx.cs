@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext
 {
+    [Obsolete]
     public static class DbContextEx
     {
         private static Task<T> RunAsync<T>(Func<T> func)
@@ -103,9 +104,9 @@ namespace MDbContext
         public static Task ExecuteDataReaderAsync(this DbContext self, Func<IDataReader, Task> taskFunc) => ExecuteDataReaderAsync(self, self.Sql, self.SqlParameter, taskFunc);
         public static async Task ExecuteDataReaderAsync(this DbContext self, string sql, object p, Func<IDataReader, Task> taskFunc)
         {
-            var reader = self.DbConnection.ExecuteReader(sql, p);
-            await taskFunc(reader);
-            reader.Close();
+            //var reader = self.DbConnection.ExecuteReader(sql, p);
+            //await taskFunc(reader);
+            //reader.Close();
         }
 
         public static void AddTrans(this DbContext self)

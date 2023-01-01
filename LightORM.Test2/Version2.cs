@@ -64,7 +64,15 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                //db.Select<User>().From(sub=>sub.Select<>)
+                var p = new Power();
+                p.PowerId = "StationRecord";
+                p.PowerName = "ÊµÊ±¼à¿Ø";
+                p.ParentId = "BussinessFunc";
+                p.PowerType = PowerType.Page;
+                p.Path = "stationrecord";
+                p.Sort = 203;
+                var sql = db.SwitchDatabase("Mysql").Insert<Power>().AppendData(p).ToSql();
+                Console.WriteLine(sql);
             });
         }
 
@@ -244,9 +252,44 @@ namespace LightORM.Test2
             });
         }
         [TestMethod]
-        public void DataTableResultTest()
+        public void DataReaderTest()
         {
+            Watch(db =>
+            {
+                db.Ado.Query("select * from user", null, reader =>
+                {
+                    
+                    while (reader.Read())
+                    {
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.Write($"{reader[i]} - ");
+                        }
+                        Console.WriteLine();
+                    }
+                });
+            });
+        }
 
+        [TestMethod]
+        public void DataReaderAsyncTest()
+        {
+            Watch(db =>
+            {
+                db.Ado.QueryAsync("select * from user", null, reader =>
+                {
+
+                    while (reader.Read())
+                    {
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.Write($"{reader[i]} - ");
+                        }
+                        Console.WriteLine();
+                    }
+                    return Task.CompletedTask;
+                });
+            });
         }
 
         class P

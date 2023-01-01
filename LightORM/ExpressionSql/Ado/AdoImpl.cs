@@ -32,52 +32,52 @@ namespace MDbContext.ExpressionSql.Ado
             }
         }
 
-        public int Execute(string sql, object param = null)
+        public int Execute(string sql, object? param = null)
         {
             return CurrentConnection.Execute(sql, param);
         }
 
-        public Task<int> ExecuteAsync(string sql, object param = null)
+        public Task<int> ExecuteAsync(string sql, object? param = null)
         {
             return CurrentConnection.ExecuteAsync(sql, param);
         }
 
-        public DataTable ExecuteDataTable(string sql, object param = null)
+        public DataTable ExecuteDataTable(string sql, object? param = null)
         {
             return CurrentConnection.ExecuteTable(sql, param);
         }
 
-        public Task<DataTable> ExecuteDataTableAsync(string sql, object param = null)
+        public Task<DataTable> ExecuteDataTableAsync(string sql, object? param = null)
         {
             return CurrentConnection.ExecuteTableAsync(sql, param);
         }
 
-        public IEnumerable<T> Query<T>(string sql, object param = null)
+        public IEnumerable<T> Query<T>(string sql, object? param = null)
         {
             return CurrentConnection.Query<T>(sql, param);
         }
 
-        public IEnumerable<dynamic> Query(string sql, object param = null)
+        public IEnumerable<dynamic> Query(string sql, object? param = null)
         {
             return CurrentConnection.Query(sql, param);
         }
 
-        public Task<List<T>> QueryAsync<T>(string sql, object param = null)
+        public Task<List<T>> QueryAsync<T>(string sql, object? param = null)
         {
             return CurrentConnection.QueryAsync<T>(sql, param);
         }
 
-        public Task<IEnumerable<dynamic>> QueryAsync(string sql, object param = null)
+        public Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
         {
             return CurrentConnection.QueryAsync(sql, param);
         }
 
-        public T Single<T>(string sql, object param = null)
+        public T Single<T>(string sql, object? param = null)
         {
             return CurrentConnection.QuerySingle<T>(sql, param);
         }
 
-        public Task<T> SingleAsync<T>(string sql, object param = null)
+        public Task<T> SingleAsync<T>(string sql, object? param = null)
         {
             return CurrentConnection.QuerySingleAsync<T>(sql, param);
         }
@@ -88,6 +88,16 @@ namespace MDbContext.ExpressionSql.Ado
                 throw new ArgumentException($"未注册的数据库:{key}");
             current = key;
             return this;
+        }
+
+        public void Query(string sql, object? param, Action<IDataReader> callback)
+        {
+            CurrentConnection.ExecuteReader(sql, param, callback);
+        }
+
+        public Task QueryAsync(string sql, object? param, Func<IDataReader, Task> callback)
+        {
+            return CurrentConnection.ExecuteReaderAsync(sql, param, callback);
         }
     }
 }

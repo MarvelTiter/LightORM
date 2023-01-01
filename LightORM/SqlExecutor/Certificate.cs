@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MDbContext.SqlExecutor {
     public class Certificate : IEquatable<Certificate> {
 
-        public Certificate(string commandText, CommandType? commandType, IDbConnection conn, Type targetType, Type parameterType) {
+        public Certificate(string commandText, CommandType? commandType, IDbConnection conn, Type targetType, Type? parameterType) {
             Sql = commandText;
             CommandType = commandType;
             Connection = conn;
@@ -20,7 +20,7 @@ namespace MDbContext.SqlExecutor {
         public CommandType? CommandType { get; }
         public IDbConnection Connection { get; }
         public Type TargetType { get; }
-        public Type ParameterType { get; }
+        public Type? ParameterType { get; }
 
         public bool Equals(Certificate other) {
             if (this == other) {

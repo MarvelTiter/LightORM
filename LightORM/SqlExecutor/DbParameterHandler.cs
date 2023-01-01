@@ -17,13 +17,13 @@ namespace MDbContext.SqlExecutor
     {
         private static Dictionary<Certificate, Action<IDbCommand, object>> parameterReaderCache = new Dictionary<Certificate, Action<IDbCommand, object>>();
         private readonly Dictionary<string, ParamInfo> parameters = new Dictionary<string, ParamInfo>();
-        private object temp;
-        public DbParameterHandler(object parameter)
+        private object? temp;
+        public DbParameterHandler(object? parameter)
         {
-            if (parameter is IEnumerable<KeyValuePair<string, object>>)
+            if (parameter is IEnumerable<KeyValuePair<string, object>> kv)
             {
                 //
-                ReadEnumerableParameter(parameter as IEnumerable<KeyValuePair<string, object>>);
+                ReadEnumerableParameter(kv);
             }
             else
             {

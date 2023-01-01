@@ -18,48 +18,49 @@ namespace MDbContext.SqlExecutor
     public static partial class SqlExecutor
     {
 
-        public static int Execute(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static int Execute(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalExecute(self, command);
         }
 
-        public static object ExecuteScale(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static object ExecuteScale(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalScale(self, command);
         }
 
-        public static DataTable ExecuteTable(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static DataTable ExecuteTable(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalExecuteTable(self, command);
         }
 
-        public static IDataReader ExecuteReader(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static void ExecuteReader(this IDbConnection self, string sql, object? param = null, Action<IDataReader>? action = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            return InternalReader(self, command, (reader, cacheinfo) =>
+            InternalReader(self, command, (reader, cacheinfo) =>
              {
-                 return reader;
+                 action?.Invoke(reader);
+                 return 0;
              });
         }
 
-        public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             var result = InternalQuery<T>(self, command);
             return result;
         }
 
-        public static IEnumerable<dynamic> Query(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static IEnumerable<dynamic> Query(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             var result = InternalQuery<MapperRow>(self, command);
             return result;
         }
 
-        public static T QuerySingle<T>(this IDbConnection self, string sql, object param = null, IDbTransaction trans = null, CommandType? commandType = CommandType.Text)
+        public static T? QuerySingle<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalSingle<T>(self, command);
@@ -101,8 +102,8 @@ namespace MDbContext.SqlExecutor
             Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
-            IDbCommand cmd = null;
-            IDataReader reader = null;
+            IDbCommand? cmd = null;
+            IDataReader? reader = null;
             var wasClosed = conn.State == ConnectionState.Closed;
             try
             {
@@ -116,8 +117,12 @@ namespace MDbContext.SqlExecutor
                 }
                 while (reader.Read())
                 {
-                    var val = cacheInfo.Deserializer(reader);
-                    yield return GetValue<T>(val);
+                    var val = cacheInfo.Deserializer?.Invoke(reader);
+                    if (val == null)
+                    {
+                        continue;
+                    }
+                    yield return GetValue<T>(val)!;
                 }
             }
             finally
@@ -129,7 +134,7 @@ namespace MDbContext.SqlExecutor
                     {
                         try
                         {
-                            cmd.Cancel();
+                            cmd?.Cancel();
                         }
                         catch
                         {
@@ -152,7 +157,7 @@ namespace MDbContext.SqlExecutor
                 }
                 catch (ArgumentException ex)
                 {
-                    throw;
+                    throw ex;
                 }
             }
             CommandBehavior GetBehavior(bool close, CommandBehavior @default)
@@ -161,13 +166,13 @@ namespace MDbContext.SqlExecutor
             }
         }
 
-        private static T InternalSingle<T>(IDbConnection conn, CommandDefinition command)
+        private static T? InternalSingle<T>(IDbConnection conn, CommandDefinition command)
         {
             return InternalReader(conn, command, (reader, cacheInfo) =>
             {
                 while (reader.Read())
                 {
-                    var val = cacheInfo.Deserializer(reader);
+                    var val = cacheInfo.Deserializer?.Invoke(reader);
                     return GetValue<T>(val);
                 }
                 return default;
@@ -210,8 +215,8 @@ namespace MDbContext.SqlExecutor
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
             var wasClosed = conn.State == ConnectionState.Closed;
-            IDbCommand cmd = null;
-            IDataReader reader = null;
+            IDbCommand? cmd = null;
+            IDataReader? reader = null;
             try
             {
                 if (wasClosed)
@@ -234,7 +239,7 @@ namespace MDbContext.SqlExecutor
                     {
                         try
                         {
-                            cmd.Cancel();
+                            cmd?.Cancel();
                         }
                         catch
                         {
@@ -258,7 +263,7 @@ namespace MDbContext.SqlExecutor
             CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
             // 读取
             var wasClosed = conn.State == ConnectionState.Closed;
-            IDbCommand cmd = null;
+            IDbCommand? cmd = null;
             try
             {
                 if (wasClosed)
@@ -292,7 +297,7 @@ namespace MDbContext.SqlExecutor
         {
             var fieldCount = reader.FieldCount;
 
-            MapperTable table = null;
+            MapperTable? table = null;
 
             return
                 r =>
@@ -337,7 +342,7 @@ namespace MDbContext.SqlExecutor
                 };
         }
 
-        private static T GetValue<T>(object val)
+        private static T? GetValue<T>(object? val)
         {
             if (val is T t)
             {

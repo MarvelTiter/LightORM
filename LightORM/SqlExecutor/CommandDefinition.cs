@@ -18,13 +18,13 @@ namespace MDbContext.SqlExecutor
 
         public string CommandText { get; }
 
-        public object Parameters { get; }
+        public object? Parameters { get; }
 
         public CommandType? CommandType { get; }
 
-        public IDbTransaction Transaction { get; set; }
+        public IDbTransaction? Transaction { get; set; }
 
-        public CommandDefinition(string commandText, object parameters = null, IDbTransaction trans = null, CommandType? commandType = null)
+        public CommandDefinition(string commandText, object? parameters = null, IDbTransaction? trans = null, CommandType? commandType = null)
         {
             CommandText = commandText;
             Parameters = parameters;
@@ -38,7 +38,7 @@ namespace MDbContext.SqlExecutor
             Parameters = parameters;
         }
 
-        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object> paramReader)
+        internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object?>? paramReader)
         {
             IDbCommand dbCommand = cnn.CreateCommand();
 
@@ -55,7 +55,7 @@ namespace MDbContext.SqlExecutor
             return dbCommand;
         }
 
-        private static Action<IDbCommand> GetInit(Type commandType)
+        private static Action<IDbCommand>? GetInit(Type commandType)
         {
             if (commandType == null)
             {
@@ -67,8 +67,8 @@ namespace MDbContext.SqlExecutor
                 return value;
             }
 
-            MethodInfo basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
-            MethodInfo basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+            MethodInfo? basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+            MethodInfo? basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
             if (basicPropertySetter != null || basicPropertySetter2 != null)
             {
 #if NETSTANDARD2_0_OR_GREATER
@@ -124,7 +124,7 @@ namespace MDbContext.SqlExecutor
             return value;
         }
 
-        private static MethodInfo GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+        private static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
         {
             PropertyInfo property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
             if ((object)property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
