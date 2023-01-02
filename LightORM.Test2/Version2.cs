@@ -29,6 +29,36 @@ namespace LightORM.Test2
         {
 
         }
+
+        [TestMethod]
+        public void V2SelectObject()
+        {
+            Watch(async db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                var usrId = "admin";
+                var powers = await db.Select<User>(u => new { u.UserName } ).ToListAsync<string>();
+                //Console.WriteLine(powers.Count);
+            });
+        }
+        [TestMethod]
+        public void V2SelectMember()
+        {
+            Watch(async db =>
+            {
+                var u = new User();
+                u.UserId = "User002";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                var usrId = "admin";
+                var powers = await db.Select<User>(u => u.UserName).ToListAsync<string>();
+                //Console.WriteLine(powers.Count);
+            });
+        }
+
         [TestMethod]
         public void V2Select()
         {
