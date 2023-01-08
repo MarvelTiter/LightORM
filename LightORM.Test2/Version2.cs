@@ -40,7 +40,7 @@ namespace LightORM.Test2
                 u.UserName = "≤‚ ‘001";
                 u.Password = "0000";
                 var usrId = "admin";
-                var powers = await db.Select<User>(u => new { u.UserName } ).ToListAsync<string>();
+                var powers = await db.Select<User>(u => new { u.UserName, u.Enable }).ToListAsync<string>();
                 //Console.WriteLine(powers.Count);
             });
         }
@@ -75,9 +75,9 @@ namespace LightORM.Test2
                                      .Distinct()
                                      .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
                                      .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-                                     .Where(w => w.Tb3.UserId == usrId)
-                                     .OrderBy(w => w.Tb1.Sort)
-                                     .ToListAsync<Power>();
+                                     .Where(w => w.Tb3.UserId == usrId && w.Tb2.RoleId == "123")
+                                     .OrderBy(w => new { w.Tb1.Sort, w.Tb1.ParentId })
+                                     .ToListAsync();
                 Console.WriteLine(powers.Count);
             });
         }
@@ -179,7 +179,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
-                db.Select<User>().Max(u => u.UserId);
+                var result = db.Select<User>().Max(u => u.UserId);
             });
         }
 
@@ -216,12 +216,12 @@ namespace LightORM.Test2
         [TestMethod]
         public void GroupByTest()
         {
-            Watch(db =>
+            Watch(async db =>
             {
-                var result = db.Select<Power>(p => new
+                var result = await db.Select<Power>(p => new
                 {
                     G = SqlFn.Count(() => p.PowerId.Like("2"))
-                }).GroupBy(p => p.PowerId).ToList<int>();
+                }).GroupBy(p => p.PowerId).ToListAsync<int>();
                 Console.WriteLine(result.Count());
             });
         }
@@ -302,7 +302,7 @@ namespace LightORM.Test2
             {
                 db.Ado.Query("select * from user", null, reader =>
                 {
-                    
+
                     while (reader.Read())
                     {
                         for (int i = 0; i < reader.FieldCount; i++)

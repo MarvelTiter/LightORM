@@ -19,9 +19,9 @@ namespace MDbContext.ExpressionSql
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
         private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
         internal readonly SqlExecuteLife Life;
-        private IAdo ado;
+        private readonly IAdo ado;
 
-        public IAdo Ado => ado;
+        public IAdo Ado => ado;//;new AdoImpl(dbFactories);
 
         internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
         {

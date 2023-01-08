@@ -65,7 +65,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
             object value = e.AccessValue(exp.Type, p.Name);//p.GetValue(e, null);//
             if (value == null || value == default || value == DBNull.Value)
                 continue;
-            var name = context.GetColumn(eType, p.Name)!.FieldName!;
+            var name = context.GetColumn(eType, p.Name).FieldName!;
             context.AddEntityField(name, value);
         }
     }

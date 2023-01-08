@@ -1,6 +1,6 @@
 ﻿namespace MDbContext.ExpressionSql;
 
-internal class SqlFieldInfo
+internal struct SqlFieldInfo
 {
     public string? FieldName { get; set; }
     public string? TableAlias => Table?.Alias;

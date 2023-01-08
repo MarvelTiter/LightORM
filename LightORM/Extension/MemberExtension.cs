@@ -49,20 +49,25 @@ namespace MDbContext.ExpSql.Extension
         public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
         {
             var column = context.GetColumn(self.DeclaringType, self.Name);
-            if (config.RequiredEmphasis)
-            {
-                if (config.RequiredTableAlias)
-                    return $"{column?.TableAlias}.{context.DbHandler.ColumnEmphasis(column?.FieldName ?? "")}";
-                else
-                    return context.DbHandler.ColumnEmphasis(column?.FieldName ?? "") + "";
-            }
-            else
-            {
-                if (config.RequiredTableAlias)
-                    return $"{column?.TableAlias}.{column?.FieldName}";
-                else
-                    return $"{column?.FieldName}";
-            }
+            var tableAlias = config.RequiredTableAlias ? $"{column.TableAlias}." : "";
+            var dbColumn = config.RequiredEmphasis ? context.DbHandler.ColumnEmphasis(column.FieldName ?? "") : column.FieldName;
+            var columnAlias = config.RequiredColumnAlias ? $" {column.FieldAlias}" : "";
+            var comma = config.RequiredComma ? ", " : "";
+            return $"{tableAlias}{dbColumn}{columnAlias}{comma}";
+            //if (config.RequiredEmphasis)
+            //{
+            //    if (config.RequiredTableAlias)
+            //        return $"{column?.TableAlias}.{context.DbHandler.ColumnEmphasis(column?.FieldName ?? "")}";
+            //    else
+            //        return context.DbHandler.ColumnEmphasis(column?.FieldName ?? "") + "";
+            //}
+            //else
+            //{
+            //    if (config.RequiredTableAlias)
+            //        return $"{column?.TableAlias}.{column?.FieldName}";
+            //    else
+            //        return $"{column?.FieldName}";
+            //}
         }
     }
 }

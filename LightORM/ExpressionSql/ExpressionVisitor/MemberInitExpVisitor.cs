@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using MDbContext.ExpSql.Extension;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace MDbContext.ExpressionSql.ExpressionVisitor;
@@ -28,12 +29,14 @@ internal class MemberInitExpVisitor : BaseVisitor<MemberInitExpression>
             var props = t.GetProperties();
             foreach (PropertyInfo item in props)
             {
-                var field = context.GetColumn(t, item.Name);
-                if (field == null) continue;
-                if (config.RequiredColumnAlias)
-                    context += $"{field.TableAlias}.{field.FieldName} {field.FieldAlias},";
-                else
-                    context += $"{field.TableAlias}.{field.FieldName},";
+                var field = item.GetColumnName(context, config);
+                context += field;
+                //var field = context.GetColumn(t, item.Name);
+                //if (field == null) continue;
+                //if (config.RequiredColumnAlias)
+                //    context += $"{field.TableAlias}.{field.FieldName} {field.FieldAlias},";
+                //else
+                //    context += $"{field.TableAlias}.{field.FieldName},";
             }
         }
         if (context.EndWith(",\n"))

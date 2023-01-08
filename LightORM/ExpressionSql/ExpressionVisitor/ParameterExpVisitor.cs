@@ -1,5 +1,6 @@
 ﻿using MDbContext.ExpressionSql;
 using MDbContext.ExpressionSql.ExpressionVisitor;
+using MDbContext.ExpSql.Extension;
 using MDbContext.Extension;
 using MDbEntity.Attributes;
 using System.Linq.Expressions;
@@ -15,12 +16,14 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
             var props = t.GetProperties();
             foreach (PropertyInfo item in props)
             {
-                var field = context.GetColumn(t, item.Name);
-                if (field == null) continue;
-                if (config.RequiredColumnAlias)
-                    context += $"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")} {field?.FieldAlias},";
-                else
-                    context += ($"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")},");
+                //var field = context.GetColumn(t, item.Name);
+                //if (field == null) continue;
+                //if (config.RequiredColumnAlias)
+                //    context += $"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")} {field?.FieldAlias},";
+                //else
+                //    context += ($"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")},");
+                var field = item.GetColumnName(context, config);
+                context += field;
             }
         }
     }

@@ -22,7 +22,7 @@ namespace LightORM.Test2
                         Console.WriteLine(" Sql => \n" + e.Sql + "\n");
                     };
                 })
-                .Build();
+                .BuildContext();
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             action(eSql);

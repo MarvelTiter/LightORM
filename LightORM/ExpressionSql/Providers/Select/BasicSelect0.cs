@@ -122,8 +122,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("MAX(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingle<TMember>(args);
     }
@@ -134,8 +134,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("SUM(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingle<double>(args);
     }
@@ -146,13 +146,13 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("COUNT(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingle<int>(args);
     }
 
-    
+
 
     public Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
@@ -160,8 +160,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("MAX(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingleAsync<TMember>(args);
     }
@@ -172,8 +172,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("SUM(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingleAsync<double>(args);
     }
@@ -184,8 +184,8 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         context.SetFragment(select);
         select.Append("COUNT(");
         ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后一个字符
-        select.Append("))");
+        // tosql去掉最后2个字符
+        select.Append(")))");
         SqlArgs args = BuildArgs();
         return InternalSingleAsync<int>(args);
     }
@@ -233,8 +233,15 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var tables = context.Tables;
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
-        select!.Remove(select.Length - 1, 1);
-        sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
+        if (select == null)
+        {
+            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}* FROM {main.TableName} {main.Alias}");
+        }
+        else
+        {
+            select!.RemoveLastComma();
+            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
+        }
         for (int i = 1; i < context.Tables.Count; i++)
         {
             var temp = tables[i];
@@ -245,10 +252,16 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
             sql.Append($"\nWHERE {where}");
 
         if (groupBy != null)
+        {
+            groupBy.RemoveLastComma();
             sql.Append($"\nGROUP BY {groupBy}");
+        }
 
         if (orderBy != null)
+        {
+            orderBy.RemoveLastComma();
             sql.Append($"\nORDER BY {orderBy} {(isAsc ? "ASC" : "DESC")}");
+        }
 
         if (index * size > 0)
         {

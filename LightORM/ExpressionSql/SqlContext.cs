@@ -36,7 +36,7 @@ internal partial class SqlContext : ITableContext
     public void Insert(int index, string content) => fragment?.Insert(index, content);
 
     public string AppendDbParameter(object value)
-    {        
+    {
         var name = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Append(name);
         values[name] = CheckLike(value);
@@ -92,16 +92,19 @@ internal partial class SqlContext : ITableContext
 
     public object GetParameters() => values;
 
-    public SqlFieldInfo? GetColumn(Type tbType, string csName)
+    public SqlFieldInfo GetColumn(Type tbType, string csName)
     {
-        SqlFieldInfo? field = null;
+        //SqlFieldInfo field = null;
         //if (Tables.TryGetValue(tbName, out var tableInfo))
         //{
         //    tableInfo!.Fields?.TryGetValue(csName, out field);
         //}
         var tb = Tables.FirstOrDefault(t => t.Compare(tbType));
-        tb?.Fields?.TryGetValue(csName, out field);
-        return field;
+        if (tb?.Fields?.TryGetValue(csName, out var field) ?? false)
+        {
+            return field;
+        }
+        throw new ArgumentException($"Column not found: {csName}");
     }
 
     #region ITableContext

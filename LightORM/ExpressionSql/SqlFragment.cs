@@ -14,6 +14,7 @@ internal class SqlFragment
     public StringBuilder Clear() => Sql.Clear();
     public StringBuilder Remove(int startIndex, int length) => Sql.Remove(startIndex, length);
     public StringBuilder Insert(int index, string content) => Sql.Insert(index, content);
+    public void RemoveLastComma() => Sql.Remove(Length - 2, 2);
     public override string ToString()
     {
         return Sql.ToString();
