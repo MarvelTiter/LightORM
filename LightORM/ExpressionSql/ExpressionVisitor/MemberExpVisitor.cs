@@ -59,10 +59,11 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         for (int i = 0; i < props.Length; i++)
         {
             var p = props[i];
+            if (p.GetAttribute<IgnoreAttribute>() != null)
+                continue;
+
             object value = e.AccessValue(exp.Type, p.Name);//p.GetValue(e, null);//
             if (value == null || value == default || value == DBNull.Value)
-                continue;
-            if (p.GetAttribute<IgnoreAttribute>() != null)
                 continue;
             var name = context.GetColumn(eType, p.Name)!.FieldName!;
             context.AddEntityField(name, value);

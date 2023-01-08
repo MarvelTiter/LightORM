@@ -49,12 +49,12 @@ namespace MDbContext.ExpSql.Extension
         public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
         {
             var column = context.GetColumn(self.DeclaringType, self.Name);
-            if (config.RequiredBracket)
+            if (config.RequiredEmphasis)
             {
                 if (config.RequiredTableAlias)
                     return $"{column?.TableAlias}.{context.DbHandler.ColumnEmphasis(column?.FieldName ?? "")}";
                 else
-                    return context.DbHandler.ColumnEmphasis(column?.FieldName ?? "");
+                    return context.DbHandler.ColumnEmphasis(column?.FieldName ?? "") + "";
             }
             else
             {

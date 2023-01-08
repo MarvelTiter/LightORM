@@ -136,6 +136,20 @@ namespace LightORM.Test2
         }
 
         [TestMethod]
+        public void V2SetUpdate()
+        {
+            Watch(db =>
+            {
+                var u = new User();
+                u.UserId = "User001";
+                u.UserName = "≤‚ ‘001";
+                u.Password = "0000";
+                var sql = db.Update<User>().Set(p => p.Password, u.Password).Set(p => p.UserName, "123").Where(u => u.UserId == "000").ToSql();
+                Console.WriteLine(sql);
+            });
+        }
+
+        [TestMethod]
         public void V2Insert()
         {
             Watch(db =>

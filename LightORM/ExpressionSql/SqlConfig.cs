@@ -33,9 +33,9 @@ public class SqlConfig
     public bool RequiredTableAlias { get; private set; }
     public bool RequiredValue => CheckRequiredValue();
     /// <summary>
-    /// 是否需要中括号 [ColumnName]
+    /// 是否需要列标注（防止关键字冲突
     /// </summary>
-    public bool RequiredBracket { get; set; } = true;
+    public bool RequiredEmphasis { get; set; } = true;
     public bool RequiredResolveEntity => SqlType == SqlPartial.Update || SqlType == SqlPartial.Insert || SqlType == SqlPartial.Delete;
     public bool RequiredComma { get; private set; }
     public BinaryPosition BinaryPosition { get; set; }
@@ -59,10 +59,10 @@ public class SqlConfig
     public static SqlConfig Where = new SqlConfig() { RequiredTableAlias = true, SqlType = SqlPartial.Where };
     public static SqlConfig Insert = new SqlConfig() { SqlType = SqlPartial.Insert };
     public static SqlConfig Update = new SqlConfig() { SqlType = SqlPartial.Update };
-    public static SqlConfig UpdatePartial = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.UpdatePartial };
+    public static SqlConfig UpdatePartial = new SqlConfig() { RequiredEmphasis = false, SqlType = SqlPartial.UpdatePartial };
     public static SqlConfig Delete = new SqlConfig() { SqlType = SqlPartial.Delete };
     public static SqlConfig UpdateWhere = new SqlConfig() { SqlType = SqlPartial.Where };
     public static SqlConfig DeleteWhere = new SqlConfig() { SqlType = SqlPartial.Where };
-    public static SqlConfig UpdateIgnore = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.Ignore };
-    public static SqlConfig InsertIgnore = new SqlConfig() { RequiredBracket = false, SqlType = SqlPartial.Ignore };
+    public static SqlConfig UpdateIgnore = new SqlConfig() { RequiredEmphasis = false, SqlType = SqlPartial.Ignore };
+    public static SqlConfig InsertIgnore = new SqlConfig() { RequiredEmphasis = false, SqlType = SqlPartial.Ignore };
 }
