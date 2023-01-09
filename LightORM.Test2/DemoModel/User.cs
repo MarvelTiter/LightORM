@@ -24,5 +24,7 @@ namespace LightORM.Test2.DemoModel
          /// 用户是否启用(1-是，0-否）
          /// </summary>
         public YesOrNo Enable { get; set; }
+        [MDbEntity.Attributes.Ignore]
+        public object Test { get; set; }
     }
 }

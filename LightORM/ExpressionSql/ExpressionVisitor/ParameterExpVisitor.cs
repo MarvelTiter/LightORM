@@ -22,6 +22,7 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                 //    context += $"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")} {field?.FieldAlias},";
                 //else
                 //    context += ($"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")},");
+                if (item.HasAttribute<IgnoreAttribute>()) continue;
                 var field = item.GetColumnName(context, config);
                 context += field;
             }

@@ -14,7 +14,9 @@ namespace MDbContext.Utils
             var prop = type.GetProperty(name);
             if (prop == null)
                 throw new ArgumentException($"No such Property {name} in Type {type.Name}");
-            var getMethod = Expression.Call(p, prop.GetMethod);
+            if (!prop.CanRead)
+                throw new ArgumentException($"Property {name} in Type {type.Name} can't read");
+            var getMethod = Expression.Call(p, prop.GetMethod!);
             var lambda = Expression.Lambda<Func<TEntity, TValue>>(getMethod).Compile();
             return lambda(obj);
         }
@@ -25,7 +27,9 @@ namespace MDbContext.Utils
             var prop = entityType.GetProperty(name);
             if (prop == null)
                 throw new ArgumentException($"No such Property {name} in Type {entityType.Name}");
-            var getMethod = Expression.Call(Expression.Convert(p, entityType), prop.GetMethod);
+            if (!prop.CanRead)
+                throw new ArgumentException($"Property {name} in Type {entityType.Name} can't read");
+            var getMethod = Expression.Call(Expression.Convert(p, entityType), prop.GetMethod!);
             var converted = Expression.Convert(getMethod, typeof(object));
             var lambda = Expression.Lambda<Func<object, object>>(converted, p).Compile();
             return lambda(obj);

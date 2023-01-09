@@ -59,7 +59,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         for (int i = 0; i < props.Length; i++)
         {
             var p = props[i];
-            if (p.GetAttribute<IgnoreAttribute>() != null)
+            if (p.HasAttribute<IgnoreAttribute>())
                 continue;
 
             object value = e.AccessValue(exp.Type, p.Name);//p.GetValue(e, null);//
