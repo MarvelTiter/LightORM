@@ -2,48 +2,51 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor
 {
     public static partial class SqlExecutor
     {
-        public static Task<int> ExecuteAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static async Task<int> ExecuteAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            return InternalExecuteAsync(self, command);
+            return await InternalExecuteAsync(self, command);
         }
 
-        public static Task<object> ExecuteScaleAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static async Task<object?> ExecuteScaleAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            return InternalScaleAsync(self, command);
+            return await InternalScaleAsync(self, command);
         }
 
-        public static Task<DataTable> ExecuteTableAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static async Task<DataTable> ExecuteTableAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            return InternalExecuteTableAsync(self, command);
+            return await InternalExecuteTableAsync(self, command);
         }
 
-        public static Task ExecuteReaderAsync(this IDbConnection self, string sql, object? param = null, Func<IDataReader, Task>? func = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static async Task ExecuteReaderAsync(this IDbConnection self, string sql, object? param = null, Func<IDataReader, Task>? func = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            return InternalReaderAsync(self, command, async (reader, cacheinfo) =>
+            await InternalReaderAsync(self, command, async (reader, cacheinfo) =>
             {
                 if (func != null)
                 {
                     await func.Invoke(reader);
+                    return true;
                 }
-                return Task.CompletedTask;
+                return false;
             });
         }
 
-        public static Task<List<T>> QueryAsync<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static async Task<IList<T>> QueryAsync<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-            var result = InternalQueryAsync<T>(self, command);
+            var result = await InternalQueryAsync<T>(self, command);
             return result;
         }
 
@@ -54,7 +57,7 @@ namespace MDbContext.SqlExecutor
             return result;
         }
 
-        public static Task<T> QuerySingleAsync<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static Task<T?> QuerySingleAsync<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalSingleAsync<T>(self, command);
@@ -107,75 +110,95 @@ namespace MDbContext.SqlExecutor
             }
             throw new NotSupportedException("不支持异步");
         }
-        private static async Task<List<T>> InternalQueryAsync<T>(IDbConnection conn, CommandDefinition command)
-        {
-            // 缓存
-            var parameter = command.Parameters;
-            Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
-            CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
-            // 读取
-            DbCommand? cmd = null;
-            IDataReader? reader = null;
-            var wasClosed = conn.State == ConnectionState.Closed;
-            try
-            {
-                cmd = command.SetupCommand(conn, cacheInfo.ParameterReader).TryParse();
-                if (wasClosed)
-                    conn.Open();
-                reader = await ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult);
-                if (cacheInfo.Deserializer == null)
-                {
-                    cacheInfo.Deserializer = BuildDeserializer<T>(reader);
-                }
-                List<T> ret = new List<T>();
-                while (reader.Read())
-                {
-                    var val = cacheInfo.Deserializer(reader);
-                    if (val != null)
-                        ret.Add(GetValue<T>(val)!);
-                }
-                return ret;
-            }
-            finally
-            {
-                // dispose
-                if (reader != null)
-                {
-                    if (!reader.IsClosed)
-                    {
-                        try
-                        {
-                            cmd?.Cancel();
-                        }
-                        catch
-                        {
-                        }
-                    }
-                    reader.Dispose();
-                }
-                if (wasClosed)
-                {
-                    conn.Close();
-                }
-                cmd?.Dispose();
-            }
 
-            async Task<IDataReader> ExecuteReaderWithFlagsFallback(DbCommand c, bool close, CommandBehavior behavior)
+        //TODO 需要优化写法
+        private static Task<IList<T>> InternalQueryAsync<T>(IDbConnection conn, CommandDefinition command)
+        {
+            TaskCompletionSource<IList<T>> tcs = new TaskCompletionSource<IList<T>>();
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
                 {
-                    return await c.ExecuteReaderAsync(GetBehavior(close, behavior));
+                    var list = InternalQuery<T>(conn, command).ToList();
+                    tcs.SetResult(list);
                 }
-                catch (ArgumentException ex)
+                catch (Exception ex)
                 {
-                    throw ex;
+                    tcs.SetException(ex);
                 }
-            }
-            CommandBehavior GetBehavior(bool close, CommandBehavior @default)
-            {
-                return (close ? (@default | CommandBehavior.CloseConnection) : @default);
-            }
+            });
+            return tcs.Task;
         }
+
+        //private static async Task<IList<T>> InternalQueryAsync<T>(IDbConnection conn, CommandDefinition command)
+        //{
+        //    // 缓存
+        //    var parameter = command.Parameters;
+        //    Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
+        //    CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
+        //    // 读取
+        //    DbCommand? cmd = null;
+        //    DbDataReader? reader = null;
+        //    var wasClosed = conn.State == ConnectionState.Closed;
+        //    try
+        //    {
+        //        cmd = command.SetupCommand(conn, cacheInfo.ParameterReader).TryParse();
+        //        if (wasClosed)
+        //            conn.Open();
+        //        reader = await ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult);
+        //        if (cacheInfo.Deserializer == null)
+        //        {
+        //            cacheInfo.Deserializer = BuildDeserializer<T>(reader);
+        //        }
+        //        List<T> ret = new List<T>();
+        //        while (await reader.ReadAsync())
+        //        {
+        //            var val = cacheInfo.Deserializer(reader);
+        //            if (val != null)
+        //                ret.Add(GetValue<T>(val)!);
+        //        }
+        //        return ret;
+        //    }
+        //    finally
+        //    {
+        //        // dispose
+        //        if (reader != null)
+        //        {
+        //            if (!reader.IsClosed)
+        //            {
+        //                try
+        //                {
+        //                    cmd?.Cancel();
+        //                }
+        //                catch
+        //                {
+        //                }
+        //            }
+        //            reader.Dispose();
+        //        }
+        //        if (wasClosed)
+        //        {
+        //            conn.Close();
+        //        }
+        //        cmd?.Dispose();
+        //    }
+
+        //    async Task<DbDataReader> ExecuteReaderWithFlagsFallback(DbCommand c, bool close, CommandBehavior behavior)
+        //    {
+        //        try
+        //        {
+        //            return await c.ExecuteReaderAsync(GetBehavior(close, behavior));
+        //        }
+        //        catch (ArgumentException ex)
+        //        {
+        //            throw ex;
+        //        }
+        //    }
+        //    CommandBehavior GetBehavior(bool close, CommandBehavior @default)
+        //    {
+        //        return (close ? (@default | CommandBehavior.CloseConnection) : @default);
+        //    }            
+        //}
 
         private static Task<T?> InternalSingleAsync<T>(IDbConnection conn, CommandDefinition command)
         {
@@ -200,9 +223,9 @@ namespace MDbContext.SqlExecutor
             });
         }
 
-        private static Task<object> InternalScaleAsync(IDbConnection conn, CommandDefinition command)
+        private static async Task<object?> InternalScaleAsync(IDbConnection conn, CommandDefinition command)
         {
-            return InternalExectorAsync(conn, command, cmd =>
+            return await InternalExectorAsync(conn, command, cmd =>
             {
                 var obj = cmd.ExecuteScalarAsync();
                 return (obj);

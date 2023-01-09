@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using System;
+using System.Linq;
+
 namespace MDbContext.ExpressionSql.Ado
 {
     public class AdoImpl : IAdo
@@ -62,22 +64,23 @@ namespace MDbContext.ExpressionSql.Ado
             return CurrentConnection.Query(sql, param);
         }
 
-        public Task<List<T>> QueryAsync<T>(string sql, object? param = null)
+        public Task<IList<T>> QueryAsync<T>(string sql, object? param = null)
         {
             return CurrentConnection.QueryAsync<T>(sql, param);
         }
 
-        public Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
+        public async Task<IList<dynamic>> QueryAsync(string sql, object? param = null)
         {
-            return CurrentConnection.QueryAsync(sql, param);
+            var result = await CurrentConnection.QueryAsync(sql, param);
+            return result.ToList();
         }
 
-        public T Single<T>(string sql, object? param = null)
+        public T? Single<T>(string sql, object? param = null)
         {
             return CurrentConnection.QuerySingle<T>(sql, param);
         }
 
-        public Task<T> SingleAsync<T>(string sql, object? param = null)
+        public Task<T?> SingleAsync<T>(string sql, object? param = null)
         {
             return CurrentConnection.QuerySingleAsync<T>(sql, param);
         }

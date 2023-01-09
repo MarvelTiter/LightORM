@@ -21,7 +21,7 @@ namespace MDbContext.ExpressionSql
         internal readonly SqlExecuteLife Life;
         private readonly IAdo ado;
 
-        public IAdo Ado => ado;//;new AdoImpl(dbFactories);
+        public IAdo Ado => ado;//new AdoImpl(dbFactories);//
 
         internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
         {

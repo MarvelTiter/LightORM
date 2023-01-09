@@ -16,7 +16,7 @@ namespace DExpSql
         {
             return _dbContext.DbConnection.Query<TReturn>(ToSql(), _sqlCaluse.SqlParam);
         }
-        public T FirstOne()
+        public T? FirstOne()
         {
             return _dbContext.DbConnection.QuerySingle<T>(ToSql(), _sqlCaluse.SqlParam);
         }
@@ -28,15 +28,15 @@ namespace DExpSql
 
         //===============================Async
 
-        public Task<List<T>> QueryAsync()
+        public Task<IList<T>> QueryAsync()
         {
             return _dbContext.DbConnection.QueryAsync<T>(ToSql(), _sqlCaluse.SqlParam);
         }
-        public Task<List<TReturn>> QueryAsync<TReturn>()
+        public Task<IList<TReturn>> QueryAsync<TReturn>()
         {
             return _dbContext.DbConnection.QueryAsync<TReturn>(ToSql(), _sqlCaluse.SqlParam);
         }
-        public Task<T> FirstOneAsync()
+        public Task<T?> FirstOneAsync()
         {
             return _dbContext.DbConnection.QuerySingleAsync<T>(ToSql(), _sqlCaluse.SqlParam);
         }
