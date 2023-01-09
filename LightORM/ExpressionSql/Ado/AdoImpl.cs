@@ -64,9 +64,16 @@ namespace MDbContext.ExpressionSql.Ado
             return CurrentConnection.Query(sql, param);
         }
 
-        public Task<IList<T>> QueryAsync<T>(string sql, object? param = null)
+        public Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false)
         {
-            return CurrentConnection.QueryAsync<T>(sql, param);
+            if (threadPool)
+            {
+                return CurrentConnection.ThreadPoolQueryAsync<T>(sql, param);
+            }
+            else
+            {
+                return CurrentConnection.QueryAsync<T>(sql, param);
+            }
         }
 
         public async Task<IList<dynamic>> QueryAsync(string sql, object? param = null)

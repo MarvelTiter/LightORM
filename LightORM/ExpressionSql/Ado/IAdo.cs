@@ -17,7 +17,7 @@ namespace MDbContext.ExpressionSql.Ado
         #region Async
         Task<int> ExecuteAsync(string sql, object? param = null);
         Task<DataTable> ExecuteDataTableAsync(string sql, object? param = null);
-        Task<IList<T>> QueryAsync<T>(string sql, object? param = null);
+        Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false);
         Task<IList<dynamic>> QueryAsync(string sql, object? param = null);
         Task<T?> SingleAsync<T>(string sql, object? param = null);
         Task QueryAsync(string sql, object? param, Func<IDataReader, Task> callback);
