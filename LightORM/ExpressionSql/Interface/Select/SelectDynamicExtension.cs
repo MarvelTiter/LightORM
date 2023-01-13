@@ -1,4 +1,6 @@
-﻿using MDbContext.ExpressionSql.Providers.Select;
+﻿#if NET40
+#else
+using MDbContext.ExpressionSql.Providers.Select;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -365,3 +367,4 @@ namespace MDbContext.ExpressionSql.Interface.Select
         #endregion
     }
 }
+#endif

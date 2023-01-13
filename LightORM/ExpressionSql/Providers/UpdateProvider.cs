@@ -51,7 +51,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 
         //return conn.Execute(ToSql(), param);
     }
-
+#if !NET40
     public Task<int> ExecuteAsync()
     {
         SqlArgs args = new SqlArgs()
@@ -65,6 +65,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         //var param = context.GetParameters();
         //return await conn.ExecuteAsync(ToSql(), param);
     }
+#endif
 
     public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {

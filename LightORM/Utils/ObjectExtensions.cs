@@ -16,7 +16,7 @@ namespace MDbContext.Utils
                 throw new ArgumentException($"No such Property {name} in Type {type.Name}");
             if (!prop.CanRead)
                 throw new ArgumentException($"Property {name} in Type {type.Name} can't read");
-            var getMethod = Expression.Call(p, prop.GetMethod!);
+            var getMethod = Expression.Call(p, prop.GetGetMethod(true));
             var lambda = Expression.Lambda<Func<TEntity, TValue>>(getMethod).Compile();
             return lambda(obj);
         }
@@ -29,7 +29,7 @@ namespace MDbContext.Utils
                 throw new ArgumentException($"No such Property {name} in Type {entityType.Name}");
             if (!prop.CanRead)
                 throw new ArgumentException($"Property {name} in Type {entityType.Name} can't read");
-            var getMethod = Expression.Call(Expression.Convert(p, entityType), prop.GetMethod!);
+            var getMethod = Expression.Call(Expression.Convert(p, entityType), prop.GetGetMethod(true));
             var converted = Expression.Convert(getMethod, typeof(object));
             var lambda = Expression.Lambda<Func<object, object>>(converted, p).Compile();
             return lambda(obj);

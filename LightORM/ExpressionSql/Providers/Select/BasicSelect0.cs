@@ -151,46 +151,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         SqlArgs args = BuildArgs();
         return InternalSingle<int>(args);
     }
-
-
-
-    public Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
-    {
-        select ??= new SqlFragment();
-        context.SetFragment(select);
-        select.Append("MAX(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后2个字符
-        select.Append(")))");
-        SqlArgs args = BuildArgs();
-        return InternalSingleAsync<TMember>(args);
-    }
-
-    public Task<double> SumAsync(Expression<Func<T1, object>> exp)
-    {
-        select ??= new SqlFragment();
-        context.SetFragment(select);
-        select.Append("SUM(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后2个字符
-        select.Append(")))");
-        SqlArgs args = BuildArgs();
-        return InternalSingleAsync<double>(args);
-    }
-
-    public Task<int> CountAsync(Expression<Func<T1, object>> exp)
-    {
-        select ??= new SqlFragment();
-        context.SetFragment(select);
-        select.Append("COUNT(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
-        // tosql去掉最后2个字符
-        select.Append(")))");
-        SqlArgs args = BuildArgs();
-        return InternalSingleAsync<int>(args);
-    }
-
-
+    
     bool rollup = false;
     public TSelect RollUp()
     {

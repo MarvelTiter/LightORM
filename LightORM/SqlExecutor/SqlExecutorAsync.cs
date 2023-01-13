@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if NET40
+#else
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -9,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.SqlExecutor
 {
+
     public static partial class SqlExecutor
     {
         public static async Task<int> ExecuteAsync(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
@@ -320,3 +323,4 @@ namespace MDbContext.SqlExecutor
         }
     }
 }
+#endif

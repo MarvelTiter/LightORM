@@ -1,12 +1,15 @@
 ﻿using MDbContext.ExpressionSql;
 using MDbContext.ExpressionSql.Interface;
+#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace MDbContext
-{    
+{
+#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
     public static class IocExtension
     {
         [Obsolete]
@@ -30,4 +33,5 @@ namespace MDbContext
             return services;
         }
     }
+#endif
 }

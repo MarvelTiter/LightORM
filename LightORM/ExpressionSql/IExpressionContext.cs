@@ -4,8 +4,10 @@ using MDbContext.ExpressionSql.Interface.Select;
 using System;
 using System.Data;
 using System.Linq.Expressions;
+#if NET40
+#else
 using System.Threading.Tasks;
-
+#endif
 namespace MDbContext.ExpressionSql
 {
     public interface IExpressionContext
@@ -18,7 +20,10 @@ namespace MDbContext.ExpressionSql
         IExpDelete<T> Delete<T>();
         IExpressionContext BeginTransaction();
         bool CommitTransaction();
+#if NET40
+#else
         Task<bool> CommitTransactionAsync();
+#endif
         IAdo Ado { get; }
     }
 

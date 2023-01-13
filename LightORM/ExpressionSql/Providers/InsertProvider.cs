@@ -55,7 +55,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         };
         return InternalExecute(args);
     }
-
+#if !NET40
     public Task<int> ExecuteAsync()
     {
         SqlArgs args = new SqlArgs
@@ -69,6 +69,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         //var param = context.GetParameters();
         //return await conn.ExecuteAsync(ToSql(), param);
     }
+#endif
 
     public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {

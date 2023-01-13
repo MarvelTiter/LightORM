@@ -27,7 +27,7 @@ namespace DExpSql
         }
 
         //===============================Async
-
+#if !NET40
         public Task<IList<T>> QueryAsync()
         {
             return _dbContext.DbConnection.QueryAsync<T>(ToSql(), _sqlCaluse.SqlParam);
@@ -45,6 +45,7 @@ namespace DExpSql
         {
             return _dbContext.DbConnection.ExecuteTableAsync(ToSql(), _sqlCaluse.SqlParam);
         }
+#endif
 
         internal long GetTotal()
         {

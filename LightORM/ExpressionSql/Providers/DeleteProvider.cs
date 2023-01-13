@@ -39,7 +39,8 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         };
         return InternalExecute(args);
     }
-
+#if NET40
+#else
     public Task<int> ExecuteAsync()
     {
         //using var conn = dbConnect.CreateConnection();
@@ -53,7 +54,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         };
         return InternalExecuteAsync(args);
     }
-
+#endif
     public string ToSql()
     {
         StringBuilder sql = new StringBuilder();

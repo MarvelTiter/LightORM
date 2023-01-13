@@ -31,7 +31,7 @@ namespace MDbContext.SqlExecutor
         }
 
         internal int IndexOfName(string name)
-        {            
+        {
             return (name != null && fieldNameLookup.TryGetValue(name.ToUpper(), out int result)) ? result : -1;
         }
 
@@ -329,7 +329,17 @@ namespace MDbContext.SqlExecutor
         public override IEnumerable<string> GetDynamicMemberNames()
         {
             if (HasValue && Value is IDictionary<string, object> lookup) return lookup.Keys;
-            return Array.Empty<string>();
+            // return Array.Empty<string>();
+            return EmptyArray<string>.Value;
         }
+    }
+
+    /// <summary>
+    /// 兼容 .Net40
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    internal static class EmptyArray<T>
+    {
+        internal readonly static T[] Value = new T[0];
     }
 }

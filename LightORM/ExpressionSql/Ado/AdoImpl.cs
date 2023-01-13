@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace MDbContext.ExpressionSql.Ado
 {
-    public class AdoImpl : IAdo
+    public partial class AdoImpl : IAdo
     {
         private string? current = null;
         private const string MAIN = "MainDb";
@@ -37,21 +37,11 @@ namespace MDbContext.ExpressionSql.Ado
         public int Execute(string sql, object? param = null)
         {
             return CurrentConnection.Execute(sql, param);
-        }
-
-        public Task<int> ExecuteAsync(string sql, object? param = null)
-        {
-            return CurrentConnection.ExecuteAsync(sql, param);
-        }
+        }        
 
         public DataTable ExecuteDataTable(string sql, object? param = null)
         {
             return CurrentConnection.ExecuteTable(sql, param);
-        }
-
-        public Task<DataTable> ExecuteDataTableAsync(string sql, object? param = null)
-        {
-            return CurrentConnection.ExecuteTableAsync(sql, param);
         }
 
         public IEnumerable<T> Query<T>(string sql, object? param = null)
@@ -63,33 +53,10 @@ namespace MDbContext.ExpressionSql.Ado
         {
             return CurrentConnection.Query(sql, param);
         }
-
-        public Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false)
-        {
-            if (threadPool)
-            {
-                return CurrentConnection.ThreadPoolQueryAsync<T>(sql, param);
-            }
-            else
-            {
-                return CurrentConnection.QueryAsync<T>(sql, param);
-            }
-        }
-
-        public async Task<IList<dynamic>> QueryAsync(string sql, object? param = null)
-        {
-            var result = await CurrentConnection.QueryAsync(sql, param);
-            return result.ToList();
-        }
-
+              
         public T? Single<T>(string sql, object? param = null)
         {
             return CurrentConnection.QuerySingle<T>(sql, param);
-        }
-
-        public Task<T?> SingleAsync<T>(string sql, object? param = null)
-        {
-            return CurrentConnection.QuerySingleAsync<T>(sql, param);
         }
 
         public IAdo SwitchDatabase(string key)
@@ -105,9 +72,5 @@ namespace MDbContext.ExpressionSql.Ado
             CurrentConnection.ExecuteReader(sql, param, callback);
         }
 
-        public Task QueryAsync(string sql, object? param, Func<IDataReader, Task> callback)
-        {
-            return CurrentConnection.ExecuteReaderAsync(sql, param, callback);
-        }
     }
 }

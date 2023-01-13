@@ -4,10 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+#if NET40
+#else
 using System.Threading.Tasks;
 
 namespace MDbContext.Context.Extension
 {
+
     public static class ExpressionSqlEx
     {
         public static Task<IEnumerable<T>> ToListAsync<T>(this ExpressionSqlCore self)
@@ -48,3 +51,4 @@ namespace MDbContext.Context.Extension
         }
     }
 }
+#endif

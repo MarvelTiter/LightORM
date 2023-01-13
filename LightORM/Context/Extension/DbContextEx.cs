@@ -4,10 +4,15 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
+#if NET40
+#else
 using System.Threading.Tasks;
+#endif
 
 namespace MDbContext
 {
+#if NET40
+#else
     [Obsolete]
     public static class DbContextEx
     {
@@ -140,4 +145,5 @@ namespace MDbContext
             });
         }
     }
+#endif
 }

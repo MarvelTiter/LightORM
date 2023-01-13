@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers;
 
-internal abstract class BasicProvider<T1>
+internal abstract partial class BasicProvider<T1>
 {
     protected readonly SqlContext context;
     //private readonly ITableContext tableContext;
@@ -61,16 +61,7 @@ internal abstract class BasicProvider<T1>
         Life.AfterExecute?.Invoke(args);
         return ret;
     }
-
-    internal async Task<TReturn> InternalSingleAsync<TReturn>(SqlArgs args)
-    {
-        Life.BeforeExecute?.Invoke(args);
-        using var conn = dbConnect.CreateConnection();
-        var ret = await conn.QuerySingleAsync<TReturn>(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
-    }
+       
 
     internal int InternalExecute(SqlArgs args)
     {
@@ -82,15 +73,7 @@ internal abstract class BasicProvider<T1>
         return ret;
     }
 
-    internal async Task<int> InternalExecuteAsync(SqlArgs args)
-    {
-        Life.BeforeExecute?.Invoke(args);
-        using var conn = dbConnect.CreateConnection();
-        var ret = await conn.ExecuteAsync(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
-    }
+    
 
     //internal TReturn InternalExecute<TReturn>(string sql, object param)
     //{
@@ -118,24 +101,6 @@ internal abstract class BasicProvider<T1>
         args.Done = true;
         Life.AfterExecute?.Invoke(args);
         return ret;
-    }
-
-    internal async Task<IList<TReturn>> InternalQueryAsync<TReturn>(SqlArgs args)
-    {        
-        Life.BeforeExecute?.Invoke(args);
-        var conn = dbConnect.CreateConnection();
-        var ret = await conn.QueryAsync<TReturn>(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
-    }
-    internal async Task<IList<dynamic>> InternalQueryAsync(SqlArgs args)
-    {
-        Life.BeforeExecute?.Invoke(args);
-        using var conn = dbConnect.CreateConnection();
-        var list = await conn.QueryAsync(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return list.ToList();
-    }
+    }    
+   
 }

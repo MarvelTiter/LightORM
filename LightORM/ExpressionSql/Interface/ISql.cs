@@ -13,6 +13,9 @@ namespace MDbContext.ExpressionSql.Interface
         TPart Where(Expression<Func<T, bool>> exp);
         TPart WhereIf(bool condition, Expression<Func<T, bool>> exp);
         int Execute();
+#if NET40
+#else
         Task<int> ExecuteAsync();
+#endif
     }
 }

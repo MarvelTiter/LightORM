@@ -33,11 +33,17 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     IEnumerable<TReturn> ToList<TReturn>();
     DataTable ToDataTable();
     #region async
+#if NET40
+#else
     Task<IList<T1>> ToListAsync();
     Task<IList<dynamic>> ToDynamicListAsync();
     Task<IList<TReturn>> ToListAsync<TReturn>();
     Task<DataTable> ToDataTableAsync();
-    #endregion
+    Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
+    Task<double> SumAsync(Expression<Func<T1, object>> exp);
+    Task<int> CountAsync(Expression<Func<T1, object>> exp);
+#endif
+#endregion
     //int Execute();
     //Task<int> ExecuteAsync();
 
@@ -45,9 +51,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     TMember Max<TMember>(Expression<Func<T1, TMember>> exp);
     double Sum(Expression<Func<T1, object>> exp);
     int Count(Expression<Func<T1, object>> exp);
-    Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
-    Task<double> SumAsync(Expression<Func<T1, object>> exp);
-    Task<int> CountAsync(Expression<Func<T1, object>> exp);
+   
     TSelect RollUp();
     TSelect Distinct();
     //TSelect From(Func<IExpressionContext, TSelect> sub);

@@ -233,9 +233,13 @@ namespace MDbContext.SqlExecutor
                 {
                     return ((ColumnNameAttribute)Member.GetCustomAttributes(typeof(ColumnNameAttribute), true)[0]).Name;
                 }
-                else if (Member.IsDefined(typeof(ColumnAttribute)))
+                else if (Member.IsDefined(typeof(ColumnAttribute), true))
                 {
+#if NET40
+                    return (Member.GetCustomAttributes(typeof(ColumnAttribute), true).First() as ColumnAttribute)?.Name ?? string.Empty;
+#else
                     return (Member.GetCustomAttribute(typeof(ColumnAttribute), true) as ColumnAttribute)?.Name ?? string.Empty;
+#endif
                 }
                 else
                 {
