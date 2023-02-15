@@ -47,6 +47,16 @@ namespace MDbContext.ExpressionSql.Providers
             Life.AfterExecute?.Invoke(args);
             return list.ToList();
         }
+
+        internal async Task<object> InternalScaleAsync(SqlArgs args)
+        {
+            Life.BeforeExecute?.Invoke(args);
+            var conn = dbConnect.CreateConnection();
+            var ret = await conn.ExecuteScaleAsync(args.Sql!, args.SqlParameter);
+            args.Done = true;
+            Life.AfterExecute?.Invoke(args);
+            return ret;
+        }
     }
 }
 #endif

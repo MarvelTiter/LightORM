@@ -51,6 +51,22 @@ namespace MDbContext.ExpressionSql.Providers.Select
             return InternalSingleAsync<int>(args);
         }
 
+        public Task<int> CountAsync()
+        {
+            select ??= new SqlFragment();
+            context.SetFragment(select);
+            select.Append("COUNT(*");
+            // tosql去掉最后2个字符
+            select.Append(")))");
+            SqlArgs args = BuildArgs();
+            return InternalSingleAsync<int>(args);
+        }
+
+        public async Task<bool> AnyAsync()
+        {
+            return await CountAsync() > 0;
+        }
+
         public Task<IList<T1>> ToListAsync(Expression<Func<T1, object>> exp)
         {
             SelectHandle(exp.Body);

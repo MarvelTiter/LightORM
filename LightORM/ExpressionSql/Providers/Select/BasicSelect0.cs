@@ -31,6 +31,11 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var args = BuildArgs(sql);
         total = InternalSingle<long>(args);
         return (this as TSelect)!;
+    }    
+
+    public bool Any()
+    {
+        return Count() > 0;
     }
 
     #region jion
@@ -151,7 +156,18 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         SqlArgs args = BuildArgs();
         return InternalSingle<int>(args);
     }
-    
+
+    public int Count()
+    {
+        select ??= new SqlFragment();
+        context.SetFragment(select);
+        select.Append("COUNT(*");
+        // tosql去掉最后2个字符
+        select.Append(")))");
+        SqlArgs args = BuildArgs();
+        return InternalSingle<int>(args);
+    }
+
     bool rollup = false;
     public TSelect RollUp()
     {

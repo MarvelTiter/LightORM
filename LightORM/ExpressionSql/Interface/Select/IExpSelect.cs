@@ -42,6 +42,8 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
     Task<double> SumAsync(Expression<Func<T1, object>> exp);
     Task<int> CountAsync(Expression<Func<T1, object>> exp);
+    Task<int> CountAsync();
+    Task<bool> AnyAsync();
 #endif
 #endregion
     //int Execute();
@@ -51,6 +53,8 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     TMember Max<TMember>(Expression<Func<T1, TMember>> exp);
     double Sum(Expression<Func<T1, object>> exp);
     int Count(Expression<Func<T1, object>> exp);
+    int Count();
+    bool Any();
    
     TSelect RollUp();
     TSelect Distinct();

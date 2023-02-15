@@ -102,5 +102,14 @@ internal abstract partial class BasicProvider<T1>
         Life.AfterExecute?.Invoke(args);
         return ret;
     }    
-   
+
+    internal object InternalScale(SqlArgs args)
+    {
+        Life.BeforeExecute?.Invoke(args);
+        var conn = dbConnect.CreateConnection();
+        var ret = conn.ExecuteScale(args.Sql!, args.SqlParameter);
+        args.Done = true;
+        Life.AfterExecute?.Invoke(args);
+        return ret;
+    }   
 }

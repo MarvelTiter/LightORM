@@ -336,6 +336,17 @@ namespace LightORM.Test2
             });
         }
 
+        [TestMethod]
+        public void CountTest()
+        {
+            Watch(async db =>
+            {
+                await Task.CompletedTask;
+                var count = db.Select<User>().Count();
+                Console.WriteLine(count);
+            });
+        }
+
         class P
         {
             public int Age { get; set; }
