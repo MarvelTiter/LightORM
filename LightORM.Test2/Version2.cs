@@ -231,6 +231,7 @@ namespace LightORM.Test2
         {
             Watch(db =>
             {
+                //var r = db.SwitchDatabase("Mysql").Repository<User>().GetListAsync(u => true);
                 var u = new User();
                 u.UserId = "User002";
                 u.UserName = "≤‚ ‘001";

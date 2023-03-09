@@ -9,7 +9,7 @@ namespace MDbContext.Repository;
 
 public partial interface IRepository<T>
 {
-    IRepository<T> SwitchDatabase(string key);
+    //IRepository<T> SwitchDatabase(string key);
     T? Insert(T item);
     int Update(T item, Expression<Func<T, bool>>? whereExpression);
     int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression);

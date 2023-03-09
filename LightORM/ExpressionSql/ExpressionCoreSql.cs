@@ -100,6 +100,7 @@ namespace MDbContext.ExpressionSql
             }
             throw new ArgumentException($"{key}异常");
         }
+
         private readonly string MainDb = ConstString.Main;
         private string? _dbKey = null;
         internal string CurrentKey
