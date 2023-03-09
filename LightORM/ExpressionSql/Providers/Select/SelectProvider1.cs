@@ -39,9 +39,5 @@ internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, I
         return InternalQueryAsync<TReturn>(args);
     }
 #endif
-    public IExpSelect<T1> Where(Expression<Func<T1, bool>> exp)
-    {
-        WhereHandle(exp.Body);
-        return this;
-    }
+    
 }

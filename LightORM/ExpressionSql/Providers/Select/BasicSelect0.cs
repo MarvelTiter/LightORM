@@ -31,7 +31,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var args = BuildArgs(sql);
         total = InternalSingle<long>(args);
         return (this as TSelect)!;
-    }    
+    }
 
     public bool Any()
     {
@@ -102,7 +102,11 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         size = pageSize;
         return (this as TSelect)!;
     }
-
+    public TSelect Where(Expression<Func<T1, bool>> exp)
+    {
+        WhereHandle(exp.Body);
+        return (this as TSelect)!;
+    }
     public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
     {
         WhereHandle(exp.Body);
@@ -118,6 +122,12 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
     {
         if (condition) WhereHandle(exp.Body);
+        return (this as TSelect)!;
+    }
+
+    public TSelect GroupBy<Another>(Expression<Func<Another, object>> exp)
+    {
+        GroupByHandle(exp.Body);
         return (this as TSelect)!;
     }
 

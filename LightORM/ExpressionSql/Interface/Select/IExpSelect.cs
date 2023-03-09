@@ -24,9 +24,11 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
     TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
     TSelect Count(out long total);
+    TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
     TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp);
+    TSelect GroupBy<Another>(Expression<Func<Another, object>> exp);
     //IEnumerable<T1> ToList(Expression<Func<T1, object>> exp);
     IEnumerable<T1> ToList();
     IEnumerable<dynamic> ToDynamicList();
@@ -66,7 +68,6 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     //Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
     IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true);
     IExpSelect<T1> GroupBy(Expression<Func<T1, object>> exp);
-    IExpSelect<T1> Where(Expression<Func<T1, bool>> exp);
 }
 
 public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
