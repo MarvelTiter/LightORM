@@ -60,6 +60,18 @@ namespace MDbContext.Repository
             if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
             return context.Update<T>().UpdateColumns(updateExpression).Where(whereExpression).ExecuteAsync();
         }
+
+        public Task<int> CountAsync(Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
+            return context.Select<T>().Where(whereExpression).CountAsync();
+        }
+
+        public Task<TMember> MaxAsync<TMember>(Expression<Func<T,TMember>> maxExpression,Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
+            return context.Select<T>().Where(whereExpression).MaxAsync(maxExpression);
+        }
     }
 }
 #endif

@@ -15,6 +15,8 @@ namespace MDbContext.Repository
         Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression);
         Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression);
         Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression);
+        Task<int> CountAsync(Expression<Func<T, bool>>? whereExpression);
+        Task<TMember> MaxAsync<TMember>(Expression<Func<T, TMember>> maxExpression, Expression<Func<T, bool>>? whereExpression);
         Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression);
         Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);
         Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true);

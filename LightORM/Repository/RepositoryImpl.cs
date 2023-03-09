@@ -75,5 +75,15 @@ internal partial class RepositoryImpl<T> : IRepository<T>
         return context.Update<T>().UpdateColumns(updateExpression).Where(whereExpression).Execute();
     }
 
-   
+    public int Count(Expression<Func<T, bool>>? whereExpression)
+    {
+        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
+        return context.Select<T>().Where(whereExpression).Count();
+    }
+
+    public TMember Max<TMember>(Expression<Func<T, TMember>> maxExpression, Expression<Func<T, bool>>? whereExpression)
+    {
+        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
+        return context.Select<T>().Where(whereExpression).Max(maxExpression);
+    }
 }
