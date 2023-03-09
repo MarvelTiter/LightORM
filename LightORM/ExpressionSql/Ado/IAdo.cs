@@ -9,7 +9,7 @@ namespace MDbContext.ExpressionSql.Ado
 {
     public interface IAdo
     {
-        IAdo SwitchDatabase(string key);
+        //IAdo SwitchDatabase(string key);
         int Execute(string sql, object? param = null);
         DataTable ExecuteDataTable(string sql, object? param = null);
         IEnumerable<T> Query<T>(string sql, object? param = null);

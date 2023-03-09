@@ -12,25 +12,33 @@ namespace MDbContext.ExpressionSql.Ado
 {
     public partial class AdoImpl : IAdo
     {
-        private string? current = null;
-        private const string MAIN = "MainDb";
-        private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
-        internal AdoImpl(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
+        //private string? current = null;
+        //private const string MAIN = "MainDb";
+        //private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+        private readonly DbConnectInfo connectInfo;
+
+        //internal AdoImpl(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
+        //{
+        //    this.dbFactories = dbFactories;
+        //}
+
+        internal AdoImpl(DbConnectInfo connectInfo)
         {
-            this.dbFactories = dbFactories;
+            this.connectInfo = connectInfo;
         }
 
         IDbConnection CurrentConnection
         {
             get
             {
-                var k = current ?? MAIN;
-                current = null;
-                if (dbFactories.TryGetValue(k, out var conn))
-                {
-                    return conn.CreateConnection();
-                }
-                throw new ArgumentException($"未注册的数据库:{k}");
+                //var k = current ?? MAIN;
+                //current = null;
+                //if (dbFactories.TryGetValue(k, out var conn))
+                //{
+                //    return conn.CreateConnection();
+                //}
+                //throw new ArgumentException($"未注册的数据库:{k}");
+                return connectInfo.CreateConnection();
             }
         }
 
@@ -59,13 +67,13 @@ namespace MDbContext.ExpressionSql.Ado
             return CurrentConnection.QuerySingle<T>(sql, param);
         }
 
-        public IAdo SwitchDatabase(string key)
-        {
-            if (!dbFactories.ContainsKey(key))
-                throw new ArgumentException($"未注册的数据库:{key}");
-            current = key;
-            return this;
-        }
+        //public IAdo SwitchDatabase(string key)
+        //{
+        //    if (!dbFactories.ContainsKey(key))
+        //        throw new ArgumentException($"未注册的数据库:{key}");
+        //    current = key;
+        //    return this;
+        //}
 
         public void Query(string sql, object? param, Action<IDataReader> callback)
         {

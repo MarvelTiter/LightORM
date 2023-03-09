@@ -60,16 +60,22 @@ namespace MDbContext.ExpressionSql
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
         private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
         internal readonly SqlExecuteLife Life;
-        private readonly IAdo ado;
+        //private IAdo ado;
 
-        public IAdo Ado => ado;//new AdoImpl(dbFactories);//
+        public IAdo Ado
+        {
+            get
+            {
+                return new AdoImpl(GetDbInfo(CurrentKey));
+            }
+        }//new AdoImpl(dbFactories);//
 
         internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
         {
             this.dbFactories = dbFactories;
             this.Life = life;
             this.Life.Core = this;
-            this.ado = ado ?? new AdoImpl(dbFactories);
+            //this.ado = ado ?? new AdoImpl(dbFactories);
         }
 
         internal ITableContext GetContext(string key)
@@ -146,7 +152,7 @@ namespace MDbContext.ExpressionSql
 
         public IExpressionContext BeginTransaction()
         {
-            return new ExpressionCoreSql(dbFactories, Life, ado);
+            return new ExpressionCoreSql(dbFactories, Life);
         }
 
         public bool CommitTransaction()
