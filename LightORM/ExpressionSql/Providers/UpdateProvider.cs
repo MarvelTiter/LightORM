@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers;
@@ -65,9 +66,16 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         //var param = context.GetParameters();
         //return await conn.ExecuteAsync(ToSql(), param);
     }
+
+	public IExpUpdate<T> AttachCancellationToken(CancellationToken token)
+	{
+		CancellToken = token;
+		return this;
+	}
+
 #endif
 
-    public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
+	public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
@@ -157,5 +165,4 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         if (condition) Where(exp);
         return this;
     }
-
 }

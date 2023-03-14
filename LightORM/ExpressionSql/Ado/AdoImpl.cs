@@ -41,7 +41,7 @@ namespace MDbContext.ExpressionSql.Ado
                 return connectInfo.CreateConnection();
             }
         }
-
+        
         public int Execute(string sql, object? param = null)
         {
             return CurrentConnection.Execute(sql, param);

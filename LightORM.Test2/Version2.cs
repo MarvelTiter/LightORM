@@ -10,7 +10,8 @@ using System.Diagnostics;
 
 namespace LightORM.Test2
 {
-    [TestClass]
+
+	[TestClass]
     public class Version2 : TestBase
     {
         P p = new P { Age = 5, Bns = 10 };

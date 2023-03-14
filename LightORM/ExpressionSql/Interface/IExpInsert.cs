@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Interface
@@ -15,7 +16,8 @@ namespace MDbContext.ExpressionSql.Interface
 #if NET40
 #else
         Task<int> ExecuteAsync();
+		IExpInsert<T> AttachCancellationToken(CancellationToken token);
 #endif
-        string ToSql();
+		string ToSql();
     }
 }

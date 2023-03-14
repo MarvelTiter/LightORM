@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers;
@@ -69,9 +70,16 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         //var param = context.GetParameters();
         //return await conn.ExecuteAsync(ToSql(), param);
     }
+
+	public IExpInsert<T> AttachCancellationToken(CancellationToken token)
+	{
+		CancellToken = token;
+		return this;
+	}
+
 #endif
 
-    public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
+	public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
@@ -117,13 +125,15 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         return sql.ToString();
     }
 
-    //IExpInsert<T> ISql<IExpInsert<T>, T>.Where(Expression<Func<T, bool>> exp)
-    //{
-    //    throw new NotImplementedException();
-    //}
+	//IExpInsert<T> ISql<IExpInsert<T>, T>.Where(Expression<Func<T, bool>> exp)
+	//{
+	//    throw new NotImplementedException();
+	//}
 
-    //IExpInsert<T> ISql<IExpInsert<T>, T>.WhereIf(bool condition, Expression<Func<T, bool>> exp)
-    //{
-    //    throw new NotImplementedException();
-    //}
+	//IExpInsert<T> ISql<IExpInsert<T>, T>.WhereIf(bool condition, Expression<Func<T, bool>> exp)
+	//{
+	//    throw new NotImplementedException();
+	//}
+
+
 }

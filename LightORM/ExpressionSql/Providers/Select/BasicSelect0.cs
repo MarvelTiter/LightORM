@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers.Select;
@@ -267,4 +268,5 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
             Action = SqlAction.Select,
         };
     }
+
 }

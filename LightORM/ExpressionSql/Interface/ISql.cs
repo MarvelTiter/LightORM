@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Linq.Expressions;
+#if NET40
+#else
+using System.Threading;
 using System.Threading.Tasks;
-
+#endif
 namespace MDbContext.ExpressionSql.Interface
 {
     public interface ISql
@@ -15,7 +18,8 @@ namespace MDbContext.ExpressionSql.Interface
         int Execute();
 #if NET40
 #else
-        Task<int> ExecuteAsync();
+        Task<int> ExecuteAsync();        
+        TPart AttachCancellationToken(CancellationToken token);
 #endif
     }
 }

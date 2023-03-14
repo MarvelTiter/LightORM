@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql.Providers;
@@ -54,8 +55,15 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         };
         return InternalExecuteAsync(args);
     }
+
+	public IExpDelete<T> AttachCancellationToken(CancellationToken token)
+	{
+		CancellToken = token;
+		return this;
+	}
+
 #endif
-    public string ToSql()
+	public string ToSql()
     {
         StringBuilder sql = new StringBuilder();
         var table = context.Tables.First();

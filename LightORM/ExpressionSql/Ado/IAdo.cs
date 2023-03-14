@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Threading;
 #if NET40
 #else
 using System.Threading.Tasks;
@@ -16,9 +17,10 @@ namespace MDbContext.ExpressionSql.Ado
         IEnumerable<dynamic> Query(string sql, object? param = null);
         T? Single<T>(string sql, object? param = null);
         void Query(string sql, object? param, Action<IDataReader> callback);
-#region Async
+        #region Async
 #if NET40
 #else
+        IAdo AttachCancellationToken(CancellationToken token);
         Task<int> ExecuteAsync(string sql, object? param = null);
         Task<DataTable> ExecuteDataTableAsync(string sql, object? param = null);
         Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false);
