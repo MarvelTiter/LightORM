@@ -67,6 +67,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
     {
         // Where 条件中 In
         if (config.SqlType != SqlPartial.Where) throw new InvalidOperationException("In函数仅能用于Where子句中");
+        config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
         context.Append(" IN (");
         config.BinaryPosition = BinaryPosition.Right;

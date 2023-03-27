@@ -26,5 +26,10 @@ namespace LightORM.Test2.DemoModel
         public YesOrNo Enable { get; set; }
         [MDbEntity.Attributes.Ignore]
         public object Test { get; set; }
+
+        public override string ToString()
+        {
+            return $"{UserId}-{UserName}";
+        }
     }
 }

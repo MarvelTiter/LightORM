@@ -38,8 +38,8 @@ internal class ExpressionVisit
             _i = new MemberExpVisitor();
         else if (exp is MethodCallExpression)
             _i = new MethodCallExpVisitor();
-        //else if (exp is NewArrayExpression)
-        //    _i = new NewArrayExpVisitor();
+        else if (exp is NewArrayExpression)
+            _i = new NewArrayExpVisitor();
         else if (exp is NewExpression)
             _i = new NewExpVisitor();
         else if (exp is UnaryExpression)

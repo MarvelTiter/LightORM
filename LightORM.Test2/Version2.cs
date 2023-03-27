@@ -11,7 +11,7 @@ using System.Diagnostics;
 namespace LightORM.Test2
 {
 
-	[TestClass]
+    [TestClass]
     public class Version2 : TestBase
     {
         P p = new P { Age = 5, Bns = 10 };
@@ -82,6 +82,7 @@ namespace LightORM.Test2
                 Console.WriteLine(powers.Count);
             });
         }
+
         [TestMethod]
         public void V2SelectInherit()
         {
@@ -199,6 +200,21 @@ namespace LightORM.Test2
             Watch(db =>
             {
                 db.Select<User>().Where(u => u.UserName.Like("HH"));
+            });
+        }
+        [TestMethod]
+        public void V2WhereIn()
+        {
+            Watch(db =>
+            {
+                //var arr = new string[] { "admin","123" };
+                var arr = new List<string>() { "admin","123" };
+                var result = db.Select<User>().Where(u => u.UserId.In(arr)).ToList();
+                //var result = db.Select<User>().Where(u => u.UserId.In("admin")).ToList();
+                foreach (var item in result)
+                {
+                    Console.WriteLine(item);
+                }
             });
         }
         [TestMethod]
