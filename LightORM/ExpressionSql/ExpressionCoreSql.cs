@@ -14,47 +14,13 @@ using System.Threading.Tasks;
 
 namespace MDbContext.ExpressionSql
 {
+#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
     internal partial class ExpressionCoreSql
     {
-#if NET40
-#else
-        public async Task<bool> CommitTransactionAsync()
-        {
-            if (transactions.Count == 0) return false;
-            var groups = transactions.GroupBy(i => i.Key);
-            Dictionary<IDbConnection, IDbTransaction> allTrans = new Dictionary<IDbConnection, IDbTransaction>();
-            foreach (var g in groups)
-            {
-                var conn = dbFactories[g.Key].CreateConnection();
-                conn.Open();
-                var trans = conn.BeginTransaction();
-                allTrans.Add(conn, trans);
-                foreach (var item in g)
-                {
-                    try
-                    {
-                        await conn.ExecuteAsync(item.Sql, item.Parameters, trans);
-                    }
-                    catch (Exception ex)
-                    {
-                        foreach (var kv in allTrans)
-                        {
-                            kv.Value.Rollback();
-                            kv.Key.Close();
-                        }
-                        throw ex;
-                    }
-                }
-            }
-            foreach (var kv in allTrans)
-            {
-                kv.Value.Commit();
-                kv.Key.Close();
-            }
-            return true;
-        }
-#endif
+        public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
     }
+
+#endif
     internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     {
         private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
@@ -131,7 +97,6 @@ namespace MDbContext.ExpressionSql
 
         public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
         IExpDelete<T> CreateDeleteProvider<T>(string key) => new DeleteProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
-
 
 
         private struct TransactionInfo
@@ -221,6 +186,5 @@ namespace MDbContext.ExpressionSql
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
     }
 }

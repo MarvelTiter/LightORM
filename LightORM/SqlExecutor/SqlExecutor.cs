@@ -24,7 +24,7 @@ namespace MDbContext.SqlExecutor
             return InternalExecute(self, command);
         }
 
-        public static object ExecuteScale(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+        public static object? ExecuteScale(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
         {
             CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
             return InternalScale(self, command);
@@ -189,7 +189,7 @@ namespace MDbContext.SqlExecutor
             });
         }
 
-        private static object InternalScale(IDbConnection conn, CommandDefinition command)
+        private static object? InternalScale(IDbConnection conn, CommandDefinition command)
         {
             return InternalExector(conn, command, cmd =>
             {

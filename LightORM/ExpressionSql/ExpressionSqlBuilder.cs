@@ -1,8 +1,10 @@
 ﻿using MDbContext.ExpressionSql.Interface;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq.Expressions;
 
 namespace MDbContext.ExpressionSql;
 
@@ -50,6 +52,17 @@ public class ExpressionSqlOptions
     public ExpressionSqlOptions SetWatcher(Action<SqlExecuteLife> option)
     {
         option(Life);
+        return this;
+    }
+    internal Type? ContextInitialType { get; set; }
+    //public ExpressionSqlOptions InitializedContext(Type type)
+    //{
+    //    this.ContextInitialType = type;
+    //    return this;
+    //}
+    public ExpressionSqlOptions InitializedContext<T>() where T : ExpressionContext, new()
+    {
+        this.ContextInitialType = typeof(T);
         return this;
     }
 }
@@ -102,4 +115,21 @@ public partial class ExpressionSqlBuilder
         }
         return new ExpressionCoreSql(options.DbFactories!, options.Life);
     }
+#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+    public IExpressionContext Build(IServiceProvider provider)
+    {
+        var context = (Build() as ExpressionCoreSql)!;
+        if (options.ContextInitialType != null)
+        {
+            var logger = provider.GetService(typeof(Microsoft.Extensions.Logging.ILogger<IExpressionContext>)) as Microsoft.Extensions.Logging.ILogger<IExpressionContext>;
+            context.Logger = logger;
+            var instance = Activator.CreateInstance(options.ContextInitialType);
+            var methodExp = Expression.Call(Expression.Constant(instance)
+                , ExpressionContext.InitializedMethod
+                , Expression.Convert(Expression.Constant(context), typeof(IDbInitial)));
+            Expression.Lambda(methodExp).Compile().DynamicInvoke();
+        }
+        return context;
+    }
+#endif
 }

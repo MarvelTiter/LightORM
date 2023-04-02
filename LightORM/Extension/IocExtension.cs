@@ -2,6 +2,7 @@
 using MDbContext.ExpressionSql.Interface;
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 #endif
 using System;
 using System.Collections.Generic;
@@ -26,12 +27,22 @@ namespace MDbContext
         {
             var option = new ExpressionSqlOptions();
             options(option);
-            var builder = new ExpressionSqlBuilder(option);
-            var ins = builder.Build();
             //services.AddSingleton(typeof(IExpressionContext), provider => builder.Build());
-            services.AddSingleton(ins);
+            services.AddSingleton(provider =>
+            {
+                var builder = new ExpressionSqlBuilder(option);
+                var ins = builder.Build(provider);
+                return ins;
+            });
             return services;
         }
+
+        //public static void InitializedContext<T>(this IExpressionContext context) where T : ExpressionContext, new()
+        //{
+        //    var ctx = new T();
+        //    ctx.Initialized((context as IDbInitial)!);
+        //}
+
     }
 #endif
 }

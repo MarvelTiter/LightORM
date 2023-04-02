@@ -161,22 +161,24 @@ namespace MDbContext.SqlExecutor
              * }
              */
             // (cmd, obj) => 
-            MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter");
-            PropertyInfo parameterCollection = typeof(IDbCommand).GetProperty("Parameters");
-            MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add");
+            MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
+            PropertyInfo parameterCollection = typeof(IDbCommand).GetProperty("Parameters")!;
+            MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
 
             ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
             ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
-            var objType = certificate.ParameterType; ;
+            var objType = certificate.ParameterType;
             var props = ExtractParameter(certificate, objType.GetProperties());
             // var temp
             var tempExp = Expression.Variable(typeof(IDataParameter), "temp");
             // var p = (Type)obj;
             var p1 = Expression.Variable(objType, "p");
             var paramExp = Expression.Assign(p1, Expression.Convert(objExp, objType));
-            List<Expression> body = new List<Expression>();
-            body.Add(tempExp);
-            body.Add(paramExp);
+            List<Expression> body = new List<Expression>
+            {
+                tempExp,
+                paramExp
+            };
             foreach (PropertyInfo prop in props)
             {
                 // cmd.CreateParameter()
