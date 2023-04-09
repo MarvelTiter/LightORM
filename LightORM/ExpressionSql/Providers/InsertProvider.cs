@@ -2,6 +2,7 @@
 using MDbContext.ExpressionSql.ExpressionVisitor;
 using MDbContext.ExpressionSql.Interface;
 using MDbContext.SqlExecutor;
+using MDbContext.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,19 +29,30 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     {
         Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
-
+    IEnumerable<SimpleColumn>? entityColumns;
+    List<T>? entities;
     public IExpInsert<T> AppendData(T item)
     {
         insert ??= new SqlFragment();
-        Expression<Func<object>> exp = () => item!;
         context.SetFragment(insert);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
+        //Expression<Func<object>> exp = () => item!;
+        //ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
+        entityColumns ??= typeof(T).GetColumns();
+        entities ??= new List<T>();
+        entities.Add(item);
         return this;
     }
 
     public IExpInsert<T> AppendData(IEnumerable<T> items)
     {
-        throw new NotImplementedException();
+        insert ??= new SqlFragment();
+        context.SetFragment(insert);
+        //Expression<Func<object>> exp = () => item!;
+        //ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
+        entityColumns ??= typeof(T).GetColumns();
+        entities ??= new List<T>();
+        entities.AddRange(items);
+        return this;
     }
 
     public int Execute()
@@ -79,7 +91,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 
 #endif
 
-	public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
+    public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
@@ -97,43 +109,80 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 
     public string ToSql()
     {
-        StringBuilder sql = new StringBuilder();
-        var table = context.Tables.First();
-        sql.Append($"INSERT INTO {table.TableName} () VALUES ()");
-        var fIndex = 11 + table.TableName!.Length + 3;
-        var vIndex = fIndex + 10;
-        for (int i = 0; i < insert!.Names.Count; i++)
+        if (entities != null)
         {
-            var f = insert.Names[i];
-            if (ignore?.Has(f) ?? false)
-                continue;
-            sql.Insert(fIndex, $"{context.DbHandler.ColumnEmphasis(f)},");
-            // 逗号、中括号 Length + 3;
-            fIndex += f.Length + 3;
-            vIndex += f.Length + 3;
-            var p = insert.Values[i];
-            sql.Insert(vIndex, $"{p},");
-            vIndex += p.Length + 1;
+            return BuildEntitySql();
         }
-        if (insert.Names.Count > 0)
+        else
         {
-            // 移除最后面的逗号
-            sql.Remove(fIndex - 1, 1);
-            sql.Remove(vIndex - 2, 1);
+            return BuildFragmentSql();
         }
-        //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Insert });
-        return sql.ToString();
+
+        string BuildFragmentSql()
+        {
+            StringBuilder sql = new StringBuilder();
+            var table = context.Tables.First();
+            sql.Append($"INSERT INTO {table.TableName} () VALUES ()");
+            var fIndex = 11 + table.TableName!.Length + 3;
+            var vIndex = fIndex + 10;
+            for (int i = 0; i < insert!.Names.Count; i++)
+            {
+                var f = insert.Names[i];
+                if (ignore?.Has(f) ?? false)
+                    continue;
+                sql.Insert(fIndex, $"{context.DbHandler.ColumnEmphasis(f)},");
+                // 逗号、中括号 Length + 3;
+                fIndex += f.Length + 3;
+                vIndex += f.Length + 3;
+                var p = insert.Values[i];
+                sql.Insert(vIndex, $"{p},");
+                vIndex += p.Length + 1;
+            }
+            if (insert.Names.Count > 0)
+            {
+                // 移除最后面的逗号
+                sql.Remove(fIndex - 1, 1);
+                sql.Remove(vIndex - 2, 1);
+            }
+            //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Insert });
+            return sql.ToString();
+        }
+
+        string BuildEntitySql()
+        {
+            StringBuilder sql = new StringBuilder();
+            var table = context.Tables.First();
+            sql.Append($"INSERT INTO {table.TableName} (");
+            sql.Append(string.Join(", ", entityColumns.Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
+            sql.Append(")\n");
+            sql.AppendLine("VALUES");
+            foreach (var item in entities)
+            {
+                sql.Append("(");
+                foreach (var col in entityColumns!)
+                {
+                    var val = item.AccessValue(col.PropName!);
+                    var pName = context.AppendDbParameter(val);
+                    sql.Append(pName);
+                    sql.Append(", ");
+                }
+                sql.Remove(sql.Length - 2, 2);
+                sql.Append("),\n");
+            }
+            sql.Remove(sql.Length - 2, 2);
+            return sql.ToString();
+        }
     }
 
-	//IExpInsert<T> ISql<IExpInsert<T>, T>.Where(Expression<Func<T, bool>> exp)
-	//{
-	//    throw new NotImplementedException();
-	//}
+    //IExpInsert<T> ISql<IExpInsert<T>, T>.Where(Expression<Func<T, bool>> exp)
+    //{
+    //    throw new NotImplementedException();
+    //}
 
-	//IExpInsert<T> ISql<IExpInsert<T>, T>.WhereIf(bool condition, Expression<Func<T, bool>> exp)
-	//{
-	//    throw new NotImplementedException();
-	//}
+    //IExpInsert<T> ISql<IExpInsert<T>, T>.WhereIf(bool condition, Expression<Func<T, bool>> exp)
+    //{
+    //    throw new NotImplementedException();
+    //}
 
 
 }

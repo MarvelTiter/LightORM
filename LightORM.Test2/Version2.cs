@@ -208,7 +208,7 @@ namespace LightORM.Test2
             Watch(db =>
             {
                 //var arr = new string[] { "admin","123" };
-                var arr = new List<string>() { "admin","123" };
+                var arr = new List<string>() { "admin", "123" };
                 var result = db.Select<User>().Where(u => u.UserId.In(arr)).ToList();
                 //var result = db.Select<User>().Where(u => u.UserId.In("admin")).ToList();
                 foreach (var item in result)
@@ -351,6 +351,25 @@ namespace LightORM.Test2
                     }
                     return Task.CompletedTask;
                 });
+            });
+        }
+
+        [TestMethod]
+        public void InsertCollection()
+        {
+            Watch(db =>
+            {
+                var us = new List<User>();
+                for (int i = 0; i < 10; i++)
+                {
+                    us.Add(new()
+                    {
+                        UserId = $"Uid{i}",
+                        UserName = $"²âÊÔ{i}",
+                        Password = "12345"
+                    });
+                }
+                db.Insert<User>().AppendData(us).Execute();
             });
         }
 

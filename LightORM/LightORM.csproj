@@ -18,6 +18,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="ExpressionSql\DbGenerator\**" />
+	  <EmbeddedResource Remove="ExpressionSql\DbGenerator\**" />
+	  <None Remove="ExpressionSql\DbGenerator\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Handle.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Result.cs" />
@@ -46,10 +52,6 @@
 		  <PackagePath>\</PackagePath>
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="ExpressionSql\DbGenerator\" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
