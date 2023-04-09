@@ -8,12 +8,12 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>10.0</LangVersion>
 		<Description>使用表达式树（ExpressionTree）构建Sql，仅用于学习</Description>
-		<Version>1.2.4</Version>
-		<AssemblyVersion>1.2.4</AssemblyVersion>
+		<Version>1.2.5</Version>
+		<AssemblyVersion>1.2.5</AssemblyVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<FileVersion>1.2.4</FileVersion>
+		<FileVersion>1.2.5</FileVersion>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 	</PropertyGroup>
 
