@@ -307,7 +307,6 @@ namespace LightORM.Test2
             Watch(db =>
             {
                 var u = new User();
-                u.UserId = "User002";
                 u.UserName = "≤‚ ‘001";
                 u.Password = "0000";
                 Console.WriteLine(db.Insert<User>().AppendData(u).ToSql());

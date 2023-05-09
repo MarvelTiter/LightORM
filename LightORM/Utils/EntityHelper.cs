@@ -13,7 +13,8 @@ namespace MDbContext.Utils
         public string? PropName { get; set; }
         public bool Primary { get; set; }
         public bool AutoIncrement { get; set; }
-        public bool Insertable => !AutoIncrement;
+        public bool NullValue { get; set; }
+        public bool Insertable => !AutoIncrement && !NullValue;
     }
     internal static class EntityHelper
     {

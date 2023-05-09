@@ -153,19 +153,29 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             StringBuilder sql = new StringBuilder();
             var table = context.Tables.First();
             sql.Append($"INSERT INTO {table.TableName} (");
-            sql.Append(string.Join(", ", entityColumns.Where(c => c.Insertable).Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
+            var insertColumnIndex = sql.Length;
             sql.Append(")\n");
             sql.AppendLine("VALUES");
             foreach (var item in entities)
             {
                 sql.Append("(");
+                List<SimpleColumn> insertCols = new List<SimpleColumn>();
                 foreach (var col in entityColumns!)
                 {
                     var val = item.AccessValue(col.PropName!);
-                    var pName = context.AppendDbParameter(val);
-                    sql.Append(pName);
-                    sql.Append(", ");
+                    if (val == null)
+                    {
+                        col.NullValue = true;
+                    }
+                    else
+                    {
+                        var pName = context.AppendDbParameter(val);
+                        sql.Append(pName);
+                        sql.Append(", ");
+                    }
+                    insertCols.Add(col);
                 }
+                sql.Insert(insertColumnIndex, string.Join(", ", insertCols.Where(c => c.Insertable).Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
                 sql.Remove(sql.Length - 2, 2);
                 sql.Append("),\n");
             }
