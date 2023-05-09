@@ -153,7 +153,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             StringBuilder sql = new StringBuilder();
             var table = context.Tables.First();
             sql.Append($"INSERT INTO {table.TableName} (");
-            sql.Append(string.Join(", ", entityColumns.Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
+            sql.Append(string.Join(", ", entityColumns.Where(c => c.Insertable).Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
             sql.Append(")\n");
             sql.AppendLine("VALUES");
             foreach (var item in entities)

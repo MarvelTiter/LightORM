@@ -310,7 +310,7 @@ namespace LightORM.Test2
                 u.UserId = "User002";
                 u.UserName = "≤‚ ‘001";
                 u.Password = "0000";
-                db.Update<User>().AppendData(u).Where(p => p.UserId != null).ToSql();
+                Console.WriteLine(db.Insert<User>().AppendData(u).ToSql());
             });
         }
         [TestMethod]

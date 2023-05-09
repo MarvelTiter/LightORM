@@ -11,6 +11,9 @@ namespace MDbContext.Utils
     {
         public string? DbColumn { get; set; }
         public string? PropName { get; set; }
+        public bool Primary { get; set; }
+        public bool AutoIncrement { get; set; }
+        public bool Insertable => !AutoIncrement;
     }
     internal static class EntityHelper
     {
@@ -26,6 +29,8 @@ namespace MDbContext.Utils
                 {
                     DbColumn = colAttr?.Name ?? prop.Name,
                     PropName = prop.Name,
+                    Primary = colAttr?.PrimaryKey ?? false,
+                    AutoIncrement = colAttr?.AutoIncrement ?? false,
                 };
             }
         }
