@@ -10,7 +10,6 @@ using System.Diagnostics;
 
 namespace LightORM.Test2
 {
-
     [TestClass]
     public class Version2 : TestBase
     {

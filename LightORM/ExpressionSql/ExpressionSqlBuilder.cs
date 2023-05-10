@@ -121,7 +121,7 @@ public partial class ExpressionSqlBuilder
         var context = (Build() as ExpressionCoreSql)!;
         if (options.ContextInitialType != null)
         {
-            var logger = provider.GetService(typeof(Microsoft.Extensions.Logging.ILogger<IExpressionContext>)) as Microsoft.Extensions.Logging.ILogger<IExpressionContext>;
+            var logger = provider?.GetService(typeof(Microsoft.Extensions.Logging.ILogger<IExpressionContext>)) as Microsoft.Extensions.Logging.ILogger<IExpressionContext>;
             context.Logger = logger;
             var instance = Activator.CreateInstance(options.ContextInitialType);
             var methodExp = Expression.Call(Expression.Constant(instance)
