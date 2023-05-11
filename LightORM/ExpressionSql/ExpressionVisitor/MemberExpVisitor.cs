@@ -5,11 +5,13 @@ using MDbEntity.Attributes;
 using System;
 using System.Collections;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace MDbContext.ExpressionSql.ExpressionVisitor;
 
 internal class MemberExpVisitor : BaseVisitor<MemberExpression>
 {
+
     public override void DoVisit(MemberExpression exp, SqlConfig config, SqlContext context)
     {
         if (config.RequiredResolveEntity)
@@ -45,9 +47,20 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         }
         else
         {
-            var col = exp.Member.GetColumnName(context, config);
-            context.Append(col);
-            context.AddFieldName(col);
+            var col = context.GetColumn(exp.Member.DeclaringType, exp.Member.Name);
+            var colName = col.GetColumnName(context, config);
+            context.Append(colName);
+            context.AddFieldName(colName);
+            if (config.IsUnitColumn)
+            {
+                context.AddCell(new UnitCell
+                {
+                    TableAlias = col.TableAlias,
+                    ColumnName = col.FieldName,
+                    ColumnAlias = col.FieldAlias,
+                    IsPrimaryKey = col.IsPrimaryKey,
+                });
+            }
         }
     }
 
@@ -65,8 +78,8 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
             object value = e.AccessValue(exp.Type, p.Name);//p.GetValue(e, null);//
             if (value == null || value == default || value == DBNull.Value)
                 continue;
-            var name = context.GetColumn(eType, p.Name).FieldName!;
-            context.AddEntityField(name, value);
+            var col = context.GetColumn(eType, p.Name);
+            var pName = context.AddEntityField(col.FieldName!, value);
         }
     }
 }

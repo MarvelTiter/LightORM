@@ -218,45 +218,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
 
     public string ToSql()
     {
-        var tables = context.Tables;
-        var main = tables[0];
-        StringBuilder sql = new StringBuilder();
-        if (select == null)
-        {
-            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}* FROM {context.DbHandler.DbEmphasis(main.TableName!)} {main.Alias}");
-        }
-        else
-        {
-            select!.RemoveLastComma();
-            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {context.DbHandler.DbEmphasis(main.TableName!)} {main.Alias}");
-        }
-        for (int i = 1; i < context.Tables.Count; i++)
-        {
-            var temp = tables[i];
-            if (temp.TableType == TableLinkType.None) continue;
-            sql.Append($"\n{temp.TableType.ToLabel()} {context.DbHandler.DbEmphasis(temp.TableName!)} {temp.Alias} ON {temp.Fragment}");
-        }
-        if (where != null)
-            sql.Append($"\nWHERE {where}");
-
-        if (groupBy != null)
-        {
-            groupBy.RemoveLastComma();
-            sql.Append($"\nGROUP BY {groupBy}");
-        }
-
-        if (orderBy != null)
-        {
-            orderBy.RemoveLastComma();
-            sql.Append($"\nORDER BY {orderBy} {(isAsc ? "ASC" : "DESC")}");
-        }
-
-        if (index * size > 0)
-        {
-            //分页处理
-            context.DbHandler.DbPaging(context, select, sql, index, size);
-        }
-        return sql.ToString();
+        return context.DbHandler.BuildSelectSql(context, select, distanct, where, groupBy, orderBy, isAsc, index, size);
     }
 
     protected SqlArgs BuildArgs(string? sql = null)

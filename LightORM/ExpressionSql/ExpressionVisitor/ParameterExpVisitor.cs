@@ -23,8 +23,17 @@ namespace MDbContext.NewExpSql.ExpressionVisitor
                 //else
                 //    context += ($"{field?.TableAlias}.{context.DbHandler.ColumnEmphasis(field?.FieldName ?? "")},");
                 if (item.HasAttribute<IgnoreAttribute>()) continue;
-                var field = item.GetColumnName(context, config);
+                var col = context.GetColumn(item.DeclaringType, item.Name);
+                var field = col.GetColumnName(context, config);
                 context += field;
+                context.AddFieldName(field);
+                context.AddCell(new UnitCell
+                {
+                    TableAlias = col.TableAlias,
+                    ColumnName = col.FieldName,
+                    ColumnAlias = col.FieldAlias,
+                    IsPrimaryKey = col.IsPrimaryKey,
+                });
             }
         }
     }

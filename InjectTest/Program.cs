@@ -31,10 +31,10 @@ internal class Program
 
         builder.Services.AddLightOrm(option =>
         {
-            option.SetDatabase(DbBaseType.Sqlite, () =>
+            option.SetDatabase(DbBaseType.SqlServer, () =>
             {
-                return new SqliteConnection("DataSource=DB01.db");
-            }).InitializedContext<DbContext>();
+                return new System.Data.SqlClient.SqlConnection("server=59.41.141.10,15456;uid=dev;pwd=banner@2021;database=MacauStationDb_MoSmoker;TrustServerCertificate=true");
+            });
         });
 
         var app = builder.Build();

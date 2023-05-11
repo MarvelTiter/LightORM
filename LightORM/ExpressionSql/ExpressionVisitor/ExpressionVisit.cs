@@ -8,7 +8,11 @@ namespace MDbContext.ExpressionSql.ExpressionVisitor;
 internal class ExpressionVisit
 {
     public static void Visit(Expression exp, SqlConfig config, SqlContext context)
-        => GetVisitor(exp).Visit(exp, config, context);
+    {
+
+        var visitor = GetVisitor(exp);
+        visitor.Visit(exp, config, context);
+    }
 
     private static IExpressionVisitor GetVisitor(Expression exp)
     {

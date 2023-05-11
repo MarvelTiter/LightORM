@@ -56,55 +56,32 @@ internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
                 throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
         }
     }
-    //private string OperatorParser(ExpressionType expressionNodeType, int operatorIndex, bool useIs = false)
-    //{
-    //    switch (expressionNodeType)
-    //    {
-    //        case ExpressionType.And:
-    //        case ExpressionType.AndAlso:
-    //            return " AND ";
-    //        case ExpressionType.Equal:
-    //            if (useIs)
-    //            {
-    //                return " IS ";
-    //            }
-    //            else
-    //            {
-    //                return " = ";
-    //            }
-    //        case ExpressionType.GreaterThan:
-    //            return " > ";
-    //        case ExpressionType.GreaterThanOrEqual:
-    //            return " >= ";
-    //        case ExpressionType.NotEqual:
-    //            if (useIs)
-    //            {
-    //                return " IS NOT ";
-    //            }
-    //            else
-    //            {
-    //                return " <> ";
-    //            }
-    //        case ExpressionType.Or:
-    //        case ExpressionType.OrElse:
-    //           return " OR ";
-    //        case ExpressionType.LessThan:
-    //           return " < ";
-    //        case ExpressionType.LessThanOrEqual:
-    //           return " <= ";
-    //        default:
-    //            throw new NotImplementedException("未实现的节点类型" + expressionNodeType);
-    //    }
-    //}
+
+    private string OperatorParser(ExpressionType expressionNodeType, bool useIs)
+    {
+        return expressionNodeType switch
+        {
+            ExpressionType.And or
+            ExpressionType.AndAlso => "AND",
+            ExpressionType.Equal => useIs ? "IS" : "=",
+            ExpressionType.GreaterThan => ">",
+            ExpressionType.GreaterThanOrEqual => ">=",
+            ExpressionType.NotEqual => useIs ? "IS NOT" : "<>",
+            ExpressionType.Or or
+            ExpressionType.OrElse => "OR",
+            ExpressionType.LessThan => "<",
+            ExpressionType.LessThanOrEqual => "<=",
+            _ => throw new NotImplementedException("未实现的节点类型" + expressionNodeType)
+        };
+    }
+
     public override void DoVisit(BinaryExpression exp, SqlConfig config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Left, config, context);
         var insertIndex = context.Length;
-
         config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Right, config, context);
-
         var endIndex = context.Length;
         var b = endIndex - insertIndex == 5 && context.EndWith("null");
         OperatorParser(exp.NodeType, insertIndex, context, b);

@@ -22,15 +22,23 @@ namespace InjectTest.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public async Task<IEnumerable<object>> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            var a1 = await context.Select<Power>().ToListAsync();
+            var a2 = await context.Select<Power>().ToListAsync();
+            var a3 = await context.Select<Power>().ToListAsync();
+
+            return a1.Concat(a2).Concat(a3);
+        }
+
+        [HttpGet("v2")]
+        public async Task<IEnumerable<object>> Get2()
+        {
+            var a1 = await context.Select<Power>().ToListAsync();
+            var a2 = await context.Select<Power>().ToListAsync();
+            var a3 = await context.Select<Power>().ToListAsync();
+
+            return a1.Concat(a2).Concat(a3);
         }
     }
 }

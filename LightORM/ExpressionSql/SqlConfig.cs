@@ -31,6 +31,7 @@ public class SqlConfig
 {
     public bool RequiredColumnAlias { get; private set; }
     public bool RequiredTableAlias { get; private set; }
+    public bool IsUnitColumn => SqlType == SqlPartial.Select || SqlType == SqlPartial.GroupBy || SqlType == SqlPartial.OrderBy;
     public bool RequiredValue => CheckRequiredValue();
     /// <summary>
     /// 是否需要列标注（防止关键字冲突

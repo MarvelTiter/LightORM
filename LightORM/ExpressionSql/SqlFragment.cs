@@ -8,7 +8,8 @@ internal class SqlFragment
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public List<string> Names { get; set; } = new List<string>();
     public List<string> Values { get; set; } = new List<string>();
-    public Dictionary<string, SelectColumn> Columns { get; set; } = new Dictionary<string, SelectColumn>();
+    public Dictionary<string, FieldCell> Columns { get; set; } = new Dictionary<string, FieldCell>();
+    public List<UnitCell> Cells { get; set; } = new List<UnitCell>();
     public int Length => Sql.Length;
     public StringBuilder Append(string content) => Sql.Append(content);
     public StringBuilder Clear() => Sql.Clear();
@@ -25,15 +26,19 @@ internal class SqlFragment
         return Names.Contains(name);
     }
 
+    public void AddCell(UnitCell cell) => Cells.Add(cell);
+
     public SqlFragment AddColumn(SqlFieldInfo info, string val)
     {
-        Columns.Add(info.FieldAlias ?? info.FieldName!, new SelectColumn
-        {
-            TableAlias = info.TableAlias,
-            ColumnName = info.FieldName,
-            ColumnAlias = info.FieldAlias,
-            ValueName = val
-        });
+        var key = info.FieldAlias ?? info.FieldName!;
+        if (!Columns.ContainsKey(key))
+            Columns.Add(key, new FieldCell
+            {
+                TableAlias = info.TableAlias,
+                ColumnName = info.FieldName,
+                ColumnAlias = info.FieldAlias,
+                ValueName = val
+            });
         return this;
     }
 }

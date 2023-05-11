@@ -15,13 +15,14 @@ internal class NewExpVisitor : BaseVisitor<NewExpression>
             for (int i = 0; i < exp.Members!.Count; i++)
             {
                 var member = exp.Members[i];
-                var colName = context.GetColumn(context.MainTable!.Type!, member.Name);
+                var col = context.GetColumn(context.MainTable!.Type!, member.Name);
                 var arg = exp.Arguments[i];
                 var func = Expression.Lambda(arg).Compile();
                 var value = func.DynamicInvoke();
                 if (value == null || value == DBNull.Value)
                     continue;
-                context.AddEntityField(colName.FieldName ?? member.Name, value);
+                var pName = context.AddEntityField(col.FieldName ?? member.Name, value);
+                context.AddColumn(col, pName);
             }
         }
         else

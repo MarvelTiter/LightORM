@@ -70,12 +70,13 @@ internal partial class SqlContext : ITableContext
         }
     }
 
-    public void AddEntityField(string name, object value)
+    public string AddEntityField(string name, object value)
     {
         var valueName = $"{DbHandler.GetPrefix()}p{values.Count}";
         fragment?.Names.Add(name);
         fragment?.Values.Add(valueName);
         values[valueName] = value;
+        return valueName;
     }
 
     public void AddFieldName(string name)
@@ -84,7 +85,7 @@ internal partial class SqlContext : ITableContext
     }
 
     public void AddColumn(SqlFieldInfo info, string valueName) => fragment?.AddColumn(info, valueName);
-
+    public void AddCell(UnitCell cell) => fragment?.AddCell(cell);
     public void Append(string sql) => fragment?.Append(sql);
     public void Remove(int index, int count) => fragment?.Remove(index, count);
     //public string? Sql() => @string?.ToString();
@@ -142,7 +143,7 @@ internal partial class SqlContext : ITableContext
     #endregion
     public override string ToString()
     {
-        return "\n" + paramString();
+        return $"{fragment}\n{paramString()}";
 
         string paramString()
         {

@@ -12,6 +12,8 @@ internal class ConstantExpVisitor : BaseVisitor<ConstantExpression>
             context.Append(" null");
         }
         else
+        {
             context.AppendDbParameter(value);
+        }
     }
 }

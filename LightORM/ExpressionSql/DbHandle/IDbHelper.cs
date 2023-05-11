@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 
 namespace MDbContext.ExpressionSql.DbHandle;
 
@@ -13,5 +15,6 @@ internal interface IDbHelper
     /// <returns></returns>
     string DbEmphasis(string columnName);
     string DbStringConvert(string content);
-    void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size);
+    //void DbPaging(SqlContext context, IList<UnitCell> orderby, StringBuilder sql, int index, int size);
+    string BuildSelectSql(SqlContext context, SqlFragment? select, bool distanct, SqlFragment? where, SqlFragment? groupBy, SqlFragment? orderBy, bool isAsc, int index, int size);
 }
