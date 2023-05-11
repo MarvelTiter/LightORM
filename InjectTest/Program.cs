@@ -33,7 +33,7 @@ internal class Program
         {
             option.SetDatabase(DbBaseType.SqlServer, () =>
             {
-                return new System.Data.SqlClient.SqlConnection("server=59.41.141.10,15456;uid=dev;pwd=banner@2021;database=MacauStationDb_MoSmoker;TrustServerCertificate=true");
+                return new System.Data.SqlClient.SqlConnection("server=192.168.56.11;uid=sa;pwd=Ybeluoek3;database=MoSmoker;TrustServerCertificate=true");
             });
         });
 
