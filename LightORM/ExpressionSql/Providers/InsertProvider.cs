@@ -83,11 +83,11 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         //return await conn.ExecuteAsync(ToSql(), param);
     }
 
-	public IExpInsert<T> AttachCancellationToken(CancellationToken token)
-	{
-		CancellToken = token;
-		return this;
-	}
+    public IExpInsert<T> AttachCancellationToken(CancellationToken token)
+    {
+        CancellToken = token;
+        return this;
+    }
 
 #endif
 
@@ -122,15 +122,16 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         {
             StringBuilder sql = new StringBuilder();
             var table = context.Tables.First();
-            sql.Append($"INSERT INTO {table.TableName} () VALUES ()");
-            var fIndex = 11 + table.TableName!.Length + 3;
+            var tableName = context.DbHandler.DbEmphasis(table.TableName!);
+            sql.Append($"INSERT INTO {tableName} () VALUES ()");
+            var fIndex = 11 + tableName.Length + 3;
             var vIndex = fIndex + 10;
             for (int i = 0; i < insert!.Names.Count; i++)
             {
                 var f = insert.Names[i];
                 if (ignore?.Has(f) ?? false)
                     continue;
-                sql.Insert(fIndex, $"{context.DbHandler.ColumnEmphasis(f)},");
+                sql.Insert(fIndex, $"{context.DbHandler.DbEmphasis(f)},");
                 // 逗号、中括号 Length + 3;
                 fIndex += f.Length + 3;
                 vIndex += f.Length + 3;
@@ -152,7 +153,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         {
             StringBuilder sql = new StringBuilder();
             var table = context.Tables.First();
-            sql.Append($"INSERT INTO {table.TableName} (");
+            sql.Append($"INSERT INTO {context.DbHandler.DbEmphasis(table.TableName!)} (");
             var insertColumnIndex = sql.Length;
             sql.Append(")\n");
             sql.AppendLine("VALUES");
@@ -175,7 +176,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
                     }
                     insertCols.Add(col);
                 }
-                sql.Insert(insertColumnIndex, string.Join(", ", insertCols.Where(c => c.Insertable).Select(c => context.DbHandler.ColumnEmphasis(c.DbColumn!))));
+                sql.Insert(insertColumnIndex, string.Join(", ", insertCols.Where(c => c.Insertable).Select(c => context.DbHandler.DbEmphasis(c.DbColumn!))));
                 sql.Remove(sql.Length - 2, 2);
                 sql.Append("),\n");
             }

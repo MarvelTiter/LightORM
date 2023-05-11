@@ -4,7 +4,7 @@ namespace MDbContext.ExpressionSql.DbHandle;
 
 internal class SqliteDb : IDbHelper
 {
-    public string ColumnEmphasis(string columnName) => $"`{columnName}`";
+    public string DbEmphasis(string columnName) => $"`{columnName}`";
 
     public void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size)
     {

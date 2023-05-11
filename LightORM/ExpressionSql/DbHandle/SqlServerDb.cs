@@ -30,7 +30,7 @@ internal class SqlServerDb : SqlSerberDbBase
 }
 internal abstract class SqlSerberDbBase : IDbHelper
 {
-    public string ColumnEmphasis(string columnName) => $"[{columnName}]";
+    public string DbEmphasis(string columnName) => $"[{columnName}]";
 
     public virtual void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size)
     {

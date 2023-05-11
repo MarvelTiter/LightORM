@@ -4,7 +4,7 @@ namespace MDbContext.ExpressionSql.DbHandle;
 internal class OracleDb : IDbHelper
 {
     // oracle用""，字段名需要大写
-    public string ColumnEmphasis(string columnName) => $"\"{columnName.ToUpper()}\"";
+    public string DbEmphasis(string columnName) => $"\"{columnName.ToUpper()}\"";
 
     public void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size)
     {

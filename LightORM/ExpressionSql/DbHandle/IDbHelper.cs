@@ -11,7 +11,7 @@ internal interface IDbHelper
     /// </summary>
     /// <param name="columnName"></param>
     /// <returns></returns>
-    string ColumnEmphasis(string columnName);
+    string DbEmphasis(string columnName);
     string DbStringConvert(string content);
     void DbPaging(SqlContext context, SqlFragment select, StringBuilder sql, int index, int size);
 }

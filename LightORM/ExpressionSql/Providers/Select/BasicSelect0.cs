@@ -204,12 +204,12 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var tables = context.Tables;
         var main = tables[0];
         StringBuilder sql = new StringBuilder();
-        sql.Append($"SELECT COUNT(1) FROM {main.TableName} {main.Alias}");
+        sql.Append($"SELECT COUNT(1) FROM {context.DbHandler.DbEmphasis(main.TableName!)} {main.Alias}");
         for (int i = 1; i < context.Tables.Count; i++)
         {
             var temp = tables[i];
             if (temp.TableType == TableLinkType.None) continue;
-            sql.Append($"\n{temp.TableType.ToLabel()} {temp.TableName} {temp.Alias} ON {temp.Fragment}");
+            sql.Append($"\n{temp.TableType.ToLabel()} {context.DbHandler.DbEmphasis(temp.TableName!)} {temp.Alias} ON {temp.Fragment}");
         }
         if (where != null)
             sql.Append($"\nWHERE {where}");
@@ -223,18 +223,18 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         StringBuilder sql = new StringBuilder();
         if (select == null)
         {
-            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}* FROM {main.TableName} {main.Alias}");
+            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}* FROM {context.DbHandler.DbEmphasis(main.TableName!)} {main.Alias}");
         }
         else
         {
             select!.RemoveLastComma();
-            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {main.TableName} {main.Alias}");
+            sql.Append($"SELECT {(distanct ? "DISTINCT " : "")}{select} FROM {context.DbHandler.DbEmphasis(main.TableName!)} {main.Alias}");
         }
         for (int i = 1; i < context.Tables.Count; i++)
         {
             var temp = tables[i];
             if (temp.TableType == TableLinkType.None) continue;
-            sql.Append($"\n{temp.TableType.ToLabel()} {temp.TableName} {temp.Alias} ON {temp.Fragment}");
+            sql.Append($"\n{temp.TableType.ToLabel()} {context.DbHandler.DbEmphasis(temp.TableName!)} {temp.Alias} ON {temp.Fragment}");
         }
         if (where != null)
             sql.Append($"\nWHERE {where}");
