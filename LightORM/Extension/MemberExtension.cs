@@ -50,7 +50,7 @@ namespace MDbContext.ExpSql.Extension
         {
             var tableAlias = config.RequiredTableAlias ? $"{column.TableAlias}." : "";
             var dbColumn = config.RequiredEmphasis ? context.DbHandler.DbEmphasis(column.FieldName ?? "") : column.FieldName;
-            var columnAlias = config.RequiredColumnAlias ? $" {column.FieldAlias}" : "";
+            var columnAlias = config.RequiredColumnAlias ? $" {context.DbHandler.GetColumnEmphasis(true)}{column.FieldAlias}{context.DbHandler.GetColumnEmphasis(false)}" : "";
             var comma = config.RequiredComma ? ", " : "";
             return $"{tableAlias}{dbColumn}{columnAlias}{comma}";            
         }

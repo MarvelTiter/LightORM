@@ -31,5 +31,13 @@ namespace LightORM.Test2
 
             IExpressionContext eSql = new ExpressionSqlBuilder(option).Build(null);
         }
+
+        [TestMethod]
+        public void T()
+        {
+            byte[] bytes = new byte[1024];
+            var name = bytes.GetType().FullName;
+            Console.WriteLine(name);
+        }
     }
 }

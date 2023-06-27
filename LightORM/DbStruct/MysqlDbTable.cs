@@ -3,14 +3,19 @@ using System.Data;
 
 namespace MDbContext.DbStruct
 {
-    internal class MySqlDbTable : IDbTable
+    internal class MySqlDbTable : DbTableBase
     {
-        public bool GenerateDbTable<T>(IDbConnection connection, out string message)
+        internal override void BuildSql(IDbConnection connection, DbTable info)
         {
             throw new NotImplementedException();
         }
 
-        public void SaveDbTableStruct()
+        internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override string ConvertToDbType(DbColumn type)
         {
             throw new NotImplementedException();
         }

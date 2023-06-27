@@ -102,6 +102,7 @@ namespace MDbContext.DbStruct
                 "System.DateTime" => "DateTime",
                 "System.DateTimeOffset" => "DateTimeOffset",
                 "System.Guid" => "UniqueIdentifier",
+                "System.Byte[]" => "Binary",
                 "System.Object" => "Variant",
                 _ => "NVarChar",
             };
