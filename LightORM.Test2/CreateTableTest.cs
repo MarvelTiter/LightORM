@@ -24,6 +24,14 @@ namespace LightORM.Test2
             Console.WriteLine(sql);
         }
 
+        [TestMethod]
+        public void SqlServerTest()
+        {
+            IDbInitial? context = CreateDbInitial(DbBaseType.SqlServer);
+            var sql = context!.GenerateCreateSql<User>();
+            Console.WriteLine(sql);
+        }
+
         private static IDbInitial? CreateDbInitial(DbBaseType sqlite)
         {
             var option = new ExpressionSqlOptions().SetDatabase(sqlite, () => new SqliteConnection())

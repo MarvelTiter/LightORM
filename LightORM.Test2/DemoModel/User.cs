@@ -19,7 +19,7 @@ namespace LightORM.Test2.DemoModel
         public string UserId { get; set; }
         [Column(Name = "USER_NAME")]
         public string UserName { get; set; }
-        [Column(Name = "PASSWORD")]
+        [Column(Name = "PASSWORD", PrimaryKey = true)]
         public string Password { get; set; }
         /// <summary>
         /// 用户是否启用(1-是，0-否）

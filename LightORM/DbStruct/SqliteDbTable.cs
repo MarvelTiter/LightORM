@@ -24,16 +24,16 @@ namespace MDbContext.DbStruct
                 primaryKeyConstraint =
 $@"
 ,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
- (
-  {string.Join(Environment.NewLine, primaryKeys.Select(item => $"{DbEmphasis(item.Name)},")).TrimEnd(',')}
- )";
+(
+{string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
+)";
             }
 
             var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
             sql.AppendLine(@$"
 CREATE TABLE{existsClause} {DbEmphasis(info.Name)}(
- {string.Join($",{Environment.NewLine}", info.Columns.Select(col => BuildColumn(col)))}
- {primaryKeyConstraint}
+{string.Join($",{Environment.NewLine}", info.Columns.Select(col => BuildColumn(col)))}
+{primaryKeyConstraint}
 );
 ");
             int i = 1;
