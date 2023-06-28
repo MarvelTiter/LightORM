@@ -5,6 +5,7 @@ namespace MDbContext.DbStruct
     internal struct DbTable
     {
         public string Name { get; set; }
+        public IEnumerable<DbIndex> Indexs { get; set; }
         public IEnumerable<DbColumn> Columns { get; set; }
     }
 }

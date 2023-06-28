@@ -8,7 +8,13 @@ namespace MDbContext.DbStruct
 {
     internal class SqlServerDbTable : DbTableBase
     {
-        internal override void BuildSql(IDbConnection connection, DbTable info)
+
+        public SqlServerDbTable(TableGenerateOption option) : base(option)
+        {
+
+        }
+
+        internal override string BuildSql(DbTable info)
         {
             // create table
             StringBuilder sb = new StringBuilder();
@@ -19,7 +25,7 @@ namespace MDbContext.DbStruct
             //}
             var cols = info.Columns.Select(col => GenerateColumn(col));
             sb.Append(string.Join(",\n", cols)).Append(')');
-            connection.Execute(sb.ToString());
+            return sb.ToString();
         }
 
         private string GenerateColumn(DbColumn col)
@@ -73,10 +79,6 @@ namespace MDbContext.DbStruct
             return sb.ToString();
         }
 
-        internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
-        {
-            return false;
-        }
 
         internal override string ConvertToDbType(DbColumn type)
         {
@@ -106,6 +108,16 @@ namespace MDbContext.DbStruct
                 "System.Object" => "Variant",
                 _ => "NVarChar",
             };
+        }
+
+        internal override string BuildColumn(DbColumn column)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override string DbEmphasis(string name)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,34 +1,36 @@
-﻿using MDbContext.Extension;
+﻿using MDbContext.DbStruct;
+using MDbContext.Extension;
+using MDbContext.SqlExecutor;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace MDbContext.DbStruct
 {
-    internal abstract class DbTableBase: IDbTable
+    internal abstract class DbTableBase : IDbTable
     {
-        internal abstract bool CheckTableExists(IDbConnection connection, DbTable dbTable);
+        protected TableGenerateOption Option { get; }
+        public DbTableBase(TableGenerateOption option)
+        {
+            Option = option;
+        }
         internal abstract string ConvertToDbType(DbColumn type);
-        internal abstract void BuildSql(IDbConnection connection, DbTable info);
-        public bool GenerateDbTable<T>(IDbConnection connection, out string message)
+        internal abstract string BuildColumn(DbColumn column);
+        internal abstract string DbEmphasis(string name);
+        internal abstract string BuildSql(DbTable info);
+        public string GenerateDbTable<T>()
         {
             try
             {
                 var info = typeof(T).CollectDbTableInfo();
-                if (!CheckTableExists(connection, info))
-                {
-                    BuildSql(connection, info);
-                    message = string.Empty;
-                }
-                else
-                {
-                    message = "Table Exist";
-                }
-                return true;
+                return BuildSql(info);
             }
             catch (Exception ex)
             {
-                message = ex.Message;
-                return false;
+                throw ex;
             }
         }
         public virtual void SaveDbTableStruct()
@@ -36,5 +38,14 @@ namespace MDbContext.DbStruct
             throw new NotImplementedException();
         }
 
+        protected string GetIndexName(DbTable info, DbIndex index, int i)
+        {
+            return index.Name ?? $"{info.Name}_{string.Join("_", index.Columns)}_{i}";
+        }
+
+        protected string GetPrimaryKeyName(IEnumerable<DbColumn> pks)
+        {
+            return $"PK_{string.Join("_", pks.Select(c => c.Name))}";
+        }
     }
 }

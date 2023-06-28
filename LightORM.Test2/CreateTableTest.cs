@@ -2,7 +2,7 @@
 using MDbContext;
 using MDbContext.ExpressionSql;
 using MDbContext.ExpressionSql.Interface;
-using SQLitePCL;
+using Microsoft.Data.Sqlite;
 
 namespace LightORM.Test2
 {
@@ -17,27 +17,27 @@ namespace LightORM.Test2
             }
         }
         [TestMethod]
-        public void SqlServerTest()
+        public void SqliteTest()
         {
-            var option = new ExpressionSqlOptions().SetDatabase(DbBaseType.SqlServer, () => null)
-                .SetWatcher(option =>
-                {
-                    option.BeforeExecute = e =>
-                    {
-                        Console.Write(DateTime.Now);
-                        Console.WriteLine(" Sql => \n" + e.Sql + "\n");
-                    };
-                }).InitializedContext<TestContext>();
-
-            IExpressionContext eSql = new ExpressionSqlBuilder(option).Build(null);
+            IDbInitial? context = CreateDbInitial(DbBaseType.Sqlite);
+            var sql = context!.GenerateCreateSql<User>();
+            Console.WriteLine(sql);
         }
 
-        [TestMethod]
-        public void T()
+        private static IDbInitial? CreateDbInitial(DbBaseType sqlite)
         {
-            byte[] bytes = new byte[1024];
-            var name = bytes.GetType().FullName;
-            Console.WriteLine(name);
+            var option = new ExpressionSqlOptions().SetDatabase(sqlite, () => new SqliteConnection())
+                            .SetWatcher(option =>
+                            {
+                                option.BeforeExecute = e =>
+                                {
+                                    Console.Write(DateTime.Now);
+                                    Console.WriteLine(" Sql => \n" + e.Sql + "\n");
+                                };
+                            });
+
+            var context = new ExpressionSqlBuilder(option).Build(null) as IDbInitial;
+            return context;
         }
     }
 }

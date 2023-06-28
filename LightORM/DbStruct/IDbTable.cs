@@ -9,20 +9,20 @@ namespace MDbContext.DbStruct
 {
     internal static class DbTypeEx
     {
-        internal static IDbTable GetDbTable(this DbBaseType dbBaseType)
+        internal static IDbTable GetDbTable(this DbBaseType dbBaseType, TableGenerateOption option)
         {
             switch (dbBaseType)
             {
                 case DbBaseType.SqlServer:
-                    return new SqlServerDbTable();
+                    return new SqlServerDbTable(option);
                 case DbBaseType.SqlServer2012:
-                    return new SqlServerDbTable();
+                    return new SqlServerDbTable(option);
                 case DbBaseType.Oracle:
-                    return new OracleDbTable();
+                    return new OracleDbTable(option);
                 case DbBaseType.MySql:
-                    return new MySqlDbTable();
+                    return new MySqlDbTable(option);
                 case DbBaseType.Sqlite:
-                    return new SqliteDbTable();
+                    return new SqliteDbTable(option);
                 default:
                     throw new ArgumentException();
             }
@@ -30,7 +30,7 @@ namespace MDbContext.DbStruct
     }
     internal interface IDbTable
     {
-        bool GenerateDbTable<T>(IDbConnection connection, out string message);
+        string GenerateDbTable<T>();
         void SaveDbTableStruct();
     }
 }

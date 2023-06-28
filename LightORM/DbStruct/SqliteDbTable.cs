@@ -1,36 +1,73 @@
-﻿using MDbContext.Extension;
-using MDbContext.SqlExecutor;
-using MDbEntity.Attributes;
+﻿using MDbContext.SqlExecutor;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace MDbContext.DbStruct
 {
     internal class SqliteDbTable : DbTableBase
-    {        
-        internal override void BuildSql(IDbConnection connection, DbTable info)
+    {
+        public SqliteDbTable(TableGenerateOption option) : base(option)
         {
-            // create table
-            StringBuilder sb = new StringBuilder();
-            sb.Append("CREATE TABLE ").Append(info.Name).Append("(\n");
-            //foreach (var col in info.Columns)
-            //{
-            //    sb.Append($"{col.Name}");
-            //}
-            var cols = info.Columns.Select(col => $"{col.Name} {ConvertToDbType(col)}{(col.PrimaryKey ? " PRIMARY KEY" : "")}{(col.AutoIncrement ? " AUTOINCREMENT" : "")}{(col.NotNull || col.PrimaryKey ? " NOT NULL" : "")}{(col.Default != null ? $" DEFAULT '{col}'" : "")}");
-            sb.Append(string.Join(",\n", cols)).Append(')');
-            connection.Execute(sb.ToString());
+
+        }
+        internal override string BuildSql(DbTable info)
+        {
+            StringBuilder sql = new StringBuilder();
+            var primaryKeys = info.Columns.Where(col => col.PrimaryKey);
+            string primaryKeyConstraint = "";
+
+            if (primaryKeys.Count() > 0)
+            {
+                primaryKeyConstraint =
+$@"
+,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+ (
+  {string.Join(Environment.NewLine, primaryKeys.Select(item => $"{DbEmphasis(item.Name)},")).TrimEnd(',')}
+ )";
+            }
+
+            var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
+            sql.AppendLine(@$"
+CREATE TABLE{existsClause} {DbEmphasis(info.Name)}(
+ {string.Join($",{Environment.NewLine}", info.Columns.Select(col => BuildColumn(col)))}
+ {primaryKeyConstraint}
+);
+");
+            int i = 1;
+            foreach (DbIndex index in info.Indexs)
+            {
+                string columnNames = string.Join(",", index.Columns.Select(item => $"{DbEmphasis(item)}"));
+                string type = "";
+                if (index.DbIndexType == IndexType.Unique)
+                {
+                    type = "UNIQUE ";
+                }
+                sql.AppendLine($"CREATE {type}INDEX {GetIndexName(info, index, i)} ON {DbEmphasis(info.Name)}({columnNames});");
+                i++;
+            }
+
+            return sql.ToString();
         }
 
-        internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
+        internal override string BuildColumn(DbColumn column)
         {
-            var sql = $"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = '{dbTable.Name}'";
-            var count = connection.ExecuteScale(sql);
-            return count != null && ((int)Convert.ChangeType(count, typeof(int))) > 0;
+            string dataType = ConvertToDbType(column);
+            string notNull = column.NotNull ? "NOT NULL" : "NULL";
+            string identity = column.AutoIncrement ? $"AUTO_INCREMENT" : "";
+            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"COMMENT '{column.Comment}'" : "");
+            string defaultValueClause = column.Default != null ? $" DEFAULT {column.Default}" : "";
+            return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
         }
+
+        //internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
+        //{
+        //    var sql = $"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = '{dbTable.Name}'";
+        //    var count = connection.ExecuteScale(sql);
+        //    return count != null && ((int)Convert.ChangeType(count, typeof(int))) > 0;
+        //}
 
         /// <summary>
         /// https://learn.microsoft.com/zh-cn/dotnet/standard/data/sqlite/types
@@ -66,5 +103,7 @@ namespace MDbContext.DbStruct
                 return "TEXT";
             }
         }
+
+        internal override string DbEmphasis(string name) => $"`{name}`";
     }
 }

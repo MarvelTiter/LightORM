@@ -5,17 +5,27 @@ namespace MDbContext.DbStruct
 {
     internal class MySqlDbTable : DbTableBase
     {
-        internal override void BuildSql(IDbConnection connection, DbTable info)
+        public MySqlDbTable(TableGenerateOption option) : base(option)
+        {
+
+        }
+
+        internal override string BuildColumn(DbColumn column)
         {
             throw new NotImplementedException();
         }
 
-        internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
+        internal override string BuildSql(DbTable info)
         {
             throw new NotImplementedException();
         }
 
         internal override string ConvertToDbType(DbColumn type)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override string DbEmphasis(string name)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MDbContext.DbStruct;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,5 +19,17 @@ namespace MDbEntity.Attributes
     public class TableAttribute : Attribute
     {
         public string? Name { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class TableIndexAttribute : Attribute
+    {
+        public IList<string>? Indexs { get; set; }
+        public IndexType DbIndexType { get; set; }
+        public string? Name { get; set; }
+        public TableIndexAttribute(params string[] indexs)
+        {
+            Indexs = indexs;
+        }
     }
 }

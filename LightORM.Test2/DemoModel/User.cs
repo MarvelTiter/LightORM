@@ -12,6 +12,7 @@ namespace LightORM.Test2.DemoModel
         No = 0,
     }
     [Table(Name = "USER")]
+    [TableIndex(nameof(UserName), nameof(Password))]
     public class User
     {
         [Column(Name = "USER_ID", PrimaryKey = true)]
