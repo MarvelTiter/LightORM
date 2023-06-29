@@ -1,9 +1,7 @@
-﻿using MDbContext.SqlExecutor;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
+using System.Reflection;
 using System.Text;
 
 namespace MDbContext.DbStruct
@@ -18,12 +16,11 @@ namespace MDbContext.DbStruct
 
         internal override string BuildSql(DbTable table)
         {
-            // create table
             StringBuilder sql = new StringBuilder();
 
+            #region PrimaryKey
             var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
             string primaryKeyConstraint = "";
-
             if (primaryKeys.Count() > 0)
             {
                 primaryKeyConstraint =
@@ -33,7 +30,9 @@ $@"
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )";
             }
+            #endregion
 
+            #region Table
             string existsClause = Option.NotCreateIfExists ? $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')" : "";
             sql.Append($@"
 SET ANSI_NULLS ON
@@ -44,35 +43,58 @@ CREATE TABLE {DbEmphasis(table.Name)}(
 {primaryKeyConstraint}
 );
 ");
+            #endregion
 
-            var comments = table.Columns.Where(col => col.Comment != null);
-
-            foreach (var com in comments)
+            #region ColumnConment
+            if (Option.SupportComment)
             {
-                string type = "";
+                var comments = table.Columns.Where(col => col.Comment != null);
 
-                if (com.PrimaryKey)
+                foreach (var com in comments)
                 {
-                    type = "CONSTRAINT";
+                    sql.AppendLine($"EXEC sp_addextendedproperty N'MS_Description',N'{(com.Comment)}',N'SCHEMA',N'dbo',N'table',N'{table.Name}',N'COLUMN',N'{com.Name}'");
                 }
-                else if (table.Indexs.Any(i => i.Columns.Contains(com.Name)))
-                {
-                    type = "INDEX";
-                }
-                else
-                {
-                    type = "COLUMN";
-                }
+            }
+            #endregion
 
-                sql.AppendLine($"EXEC sp_addextendedproperty N'MS_Description',N'{(com.Comment)}',N'SCHEMA',N'dbo',N'table',N'{table.Name}',N'{type}',N'{com.Name}'");
+            #region Default
+            var defaults = table.Columns.Where(col => col.Default != null);
+            foreach (var def in defaults)
+            {
+                var defaultValue = CheckDefaultValue(def);
+                sql.AppendLine($"ALTER TABLE {DbEmphasis(table.Name)} ADD CONSTRAINT {($"DF_{table.Name}_{def.Name}")}  DEFAULT {defaultValue} FOR {DbEmphasis(def.Name)}");
+            }
+            #endregion
+
+            #region Index
+            int i = 1;
+            foreach (DbIndex index in table.Indexs)
+            {
+                string columnNames = string.Join(",", index.Columns);
+                string unique = index.IsUnique ? "UNIQUE " : "";
+                string clustered = index.IsClustered ? "CLUSTERED " : "NONCLUSTERED ";
+                string type = index.DbIndexType == IndexType.ColumnStore ? "COLUMNSTORE " : "";
+                sql.AppendLine($@"CREATE {unique}{clustered}{type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames})");
+                i++;
             }
 
+            #endregion
 
             return sql.ToString();
         }
 
-
-
+        private object CheckDefaultValue(DbColumn column)
+        {
+            var defaultValueStr = column.Default!.ToString();
+            if (defaultValueStr is not null)
+            {
+                if (column.DataType == typeof(bool) && column.Default is bool bVal)
+                {
+                    return bVal ? 1 : 0;
+                }
+            }
+            return defaultValueStr!;
+        }
 
         internal override string ConvertToDbType(DbColumn type)
         {
@@ -106,49 +128,11 @@ CREATE TABLE {DbEmphasis(table.Name)}(
 
         internal override string BuildColumn(DbColumn column)
         {
-            StringBuilder sb = new StringBuilder();
             var dbType = ConvertToDbType(column);
-            sb.AppendFormat("\t[{0}] {1}", column.Name, dbType);
-            if (dbType.ToUpperInvariant().Contains("CHAR"))
-            {
-                sb.Append($"({column.Length ?? Option.DefaultStringLength})");
-            }
-            if (column.AutoIncrement)
-            {
-                sb.Append(" IDENTITY(1,1) ");
-            }
-            if (column.NotNull)
-            {
-                sb.Append(" NOT NULL");
-            }
-            var defaultValueStr = column.Default?.ToString();
-            if (defaultValueStr is not null)
-            {
-                if (!column.PrimaryKey)
-                {
-                    if ((dbType.Contains("CHAR") || dbType.Contains("TEXT"))
-                        && !defaultValueStr.StartsWith("N'") && !defaultValueStr.StartsWith("'") != true)
-                    {
-                        sb.AppendFormat(" DEFAULT(N'{0}')", column.Default);
-                    }
-                    else
-                    {
-                        switch (dbType)
-                        {
-                            case "BIT":
-                                if (column.Default is bool bVal)
-                                {
-                                    sb.AppendFormat(" DEFAULT({0}) ", bVal ? 1 : 0);
-                                }
-                                break;
-                            default:
-                                sb.AppendFormat(" DEFAULT({0}) ", column.Default);
-                                break;
-                        }
-                    }
-                }
-            }
-            return sb.ToString();
+            string dataType = $"{DbEmphasis(column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? Option.DefaultStringLength})" : "")}";
+            string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
+            string notNull = column.NotNull ? " NOT NULL" : "";
+            return $"{dataType}{identity}{notNull}";
         }
 
         internal override string DbEmphasis(string name) => $"[{name}]";

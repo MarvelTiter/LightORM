@@ -15,9 +15,9 @@ namespace LightORM.Test2.DemoModel
     [TableIndex(nameof(UserName), nameof(Password))]
     public class User
     {
-        [Column(Name = "USER_ID", PrimaryKey = true)]
+        [Column(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
         public string UserId { get; set; }
-        [Column(Name = "USER_NAME")]
+        [Column(Name = "USER_NAME", Default = "TEST", Comment = "用户姓名")]
         public string UserName { get; set; }
         [Column(Name = "PASSWORD", PrimaryKey = true)]
         public string Password { get; set; }

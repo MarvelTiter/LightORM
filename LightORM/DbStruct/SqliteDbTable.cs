@@ -13,10 +13,10 @@ namespace MDbContext.DbStruct
         {
 
         }
-        internal override string BuildSql(DbTable info)
+        internal override string BuildSql(DbTable table)
         {
             StringBuilder sql = new StringBuilder();
-            var primaryKeys = info.Columns.Where(col => col.PrimaryKey);
+            var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
             string primaryKeyConstraint = "";
 
             if (primaryKeys.Count() > 0)
@@ -31,13 +31,13 @@ $@"
 
             var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
             sql.AppendLine(@$"
-CREATE TABLE{existsClause} {DbEmphasis(info.Name)}(
-{string.Join($",{Environment.NewLine}", info.Columns.Select(col => BuildColumn(col)))}
+CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
+{string.Join($",{Environment.NewLine}", table.Columns.Select(col => BuildColumn(col)))}
 {primaryKeyConstraint}
 );
 ");
             int i = 1;
-            foreach (DbIndex index in info.Indexs)
+            foreach (DbIndex index in table.Indexs)
             {
                 string columnNames = string.Join(",", index.Columns.Select(item => $"{DbEmphasis(item)}"));
                 string type = "";
@@ -45,7 +45,7 @@ CREATE TABLE{existsClause} {DbEmphasis(info.Name)}(
                 {
                     type = "UNIQUE ";
                 }
-                sql.AppendLine($"CREATE {type}INDEX {GetIndexName(info, index, i)} ON {DbEmphasis(info.Name)}({columnNames});");
+                sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames});");
                 i++;
             }
 
@@ -57,7 +57,7 @@ CREATE TABLE{existsClause} {DbEmphasis(info.Name)}(
             string dataType = ConvertToDbType(column);
             string notNull = column.NotNull ? "NOT NULL" : "NULL";
             string identity = column.AutoIncrement ? $"AUTO_INCREMENT" : "";
-            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"COMMENT '{column.Comment}'" : "");
+            string commentClause = !string.IsNullOrEmpty(column.Comment) && Option.SupportComment ? $"COMMENT '{column.Comment}'" : "";
             string defaultValueClause = column.Default != null ? $" DEFAULT {column.Default}" : "";
             return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
         }

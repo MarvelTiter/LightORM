@@ -28,6 +28,10 @@ namespace LightORM.Test2
         public void SqlServerTest()
         {
             IDbInitial? context = CreateDbInitial(DbBaseType.SqlServer);
+            context!.Configuration(option =>
+            {
+                //option.SupportComment = true;
+            });
             var sql = context!.GenerateCreateSql<User>();
             Console.WriteLine(sql);
         }

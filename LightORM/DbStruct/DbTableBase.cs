@@ -20,7 +20,7 @@ namespace MDbContext.DbStruct
         internal abstract string ConvertToDbType(DbColumn type);
         internal abstract string BuildColumn(DbColumn column);
         internal abstract string DbEmphasis(string name);
-        internal abstract string BuildSql(DbTable info);
+        internal abstract string BuildSql(DbTable table);
         public string GenerateDbTable<T>()
         {
             try
