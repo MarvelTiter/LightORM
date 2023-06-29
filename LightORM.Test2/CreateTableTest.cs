@@ -36,6 +36,18 @@ namespace LightORM.Test2
             Console.WriteLine(sql);
         }
 
+        [TestMethod]
+        public void MySqlTest()
+        {
+            IDbInitial? context = CreateDbInitial(DbBaseType.MySql);
+            context!.Configuration(option =>
+            {
+                //option.SupportComment = true;
+            });
+            var sql = context!.GenerateCreateSql<User>();
+            Console.WriteLine(sql);
+        }
+
         private static IDbInitial? CreateDbInitial(DbBaseType sqlite)
         {
             var option = new ExpressionSqlOptions().SetDatabase(sqlite, () => new SqliteConnection())
