@@ -62,7 +62,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
             foreach (var def in defaults)
             {
                 var defaultValue = CheckDefaultValue(def);
-                sql.AppendLine($"ALTER TABLE {DbEmphasis(table.Name)} ADD CONSTRAINT {($"DF_{table.Name}_{def.Name}")}  DEFAULT {defaultValue} FOR {DbEmphasis(def.Name)}");
+                sql.AppendLine($"ALTER TABLE {DbEmphasis(table.Name)} ADD CONSTRAINT {($"DF_{table.Name}_{def.Name}")}  DEFAULT '{defaultValue}' FOR {DbEmphasis(def.Name)}");
             }
             #endregion
 
