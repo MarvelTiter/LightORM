@@ -48,6 +48,18 @@ namespace LightORM.Test2
             Console.WriteLine(sql);
         }
 
+        [TestMethod]
+        public void OracleTest()
+        {
+            IDbInitial? context = CreateDbInitial(DbBaseType.Oracle);
+            context!.Configuration(option =>
+            {
+                option.SupportComment = true;
+            });
+            var sql = context!.GenerateCreateSql<User>();
+            Console.WriteLine(sql);
+        }
+
         private static IDbInitial? CreateDbInitial(DbBaseType sqlite)
         {
             var option = new ExpressionSqlOptions().SetDatabase(sqlite, () => new SqliteConnection())

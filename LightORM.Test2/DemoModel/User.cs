@@ -11,10 +11,12 @@ namespace LightORM.Test2.DemoModel
         [Display(Name = "否")]
         No = 0,
     }
-    [Table(Name = "USER")]
+    [Table(Name = "USER222")]
     [TableIndex(nameof(UserName), nameof(Password))]
     public class User
     {
+        [Column(Name = "ID", AutoIncrement = true, PrimaryKey = true)]
+        public long? Id { get; set; }
         [Column(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
         public string UserId { get; set; }
         [Column(Name = "USER_NAME", Default = "TEST", Comment = "用户姓名")]
