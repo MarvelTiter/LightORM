@@ -58,7 +58,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
             string notNull = column.NotNull ? "NOT NULL" : "NULL";
             string identity = column.AutoIncrement ? $"AUTO_INCREMENT" : "";
             string commentClause = !string.IsNullOrEmpty(column.Comment) && Option.SupportComment ? $"COMMENT '{column.Comment}'" : "";
-            string defaultValueClause = column.Default != null ? $" DEFAULT {column.Default}" : "";
+            string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
             return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
         }
 
