@@ -117,6 +117,7 @@ BEGIN
         SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{col.Name.ToUpper()} FROM DUAL;
     END IF;
 END;
+ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
 ");
                 }
             }
