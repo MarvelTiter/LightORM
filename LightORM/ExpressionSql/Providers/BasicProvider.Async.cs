@@ -18,7 +18,7 @@ namespace MDbContext.ExpressionSql.Providers
 		{
 			Life.BeforeExecute?.Invoke(args);
 			using var conn = dbConnect.CreateConnection();
-			var ret = await conn.QuerySingleAsync<TReturn>(args.Sql!, CancellToken, args.SqlParameter);
+			var ret = await conn.QuerySingleAsync<TReturn>(args.Sql!, CancellToken, args.SqlParameter).ConfigureAwait(false);
 			args.Done = true;
 			Life.AfterExecute?.Invoke(args);
 			return ret;
@@ -27,7 +27,7 @@ namespace MDbContext.ExpressionSql.Providers
 		{
 			Life.BeforeExecute?.Invoke(args);
 			using var conn = dbConnect.CreateConnection();
-			var ret = await conn.ExecuteAsync(args.Sql!, CancellToken, args.SqlParameter);
+			var ret = await conn.ExecuteAsync(args.Sql!, CancellToken, args.SqlParameter).ConfigureAwait(false);
 			args.Done = true;
 			Life.AfterExecute?.Invoke(args);
 			return ret;
@@ -36,7 +36,7 @@ namespace MDbContext.ExpressionSql.Providers
 		{
 			Life.BeforeExecute?.Invoke(args);
 			var conn = dbConnect.CreateConnection();
-			var ret = await conn.QueryAsync<TReturn>(args.Sql!, CancellToken, args.SqlParameter);
+			var ret = await conn.QueryAsync<TReturn>(args.Sql!, CancellToken, args.SqlParameter).ConfigureAwait(false);
 			args.Done = true;
 			Life.AfterExecute?.Invoke(args);
 			return ret;
@@ -45,7 +45,7 @@ namespace MDbContext.ExpressionSql.Providers
 		{
 			Life.BeforeExecute?.Invoke(args);
 			using var conn = dbConnect.CreateConnection();
-			var list = await conn.QueryAsync(args.Sql!, CancellToken, args.SqlParameter);
+			var list = await conn.QueryAsync(args.Sql!, CancellToken, args.SqlParameter).ConfigureAwait(false);
 			args.Done = true;
 			Life.AfterExecute?.Invoke(args);
 			return list.ToList();
@@ -55,7 +55,7 @@ namespace MDbContext.ExpressionSql.Providers
 		{
 			Life.BeforeExecute?.Invoke(args);
 			var conn = dbConnect.CreateConnection();
-			var ret = await conn.ExecuteScaleAsync(args.Sql!, CancellToken, args.SqlParameter);
+			var ret = await conn.ExecuteScaleAsync(args.Sql!, CancellToken, args.SqlParameter).ConfigureAwait(false);
 			args.Done = true;
 			Life.AfterExecute?.Invoke(args);
 			return ret;

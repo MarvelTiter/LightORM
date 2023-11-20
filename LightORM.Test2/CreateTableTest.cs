@@ -32,7 +32,7 @@ namespace LightORM.Test2
             {
                 //option.SupportComment = true;
             });
-            var sql = context!.GenerateCreateSql<User>();
+            var sql = context!.GenerateCreateSql<MachineStatus>();
             Console.WriteLine(sql);
         }
 
