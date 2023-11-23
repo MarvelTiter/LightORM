@@ -16,15 +16,17 @@ namespace MDbContext.ExpressionSql.Ado
         //private const string MAIN = "MainDb";
         //private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
         private readonly DbConnectInfo connectInfo;
+        private readonly SqlExecuteLife life;
 
         //internal AdoImpl(ConcurrentDictionary<string, DbConnectInfo> dbFactories)
         //{
         //    this.dbFactories = dbFactories;
         //}
 
-        internal AdoImpl(DbConnectInfo connectInfo)
+        internal AdoImpl(DbConnectInfo connectInfo, SqlExecuteLife life)
         {
             this.connectInfo = connectInfo;
+            this.life = life;
         }
 
         IDbConnection CurrentConnection
@@ -41,30 +43,54 @@ namespace MDbContext.ExpressionSql.Ado
                 return connectInfo.CreateConnection();
             }
         }
-        
+
+        T InternalExecute<T>(string sql, object? param, Func<T> executor)
+        {
+            SqlArgs args = new SqlArgs() { Action = SqlAction.ExecuteSql, Sql = sql, SqlParameter = param };
+            life.BeforeExecute?.Invoke(args);
+            var result = executor();
+            life.AfterExecute?.Invoke(args);
+            return result;
+        }
+
         public int Execute(string sql, object? param = null)
         {
-            return CurrentConnection.Execute(sql, param);
-        }        
+            return InternalExecute(sql, param, () =>
+             {
+                 return CurrentConnection.Execute(sql, param);
+             });
+        }
 
         public DataTable ExecuteDataTable(string sql, object? param = null)
         {
-            return CurrentConnection.ExecuteTable(sql, param);
+            return InternalExecute(sql, param, () =>
+            {
+                return CurrentConnection.ExecuteTable(sql, param);
+            });
         }
 
         public IEnumerable<T> Query<T>(string sql, object? param = null)
         {
-            return CurrentConnection.Query<T>(sql, param);
+            return InternalExecute(sql, param, () =>
+            {
+                return CurrentConnection.Query<T>(sql, param);
+            });
         }
 
         public IEnumerable<dynamic> Query(string sql, object? param = null)
         {
-            return CurrentConnection.Query(sql, param);
+            return InternalExecute(sql, param, () =>
+            {
+                return CurrentConnection.Query(sql, param);
+            });
         }
-              
+
         public T? Single<T>(string sql, object? param = null)
         {
-            return CurrentConnection.QuerySingle<T>(sql, param);
+            return InternalExecute(sql, param, () =>
+            {
+                return CurrentConnection.QuerySingle<T>(sql, param);
+            });
         }
 
         //public IAdo SwitchDatabase(string key)
@@ -77,7 +103,11 @@ namespace MDbContext.ExpressionSql.Ado
 
         public void Query(string sql, object? param, Action<IDataReader> callback)
         {
-            CurrentConnection.ExecuteReader(sql, param, callback);
+            InternalExecute<int>(sql, param, () =>
+           {
+               CurrentConnection.ExecuteReader(sql, param, callback);
+               return 0;
+           });
         }
 
     }

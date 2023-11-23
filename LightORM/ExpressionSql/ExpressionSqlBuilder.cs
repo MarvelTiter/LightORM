@@ -14,6 +14,7 @@ public enum SqlAction
     Update,
     Insert,
     Delete,
+    ExecuteSql
 }
 
 public class ConstString

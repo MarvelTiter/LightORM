@@ -103,13 +103,17 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         var table = context.Tables.First();
         var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
         bool updateKey = false;
+        if (update!.Names.Count == primary.Count())
+        {
+            throw new InvalidOperationException("There is no column need to update, because all the columns are primary column");
+        }
         if (where == null)
         {
             if (!primary.Any()) throw new InvalidOperationException($"Where Condition is null and Model of [{table.CsName}] do not has a PrimaryKey");
             updateKey = true;
             where = new SqlFragment();
         }
-        sql.Append($"UPDATE {context.DbHandler.DbEmphasis(table.TableName!)} SET");
+        sql.Append($"UPDATE {context.DbHandler.DbEmphasis(table.TableName!)} SET ");
         for (int i = 0; i < update!.Names.Count; i++)
         {
             var f = update.Names[i];
@@ -117,7 +121,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
             {
                 if (updateKey)
                 {
-                    if (where.Length > 0) where.Append("AND ");
+                    if (where.Length > 0) where.Append("\nAND ");
                     where.Append($"{context.DbHandler.DbEmphasis(f)} = {update.Values[i]}");
                 }
                 continue;

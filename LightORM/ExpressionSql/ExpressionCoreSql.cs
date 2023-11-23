@@ -32,7 +32,7 @@ namespace MDbContext.ExpressionSql
         {
             get
             {
-                return new AdoImpl(GetDbInfo(CurrentKey));
+                return new AdoImpl(GetDbInfo(CurrentKey), Life);
             }
         }//new AdoImpl(dbFactories);//
 
