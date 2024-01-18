@@ -1,4 +1,5 @@
-﻿using MDbContext.ExpressionSql.Interface;
+﻿using MDbContext.DbEntity;
+using MDbContext.ExpressionSql.Interface;
 
 using System;
 using System.Collections.Concurrent;
@@ -14,7 +15,8 @@ public enum SqlAction
     Update,
     Insert,
     Delete,
-    ExecuteSql
+    ExecuteSql,
+    CreateTable
 }
 
 public class ConstString
@@ -55,15 +57,18 @@ public class ExpressionSqlOptions
         option(Life);
         return this;
     }
-    internal Type? ContextInitialType { get; set; }
+    internal DbInitialContext? ContextInitializer { get; set; }
     //public ExpressionSqlOptions InitializedContext(Type type)
     //{
     //    this.ContextInitialType = type;
     //    return this;
     //}
-    public ExpressionSqlOptions InitializedContext<T>() where T : ExpressionContext, new()
+    public ExpressionSqlOptions InitializedContext<T>(Action<DbInfo>? option = null) where T : DbInitialContext, new()
     {
-        this.ContextInitialType = typeof(T);
+        DbInfo info = new DbInfo();
+        option?.Invoke(info);
+        this.ContextInitializer = new T();
+        ContextInitializer.Info = info;
         return this;
     }
 }
@@ -92,7 +97,7 @@ public partial class ExpressionSqlBuilder
     }
     public ExpressionSqlBuilder()
     {
-
+        options = new ExpressionSqlOptions();
     }
     public ExpressionSqlBuilder(ExpressionSqlOptions options)
     {
@@ -108,7 +113,7 @@ public partial class ExpressionSqlBuilder
         return new ExpressionCoreSql(dbFactories!, life);
     }
 
-    public IExpressionContext Build()
+    internal IExpressionContext InnerBuild()
     {
         if ((options.DbFactories?.Count ?? 0) < 1)
         {
@@ -116,19 +121,29 @@ public partial class ExpressionSqlBuilder
         }
         return new ExpressionCoreSql(options.DbFactories!, options.Life);
     }
+
+    public IExpressionContext Build()
+    {
+        var context = (InnerBuild() as ExpressionCoreSql)!;
+
+        options.ContextInitializer?.Check(context);
+        return context;
+    }
+
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
     public IExpressionContext Build(IServiceProvider provider)
     {
-        var context = (Build() as ExpressionCoreSql)!;
-        if (options.ContextInitialType != null)
+        var context = (InnerBuild() as ExpressionCoreSql)!;
+        if (options.ContextInitializer != null)
         {
             var logger = provider?.GetService(typeof(Microsoft.Extensions.Logging.ILogger<IExpressionContext>)) as Microsoft.Extensions.Logging.ILogger<IExpressionContext>;
             context.Logger = logger;
-            var instance = Activator.CreateInstance(options.ContextInitialType);
-            var methodExp = Expression.Call(Expression.Constant(instance)
-                , ExpressionContext.InitializedMethod
-                , Expression.Convert(Expression.Constant(context), typeof(IDbInitial)));
-            Expression.Lambda(methodExp).Compile().DynamicInvoke();
+            //var instance = Activator.CreateInstance(options.ContextInitialType);
+            //var methodExp = Expression.Call(Expression.Constant(instance)
+            //    , ExpressionContext.InitializedMethod
+            //    , Expression.Convert(Expression.Constant(context), typeof(IDbInitial)));
+            //Expression.Lambda(methodExp).Compile().DynamicInvoke();
+            options.ContextInitializer.Check(context);
         }
         return context;
     }

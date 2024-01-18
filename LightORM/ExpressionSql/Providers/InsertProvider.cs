@@ -35,11 +35,11 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     {
         insert ??= new SqlFragment();
         context.SetFragment(insert);
-        //Expression<Func<object>> exp = () => item!;
-        //ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
-        entityColumns ??= typeof(T).GetColumns();
-        entities ??= new List<T>();
-        entities.Add(item);
+        Expression<Func<object>> exp = () => item!;
+        ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
+        //entityColumns ??= typeof(T).GetColumns();
+        //entities ??= new List<T>();
+        //entities.Add(item);
         return this;
     }
 
@@ -154,29 +154,22 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
             StringBuilder sql = new StringBuilder();
             var table = context.Tables.First();
             sql.Append($"INSERT INTO {context.DbHandler.DbEmphasis(table.TableName!)} (");
-            var insertColumnIndex = sql.Length;
+            //var insertColumnIndex = sql.Length;
+            sql.Append(string.Join(", ", entityColumns!.Where(c => !c.AutoIncrement).Select(c => context.DbHandler.DbEmphasis(c.DbColumn!))));
             sql.Append(")\n");
             sql.AppendLine("VALUES");
+            //bool CanExecute = true;
+
             foreach (var item in entities)
             {
                 sql.Append("(");
-                List<SimpleColumn> insertCols = new List<SimpleColumn>();
                 foreach (var col in entityColumns!)
                 {
                     var val = item.AccessValue(col.PropName!);
-                    if (val == null)
-                    {
-                        col.NullValue = true;
-                    }
-                    else
-                    {
-                        var pName = context.AppendDbParameter(val);
-                        sql.Append(pName);
-                        sql.Append(", ");
-                    }
-                    insertCols.Add(col);
+                    var pName = context.AppendDbParameter(val);
+                    sql.Append(pName);
+                    sql.Append(", ");
                 }
-                sql.Insert(insertColumnIndex, string.Join(", ", insertCols.Where(c => c.Insertable).Select(c => context.DbHandler.DbEmphasis(c.DbColumn!))));
                 sql.Remove(sql.Length - 2, 2);
                 sql.Append("),\n");
             }

@@ -28,9 +28,9 @@ namespace MDbContext.DbStruct
                 var info = typeof(T).CollectDbTableInfo();
                 return BuildSql(info);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
         public virtual void SaveDbTableStruct()
@@ -38,12 +38,12 @@ namespace MDbContext.DbStruct
             throw new NotImplementedException();
         }
 
-        protected string GetIndexName(DbTable info, DbIndex index, int i)
+        protected static string GetIndexName(DbTable info, DbIndex index, int i)
         {
             return index.Name ?? $"{info.Name}_{string.Join("_", index.Columns)}_{i}";
         }
 
-        protected string GetPrimaryKeyName(IEnumerable<DbColumn> pks)
+        protected static string GetPrimaryKeyName(IEnumerable<DbColumn> pks)
         {
             return $"PK_{string.Join("_", pks.Select(c => c.Name))}";
         }

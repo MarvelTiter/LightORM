@@ -5,12 +5,12 @@ using MDbContext.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace MDbContext.ExpressionSql
 {
     internal partial class ExpressionCoreSql : IDbInitial
     {
-
         public void Log(string message)
         {
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
@@ -25,15 +25,19 @@ namespace MDbContext.ExpressionSql
             var sql = db.GenerateDbTable<T>();
             return sql;
         }
-        public IDbInitial CreateTable<T>(string key = ConstString.Main)
+        public IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas)
         {
             var info = GetDbInfo(key);
             try
             {
-                var sql = GenerateCreateSql<T>(key);
                 using var conn = info.CreateConnection.Invoke();
-                conn.Execute(sql);
+                DoCreateTable(conn, GenerateCreateSql<T>(key));
                 Log($"{info.DbBaseType} Table: [{typeof(T).Name}] Created!");
+                if (datas != null && datas.Any())
+                {
+                    var effects = Insert<T>().AppendData(datas).Execute();
+                    Log($"{info.DbBaseType} Table: [{typeof(T).Name}] Inserted {effects} Rows");
+                }
             }
             catch (Exception ex)
             {
@@ -43,6 +47,14 @@ namespace MDbContext.ExpressionSql
             return this;
         }
 
+        private void DoCreateTable(IDbConnection conn, string sql)
+        {
+            var sqlArgs = new SqlArgs { Action = SqlAction.CreateTable, Sql = sql };
+            Life.BeforeExecute?.Invoke(sqlArgs);
+            conn.Execute(sql);
+            sqlArgs.Done = true;
+            Life.AfterExecute?.Invoke(sqlArgs);
+        }
 
         TableGenerateOption tableOption = new TableGenerateOption();
         public IDbInitial Configuration(Action<TableGenerateOption> option)

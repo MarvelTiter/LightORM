@@ -81,7 +81,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
                     type = "BITMAP ";
                 }
                 string reverse = index.DbIndexType == IndexType.Reverse ? "REVERSE" : "";
-                sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames}){reverse};");
+                sql.AppendLine($"CREATE {type}INDEX {DbTableBase.GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames}){reverse};");
                 i++;
             }
 
@@ -93,7 +93,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
             {
                 sql.AppendLine(
 $@"
-ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {DbTableBase.GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
 (
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 ) USING INDEX {tableSpace};"

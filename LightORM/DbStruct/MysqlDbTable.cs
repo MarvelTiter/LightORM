@@ -32,7 +32,7 @@ namespace MDbContext.DbStruct
             {
                 primaryKeyConstraint =
 $@"
-,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+,CONSTRAINT {DbTableBase.GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
 (
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )";
@@ -54,7 +54,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
                 {
                     type = "UNIQUE ";
                 }
-                sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames});");
+                sql.AppendLine($"CREATE {type}INDEX {DbTableBase.GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames});");
                 i++;
             }
 

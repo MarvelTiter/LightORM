@@ -52,17 +52,13 @@ internal partial class SqlContext : ITableContext
     {
         if (LikeMode > 0)
         {
-            switch (LikeMode)
+            return LikeMode switch
             {
-                case 1:
-                    return $"%{value}%";
-                case 2:
-                    return $"%{value}";
-                case 3:
-                    return $"{value}%";
-                default:
-                    throw new ArgumentException("Unknow Like Mode");
-            }
+                1 => $"%{value}%",
+                2 => $"%{value}",
+                3 => $"{value}%",
+                _ => throw new ArgumentException("Unknow Like Mode"),
+            };
         }
         else
         {

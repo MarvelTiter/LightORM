@@ -9,7 +9,7 @@ namespace LightORM.Test2
     [TestClass]
     public class CreateTableTest
     {
-        class TestContext : ExpressionContext
+        class TestContext : DbInitialContext
         {
             public override void Initialized(IDbInitial db)
             {

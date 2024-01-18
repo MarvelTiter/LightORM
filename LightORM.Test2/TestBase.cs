@@ -1,12 +1,26 @@
 ﻿using MDbContext;
 using MDbContext.ExpressionSql;
+using MDbContext.ExpressionSql.Interface;
 using Microsoft.Data.Sqlite;
 using System.Data;
 using System.Diagnostics;
 
 namespace LightORM.Test2
 {
-	[TestClass]
+	public class TestModel
+	{
+        public int Id { get; set; }
+		public string Name { get; set; }
+    }
+    public class IniTest : DbInitialContext
+    {
+        public override void Initialized(IDbInitial db)
+        {
+			var datas = Enumerable.Range(1,10).Select(i=>new TestModel { Id = i, Name = $"Name_{i}" }).ToArray();
+			db.CreateTable<TestModel>(datas: datas);
+        }
+    }
+    [TestClass]
 	public class TestBase
 	{
 		protected void Watch(Action<IExpressionContext> action)
@@ -20,7 +34,7 @@ namespace LightORM.Test2
 						Console.Write(DateTime.Now);
 						Console.WriteLine(" Sql => \n" + e.Sql + "\n");
 					};
-				});
+				}).InitializedContext<IniTest>();
 
 			IExpressionContext eSql = new ExpressionSqlBuilder(option).Build();
 			Stopwatch stopwatch = new Stopwatch();

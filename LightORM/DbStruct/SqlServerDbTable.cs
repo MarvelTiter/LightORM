@@ -25,7 +25,7 @@ namespace MDbContext.DbStruct
             {
                 primaryKeyConstraint =
 $@"
-,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+,CONSTRAINT {DbTableBase.GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
 (
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )";
@@ -74,7 +74,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
                 string unique = index.IsUnique ? "UNIQUE " : "";
                 string clustered = index.IsClustered ? "CLUSTERED " : "NONCLUSTERED ";
                 string type = index.DbIndexType == IndexType.ColumnStore ? "COLUMNSTORE " : "";
-                sql.AppendLine($@"CREATE {unique}{clustered}{type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames})");
+                sql.AppendLine($@"CREATE {unique}{clustered}{type}INDEX {DbTableBase.GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames})");
                 i++;
             }
 
