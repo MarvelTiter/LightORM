@@ -67,15 +67,15 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         //return await conn.ExecuteAsync(ToSql(), param);
     }
 
-	public IExpUpdate<T> AttachCancellationToken(CancellationToken token)
-	{
-		CancellToken = token;
-		return this;
-	}
+    public IExpUpdate<T> AttachCancellationToken(CancellationToken token)
+    {
+        CancellToken = token;
+        return this;
+    }
 
 #endif
 
-	public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
+    public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
@@ -103,7 +103,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         var table = context.Tables.First();
         var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
         bool updateKey = false;
-        if (update!.Names.Count == primary.Count())
+        if (update!.Names.Count == primary.Count() && IsAllPrimary())
         {
             throw new InvalidOperationException("There is no column need to update, because all the columns are primary column");
         }
@@ -136,6 +136,13 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         sql.Append($"\nWHERE {where}");
         //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Update });
         return sql.ToString();
+
+
+        bool IsAllPrimary()
+        {
+            return update!.Names.All(n => primary.Any(p => p.FieldName == n));
+        }
+
     }
 
     public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)

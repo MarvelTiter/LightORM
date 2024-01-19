@@ -11,7 +11,7 @@ class User
     [Column(NotNull = true)]
     public string Name { get; set; }
 }
-internal class DbContext : ExpressionContext
+internal class DbContext : DbInitialContext
 {
     public override void Initialized(IDbInitial db)
     {
