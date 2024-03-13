@@ -1,4 +1,4 @@
-﻿namespace MDbContext.ExpressionSql;
+﻿namespace LightORM.ExpressionSql;
 
 internal struct SqlFieldInfo
 {

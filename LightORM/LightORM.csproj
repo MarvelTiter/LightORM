@@ -2,7 +2,6 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net4.0;net45;net4.8;netstandard2.1;netcoreapp3.1;net6.0;net7.0;net8.0;</TargetFrameworks>
-		<RootNamespace>MDbContext</RootNamespace>
 		<AssemblyName>MT.LightORM</AssemblyName>
 		<Authors>MarvelTiter</Authors>
 		<Nullable>enable</Nullable>

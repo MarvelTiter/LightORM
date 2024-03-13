@@ -1,6 +1,8 @@
 ﻿#if NET40
 #else
-using MDbContext.SqlExecutor;
+using LightORM.ExpressionSql;
+using LightORM.ExpressionSql.Ado;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Ado
+namespace LightORM.ExpressionSql.Ado
 {
     public partial class AdoImpl
     {

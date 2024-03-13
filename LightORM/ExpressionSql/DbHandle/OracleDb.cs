@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.DbHandle;
+namespace LightORM.ExpressionSql.DbHandle;
 internal class OracleDb : IDbHelper
 {
     public string BuildSelectSql(SqlContext context, SqlFragment? select, bool distanct, SqlFragment? where, SqlFragment? groupBy, SqlFragment? orderBy, bool isAsc, int index, int size)

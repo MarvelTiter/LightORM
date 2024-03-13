@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.DbHandle;
+namespace LightORM.ExpressionSql.DbHandle;
 
 internal class SqliteDb : IDbHelper
 {

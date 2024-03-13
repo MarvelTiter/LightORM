@@ -1,7 +1,7 @@
-﻿using MDbContext;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Providers;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers;
+namespace LightORM.ExpressionSql.Providers;
 
 internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 {

@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Interface.Select;
+namespace LightORM.ExpressionSql.Interface.Select;
 
 public interface IExpSelect<T1, T2, T3> : IExpSelect0<IExpSelect<T1, T2, T3>, T1>
 {

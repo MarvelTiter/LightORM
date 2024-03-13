@@ -1,8 +1,8 @@
-﻿using MDbContext;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.SqlExecutor;
-using MDbContext.Utils;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface;
+using LightORM.Utils;
+using LightORM.ExpressionSql.Providers;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers;
+namespace LightORM.ExpressionSql.Providers;
 
 internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
 {

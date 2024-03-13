@@ -1,14 +1,10 @@
-﻿using MDbContext.ExpressionSql.Interface;
-using MDbContext.ExpressionSql.Interface.Select;
-using MDbContext.NewExpSql.ExpressionVisitor;
-using MDbContext.SqlExecutor;
-using System;
+﻿using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Interface.Select;
+using LightORM.ExpressionSql.Providers.Select;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers.Select;
+namespace LightORM.ExpressionSql.Providers.Select;
 
 internal partial class SelectProvider3<T1, T2, T3> : BasicSelect0<IExpSelect<T1, T2, T3>, T1>, IExpSelect<T1, T2, T3>
 {
@@ -112,14 +108,14 @@ internal partial class SelectProvider4<T1, T2, T3, T4> : BasicSelect0<IExpSelect
         var args = BuildArgs();
         return InternalQuery<TReturn>(args);
     }
-//#if !NET40
-//    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, object>> exp)
-//    {
-//        SelectHandle(exp.Body);
-//        var args = BuildArgs();
-//        return InternalQueryAsync<TReturn>(args);
-//    }
-//#endif
+    //#if !NET40
+    //    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4>, object>> exp)
+    //    {
+    //        SelectHandle(exp.Body);
+    //        var args = BuildArgs();
+    //        return InternalQueryAsync<TReturn>(args);
+    //    }
+    //#endif
     public IExpSelect<T1, T2, T3, T4> Where(Expression<Func<TypeSet<T1, T2, T3, T4>, bool>> exp)
     {
         WhereHandle(exp.Body);
@@ -173,14 +169,14 @@ internal partial class SelectProvider5<T1, T2, T3, T4, T5> : BasicSelect0<IExpSe
         var args = BuildArgs();
         return InternalQuery<TReturn>(args);
     }
-//#if !NET40
-//    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, object>> exp)
-//    {
-//        SelectHandle(exp.Body);
-//        var args = BuildArgs();
-//        return InternalQueryAsync<TReturn>(args);
-//    }
-//#endif
+    //#if !NET40
+    //    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, object>> exp)
+    //    {
+    //        SelectHandle(exp.Body);
+    //        var args = BuildArgs();
+    //        return InternalQueryAsync<TReturn>(args);
+    //    }
+    //#endif
     public IExpSelect<T1, T2, T3, T4, T5> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5>, bool>> exp)
     {
         WhereHandle(exp.Body);
@@ -235,14 +231,14 @@ internal partial class SelectProvider6<T1, T2, T3, T4, T5, T6> : BasicSelect0<IE
         var args = BuildArgs();
         return InternalQuery<TReturn>(args);
     }
-//#if !NET40
-//    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, object>> exp)
-//    {
-//        SelectHandle(exp.Body);
-//        var args = BuildArgs();
-//        return InternalQueryAsync<TReturn>(args);
-//    }
-//#endif
+    //#if !NET40
+    //    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, object>> exp)
+    //    {
+    //        SelectHandle(exp.Body);
+    //        var args = BuildArgs();
+    //        return InternalQueryAsync<TReturn>(args);
+    //    }
+    //#endif
     public IExpSelect<T1, T2, T3, T4, T5, T6> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, bool>> exp)
     {
         WhereHandle(exp.Body);
@@ -298,14 +294,14 @@ internal partial class SelectProvider7<T1, T2, T3, T4, T5, T6, T7> : BasicSelect
         var args = BuildArgs();
         return InternalQuery<TReturn>(args);
     }
-//#if !NET40
-//    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, object>> exp)
-//    {
-//        SelectHandle(exp.Body);
-//        var args = BuildArgs();
-//        return InternalQueryAsync<TReturn>(args);
-//    }
-//#endif
+    //#if !NET40
+    //    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, object>> exp)
+    //    {
+    //        SelectHandle(exp.Body);
+    //        var args = BuildArgs();
+    //        return InternalQueryAsync<TReturn>(args);
+    //    }
+    //#endif
     public IExpSelect<T1, T2, T3, T4, T5, T6, T7> Where(Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, bool>> exp)
     {
         WhereHandle(exp.Body);

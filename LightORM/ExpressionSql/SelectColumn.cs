@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 internal interface ISqlFieldCell
 {

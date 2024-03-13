@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Interface;
+namespace LightORM.ExpressionSql.Interface;
 public interface ITransactionable
 {
     void AttachTransaction();

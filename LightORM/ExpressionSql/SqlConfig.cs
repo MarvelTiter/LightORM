@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 public enum BinaryPosition
 {
@@ -43,12 +43,12 @@ public class SqlConfig
     public SqlPartial SqlType { get; private set; }
     private bool CheckRequiredValue()
     {
-        return (BinaryPosition == BinaryPosition.Right &&
-            SqlType == SqlPartial.Where) ||
+        return BinaryPosition == BinaryPosition.Right &&
+            SqlType == SqlPartial.Where ||
             SqlType == SqlPartial.Insert ||
             SqlType == SqlPartial.Update ||
-            (BinaryPosition == BinaryPosition.Right &&
-            SqlType == SqlPartial.SelectFunc)
+            BinaryPosition == BinaryPosition.Right &&
+            SqlType == SqlPartial.SelectFunc
             ;
     }
 

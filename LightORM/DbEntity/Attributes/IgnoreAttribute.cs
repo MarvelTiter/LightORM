@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MDbEntity.Attributes {
-    public class IgnoreAttribute : Attribute {
-    }
+namespace LightORM.DbEntity.Attributes;
+public class IgnoreAttribute : Attribute
+{
 }

@@ -1,13 +1,14 @@
-﻿using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql;
+using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers;
+namespace LightORM.ExpressionSql.Providers;
 
 internal abstract partial class BasicProvider<T1>
 {

@@ -1,8 +1,8 @@
-﻿using MDbContext.ExpSql.Extension;
+﻿using LightORM.Extension;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class MemberInitExpVisitor : BaseVisitor<MemberInitExpression>
 {

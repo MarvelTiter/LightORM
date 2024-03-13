@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MDbContext.DbStruct;
+using LightORM.DbStruct;
+using LightORM.ExpressionSql;
 
-namespace MDbContext.ExpressionSql.Interface
+namespace LightORM.ExpressionSql.Interface;
+
+public interface IDbInitial
 {
-    public interface IDbInitial
-    {
-        IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas);
-        IDbInitial Configuration(Action<TableGenerateOption> option);
-        string GenerateCreateSql<T>(string key = ConstString.Main);
-    }
+    IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas);
+    IDbInitial Configuration(Action<TableGenerateOption> option);
+    string GenerateCreateSql<T>(string key = ConstString.Main);
 }

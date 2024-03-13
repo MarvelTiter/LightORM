@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace MDbContext.DbStruct
+namespace LightORM.DbStruct;
+
+internal struct DbTable
 {
-    internal struct DbTable
-    {
-        public string Name { get; set; }
-        public IEnumerable<DbIndex> Indexs { get; set; }
-        public IEnumerable<DbColumn> Columns { get; set; }
-    }
+    public string Name { get; set; }
+    public IEnumerable<DbIndex> Indexs { get; set; }
+    public IEnumerable<DbColumn> Columns { get; set; }
 }

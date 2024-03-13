@@ -1,6 +1,6 @@
-﻿using MDbContext.ExpressionSql.Ado;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.ExpressionSql.Interface.Select;
+﻿using LightORM.ExpressionSql.Ado;
+using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Interface.Select;
 using System;
 using System.Data;
 using System.Linq.Expressions;
@@ -8,30 +8,29 @@ using System.Linq.Expressions;
 #else
 using System.Threading.Tasks;
 #endif
-namespace MDbContext.ExpressionSql
+namespace LightORM.ExpressionSql;
+
+public interface IExpressionContext
 {
-    public interface IExpressionContext
-    {
-        IExpressionContext SwitchDatabase(string key);
-        IExpSelect<T> Select<T>();
-        IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
-        IExpInsert<T> Insert<T>();
-        IExpUpdate<T> Update<T>();
-        IExpDelete<T> Delete<T>();
-        IExpressionContext BeginTransaction();
-        bool CommitTransaction();
+    IExpressionContext SwitchDatabase(string key);
+    IExpSelect<T> Select<T>();
+    IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
+    IExpInsert<T> Insert<T>();
+    IExpUpdate<T> Update<T>();
+    IExpDelete<T> Delete<T>();
+    IExpressionContext BeginTransaction();
+    bool CommitTransaction();
 #if NET40
 #else
-        Task<bool> CommitTransactionAsync();
+    Task<bool> CommitTransactionAsync();
 #endif
-        IAdo Ado { get; }
-    }
+    IAdo Ado { get; }
+}
 
-    public static class ExpSqlExtensions
-    {
-        //public static IExpSelect<T> Select<T,T1>(this IExpSql self)
-        //{
-        //    return new SelectProvider<T>()
-        //}
-    }
+public static class ExpSqlExtensions
+{
+    //public static IExpSelect<T> Select<T,T1>(this IExpSql self)
+    //{
+    //    return new SelectProvider<T>()
+    //}
 }

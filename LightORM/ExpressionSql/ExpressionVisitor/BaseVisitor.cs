@@ -1,11 +1,12 @@
-﻿using System;
+﻿using LightORM.ExpressionSql;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
 {

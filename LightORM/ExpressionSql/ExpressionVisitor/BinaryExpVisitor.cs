@@ -1,9 +1,10 @@
-﻿using System;
+﻿using LightORM.ExpressionSql;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
 {

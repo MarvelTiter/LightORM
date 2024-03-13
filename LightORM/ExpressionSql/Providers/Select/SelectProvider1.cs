@@ -1,12 +1,13 @@
-﻿using MDbContext.ExpressionSql.Interface;
-using MDbContext.ExpressionSql.Interface.Select;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Interface.Select;
+using LightORM.ExpressionSql.Providers.Select;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers.Select;
+namespace LightORM.ExpressionSql.Providers.Select;
 
 internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, IExpSelect<T1>
 {
@@ -39,5 +40,5 @@ internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, I
         return InternalQueryAsync<TReturn>(args);
     }
 #endif
-    
+
 }

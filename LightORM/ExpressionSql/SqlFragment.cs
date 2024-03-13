@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 internal class SqlFragment
 {

@@ -1,5 +1,6 @@
 ﻿#if NET40
 #else
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.SqlExecutor
+namespace LightORM.SqlExecutor
 {
 
     public static partial class SqlExecutor

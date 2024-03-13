@@ -1,8 +1,9 @@
-﻿using MDbContext;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.ExpressionSql.Interface.Select;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql;
+using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Interface.Select;
+using MDbContext;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers.Select;
+namespace LightORM.ExpressionSql.Providers.Select;
 
 internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {

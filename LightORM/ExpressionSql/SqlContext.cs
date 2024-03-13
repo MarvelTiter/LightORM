@@ -1,10 +1,10 @@
-﻿using MDbContext.ExpressionSql.DbHandle;
+﻿using LightORM.ExpressionSql.DbHandle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 internal partial class SqlContext : ITableContext
 {
     SqlFragment? fragment;

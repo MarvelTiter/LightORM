@@ -1,14 +1,16 @@
 ﻿#if NET40
 #else
-using MDbContext.ExpressionSql.Providers.Select;
+using LightORM.ExpressionSql.Interface.Select;
+using LightORM.ExpressionSql.Providers.Select;
+using LightORM.ExpressionSql.Providers.Select;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Interface.Select
+namespace LightORM.ExpressionSql.Interface.Select
 {
-    
+
     public static class SelectDynamicExtension
     {
         [Obsolete]

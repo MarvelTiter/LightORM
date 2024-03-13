@@ -1,9 +1,6 @@
-﻿using MDbContext.NewExpSql.ExpressionVisitor;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class ExpressionVisit
 {

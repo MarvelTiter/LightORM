@@ -1,5 +1,8 @@
-﻿using MDbContext.DbEntity;
-using MDbContext.ExpressionSql.Interface;
+﻿using LightORM.Context;
+using LightORM.DbEntity;
+using LightORM.ExpressionSql.Interface;
+using LightORM.Extension;
+using LightORM.ExpressionSql;
 
 using System;
 using System.Collections.Concurrent;
@@ -7,7 +10,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 public enum SqlAction
 {
@@ -67,7 +70,7 @@ public class ExpressionSqlOptions
     {
         DbInfo info = new DbInfo();
         option?.Invoke(info);
-        this.ContextInitializer = new T();
+        ContextInitializer = new T();
         ContextInitializer.Info = info;
         return this;
     }

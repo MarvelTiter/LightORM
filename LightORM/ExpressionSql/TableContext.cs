@@ -1,12 +1,13 @@
-﻿using MDbContext.ExpressionSql.DbHandle;
-using MDbContext.Extension;
-using MDbEntity.Attributes;
+﻿using LightORM.Context;
+using LightORM.DbEntity.Attributes;
+using LightORM.ExpressionSql.DbHandle;
+using LightORM.Extension;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 internal static class TableLinkTypeEx
 {

@@ -1,12 +1,13 @@
-﻿using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface.Select;
+﻿using LightORM.ExpressionSql;
+using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface.Select;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.Providers.Select;
+namespace LightORM.ExpressionSql.Providers.Select;
 
 internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {

@@ -1,7 +1,7 @@
-﻿using MDbContext.ExpressionSql.DbHandle;
+﻿using LightORM.ExpressionSql.DbHandle;
 using System;
 
-namespace MDbContext.ExpressionSql;
+namespace LightORM.ExpressionSql;
 
 internal interface ITableContext
 {

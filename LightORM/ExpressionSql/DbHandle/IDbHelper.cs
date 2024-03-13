@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using LightORM.ExpressionSql;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.DbHandle;
+namespace LightORM.ExpressionSql.DbHandle;
 
 internal interface IDbHelper
 {

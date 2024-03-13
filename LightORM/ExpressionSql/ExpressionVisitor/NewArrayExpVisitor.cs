@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class NewArrayExpVisitor : BaseVisitor<NewArrayExpression>
 {

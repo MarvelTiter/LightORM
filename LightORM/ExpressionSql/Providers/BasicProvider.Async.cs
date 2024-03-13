@@ -1,6 +1,7 @@
 ﻿#if NET40
 #else
-using MDbContext.SqlExecutor;
+using LightORM.ExpressionSql;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +9,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers
+namespace LightORM.ExpressionSql.Providers
 {
-	internal partial class BasicProvider<T1>
+    internal partial class BasicProvider<T1>
 	{
 		protected CancellationToken CancellToken { get; set; } = CancellationToken.None;
 
