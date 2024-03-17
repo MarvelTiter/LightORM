@@ -5,7 +5,7 @@ namespace LightORM.Extension;
 
 internal static class MemberExtension
 {
-    public static string GetColumnName(this SqlFieldInfo column, SqlContext context, SqlConfig config)
+    public static string GetColumnName(this SqlFieldInfo column, SqlContext context, SqlResolveOptions config)
     {
         var tableAlias = config.RequiredTableAlias ? $"{column.TableAlias}." : "";
         var dbColumn = config.RequiredEmphasis ? context.DbHandler.DbEmphasis(column.FieldName ?? "") : column.FieldName;
@@ -13,7 +13,7 @@ internal static class MemberExtension
         var comma = config.RequiredComma ? ", " : "";
         return $"{tableAlias}{dbColumn}{columnAlias}{comma}";
     }
-    public static string GetColumnName(this MemberInfo self, SqlContext context, SqlConfig config)
+    public static string GetColumnName(this MemberInfo self, SqlContext context, SqlResolveOptions config)
     {
         var column = context.GetColumn(self.DeclaringType, self.Name);
         var tableAlias = config.RequiredTableAlias ? $"{column.TableAlias}." : "";

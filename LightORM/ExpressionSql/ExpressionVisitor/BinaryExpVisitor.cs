@@ -1,5 +1,4 @@
-﻿using LightORM.ExpressionSql;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -76,7 +75,7 @@ internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
         };
     }
 
-    public override void DoVisit(BinaryExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(BinaryExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Left, config, context);

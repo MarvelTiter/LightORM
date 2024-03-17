@@ -1,6 +1,5 @@
-﻿using LightORM.ExpressionSql;
-using LightORM.ExpressionSql.ExpressionVisitor;
-using LightORM.ExpressionSql.Interface.Select;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +26,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         var join = new SqlFragment();
         table!.TableType = tableLinkType;
         context.SetFragment(join);
-        ExpressionVisit.Visit(body, SqlConfig.Join, context);
+        ExpressionVisit.Visit(body, SqlResolveOptions.Join, context);
         table.Fragment = join;
     }
 
@@ -36,14 +35,14 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select ??= new SqlFragment();
         select.Clear();
         context.SetFragment(select);
-        ExpressionVisit.Visit(body, SqlConfig.Select, context);
+        ExpressionVisit.Visit(body, SqlResolveOptions.Select, context);
     }
 
     internal void GroupByHandle(Expression body)
     {
         groupBy ??= new SqlFragment();
         context.SetFragment(groupBy);
-        ExpressionVisit.Visit(body, SqlConfig.Group, context);
+        ExpressionVisit.Visit(body, SqlResolveOptions.Group, context);
     }
     bool isAsc;
     internal void OrderByHandle(Expression body, bool asc)
@@ -51,6 +50,6 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         isAsc = asc;
         orderBy ??= new SqlFragment();
         context.SetFragment(orderBy);
-        ExpressionVisit.Visit(body, SqlConfig.Order, context);
+        ExpressionVisit.Visit(body, SqlResolveOptions.Order, context);
     }
 }

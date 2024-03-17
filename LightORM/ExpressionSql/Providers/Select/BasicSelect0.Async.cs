@@ -1,8 +1,8 @@
 ﻿#if NET40
 #else
-using LightORM.ExpressionSql;
 using LightORM.ExpressionSql.ExpressionVisitor;
 using LightORM.ExpressionSql.Interface.Select;
+using LightORM.Interfaces;
 using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
@@ -27,7 +27,7 @@ namespace LightORM.ExpressionSql.Providers.Select
 			select ??= new SqlFragment();
 			context.SetFragment(select);
 			select.Append("MAX(");
-			ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+			ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
 			// tosql去掉最后2个字符
 			select.Append(")))");
 			SqlArgs args = BuildArgs();
@@ -39,7 +39,7 @@ namespace LightORM.ExpressionSql.Providers.Select
 			select ??= new SqlFragment();
 			context.SetFragment(select);
 			select.Append("SUM(");
-			ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+			ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
 			// tosql去掉最后2个字符
 			select.Append(")))");
 			SqlArgs args = BuildArgs();
@@ -51,7 +51,7 @@ namespace LightORM.ExpressionSql.Providers.Select
 			select ??= new SqlFragment();
 			context.SetFragment(select);
 			select.Append("COUNT(");
-			ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+			ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
 			// tosql去掉最后2个字符
 			select.Append(")))");
 			SqlArgs args = BuildArgs();
@@ -103,13 +103,14 @@ namespace LightORM.ExpressionSql.Providers.Select
 		}
 		public Task<DataTable> ToDataTableAsync()
 		{
-			using var conn = dbConnect.CreateConnection();
-			var args = BuildArgs();
-			Life.BeforeExecute?.Invoke(args);
-			var ret = conn.ExecuteTableAsync(args.Sql!, args.SqlParameter);
-			args.Done = true;
-			Life.AfterExecute?.Invoke(args);
-			return ret;
+			//using var conn = dbConnect.CreateConnection();
+			//var args = BuildArgs();
+			//Life.BeforeExecute?.Invoke(args);
+			//var ret = conn.ExecuteTableAsync(args.Sql!, args.SqlParameter);
+			//args.Done = true;
+			//Life.AfterExecute?.Invoke(args);
+			//return ret;
+			throw new NotImplementedException();
 		}
 	}
 }

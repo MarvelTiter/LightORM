@@ -18,6 +18,8 @@ internal static class TypeExtension
         return new DbTable { Name = tableName, Columns = columns, Indexs = indexs };
     }
 
+
+
     private static List<DbIndex> CollectIndexs(Type tableType, List<DbColumn> columns)
     {
         IEnumerable<TableIndexAttribute> attrs = tableType.GetCustomAttributes(false).Where(a => a is TableIndexAttribute).Cast<TableIndexAttribute>();
@@ -57,5 +59,31 @@ internal static class TypeExtension
             });
         }
         return columns;
+    }
+
+    private static readonly Dictionary<Type, object?> typeDefaultValueCache = new()
+    {
+        [typeof(object)] = default,
+        [typeof(string)] = default(char),
+        [typeof(bool)] = default(bool),
+        [typeof(DateTime)] = default(DateTime),
+        [typeof(Guid)] = default(Guid),
+        [typeof(int)] = default(int),
+        [typeof(uint)] = default(uint),
+        [typeof(long)] = default(long),
+        [typeof(ulong)] = default(ulong),
+        [typeof(decimal)] = default(decimal),
+        [typeof(double)] = default(double),
+        [typeof(float)] = default(float),
+        [typeof(short)] = default(short),
+        [typeof(ushort)] = default(ushort),
+        [typeof(byte)] = default(byte),
+        [typeof(sbyte)] = default(sbyte),
+        [typeof(char)] = default(char),
+    };
+    public static object? TypeDefaultValue(this Type type)
+    {
+        typeDefaultValueCache.TryGetValue(type, out var value);
+        return value;
     }
 }

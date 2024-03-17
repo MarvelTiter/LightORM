@@ -62,7 +62,9 @@ using MDbContext;
 using MDbContext.Extension;
 */
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Common;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -79,28 +81,24 @@ internal struct CommandDefinition
 
     public CommandType? CommandType { get; }
 
-    public IDbTransaction? Transaction { get; set; }
+    public DbTransaction? Transaction { get; }
 
-    public CommandDefinition(string commandText, object? parameters = null, IDbTransaction? trans = null, CommandType? commandType = null)
+    public DbConnection Connection { get; }
+
+    public CommandDefinition(DbConnection connection, string commandText, object? parameters = null, DbTransaction? trans = null, CommandType? commandType = null)
     {
+        Connection = connection;
         CommandText = commandText;
         Parameters = parameters;
         CommandType = commandType;
         Transaction = trans;
     }
 
-    private CommandDefinition(object parameters)
+    internal DbCommand PrepareCommand(Action<IDbCommand, object?>? paramReader)
     {
-        this = default;
-        Parameters = parameters;
-    }
-
-    internal IDbCommand SetupCommand(IDbConnection cnn, Action<IDbCommand, object?>? paramReader)
-    {
-        IDbCommand dbCommand = cnn.CreateCommand();
+        DbCommand dbCommand = Connection.CreateCommand();
 
         GetInit(dbCommand.GetType())?.Invoke(dbCommand);
-
         if (Transaction != null)
             dbCommand.Transaction = Transaction;
 

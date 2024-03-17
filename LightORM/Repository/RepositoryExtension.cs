@@ -1,5 +1,4 @@
-﻿using LightORM.ExpressionSql;
-using MDbContext.Repository;
+﻿using MDbContext.Repository;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,6 +9,7 @@ public static class RepositoryExtension
 {
     public static IRepository<T> Repository<T>(this IExpressionContext sql)
     {
-        return new RepositoryImpl<T>(sql);
+        //return new RepositoryImpl<T>(sql);
+        throw new NotImplementedException();
     }
 }

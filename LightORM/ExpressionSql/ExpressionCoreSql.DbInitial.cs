@@ -1,6 +1,6 @@
 ﻿using LightORM.Context;
 using LightORM.DbStruct;
-using LightORM.ExpressionSql.Interface;
+using LightORM.Interfaces;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -49,7 +49,7 @@ internal partial class ExpressionCoreSql : IDbInitial
     {
         var sqlArgs = new SqlArgs { Action = SqlAction.CreateTable, Sql = sql };
         Life.BeforeExecute?.Invoke(sqlArgs);
-        conn.Execute(sql);
+        //conn.Execute(sql);
         sqlArgs.Done = true;
         Life.AfterExecute?.Invoke(sqlArgs);
     }

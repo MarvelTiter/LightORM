@@ -1,4 +1,4 @@
-﻿using LightORM.ExpressionSql.Interface.Select;
+﻿using LightORM.Interfaces;
 using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
@@ -38,13 +38,14 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     //}
     public DataTable ToDataTable()
     {
-        using var conn = dbConnect.CreateConnection();
-        var args = BuildArgs();
-        Life.BeforeExecute?.Invoke(args);
-        var ret = conn.ExecuteTable(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
-    }   
+        //using var conn = dbConnect.CreateConnection();
+        //var args = BuildArgs();
+        //Life.BeforeExecute?.Invoke(args);
+        //var ret = conn.ExecuteTable(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
+    }
 
 }

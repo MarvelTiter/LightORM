@@ -4,7 +4,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class ExpressionVisit
 {
-    public static void Visit(Expression exp, SqlConfig config, SqlContext context)
+    public static void Visit(Expression exp, SqlResolveOptions config, SqlContext context)
     {
 
         var visitor = GetVisitor(exp);

@@ -22,11 +22,11 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         DbKey = key;
     }
 
-    protected override SqlConfig WhereConfig => SqlConfig.UpdateWhere;
+    protected override SqlResolveOptions WhereConfig => SqlResolveOptions.UpdateWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
+        //Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public IExpUpdate<T> AppendData(T item)
@@ -34,7 +34,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         update ??= new SqlFragment();
         Expression<Func<object>> exp = () => item!;
         context.SetFragment(update);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Update, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.Update, context);
         return this;
     }
 
@@ -79,14 +79,14 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.UpdateIgnore, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.UpdateIgnore, context);
         return this;
     }
     public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, object value)
     {
         update ??= new SqlFragment();
         context.SetFragment(update);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.UpdatePartial, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.UpdatePartial, context);
         context.AppendDbParameter(value);
         return this;
     }
@@ -149,7 +149,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
     {
         update ??= new SqlFragment();
         context.SetFragment(update);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.Update, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.Update, context);
         return this;
     }
 

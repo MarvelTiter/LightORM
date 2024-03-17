@@ -1,6 +1,4 @@
-﻿using LightORM.ExpressionSql;
-using LightORM.ExpressionSql;
-using LightORM.ExpressionSql.Providers.Select;
+﻿using LightORM.Providers.Select;
 using System;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices.ComTypes;
@@ -18,9 +16,9 @@ public static class SelectExtension
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext self, Expression<Func<T1, T2, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2> CreateProvider<T1, T2>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider2<T1, T2>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2> CreateProvider<T1, T2>(Expression exp, ISqlExecutor executor) => new SelectProvider2<T1, T2>(exp, executor);
     #endregion
 
     #region 3个类型参数
@@ -31,14 +29,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self, Expression<Func<T1, T2, T3, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3> CreateProvider<T1, T2, T3>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider3<T1, T2, T3>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3> CreateProvider<T1, T2, T3>(Expression exp, ISqlExecutor executor) => new SelectProvider3<T1, T2, T3>(exp, executor);
     #endregion
 
     #region 4个类型参数
@@ -49,14 +47,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4> Select<T1, T2, T3, T4>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4> Select<T1, T2, T3, T4>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4> CreateProvider<T1, T2, T3, T4>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider4<T1, T2, T3, T4>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4> CreateProvider<T1, T2, T3, T4>(Expression exp, ISqlExecutor executor) => new SelectProvider4<T1, T2, T3, T4>(exp, executor);
     #endregion
 
     #region 5个类型参数
@@ -67,14 +65,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5> Select<T1, T2, T3, T4, T5>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5> Select<T1, T2, T3, T4, T5>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5> CreateProvider<T1, T2, T3, T4, T5>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider5<T1, T2, T3, T4, T5>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5> CreateProvider<T1, T2, T3, T4, T5>(Expression exp, ISqlExecutor executor) => new SelectProvider5<T1, T2, T3, T4, T5>(exp, executor);
     #endregion
 
     #region 6个类型参数
@@ -85,14 +83,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6> Select<T1, T2, T3, T4, T5, T6>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6> Select<T1, T2, T3, T4, T5, T6>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6> CreateProvider<T1, T2, T3, T4, T5, T6>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider6<T1, T2, T3, T4, T5, T6>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6> CreateProvider<T1, T2, T3, T4, T5, T6>(Expression exp, ISqlExecutor executor) => new SelectProvider6<T1, T2, T3, T4, T5, T6>(exp, executor);
     #endregion
 
     #region 7个类型参数
@@ -103,14 +101,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7> Select<T1, T2, T3, T4, T5, T6, T7>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7> Select<T1, T2, T3, T4, T5, T6, T7>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7> CreateProvider<T1, T2, T3, T4, T5, T6, T7>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider7<T1, T2, T3, T4, T5, T6, T7>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7> CreateProvider<T1, T2, T3, T4, T5, T6, T7>(Expression exp, ISqlExecutor executor) => new SelectProvider7<T1, T2, T3, T4, T5, T6, T7>(exp, executor);
     #endregion
 
     #region 8个类型参数
@@ -121,14 +119,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Select<T1, T2, T3, T4, T5, T6, T7, T8>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> Select<T1, T2, T3, T4, T5, T6, T7, T8>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider8<T1, T2, T3, T4, T5, T6, T7, T8>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8>(Expression exp, ISqlExecutor executor) => new SelectProvider8<T1, T2, T3, T4, T5, T6, T7, T8>(exp, executor);
     #endregion
 
     #region 9个类型参数
@@ -139,14 +137,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Expression exp, ISqlExecutor executor) => new SelectProvider9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(exp, executor);
     #endregion
 
     #region 10个类型参数
@@ -157,14 +155,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(Expression exp, ISqlExecutor executor) => new SelectProvider10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(exp, executor);
     #endregion
 
     #region 11个类型参数
@@ -175,14 +173,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(Expression exp, ISqlExecutor executor) => new SelectProvider11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(exp, executor);
     #endregion
 
     #region 12个类型参数
@@ -193,14 +191,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(Expression exp, ISqlExecutor executor) => new SelectProvider12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(exp, executor);
     #endregion
 
     #region 13个类型参数
@@ -211,14 +209,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(Expression exp, ISqlExecutor executor) => new SelectProvider13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(exp, executor);
     #endregion
 
     #region 14个类型参数
@@ -229,14 +227,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(Expression exp, ISqlExecutor executor) => new SelectProvider14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(exp, executor);
     #endregion
 
     #region 15个类型参数
@@ -247,14 +245,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(Expression exp, ISqlExecutor executor) => new SelectProvider15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(exp, executor);
     #endregion
 
     #region 16个类型参数
@@ -265,14 +263,14 @@ public static class SelectExtension
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(this IExpressionContext self, Expression<Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
     public static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Select<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>, object>> exp) where T1 : class, new()
     {
         var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(ins!.CurrentKey, ins, exp.Body);
+        return CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(exp, ins!.GetExecutor(ins!.CurrentKey));
     }
-    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(string key, ExpressionCoreSql core, Expression body) => new SelectProvider16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(body, core.GetContext(key), core.GetDbInfo(key), core.Life);
+    static IExpSelect<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> CreateProvider<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(Expression exp, ISqlExecutor executor) => new SelectProvider16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(exp, executor);
     #endregion
 
 }

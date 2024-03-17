@@ -4,7 +4,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class NewArrayExpVisitor : BaseVisitor<NewArrayExpression>
 {
-    public override void DoVisit(NewArrayExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(NewArrayExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var count = exp.Expressions.Count;
         for (int i = 0; i < count; i++)

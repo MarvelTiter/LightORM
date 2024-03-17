@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using LightORM.ExpressionSql.Interface;
+using System.Linq;
+using LightORM.Interfaces;
 
 namespace LightORM.ExpressionSql.Ado;
 
@@ -51,7 +52,8 @@ public partial class AdoImpl : IAdo
     {
         return InternalExecute(sql, param, () =>
          {
-             return CurrentConnection.Execute(sql, param);
+             //return CurrentConnection.Execute(sql, param);
+             return 0;
          });
     }
 
@@ -59,7 +61,8 @@ public partial class AdoImpl : IAdo
     {
         return InternalExecute(sql, param, () =>
         {
-            return CurrentConnection.ExecuteTable(sql, param);
+            //return CurrentConnection.ExecuteTable(sql, param);
+            return new DataTable();
         });
     }
 
@@ -67,7 +70,8 @@ public partial class AdoImpl : IAdo
     {
         return InternalExecute(sql, param, () =>
         {
-            return CurrentConnection.Query<T>(sql, param);
+            //return CurrentConnection.Query<T>(sql, param);
+            return Enumerable.Empty<T>();
         });
     }
 
@@ -75,7 +79,8 @@ public partial class AdoImpl : IAdo
     {
         return InternalExecute(sql, param, () =>
         {
-            return CurrentConnection.Query(sql, param);
+            //return CurrentConnection.Query(sql, param);
+            return Enumerable.Empty<object>();
         });
     }
 
@@ -83,7 +88,7 @@ public partial class AdoImpl : IAdo
     {
         return InternalExecute(sql, param, () =>
         {
-            return CurrentConnection.QuerySingle<T>(sql, param);
+            return default(T?);
         });
     }
 
@@ -99,7 +104,7 @@ public partial class AdoImpl : IAdo
     {
         InternalExecute<int>(sql, param, () =>
        {
-           CurrentConnection.ExecuteReader(sql, param, callback);
+           //CurrentConnection.ExecuteReader(sql, param, callback);
            return 0;
        });
     }

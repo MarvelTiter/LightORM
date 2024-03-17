@@ -7,17 +7,9 @@ namespace LightORM.Extension;
 
 internal static class AttributeExtension
 {
-    public static T? GetAttribute<T>(this MemberInfo self) where T : Attribute
+    public static T? GetAttribute<T>(this MemberInfo self, bool inherit = false) where T : Attribute
     {
-        if (self.IsDefined(typeof(T), false))
-        {
-            var attrs = self.GetCustomAttributes(typeof(T), false);
-            if (attrs.Length > 0 && attrs[0] is T)
-            {
-                return (T)attrs[0];
-            }
-        }
-        return null;
+        return Attribute.GetCustomAttribute(self, typeof(T), inherit) as T;
     }
 
     public static bool HasAttribute<T>(this MemberInfo self) where T : Attribute

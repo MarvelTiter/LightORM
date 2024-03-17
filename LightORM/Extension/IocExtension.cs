@@ -9,16 +9,7 @@ namespace MDbContext;
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 public static class IocExtension
 {
-    [Obsolete]
-    public static IServiceCollection UseLightOrm(this IServiceCollection services, Action<ExpressionSqlBuilder> config)
-    {
-        var builder = new ExpressionSqlBuilder();
-        config(builder);
-        var ins = builder.BuildContext();
-        services.AddSingleton(ins);
-        return services;
-    }
-
+   
     public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<ExpressionSqlOptions> options)
     {
         var option = new ExpressionSqlOptions();

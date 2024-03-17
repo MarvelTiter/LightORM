@@ -1,4 +1,4 @@
-using LightORM.ExpressionSql;
+using LightORM.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InjectTest.Controllers

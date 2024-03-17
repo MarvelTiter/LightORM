@@ -4,7 +4,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class NewExpVisitor : BaseVisitor<NewExpression>
 {
-    public override void DoVisit(NewExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(NewExpression exp, SqlResolveOptions config, SqlContext context)
     {
         if (config.RequiredValue)
         {

@@ -1,8 +1,11 @@
-﻿using LightORM.DbEntity.Attributes;
+﻿using LightORM.Cache;
+using LightORM.DbEntity.Attributes;
+using LightORM.Extension;
 using LightORM.SqlExecutor.Service;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -14,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.SqlExecutor;
 
-internal class ExpressionBuilder : IDeserializer
+internal class ExpressionBuilder
 {
 
     private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod("RecordFieldToBytes", BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -65,36 +68,42 @@ internal class ExpressionBuilder : IDeserializer
         Reader.GetBytes(Column, 0, Buffer, 0, Buffer.Length);
         return Buffer;
     }
-    public Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader)
+    public static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
     {
-        return BuildFunc<T>(reader, CultureInfo.CurrentCulture, false);
+        var type = typeof(T);
+
+        var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}";
+        return StaticCache<Func<IDataReader, object>>.GetOrAdd(cacheKey, () =>
+        {
+            return BuildFunc<T>(reader, CultureInfo.CurrentCulture);
+        });
     }
 
     /// <summary>
-    /// record => {
+    /// reader => {
     ///     return new T {
-    ///         Member0 = (memberType)record.Get_XXX[0],
-    ///         Member1 = (memberType)record.Get_XXX[1],
-    ///         Member2 = (memberType)record.Get_XXX[2],
-    ///         Member3 = (memberType)record.Get_XXX[3],
-    ///         Member4 = record.IsDBNull(4) ? default(memberType) : (memberType)record.Get_XXX[4],
+    ///         Member0 = (memberType)reader.Get_XXX[0],
+    ///         Member1 = (memberType)reader.Get_XXX[1],
+    ///         Member2 = (memberType)reader.Get_XXX[2],
+    ///         Member3 = (memberType)reader.Get_XXX[3],
+    ///         Member4 = reader.IsDBNull(4) ? default(memberType) : (memberType)reader.Get_XXX[4],
     ///     }
     /// }
     /// </summary>
     /// <typeparam name="Target"></typeparam>
-    /// <param name="RecordInstance"></param>
+    /// <param name="reader"></param>
     /// <param name="Culture"></param>
     /// <param name="MustMapAllProperties"></param>
     /// <returns></returns>
-    private Func<IDataRecord, object> BuildFunc<Target>(IDataRecord RecordInstance, CultureInfo Culture, bool MustMapAllProperties)
+    private static Func<IDataReader, object> BuildFunc<Target>(IDataReader reader, CultureInfo Culture)
     {
-        ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataRecord), "Record");
+        ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
-        DataTable SchemaTable = ((IDataReader)RecordInstance).GetSchemaTable();
-        Expression Body = default;
+        DataTable SchemaTable = reader.GetSchemaTable() ?? throw new NullReferenceException("GetSchemaTable 结果为 null");
+        Expression? Body = default;
 
         // 元组处理
-        if (TargetType.FullName.StartsWith("System.Tuple`"))
+        if (TargetType.FullName?.StartsWith("System.Tuple`") ?? false)
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
             if (Constructors.Count() != 1)
@@ -109,15 +118,14 @@ internal class ExpressionBuilder : IDeserializer
             for (int Ordinal = 0; Ordinal < Parameters.Length; Ordinal++)
             {
                 var ParameterType = Parameters[Ordinal].ParameterType;
-                if (Ordinal >= RecordInstance.FieldCount)
+                if (Ordinal >= reader.FieldCount)
                 {
-                    if (MustMapAllProperties) { throw new ArgumentException("Tuple has more fields than the DataReader"); }
                     TargetValueExpressions[Ordinal] = Expression.Default(ParameterType);
                 }
                 else
                 {
                     TargetValueExpressions[Ordinal] = GetTargetValueExpression(
-                                                    RecordInstance,
+                                                    reader,
                                                     Culture,
                                                     recordInstanceExp,
                                                     SchemaTable,
@@ -132,7 +140,7 @@ internal class ExpressionBuilder : IDeserializer
         {
             const int Ordinal = 0;
             Expression TargetValueExpression = GetTargetValueExpression(
-                                                    RecordInstance,
+                                                    reader,
                                                     Culture,
                                                     recordInstanceExp,
                                                     SchemaTable,
@@ -151,13 +159,13 @@ internal class ExpressionBuilder : IDeserializer
             {
                 Action work = delegate
                 {
-                    for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++)
+                    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                     {
                         //Check if the RecordFieldName matches the TargetMember
-                        if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal)))
+                        if (MemberMatchesName(TargetMember, reader.GetName(Ordinal)))
                         {
                             Expression TargetValueExpression = GetTargetValueExpression(
-                                                                    RecordInstance,
+                                                                    reader,
                                                                     Culture,
                                                                     recordInstanceExp,
                                                                     SchemaTable,
@@ -170,48 +178,40 @@ internal class ExpressionBuilder : IDeserializer
                             return;
                         }
                     }
-                    //If we reach this code the targetmember did not get mapped
-                    if (MustMapAllProperties)
-                    {
-                        throw new ArgumentException(string.Format("TargetField {0} is not matched by any field in the DataReader", TargetMember.Name));
-                    }
                 };
                 work();
             }
             // 属性处理 Property
             foreach (PropertyInfo TargetMember in TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (TargetMember.CanWrite)
+                if (!TargetMember.CanWrite)
                 {
-                    Action work = delegate
-                    {
-                        for (int Ordinal = 0; Ordinal < RecordInstance.FieldCount; Ordinal++)
-                        {
-                            //Check if the RecordFieldName matches the TargetMember
-                            if (MemberMatchesName(TargetMember, RecordInstance.GetName(Ordinal)))
-                            {
-                                Expression TargetValueExpression = GetTargetValueExpression(
-                                                                        RecordInstance,
-                                                                        Culture,
-                                                                        recordInstanceExp,
-                                                                        SchemaTable,
-                                                                        Ordinal,
-                                                                        TargetMember.PropertyType);
-
-                                //Create a binding to the target member
-                                MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                                Bindings.Add(Ordinal, BindExpression);
-                                return;
-                            }
-                        }
-                        //If we reach this code the targetmember did not get mapped
-                        if (MustMapAllProperties)
-                        {
-                            throw new ArgumentException(string.Format("TargetProperty {0} is not matched by any Field in the DataReader", TargetMember.Name));
-                        }
-                    };
-                    work();
+                    continue;
                 }
+                Action work = delegate
+                {
+
+                    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                    {
+                        //Check if the RecordFieldName matches the TargetMember
+                        if (MemberMatchesName(TargetMember, reader.GetName(Ordinal)))
+                        {
+                            Expression TargetValueExpression = GetTargetValueExpression(
+                                                                    reader,
+                                                                    Culture,
+                                                                    recordInstanceExp,
+                                                                    SchemaTable,
+                                                                    Ordinal,
+                                                                    TargetMember.PropertyType);
+
+                            //Create a binding to the target member
+                            MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
+                            Bindings.Add(Ordinal, BindExpression);
+                            return;
+                        }
+                    }
+                };
+                work();
             }
 
             Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
@@ -229,30 +229,29 @@ internal class ExpressionBuilder : IDeserializer
 
         string GetColumnNameAttribute()
         {
-            if (Member.IsDefined(typeof(ColumnAttribute), true))
-            {
-#if NET40
-                return (Member.GetCustomAttributes(typeof(ColumnAttribute), true).First() as ColumnAttribute)?.Name ?? string.Empty;
+#if NET6_0_OR_GREATER
+            return Member.GetAttribute<LightColumnAttribute>()?.Name 
+                ?? Member.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name 
+                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name 
+                ?? "";
 #else
-                return (Member.GetCustomAttribute(typeof(ColumnAttribute), true) as ColumnAttribute)?.Name ?? string.Empty;
+            return Member.GetAttribute<LightColumnAttribute>()?.Name 
+                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name 
+                ?? "";
 #endif
-            }
-            else
-            {
-                return string.Empty;
-            }
+
         }
     }
 
     private static Expression GetTargetValueExpression(
-        IDataRecord RecordInstance,
+        IDataReader reader,
         CultureInfo Culture,
         ParameterExpression recordInstanceExp,
         DataTable SchemaTable,
         int Ordinal,
         Type TargetMemberType)
     {
-        Type RecordFieldType = RecordInstance.GetFieldType(Ordinal);
+        Type RecordFieldType = reader.GetFieldType(Ordinal);
         var columnAllowDbNull = SchemaTable.Rows[Ordinal]["AllowDBNull"];
         bool AllowDBNull = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
         Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);

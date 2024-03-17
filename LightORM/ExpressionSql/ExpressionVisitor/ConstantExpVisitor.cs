@@ -4,7 +4,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class ConstantExpVisitor : BaseVisitor<ConstantExpression>
 {
-    public override void DoVisit(ConstantExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(ConstantExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var value = exp.Value;
         if (value == null)

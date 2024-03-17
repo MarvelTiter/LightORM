@@ -1,6 +1,5 @@
 ﻿using LightORM.ExpressionSql.Ado;
 using LightORM.ExpressionSql.Interface;
-using LightORM.ExpressionSql.Interface.Select;
 using LightORM.ExpressionSql.Providers;
 using LightORM.ExpressionSql.Providers.Select;
 using LightORM.SqlExecutor;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LightORM.ExpressionSql;
 
@@ -21,18 +21,12 @@ internal partial class ExpressionCoreSql
 #endif
 internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
-    private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
     private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+    private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlExecuteLife Life;
     //private IAdo ado;
 
-    public IAdo Ado
-    {
-        get
-        {
-            return new AdoImpl(GetDbInfo(CurrentKey), Life);
-        }
-    }//new AdoImpl(dbFactories);//
+    public ISqlExecutor Ado => GetExecutor(CurrentKey);
 
     internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
     {
@@ -44,16 +38,25 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     internal ITableContext GetContext(string key)
     {
-        if (dbFactories.TryGetValue(key, out var dbInfo))
-        {
-            if (!tableContexts.TryGetValue(key, out var dbContext))
-            {
-                dbContext = new TableContext(dbInfo.DbBaseType);
-                tableContexts[key] = dbContext;
-            }
-            return dbContext;
-        }
+        //if (dbFactories.TryGetValue(key, out var dbInfo))
+        //{
+        //    if (!tableContexts.TryGetValue(key, out var dbContext))
+        //    {
+        //        dbContext = new TableContext(dbInfo.DbBaseType);
+        //        tableContexts[key] = dbContext;
+        //    }
+        //    return dbContext;
+        //}
         throw new ArgumentException($"{key}异常");
+    }
+
+    internal ISqlExecutor GetExecutor(string key)
+    {
+        if (dbFactories.TryGetValue(key, out var info))
+        {
+            return new SqlExecutor.SqlExecutor(info);
+        }
+        throw new ArgumentException($"{key} not register");
     }
 
     internal DbConnectInfo GetDbInfo(string key)
@@ -81,11 +84,11 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
         _dbKey = key;
         return this;
     }
-    public IExpSelect<T> Select<T>() => Select<T>(t => new { t });
+    public IExpSelect<T> Select<T>() => Select<T>(t => t!);
 
     public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
 
-    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) => new SelectProvider1<T>(body, GetContext(key), GetDbInfo(key), Life);
+    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) => new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
 
     public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
     IExpInsert<T> CreateInsertProvider<T>(string key) => new InsertProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
@@ -97,63 +100,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     IExpDelete<T> CreateDeleteProvider<T>(string key) => new DeleteProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
 
 
-    private struct TransactionInfo
-    {
-        public string Sql { get; set; }
-        public object Parameters { get; set; }
-        public string Key { get; set; }
-    }
-    List<TransactionInfo> transactions = new List<TransactionInfo>();
-    internal void Attch(string sql, object param, string key = ConstString.Main)
-    {
-        transactions.Add(new TransactionInfo
-        {
-            Key = key,
-            Sql = sql,
-            Parameters = param,
-        });
-    }
 
-    public IExpressionContext BeginTransaction()
-    {
-        return new ExpressionCoreSql(dbFactories, Life);
-    }
-
-    public bool CommitTransaction()
-    {
-        if (transactions.Count == 0) return false;
-        var groups = transactions.GroupBy(i => i.Key);
-        Dictionary<IDbConnection, IDbTransaction> allTrans = new Dictionary<IDbConnection, IDbTransaction>();
-        foreach (var g in groups)
-        {
-            var conn = dbFactories[g.Key].CreateConnection();
-            conn.Open();
-            var trans = conn.BeginTransaction();
-            allTrans.Add(conn, trans);
-            foreach (var item in g)
-            {
-                try
-                {
-                    conn.Execute(item.Sql, item.Parameters, trans);
-                }
-                catch (Exception ex)
-                {
-                    foreach (var kv in allTrans)
-                    {
-                        kv.Value.Rollback();
-                        kv.Key.Close();
-                    }
-                    throw ex;
-                }
-            }
-        }
-        foreach (var kv in allTrans)
-        {
-            kv.Value.Commit();
-            kv.Key.Close();
-        }
-        return true;
-    }
 
     private bool disposedValue;
     protected virtual void Dispose(bool disposing)
@@ -183,5 +130,35 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
         // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    public void BeginTran()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task BeginTranAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void CommitTran()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task CommitTranAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RollbackTran()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RollbackTranAsync()
+    {
+        throw new NotImplementedException();
     }
 }

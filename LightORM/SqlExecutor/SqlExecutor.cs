@@ -1,357 +1,402 @@
-﻿using LightORM.SqlExecutor.Service;
-using System.Collections.Generic;
+﻿using System.ComponentModel;
 using System.Data;
-using System.Globalization;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace LightORM.SqlExecutor;
 
-public static partial class SqlExecutor
+internal class SqlExecutor : ISqlExecutor, IDisposable
 {
 
-    public static int Execute(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public Action<string, object?>? DbLog { get; set; }
+
+    public DbConnectInfo ConnectInfo { get; private set; }
+    /// <summary>
+    /// 数据库事务
+    /// </summary>
+    public DbTransaction? DbTransaction { get; set; }
+    public DbConnection DbConnection { get; private set; }
+    public SqlExecutor(DbConnectInfo connectInfo)
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        return InternalExecute(self, command);
+        ConnectInfo = connectInfo;
+        DbConnection = connectInfo.DbProviderFactory.CreateConnection()!;
+        DbConnection.ConnectionString = connectInfo.ConnectString;
+    }
+    public void BeginTran()
+    {
+        if (DbConnection.State != ConnectionState.Open)
+        {
+            DbConnection.Open();
+        }
+        DbTransaction ??= DbConnection.BeginTransaction();
     }
 
-    public static object? ExecuteScale(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public async Task BeginTranAsync()
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        return InternalScale(self, command);
+#if NET45_OR_GREATER
+        await Task.Yield();
+        throw new NotSupportedException();
+#else
+        if (DbConnection.State != ConnectionState.Open)
+        {
+            await DbConnection.OpenAsync();
+        }
+        DbTransaction ??= await DbConnection.BeginTransactionAsync();
+#endif
     }
 
-    public static DataTable ExecuteTable(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public void CommitTran()
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        return InternalExecuteTable(self, command);
+        DbTransaction!.Commit();
+        DbTransaction = null;
+        DbConnection.Close();
     }
 
-    public static void ExecuteReader(this IDbConnection self, string sql, object? param = null, Action<IDataReader>? action = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public async Task CommitTranAsync()
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        InternalReader(self, command, (reader, cacheinfo) =>
-         {
-             action?.Invoke(reader);
-             return 0;
-         });
+#if NET45_OR_GREATER
+        await Task.Yield();
+        throw new NotSupportedException();
+#else
+        await DbTransaction!.CommitAsync();
+        DbTransaction = null;
+        await DbConnection.CloseAsync();
+#endif
     }
 
-    public static IEnumerable<T> Query<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public void RollbackTran()
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        var result = InternalQuery<T>(self, command);
-        return result;
+        DbTransaction?.Rollback();
+        DbTransaction = null;
+        DbConnection.Close();
     }
 
-    public static IEnumerable<dynamic> Query(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    public async Task RollbackTranAsync()
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        var result = InternalQuery<MapperRow>(self, command);
-        return result;
+#if NET45_OR_GREATER
+        await Task.Yield();
+        throw new NotSupportedException();
+#else
+        if (DbTransaction != null)
+        {
+            await DbTransaction.RollbackAsync();
+            DbTransaction = null;
+            await DbConnection.CloseAsync();
+        }
+#endif
     }
 
-    public static T? QuerySingle<T>(this IDbConnection self, string sql, object? param = null, IDbTransaction? trans = null, CommandType? commandType = CommandType.Text)
+    private bool PrepareCommand(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
-        CommandDefinition command = new CommandDefinition(sql, param, trans, commandType);
-        return InternalSingle<T>(self, command);
+        DbLog?.Invoke(commandText, dbParameters);
+        var needToClose = false;
+        if (DbConnection.State != ConnectionState.Open)
+        {
+            connection.Open();
+            needToClose = true;
+        }
+        if (transaction != null)
+        {
+            command.Transaction = transaction;
+            needToClose = false;
+        }
+        command.CommandText = commandText;
+        command.CommandType = commandType;
+        if (dbParameters != null)
+        {
+            var action = Cache.DbParameterReader.GetDbParameterReader(commandText, dbParameters.GetType());
+            action?.Invoke(command, dbParameters);
+        }
+
+        return needToClose;
     }
 
-    public static bool ExecuteTrans(this IDbConnection self, IList<string> sqls, IList<object> ps)
+    public async Task<bool> PrepareCommandAsync(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
-        self.Open();
-        var tran = self.BeginTransaction();
+        DbLog?.Invoke(commandText, dbParameters);
+        var needToClose = false;
+        if (DbConnection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync();
+            needToClose = true;
+        }
+        if (transaction != null)
+        {
+            command.Transaction = transaction;
+            needToClose = false;
+        }
+        command.CommandText = commandText;
+        command.CommandType = commandType;
+        if (dbParameters != null)
+        {
+            var action = Cache.DbParameterReader.GetDbParameterReader(commandText, dbParameters.GetType());
+            action?.Invoke(command, dbParameters);
+        }
+        return needToClose;
+    }
+
+    public int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
         {
-            if (sqls.Count != ps.Count)
-                throw new ArgumentException("SQL与参数不匹配");
-            for (int i = 0; i < sqls.Count; i++)
-            {
-                var sql = sqls[i];
-                var p = ps[i];
-                self.Execute(sql, p, tran);
-            }
-            tran.Commit();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            tran.Rollback();
-            self.Close();
-            throw ex;
+            return cmd.ExecuteNonQuery();
         }
         finally
         {
-            self.Close();
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
+            {
+                DbConnection.Close();
+            }
         }
     }
 
-    private static IEnumerable<T> InternalQuery<T>(IDbConnection conn, CommandDefinition command)
+    public async Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        // 缓存
-        var parameter = command.Parameters;
-        Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
-        CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
-        // 读取
-        IDbCommand? cmd = null;
-        IDataReader? reader = null;
-        var wasClosed = conn.State == ConnectionState.Closed;
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
         {
-            cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
-            if (wasClosed)
-                conn.Open();
-            reader = ExecuteReaderWithFlagsFallback(cmd, wasClosed, CommandBehavior.SingleResult);
-            if (cacheInfo.Deserializer == null)
-            {
-                cacheInfo.Deserializer = BuildDeserializer<T>(reader);
-            }
-            while (reader.Read())
-            {
-                var val = cacheInfo.Deserializer?.Invoke(reader);
-                if (val == null)
-                {
-                    continue;
-                }
-                yield return GetValue<T>(val)!;
-            }
+            return await cmd.ExecuteNonQueryAsync();
         }
         finally
         {
-            // dispose
-            if (reader != null)
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
             {
-                if (!reader.IsClosed)
-                {
-                    try
-                    {
-                        cmd?.Cancel();
-                    }
-                    catch
-                    {
-                    }
-                }
-                reader.Dispose();
+                DbConnection.Close();
             }
-            if (wasClosed)
-            {
-                conn.Close();
-            }
-            cmd?.Dispose();
-        }
-
-        IDataReader ExecuteReaderWithFlagsFallback(IDbCommand c, bool close, CommandBehavior behavior)
-        {
-            try
-            {
-                return c.ExecuteReader(GetBehavior(close, behavior));
-            }
-            catch (ArgumentException ex)
-            {
-                throw ex;
-            }
-        }
-        CommandBehavior GetBehavior(bool close, CommandBehavior @default)
-        {
-            return (close ? (@default | CommandBehavior.CloseConnection) : @default);
         }
     }
 
-    private static T? InternalSingle<T>(IDbConnection conn, CommandDefinition command)
+    public T? ExecuteScalar<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        return InternalReader(conn, command, (reader, cacheInfo) =>
-        {
-            while (reader.Read())
-            {
-                var val = cacheInfo.Deserializer?.Invoke(reader);
-                return GetValue<T>(val);
-            }
-            return default;
-        }, true);
-    }
-
-    private static DataTable InternalExecuteTable(IDbConnection conn, CommandDefinition command)
-    {
-        return InternalReader(conn, command, (reader, cacheInfo) =>
-        {
-            DataTable dt = new DataTable();
-            dt.Load(reader);
-            return dt;
-        });
-    }
-
-    private static object? InternalScale(IDbConnection conn, CommandDefinition command)
-    {
-        return InternalExector(conn, command, cmd =>
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
         {
             var obj = cmd.ExecuteScalar();
-            return obj;
-        });
-    }
-
-    private static int InternalExecute(IDbConnection conn, CommandDefinition command)
-    {
-        return InternalExector(conn, command, cmd =>
-        {
-            var count = cmd.ExecuteNonQuery();
-            return count;
-        });
-    }
-
-    private static T InternalReader<T>(IDbConnection conn, CommandDefinition command, Func<IDataReader, CacheInfo, T> func, bool singleRow = false)
-    {
-        // 缓存
-        var parameter = command.Parameters;
-        Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(T), parameter?.GetType());
-        CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
-        // 读取
-        var wasClosed = conn.State == ConnectionState.Closed;
-        IDbCommand? cmd = null;
-        IDataReader? reader = null;
-        try
-        {
-            if (wasClosed)
-                conn.Open();
-            cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
-            // singleRow 加上 CommandBehavior.SingleRow
-            reader = cmd.ExecuteReader(singleRow ? CommandBehavior.SingleResult | CommandBehavior.SequentialAccess | CommandBehavior.SingleRow : CommandBehavior.SingleResult | CommandBehavior.SequentialAccess);
-            if (cacheInfo.Deserializer == null)
+            if (obj is DBNull || obj is null)
             {
-                cacheInfo.Deserializer = BuildDeserializer<T>(reader);
+                return default;
             }
-            return func(reader, cacheInfo);
+            return ChangeType<T>(obj);
         }
         finally
         {
-            // dispose
-            if (reader != null)
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
             {
-                if (!reader.IsClosed)
-                {
-                    try
-                    {
-                        cmd?.Cancel();
-                    }
-                    catch
-                    {
-                    }
-                }
-                reader.Dispose();
+                DbConnection.Close();
             }
-            if (wasClosed)
-            {
-                conn.Close();
-            }
-            cmd?.Dispose();
         }
     }
 
-    private static T InternalExector<T>(IDbConnection conn, CommandDefinition command, Func<IDbCommand, T> func)
+    public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        // 缓存
-        var parameter = command.Parameters;
-        Certificate certificate = new Certificate(command.CommandText, command.CommandType, conn, typeof(object), parameter?.GetType());
-        CacheInfo cacheInfo = CacheInfo.GetCacheInfo(certificate, parameter);
-        // 读取
-        var wasClosed = conn.State == ConnectionState.Closed;
-        IDbCommand? cmd = null;
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
         {
-            if (wasClosed)
-                conn.Open();
-            cmd = command.SetupCommand(conn, cacheInfo.ParameterReader);
-            return func(cmd);
+            var obj = await cmd.ExecuteScalarAsync();
+            if (obj is DBNull || obj is null)
+            {
+                return default;
+            }
+            return ChangeType<T>(obj);
         }
         finally
         {
-            // dispose               
-            if (wasClosed)
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
             {
-                conn.Close();
+                DbConnection.Close();
             }
-            cmd?.Dispose();
         }
     }
 
-    private static Func<IDataReader, object> BuildDeserializer<T>(IDataReader reader)
+    public DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-
-        if (typeof(T) == typeof(object) || typeof(T) == typeof(MapperRow))
-        {
-            return GetMapperRowDeserializer<T>(reader, false);
-        }
-        IDeserializer des = new ExpressionBuilder();
-        return des.BuildDeserializer<T>(reader);
-    }
-
-    internal static Func<IDataReader, object> GetMapperRowDeserializer<T>(IDataRecord reader, bool returnNullIfFirstMissing)
-    {
-        var fieldCount = reader.FieldCount;
-
-        MapperTable? table = null;
-
-        return
-            r =>
-            {
-                if (table == null)
-                {
-                    //Type entityType = typeof(T);
-                    //PropertyInfo[] props = entityType.GetProperties();
-                    //Dictionary<string, string> nameMap = new Dictionary<string, string>();
-                    //foreach (PropertyInfo prop in props)
-                    //{
-                    //    var attr = prop.GetCustomAttribute<ColumnNameAttribute>();
-                    //    var field = attr?.Name ?? prop.Name;
-                    //    nameMap.Add(field, prop.Name);
-                    //}
-                    string[] names = new string[fieldCount];
-                    for (int i = 0; i < fieldCount; i++)
-                    {
-                        string rawName = r.GetName(i).ToUpper();
-                        names[i] = rawName;//(nameMap.ContainsKey(rawName) ? nameMap[rawName] : rawName);
-                    }
-                    table = new MapperTable(names);
-                }
-
-                var values = new object[fieldCount];
-
-                if (returnNullIfFirstMissing)
-                {
-                    values[0] = r.GetValue(0);
-                    if (values[0] is DBNull)
-                    {
-                        return null;
-                    }
-                }
-                var begin = returnNullIfFirstMissing ? 1 : 0;
-                for (var iter = begin; iter < fieldCount; ++iter)
-                {
-                    object obj = r.GetValue(iter);
-                    values[iter] = obj is DBNull ? null : obj;
-                }
-                return new MapperRow(table, values);
-            };
-    }
-
-    private static T? GetValue<T>(object? val)
-    {
-        if (val is T t)
-        {
-            return t;
-        }
-        Type effectiveType = typeof(T);
-        if (val == null && (!effectiveType.IsValueType || Nullable.GetUnderlyingType(effectiveType) != null))
-        {
-            return default;
-        }
-
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
         {
-            Type conversionType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-            return (T)Convert.ChangeType(val, conversionType, CultureInfo.InvariantCulture);
+            if (needToClose)
+            {
+                return cmd.ExecuteReader(CommandBehavior.CloseConnection);
+            }
+            else
+            {
+                return cmd.ExecuteReader();
+            }
         }
-        catch (Exception)
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+        }
+    }
+
+    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
+        {
+            if (needToClose)
+            {
+                return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+            }
+            else
+            {
+                return await cmd.ExecuteReaderAsync();
+            }
+        }
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+        }
+    }
+
+    public DataSet ExecuteDataSet(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var ds = new DataSet();
+        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
+        {
+            adapter.SelectCommand = cmd;
+            adapter.Fill(ds);
+        }
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
+                DbConnection.Close();
+        }
+        return ds;
+    }
+
+    public async Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var ds = new DataSet();
+        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
+        {
+            adapter.SelectCommand = cmd;
+            adapter.Fill(ds);
+        }
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
+                DbConnection.Close();
+        }
+        return ds;
+    }
+
+    public DataTable ExecuteDataTable(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var ds = new DataTable();
+        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
+        {
+            adapter.SelectCommand = cmd;
+            adapter.Fill(ds);
+        }
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
+                DbConnection.Close();
+        }
+        return ds;
+    }
+
+    public async Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    {
+        var ds = new DataTable();
+        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        var cmd = DbConnection.CreateCommand();
+        var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
+        try
+        {
+            adapter.SelectCommand = cmd;
+            adapter.Fill(ds);
+        }
+        finally
+        {
+            cmd.Parameters.Clear();
+            cmd.Dispose();
+            if (needToClose)
+                DbConnection.Close();
+        }
+        return ds;
+    }
+
+
+    private static T? ChangeType<T>(object value)
+    {
+        var conversionType = typeof(T);
+        if (value == null)
         {
             return default;
         }
+        var type = value.GetType();
+        if (type.Equals(typeof(Guid)) && conversionType.Equals(typeof(string)))
+        {
+            value = value.ToString()!;
+        }
+        if (conversionType.Equals(type))
+        {
+            return (T)value;
+        }
+        if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+        {
+            var nullableConverter = new NullableConverter(conversionType);
+            conversionType = nullableConverter.UnderlyingType;
+        }
+        return (T)Convert.ChangeType(value, conversionType);
+    }
+
+    private bool disposedValue;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                DbTransaction?.Rollback();
+                DbTransaction = null;
+                if (DbConnection != null && DbConnection.State == ConnectionState.Open)
+                {
+                    DbConnection.Close();
+                }
+            }
+            disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

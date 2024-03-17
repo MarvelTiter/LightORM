@@ -1,7 +1,4 @@
-﻿using LightORM.ExpressionSql;
-using LightORM.ExpressionSql.ExpressionVisitor;
-using LightORM.ExpressionSql.Interface;
-using LightORM.ExpressionSql.Interface.Select;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
 using MDbContext;
 using LightORM.SqlExecutor;
 using System;
@@ -11,6 +8,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LightORM.Interfaces;
 
 namespace LightORM.ExpressionSql.Providers.Select;
 
@@ -20,8 +18,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
     protected SqlFragment? groupBy;
     protected SqlFragment? orderBy;
     private readonly Expression selectBody;
-    protected override SqlConfig WhereConfig => SqlConfig.Where;
-
+    protected override SqlResolveOptions WhereConfig => SqlResolveOptions.Where;
     public BasicSelect0(Expression body, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
   : base(getContext, connectInfos, life)
     {
@@ -138,7 +135,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select ??= new SqlFragment();
         context.SetFragment(select);
         select.Append("MAX(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
         // tosql去掉最后2个字符
         select.Append(")))");
         SqlArgs args = BuildArgs();
@@ -150,7 +147,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select ??= new SqlFragment();
         context.SetFragment(select);
         select.Append("SUM(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
         // tosql去掉最后2个字符
         select.Append(")))");
         SqlArgs args = BuildArgs();
@@ -162,7 +159,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         select ??= new SqlFragment();
         context.SetFragment(select);
         select.Append("COUNT(");
-        ExpressionVisit.Visit(exp.Body, SqlConfig.SelectFunc, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.SelectFunc, context);
         // tosql去掉最后2个字符
         select.Append(")))");
         SqlArgs args = BuildArgs();
@@ -192,14 +189,7 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         distanct = true;
         return (this as TSelect)!;
     }
-    //TSelect? subQuery;
-    //public TSelect From(Func<IExpressionContext, TSelect> sub)
-    //{
-    //    throw new NotImplementedException();
-    //    subQuery = sub(Life.Core!);
-    //    return (this as TSelect)!;
-    //}
-
+   
     private string BuildCountSql()
     {
         var tables = context.Tables;
@@ -232,4 +222,28 @@ internal partial class BasicSelect0<TSelect, T1> : BasicProvider<T1>, IExpSelect
         };
     }
 
+    public TSelect As(string tableName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public TSelect As(Type type)
+    {
+        throw new NotImplementedException();
+    }
+
+    public TSelect As<TOther>()
+    {
+        throw new NotImplementedException();
+    }
+
+    public TSelect Where(string whereString)
+    {
+        throw new NotImplementedException();
+    }
+
+    public TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp)
+    {
+        throw new NotImplementedException();
+    }
 }

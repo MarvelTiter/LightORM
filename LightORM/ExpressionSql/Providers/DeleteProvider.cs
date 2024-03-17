@@ -1,5 +1,4 @@
 ﻿using LightORM.ExpressionSql.ExpressionVisitor;
-using LightORM.ExpressionSql.Interface;
 
 /* 项目“LightORM (net4.0)”的未合并的更改
 在此之前:
@@ -9,6 +8,7 @@ using LightORM.ExpressionSql.Providers;
 using MDbContext;
 */
 using LightORM.ExpressionSql.Providers;
+using LightORM.Interfaces;
 using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
@@ -28,11 +28,11 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         DbKey = key;
     }
 
-    protected override SqlConfig WhereConfig => SqlConfig.DeleteWhere;
+    protected override SqlResolveOptions WhereConfig => SqlResolveOptions.DeleteWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
+        //Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public int Execute()
@@ -104,7 +104,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         Expression<Func<object>> exp = () => item!;
         delete ??= new SqlFragment();
         context.SetFragment(delete);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Delete, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.Delete, context);
         return this;
     }
 

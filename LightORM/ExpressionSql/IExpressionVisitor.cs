@@ -5,7 +5,7 @@ namespace LightORM.ExpressionSql;
 
 internal interface IExpressionVisitor
 {
-    void Visit(Expression expression, SqlConfig config, SqlContext context);
+    void Visit(Expression expression, SqlResolveOptions config, SqlContext context);
     //void Select(Expression exp, SqlContext context);
     //void DbFunc(Expression exp, SqlContext context);
     //void Update(Expression exp, SqlContext context);

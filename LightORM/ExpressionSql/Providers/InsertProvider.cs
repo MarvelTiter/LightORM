@@ -1,5 +1,4 @@
 ﻿using LightORM.ExpressionSql.ExpressionVisitor;
-using LightORM.ExpressionSql.Interface;
 using LightORM.Utils;
 using LightORM.ExpressionSql.Providers;
 using LightORM.SqlExecutor;
@@ -10,6 +9,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using LightORM.Interfaces;
 
 namespace LightORM.ExpressionSql.Providers;
 
@@ -23,11 +23,11 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         DbKey = key;
     }
 
-    protected override SqlConfig WhereConfig => throw new NotImplementedException();
+    protected override SqlResolveOptions WhereConfig => throw new NotImplementedException();
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
+        //Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
     IEnumerable<SimpleColumn>? entityColumns;
     List<T>? entities;
@@ -36,7 +36,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
         insert ??= new SqlFragment();
         context.SetFragment(insert);
         Expression<Func<object>> exp = () => item!;
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Insert, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.Insert, context);
         //entityColumns ??= typeof(T).GetColumns();
         //entities ??= new List<T>();
         //entities.Add(item);
@@ -95,7 +95,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.InsertIgnore, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.InsertIgnore, context);
         return this;
     }
 
@@ -103,7 +103,7 @@ internal partial class InsertProvider<T> : BasicProvider<T>, IExpInsert<T>
     {
         insert ??= new SqlFragment();
         context.SetFragment(insert);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.Insert, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.Insert, context);
         return this;
     }
 

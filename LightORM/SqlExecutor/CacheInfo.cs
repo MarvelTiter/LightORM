@@ -20,14 +20,14 @@ internal class CacheInfo
         CacheInfo info = new CacheInfo();
         if (certificate.ParameterType != null)
         {
-            Action<IDbCommand, object?> action;
-            // IDictionary, Object
-            action = (cmd, obj) =>
-            {
-                IDbParameterHandle handler = new DbParameterHandler(obj);
-                handler.AddDbParameter(cmd, certificate);
-            };
-            info.ParameterReader = action;
+            //Action<IDbCommand, object?> action;
+            //// IDictionary, Object
+            //action = (cmd, obj) =>
+            //{
+            //    IDbParameterHandle handler = new DbParameterHandler(obj);
+            //    handler.AddDbParameter(cmd, certificate);
+            //};
+            //info.ParameterReader = action;
         }
         cache.Add(certificate, info);
         return info;

@@ -1,5 +1,4 @@
 ﻿using LightORM.DbEntity.Attributes;
-using LightORM.ExpressionSql;
 using LightORM.Extension;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -8,7 +7,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class ParameterExpVisitor : BaseVisitor<ParameterExpression>
 {
-    public override void DoVisit(ParameterExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(ParameterExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var t = exp.Type;
         var props = t.GetProperties();

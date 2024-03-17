@@ -1,6 +1,5 @@
-﻿using LightORM.ExpressionSql.Interface;
-using LightORM.ExpressionSql.Interface.Select;
-using LightORM.ExpressionSql.Providers.Select;
+﻿using LightORM.ExpressionSql.Providers.Select;
+using LightORM.Interfaces;
 using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,11 @@ internal partial class SelectProvider1<T1> : BasicSelect0<IExpSelect<T1>, T1>, I
     {
         GroupByHandle(exp.Body);
         return this;
+    }
+
+    public IExpSelect<T1> GroupByIf(bool ifGroupby, Expression<Func<T1, bool>> exp)
+    {
+        throw new NotImplementedException();
     }
 
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true)

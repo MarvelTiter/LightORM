@@ -1,4 +1,6 @@
-﻿namespace LightORM.ExpressionSql;
+﻿using System.Reflection;
+
+namespace LightORM.ExpressionSql;
 
 internal struct SqlFieldInfo
 {
@@ -10,3 +12,5 @@ internal struct SqlFieldInfo
     public bool IsPrimaryKey { get; set; }
     public TableInfo? Table { get; set; }
 }
+
+

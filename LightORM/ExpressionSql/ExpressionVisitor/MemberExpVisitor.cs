@@ -11,7 +11,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 internal class MemberExpVisitor : BaseVisitor<MemberExpression>
 {
 
-    public override void DoVisit(MemberExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(MemberExpression exp, SqlResolveOptions config, SqlContext context)
     {
         if (config.RequiredResolveEntity)
         {
@@ -63,7 +63,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         }
     }
 
-    private void ResolveEntity(MemberExpression exp, SqlConfig config, SqlContext context)
+    private void ResolveEntity(MemberExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var e = Expression.Lambda(exp).Compile().DynamicInvoke();
         var eType = e.GetType();

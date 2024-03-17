@@ -10,10 +10,19 @@ public class TableNameAttribute : Attribute
         TableName = name;
     }
 }
+[Obsolete]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class TableAttribute : Attribute
 {
     public string? Name { get; set; }
+}
+
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class LightTableAttribute : Attribute
+{
+    public string? Name { get; set; }
+    public string? DatabaseKey { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]

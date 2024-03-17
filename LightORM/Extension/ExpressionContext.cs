@@ -1,8 +1,8 @@
 ﻿using LightORM.DbEntity;
-using LightORM.ExpressionSql.Interface;
 using LightORM.ExpressionSql;
 using System.Linq;
 using System.Reflection;
+using LightORM.Interfaces;
 
 namespace LightORM.Extension;
 

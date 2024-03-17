@@ -43,6 +43,10 @@ internal class TableInfo : ICloneable
     public TableLinkType TableType { get; set; }
     public Dictionary<string, SqlFieldInfo>? Fields { get; set; }
     public SqlFragment? Fragment { get; set; }
+    public bool IsAnonymousType { get; set; }
+    public string? TargetDatabase { get; set; }
+    public string? Description { get; set; }
+    public List<ColumnInfo> Columns { get; set; } = new();
     public bool Compare(Type type)
     {
         return Type!.IsAssignableFrom(type)

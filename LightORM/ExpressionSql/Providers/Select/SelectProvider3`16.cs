@@ -1,6 +1,6 @@
-﻿using LightORM.ExpressionSql.Interface;
-using LightORM.ExpressionSql.Interface.Select;
+﻿using LightORM.ExpressionSql.Interface.Select;
 using LightORM.ExpressionSql.Providers.Select;
+using LightORM.Interfaces;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 

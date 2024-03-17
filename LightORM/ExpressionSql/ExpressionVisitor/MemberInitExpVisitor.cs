@@ -6,7 +6,7 @@ namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class MemberInitExpVisitor : BaseVisitor<MemberInitExpression>
 {
-    public override void DoVisit(MemberInitExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(MemberInitExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var bindings = exp.Bindings;
         if ((bindings?.Count) > 0)

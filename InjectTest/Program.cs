@@ -1,6 +1,6 @@
 using LightORM.Context;
-using LightORM.ExpressionSql.Interface;
 using LightORM.Extension;
+using LightORM.Interfaces;
 using MDbContext;
 using MDbEntity.Attributes;
 using Microsoft.Data.Sqlite;

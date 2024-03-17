@@ -1,6 +1,6 @@
-﻿using LightORM.ExpressionSql;
+﻿using LightORM.Abstracts.Builder;
 using LightORM.ExpressionSql.ExpressionVisitor;
-using LightORM.ExpressionSql.Interface;
+using LightORM.Interfaces;
 using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,6 @@ namespace LightORM.ExpressionSql.Providers;
 internal abstract partial class BasicProvider<T1>
 {
     protected readonly SqlContext context;
-    //private readonly ITableContext tableContext;
-
-    //protected readonly List<TableInfo> tables;
     protected readonly DbConnectInfo dbConnect;
     protected readonly Dictionary<string, SqlFieldInfo> SessionFields = new Dictionary<string, SqlFieldInfo>();
     protected SqlFragment? where;
@@ -35,7 +32,7 @@ internal abstract partial class BasicProvider<T1>
         context.AddTable(typeof(T1));
     }
 
-    protected abstract SqlConfig WhereConfig { get; }
+    protected abstract SqlResolveOptions WhereConfig { get; }
     protected virtual void WhereHandle(Expression body)
     {
         where ??= new SqlFragment();
@@ -55,26 +52,28 @@ internal abstract partial class BasicProvider<T1>
 
     internal TReturn InternalSingle<TReturn>(SqlArgs args)
     {
-        Life.BeforeExecute?.Invoke(args);
-        using var conn = dbConnect.CreateConnection();
-        var ret = conn.QuerySingle<TReturn>(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
+        //Life.BeforeExecute?.Invoke(args);
+        //using var conn = dbConnect.CreateConnection();
+        //var ret = conn.QuerySingle<TReturn>(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
     }
-       
+
 
     internal int InternalExecute(SqlArgs args)
     {
-        Life.BeforeExecute?.Invoke(args);
-        using var conn = dbConnect.CreateConnection();
-        var ret = conn.Execute(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
+        //Life.BeforeExecute?.Invoke(args);
+        //using var conn = dbConnect.CreateConnection();
+        //var ret = conn.Execute(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
     }
 
-    
+
 
     //internal TReturn InternalExecute<TReturn>(string sql, object param)
     //{
@@ -84,33 +83,36 @@ internal abstract partial class BasicProvider<T1>
 
     internal  IEnumerable<TReturn> InternalQuery<TReturn>(SqlArgs args)
     {
-        Life.BeforeExecute?.Invoke(args);
-        var conn = dbConnect.CreateConnection();
-        var ret = conn.Query<TReturn>(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
+        //Life.BeforeExecute?.Invoke(args);
+        //var conn = dbConnect.CreateConnection();
+        //var ret = conn.Query<TReturn>(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
     }
 
     internal IEnumerable<dynamic> InternalQuery(SqlArgs args)
     {
         //var sql = ToSql();
         //var param = context.GetParameters();
-        Life.BeforeExecute?.Invoke(args);
-        var conn = dbConnect.CreateConnection();
-        var ret = conn.Query(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
-    }    
+        //Life.BeforeExecute?.Invoke(args);
+        //var conn = dbConnect.CreateConnection();
+        //var ret = conn.Query(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
+    }
 
     internal object InternalScale(SqlArgs args)
     {
-        Life.BeforeExecute?.Invoke(args);
-        var conn = dbConnect.CreateConnection();
-        var ret = conn.ExecuteScale(args.Sql!, args.SqlParameter);
-        args.Done = true;
-        Life.AfterExecute?.Invoke(args);
-        return ret;
+        //Life.BeforeExecute?.Invoke(args);
+        //var conn = dbConnect.CreateConnection();
+        //var ret = conn.ExecuteScale(args.Sql!, args.SqlParameter);
+        //args.Done = true;
+        //Life.AfterExecute?.Invoke(args);
+        //return ret;
+        throw new NotImplementedException();
     }   
 }
