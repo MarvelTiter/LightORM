@@ -3,11 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using LightORM.Context;
 
 namespace LightORM.Interfaces
 {
     internal interface ISqlBuilder
     {
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        DbBaseType DbType { get; set; }
         /// <summary>
         /// 表达式
         /// </summary>

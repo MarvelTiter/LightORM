@@ -19,6 +19,11 @@ namespace LightORM.Cache
             return caches.GetOrAdd(key, new Lazy<T>(func)).Value;
         }
 
+        public static T? Get(string key)
+        {
+            return caches.TryGetValue(key, out var lazy) ? lazy.Value : default;
+        }
+
         public static int Count => caches.Count;
     }
 }

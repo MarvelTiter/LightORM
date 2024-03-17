@@ -8,7 +8,6 @@ namespace LightORM.SqlExecutor;
 
 internal class SqlExecutor : ISqlExecutor, IDisposable
 {
-
     public Action<string, object?>? DbLog { get; set; }
 
     public DbConnectInfo ConnectInfo { get; private set; }

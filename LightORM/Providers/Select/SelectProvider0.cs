@@ -13,7 +13,7 @@ using LightORM.Context;
 
 namespace LightORM.Providers.Select;
 
-internal partial class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
+internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
 {
     protected SelectBuilder SqlBuilder { get; }
     protected ISqlExecutor Executor { get; }

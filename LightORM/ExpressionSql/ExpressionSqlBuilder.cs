@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq.Expressions;
+using LightORM.Cache;
 
 namespace LightORM.ExpressionSql;
 
@@ -46,14 +47,15 @@ public class DbLogAop
 
 public class ExpressionSqlOptions
 {
-    internal ConcurrentDictionary<string, DbConnectInfo> DbFactories { get; } = new ConcurrentDictionary<string, DbConnectInfo>();
+    // internal ConcurrentDictionary<string, DbConnectInfo> DbFactories { get; } = new ConcurrentDictionary<string, DbConnectInfo>();
     public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, string connStr, DbProviderFactory factory)
     {
         return SetDatabase(ConstString.Main, dbBaseType, connStr, factory);
     }
     public ExpressionSqlOptions SetDatabase(string key, DbBaseType dbBaseType, string connStr, DbProviderFactory factory)
     {
-        DbFactories[key] = new DbConnectInfo(dbBaseType, connStr, factory);
+        var info = new DbConnectInfo(dbBaseType, connStr, factory);
+        _ = StaticCache<DbConnectInfo>.GetOrAdd(key, () => info);
         return this;
     }
     
@@ -88,11 +90,11 @@ public partial class ExpressionSqlBuilder
 
     internal IExpressionContext InnerBuild()
     {
-        if ((options.DbFactories?.Count ?? 0) < 1)
-        {
-            throw new Exception("未设置连接数据库");
-        }
-        return new ExpressionCoreSql(options.DbFactories!, options.Life);
+        // if ((options.DbFactories?.Count ?? 0) < 1)
+        // {
+        //     throw new Exception("未设置连接数据库");
+        // }
+        return new ExpressionCoreSql(options.Life);
     }
 
     public IExpressionContext Build()

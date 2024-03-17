@@ -25,33 +25,28 @@ internal partial class ExpressionCoreSql : IDbInitial
     }
     public IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas)
     {
-        var info = GetDbInfo(key);
+        using var info = GetExecutor(key);
         try
         {
-            using var conn = info.CreateConnection.Invoke();
-            DoCreateTable(conn, GenerateCreateSql<T>(key));
-            Log($"{info.DbBaseType} Table: [{typeof(T).Name}] Created!");
+            DoCreateTable(info, GenerateCreateSql<T>(key));
+            Log($"{info.ConnectInfo.DbBaseType} Table: [{typeof(T).Name}] Created!");
             if (datas != null && datas.Any())
             {
                 var effects = Insert<T>().AppendData(datas).Execute();
-                Log($"{info.DbBaseType} Table: [{typeof(T).Name}] Inserted {effects} Rows");
+                Log($"{info.ConnectInfo.DbBaseType} Table: [{typeof(T).Name}] Inserted {effects} Rows");
             }
         }
         catch (Exception ex)
         {
-            Log($"{info.DbBaseType} Table: [{typeof(T).Name}] Create Failed! {ex.Message}");
+            Log($"{info.ConnectInfo.DbBaseType} Table: [{typeof(T).Name}] Create Failed! {ex.Message}");
             throw;
         }
         return this;
     }
 
-    private void DoCreateTable(IDbConnection conn, string sql)
+    private void DoCreateTable(ISqlExecutor conn, string sql)
     {
-        var sqlArgs = new SqlArgs { Action = SqlAction.CreateTable, Sql = sql };
-        Life.BeforeExecute?.Invoke(sqlArgs);
-        //conn.Execute(sql);
-        sqlArgs.Done = true;
-        Life.AfterExecute?.Invoke(sqlArgs);
+        conn.ExecuteNonQuery(sql);
     }
 
     TableGenerateOption tableOption = new TableGenerateOption();

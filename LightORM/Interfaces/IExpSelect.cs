@@ -1,10 +1,4 @@
-﻿using LightORM.ExpressionSql.Interface.Select;
-using LightORM.ExpressionSql.Providers.Select;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq.Expressions;
-using System.Threading;
+﻿using System.Data;
 using System.Threading.Tasks;
 
 namespace LightORM.Interfaces;
@@ -66,7 +60,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     //Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
     IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true);
     IExpSelect<T1> GroupBy(Expression<Func<T1, object>> exp);
-    IExpSelect<T1> GroupByIf(bool ifGroupby, Expression<Func<T1, bool>> exp);
+    //IExpSelect<T1> GroupByIf(bool ifGroupby, Expression<Func<T1, bool>> exp);
 
 }
 

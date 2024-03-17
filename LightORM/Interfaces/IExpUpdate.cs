@@ -5,7 +5,7 @@ using LightORM.Interfaces;
 
 namespace LightORM.ExpressionSql.Interface;
 
-public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>, ITransactionable
+public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>
 {
     IExpUpdate<T> AppendData(T item);
     IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns);

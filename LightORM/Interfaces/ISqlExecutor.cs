@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
-
 using System.Threading.Tasks;
 using LightORM;
 using LightORM.ExpressionSql;
@@ -12,7 +11,7 @@ using LightORM.Interfaces;
 
 namespace LightORM.Interfaces;
 
-public interface ISqlExecutor
+public interface ISqlExecutor : IDisposable
 {
     /// <summary>
     /// 数据库日志
@@ -20,10 +19,12 @@ public interface ISqlExecutor
     public Action<string, object?>? DbLog { get; set; }
 
     internal DbConnectInfo ConnectInfo { get; }
+
     /// <summary>
     /// 数据库事务
     /// </summary>
     public DbTransaction? DbTransaction { get; set; }
+
     public DbConnection DbConnection { get; }
 
     /// <summary>
@@ -57,7 +58,7 @@ public interface ISqlExecutor
     /// </summary>
     /// <returns></returns>
     Task RollbackTranAsync();
-        
+
     /// <summary>
     /// 执行非查询
     /// </summary>
@@ -74,7 +75,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行标量
@@ -94,7 +96,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行阅读器
@@ -103,7 +106,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    DbDataReader ExecuteReader(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行阅读器异步
@@ -112,7 +116,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行数据集
@@ -130,7 +135,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行数据表格
@@ -139,7 +145,8 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    DataTable ExecuteDataTable(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    DataTable ExecuteDataTable(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行数据表格异步
@@ -148,5 +155,6 @@ public interface ISqlExecutor
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null,
+        CommandType commandType = CommandType.Text);
 }

@@ -1,4 +1,4 @@
-﻿namespace LightORM.ExpressionSql.Interface.Select;
+﻿namespace LightORM.Models;
 
 public class TypeSet<T1, T2>
 {

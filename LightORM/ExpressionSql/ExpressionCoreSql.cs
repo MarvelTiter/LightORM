@@ -1,14 +1,10 @@
 ﻿using LightORM.ExpressionSql.Ado;
 using LightORM.ExpressionSql.Interface;
 using LightORM.ExpressionSql.Providers;
-using LightORM.ExpressionSql.Providers.Select;
-using LightORM.SqlExecutor;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
+using System.Dynamic;
 using System.Threading.Tasks;
+using LightORM.Cache;
 
 namespace LightORM.ExpressionSql;
 
@@ -17,59 +13,42 @@ internal partial class ExpressionCoreSql
 {
     public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
 }
-
 #endif
 internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
-    private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+    // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
     private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlExecuteLife Life;
     //private IAdo ado;
 
     public ISqlExecutor Ado => GetExecutor(CurrentKey);
 
-    internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
+    internal ExpressionCoreSql(SqlExecuteLife life, IAdo? ado = null)
     {
-        this.dbFactories = dbFactories;
         this.Life = life;
         this.Life.Core = this;
         //this.ado = ado ?? new AdoImpl(dbFactories);
     }
 
-    internal ITableContext GetContext(string key)
-    {
-        //if (dbFactories.TryGetValue(key, out var dbInfo))
-        //{
-        //    if (!tableContexts.TryGetValue(key, out var dbContext))
-        //    {
-        //        dbContext = new TableContext(dbInfo.DbBaseType);
-        //        tableContexts[key] = dbContext;
-        //    }
-        //    return dbContext;
-        //}
-        throw new ArgumentException($"{key}异常");
-    }
-
     internal ISqlExecutor GetExecutor(string key)
     {
-        if (dbFactories.TryGetValue(key, out var info))
+        return executors.GetOrAdd(key, k =>
         {
-            return new SqlExecutor.SqlExecutor(info);
-        }
-        throw new ArgumentException($"{key} not register");
+            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
+            //TODO AOPlog
+            //TODO Trans setting
+            return ado;
+        });
     }
 
-    internal DbConnectInfo GetDbInfo(string key)
+    internal static DbConnectInfo GetDbInfo(string key)
     {
-        if (dbFactories.TryGetValue(key, out var dbInfo))
-        {
-            return dbInfo;
-        }
-        throw new ArgumentException($"{key}异常");
+        return StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
     }
 
     private readonly string MainDb = ConstString.Main;
     private string? _dbKey = null;
+
     internal string CurrentKey
     {
         get
@@ -79,58 +58,37 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
             return k;
         }
     }
+
     public IExpressionContext SwitchDatabase(string key)
     {
         _dbKey = key;
         return this;
     }
+
     public IExpSelect<T> Select<T>() => Select<T>(t => t!);
 
     public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
 
-    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) => new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
+    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) =>
+        new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
 
-    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
-    IExpInsert<T> CreateInsertProvider<T>(string key) => new InsertProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
+    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey, default);
+    public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(CurrentKey, entity);
 
-    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
-    IExpUpdate<T> CreateUpdateProvider<T>(string key) => new UpdateProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
+    IExpInsert<T> CreateInsertProvider<T>(string key, T? entity) =>
+        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entity);
 
-    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
-    IExpDelete<T> CreateDeleteProvider<T>(string key) => new DeleteProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
+    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey, default);
+    public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(CurrentKey, entity);
 
+    IExpUpdate<T> CreateUpdateProvider<T>(string key, T? entity) =>
+        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entity);
 
+    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey, default);
+    public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(CurrentKey, entity);
 
-
-    private bool disposedValue;
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                // 释放托管状态(托管对象)
-            }
-
-            // 释放未托管的资源(未托管的对象)并重写终结器
-            // 将大型字段设置为 null
-            disposedValue = true;
-        }
-    }
-
-    // // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-    // ~ExpressionCoreSql()
-    // {
-    //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-    //     Dispose(disposing: false);
-    // }
-
-    public void Dispose()
-    {
-        // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
+    IExpDelete<T> CreateDeleteProvider<T>(string key, T? entity) =>
+        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entity);
 
     public void BeginTran()
     {
@@ -160,5 +118,29 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public Task RollbackTranAsync()
     {
         throw new NotImplementedException();
+    }
+
+
+    private bool disposedValue;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                foreach (var item in executors)
+                {
+                    item.Value.Dispose();
+                }
+            }
+
+            disposedValue = true;
+        }
+    }
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
