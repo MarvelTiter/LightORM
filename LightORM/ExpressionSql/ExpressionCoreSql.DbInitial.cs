@@ -32,7 +32,7 @@ internal partial class ExpressionCoreSql : IDbInitial
             Log($"{info.ConnectInfo.DbBaseType} Table: [{typeof(T).Name}] Created!");
             if (datas != null && datas.Any())
             {
-                var effects = Insert<T>().AppendData(datas).Execute();
+                var effects = Insert<T>(datas).Execute();
                 Log($"{info.ConnectInfo.DbBaseType} Table: [{typeof(T).Name}] Inserted {effects} Rows");
             }
         }

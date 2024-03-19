@@ -1,16 +1,10 @@
 ﻿using LightORM.Cache;
-using LightORM.ExpressionSql.ExpressionVisitor;
 using LightORM.Extension;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Collections;
-using LightORM.Interfaces;
-using LightORM.Abstracts;
+using LightORM.SqlMethodResolver;
 namespace LightORM.Utils;
 
 internal static class ExpressionExtensions
@@ -288,7 +282,14 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             }
             else
             {
-                Sql.Append($"'{value}'");
+                if (exp.Type.IsNumber())
+                {
+                    Sql.Append($"{value}");
+                }
+                else
+                {
+                    Sql.Append($"'{value}'");
+                }
             }
         }
         return null;

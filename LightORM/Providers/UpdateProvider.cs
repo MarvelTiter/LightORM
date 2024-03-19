@@ -1,4 +1,5 @@
-﻿using LightORM.ExpressionSql.Interface;
+﻿using LightORM.Builder;
+using LightORM.ExpressionSql.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,72 +11,93 @@ namespace LightORM.Providers
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
         private readonly ISqlExecutor executor;
-
+        UpdateBuilder SqlBuilder = new UpdateBuilder();
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            // SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            // SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
-            // SqlBuilder.TargetObject = entity;
+            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.TargetObject = entity;
         }
-        public IExpUpdate<T> AppendData(T item)
+
+        public UpdateProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
-            throw new NotImplementedException();
+            this.executor = executor;
+            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.TargetObject = entities;
         }
 
         public int Execute()
         {
-            throw new NotImplementedException();
+            var sql = SqlBuilder.ToSqlString();
+            var dbParameters = SqlBuilder.DbParameters;
+            return executor.ExecuteNonQuery(sql, dbParameters);
         }
 
         public Task<int> ExecuteAsync()
         {
-            throw new NotImplementedException();
+            var sql = SqlBuilder.ToSqlString();
+            var dbParameters = SqlBuilder.DbParameters;
+            return executor.ExecuteNonQueryAsync(sql, dbParameters);
         }
 
-        public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, object value)
         {
-            throw new NotImplementedException();
+            //TODO 
+            return this;
         }
 
         public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, object value)
         {
-            throw new NotImplementedException();
+            if (condition)
+            {
+                return Set(exp, value);
+            }
+            return this;
         }
 
-        public string ToSql()
+
+        public IExpUpdate<T> UpdateColumns(Expression<Func<T, object>> columns)
         {
-            throw new NotImplementedException();
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = columns,
+                ResolveOptions = SqlResolveOptions.Update,
+            });
+            return this;
         }
 
-        public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
+        public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
         {
-            throw new NotImplementedException();
-        }
-
-        public IExpUpdate<T> Where(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IExpUpdate<T> Where(IEnumerable<T> items)
-        {
-            throw new NotImplementedException();
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = columns,
+                ResolveOptions = SqlResolveOptions.UpdateIgnore
+            });
+            return this;
         }
 
         public IExpUpdate<T> Where(Expression<Func<T, bool>> exp)
         {
-            throw new NotImplementedException();
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = exp,
+                ResolveOptions = SqlResolveOptions.Where
+            });
+            return this;
         }
 
         public IExpUpdate<T> WhereIf(bool condition, Expression<Func<T, bool>> exp)
         {
-            throw new NotImplementedException();
+            if (condition)
+            {
+                return Where(exp);
+            }    
+            return this;
         }
+        public string ToSql() => SqlBuilder.ToSqlString();
     }
 }

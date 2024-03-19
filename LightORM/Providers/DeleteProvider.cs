@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LightORM.Abstracts.Builder;
+using LightORM.Builder;
 using LightORM.ExpressionSql;
 
 namespace LightORM.Providers
@@ -12,7 +12,7 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder SqlBuilder = new DeleteBuilder();
-        
+
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
@@ -20,10 +20,14 @@ namespace LightORM.Providers
             SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
             SqlBuilder.TargetObject = entity;
         }
-        public IExpDelete<T> AppendData(T item)
+
+        public DeleteProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
-            SqlBuilder.TargetObject = item;
-            return this;
+            this.executor = executor;
+            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.TargetObject = entities;
+            SqlBuilder.IsDeleteList = true;
         }
 
         public int Execute()
@@ -45,19 +49,23 @@ namespace LightORM.Providers
             return SqlBuilder.ToSqlString();
         }
 
-        public IExpDelete<T> Where(IEnumerable<T> items)
-        {
-            throw new NotImplementedException();
-        }
-
         public IExpDelete<T> Where(Expression<Func<T, bool>> exp)
         {
-            throw new NotImplementedException();
+            SqlBuilder.Expressions.Add(new ExpressionInfo
+            {
+                ResolveOptions = SqlResolveOptions.Where,
+                Expression = exp,
+            });
+            return this;
         }
 
         public IExpDelete<T> WhereIf(bool condition, Expression<Func<T, bool>> exp)
         {
-            throw new NotImplementedException();
+            if (condition)
+            {
+                return Where(exp);
+            }
+            return this;
         }
     }
 }

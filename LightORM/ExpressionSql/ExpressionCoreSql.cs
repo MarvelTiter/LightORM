@@ -1,8 +1,5 @@
-﻿using LightORM.ExpressionSql.Ado;
-using LightORM.ExpressionSql.Interface;
-using LightORM.ExpressionSql.Providers;
+﻿using LightORM.ExpressionSql.Interface;
 using System.Collections.Concurrent;
-using System.Dynamic;
 using System.Threading.Tasks;
 using LightORM.Cache;
 
@@ -23,7 +20,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public ISqlExecutor Ado => GetExecutor(CurrentKey);
 
-    internal ExpressionCoreSql(SqlExecuteLife life, IAdo? ado = null)
+    internal ExpressionCoreSql(SqlExecuteLife life)
     {
         this.Life = life;
         this.Life.Core = this;
@@ -72,23 +69,33 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) =>
         new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
 
-    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey, default);
+    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
     public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(CurrentKey, entity);
+    public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(CurrentKey, entities);
 
-    IExpInsert<T> CreateInsertProvider<T>(string key, T? entity) =>
+    IExpInsert<T> CreateInsertProvider<T>(string key, T? entity = default) =>
         new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entity);
+    IExpInsert<T> CreateInsertProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entities);
 
-    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey, default);
+
+    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
     public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(CurrentKey, entity);
+    public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(CurrentKey, entities);
 
-    IExpUpdate<T> CreateUpdateProvider<T>(string key, T? entity) =>
+    IExpUpdate<T> CreateUpdateProvider<T>(string key, T? entity = default) =>
         new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entity);
+    IExpUpdate<T> CreateUpdateProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entities);
 
-    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey, default);
+    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
     public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(CurrentKey, entity);
+    public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(CurrentKey, entities);
 
-    IExpDelete<T> CreateDeleteProvider<T>(string key, T? entity) =>
+    IExpDelete<T> CreateDeleteProvider<T>(string key, T? entity = default) =>
         new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entity);
+    IExpDelete<T> CreateDeleteProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entities);
 
     public void BeginTran()
     {

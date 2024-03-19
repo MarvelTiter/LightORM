@@ -1,5 +1,4 @@
-﻿using LightORM.Abstracts;
-using System.Linq;
+﻿using System.Linq;
 
 namespace LightORM.SqlMethodResolver
 {

@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
-using System.Threading;
 using System.Threading.Tasks;
-using LightORM;
-using LightORM.ExpressionSql;
-using LightORM.ExpressionSql.Ado;
-using LightORM.Interfaces;
 
 namespace LightORM.Interfaces;
 

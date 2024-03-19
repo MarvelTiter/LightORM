@@ -6,10 +6,11 @@ using System.Reflection;
 using System.Text;
 using LightORM.Extension;
 using System.Xml.Linq;
+using LightORM.Utils;
 
 namespace LightORM.Models;
 
-internal record ColumnInfo
+internal sealed record ColumnInfo
 {
     public TableEntity Table { get; }
     public string ColumnName => CustomName ?? Property.Name;
@@ -28,6 +29,8 @@ internal record ColumnInfo
 #endif
     public bool IsNotMapped { get; set; }
     public bool IsPrimaryKey { get; set; }
+    readonly Func<object, object>? valueGetter;
+    public object GetValue(object target) => valueGetter?.Invoke(target) ?? throw new Exception("valueGetter is null");
     public ColumnInfo(TableEntity table, PropertyInfo property)
     {
         Table = table;
@@ -36,6 +39,8 @@ internal record ColumnInfo
         var underlying = Nullable.GetUnderlyingType(property.PropertyType);
         UnderlyingType = underlying ?? property.PropertyType;
         IsNullable = underlying != null;
+
+        valueGetter = table.Type?.GetPropertyAccessor(property);
 
         var lightColAttr = property.GetAttribute<LightColumnAttribute>();
 #if NET6_0_OR_GREATER

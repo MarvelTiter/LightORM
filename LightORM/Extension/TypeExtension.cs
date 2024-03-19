@@ -18,7 +18,15 @@ internal static class TypeExtension
         return new DbTable { Name = tableName, Columns = columns, Indexs = indexs };
     }
 
-
+    public static bool IsNumber(this Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return Type.GetTypeCode(type) switch
+        {
+            TypeCode.UInt16 or TypeCode.UInt32 or TypeCode.UInt64 or TypeCode.Int16 or TypeCode.Int32 or TypeCode.Int64 or TypeCode.Decimal or TypeCode.Double or TypeCode.Single => true,
+            _ => false,
+        };
+    }
 
     private static List<DbIndex> CollectIndexs(Type tableType, List<DbColumn> columns)
     {

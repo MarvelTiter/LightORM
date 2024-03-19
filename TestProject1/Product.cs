@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LightORM.DbEntity.Attributes;
 
 namespace TestProject1
 {
@@ -13,6 +14,7 @@ namespace TestProject1
     /// </summary>
     public class Product
     {
+        [LightColumn(PrimaryKey = true)]
         public int ProductId { get; set; }
 
         public int CategoryId { get; set; }

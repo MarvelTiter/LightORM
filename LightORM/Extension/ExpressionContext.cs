@@ -27,7 +27,7 @@ public abstract class DbInitialContext
         {
             Initialized(context);
             Info!.Initialized = true;
-            context.Insert<DbInfo>().AppendData(Info).Execute();
+            context.Insert(Info).Execute();
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿using LightORM.ExpressionSql.Ado;
-using LightORM.ExpressionSql.Interface;
-using System;
-using System.Data;
-using System.Linq.Expressions;
+﻿using LightORM.ExpressionSql.Interface;
 #if NET40
 #else
 using System.Threading.Tasks;
@@ -16,10 +12,13 @@ public interface IExpressionContext : IDbAction
     IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
     IExpInsert<T> Insert<T>();
     IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
     IExpUpdate<T> Update<T>();
     IExpUpdate<T> Update<T>(T entity);
+    //IExpUpdate<T> Update<T>(IEnumerable<T> entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(T entity);
+    //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
 }
 

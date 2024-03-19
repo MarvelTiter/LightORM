@@ -1,5 +1,4 @@
-﻿using LightORM.Abstracts;
-using LightORM.Interfaces;
+﻿using LightORM.Interfaces;
 using LightORM.Utils;
 using System;
 using System.Collections.Generic;

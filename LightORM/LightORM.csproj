@@ -17,15 +17,32 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="ExpressionSql\Ado\**" />
 	  <Compile Remove="ExpressionSql\DbGenerator\**" />
+	  <Compile Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <Compile Remove="ExpressionSql\Interface\**" />
+	  <Compile Remove="ExpressionSql\Providers\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Ado\**" />
 	  <EmbeddedResource Remove="ExpressionSql\DbGenerator\**" />
+	  <EmbeddedResource Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Interface\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Providers\**" />
+	  <None Remove="ExpressionSql\Ado\**" />
 	  <None Remove="ExpressionSql\DbGenerator\**" />
+	  <None Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <None Remove="ExpressionSql\Interface\**" />
+	  <None Remove="ExpressionSql\Providers\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Handle.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Result.cs" />
+		<Compile Remove="ExpressionSql\ITableContext.cs" />
+		<Compile Remove="ExpressionSql\SelectColumn.cs" />
+		<Compile Remove="ExpressionSql\SqlContext.cs" />
+		<Compile Remove="ExpressionSql\SqlFieldInfo.cs" />
+		<Compile Remove="ExpressionSql\SqlFragment.cs" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
@@ -57,9 +74,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="ExpressionSql\Interface\Select\select.js">
-			<SubType>Code</SubType>
-		</None>
 		<None Update="README.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>
