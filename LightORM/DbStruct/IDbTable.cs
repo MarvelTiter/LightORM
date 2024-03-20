@@ -19,7 +19,7 @@ internal static class DbTypeEx
             case DbBaseType.Sqlite:
                 return new SqliteDbTable(option);
             default:
-                throw new ArgumentException();
+                throw new NotSupportedException();
         }
     }
 }

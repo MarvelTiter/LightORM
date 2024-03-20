@@ -260,8 +260,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
+
         }
     }
 

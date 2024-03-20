@@ -15,7 +15,7 @@ namespace LightORM.Utils
             {
                 if (dic.ContainsKey(kv.Key))
                 {
-                    throw new ArgumentException($"查询参数：{kv.Key} 重复");
+                    throw new LightOrmException($"查询参数：{kv.Key} 重复");
                 }
                 dic.Add(kv.Key, kv.Value);
             }

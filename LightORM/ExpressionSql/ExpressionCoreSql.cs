@@ -34,6 +34,10 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
             var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
             //TODO AOPlog
             //TODO Trans setting
+            if (useTrans)
+            {
+                ado.BeginTran();
+            }
             return ado;
         });
     }
@@ -96,35 +100,67 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
         new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entity);
     IExpDelete<T> CreateDeleteProvider<T>(string key, IEnumerable<T> entities) =>
         new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entities);
-
+    bool useTrans;
     public void BeginTran()
     {
-        throw new NotImplementedException();
+        useTrans = true;
+        foreach (var item in executors.Values)
+        {
+            try { item.BeginTran(); } catch { }
+        }
     }
 
-    public Task BeginTranAsync()
+    public async Task BeginTranAsync()
     {
-        throw new NotImplementedException();
+        useTrans = true;
+        foreach (var item in executors.Values)
+        {
+            try
+            {
+                await item.BeginTranAsync();
+            }
+            catch { }
+        }
     }
 
     public void CommitTran()
     {
-        throw new NotImplementedException();
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { item.CommitTran(); } catch { }
+        }
     }
 
-    public Task CommitTranAsync()
+    public async Task CommitTranAsync()
     {
-        throw new NotImplementedException();
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try
+            {
+                await item.CommitTranAsync();
+            }
+            catch { }
+        }
     }
 
     public void RollbackTran()
     {
-        throw new NotImplementedException();
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { item.RollbackTran(); } catch { }
+        }
     }
 
-    public Task RollbackTranAsync()
+    public async Task RollbackTranAsync()
     {
-        throw new NotImplementedException();
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { await item.RollbackTranAsync(); } catch { }
+        }
     }
 
 

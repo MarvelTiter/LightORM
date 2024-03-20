@@ -17,7 +17,7 @@ internal record TableEntity
         
     }
     public Type? Type { get; internal set; }
-    public string TableName => CustomName ?? Type?.Name ?? throw new ArgumentNullException();
+    public string TableName => CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常");
     public string? Alias { get; internal set; }
     public bool IsAnonymousType { get; internal set; }
     public string? CustomName { get; internal set; }

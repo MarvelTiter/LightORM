@@ -1,5 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.ExpressionSql.Interface;
+using LightORM.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,15 +43,19 @@ namespace LightORM.Providers
             return executor.ExecuteNonQueryAsync(sql, dbParameters);
         }
 
-        
 
-        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, object value)
+
+        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
             //TODO 
+            var result = exp.Resolve(SqlResolveOptions.Update);
+            var member = result.Members!.First();
+            SqlBuilder.Members.Add(member);
+            SqlBuilder.DbParameters.Add(member, value!);
             return this;
         }
 
-        public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, object value)
+        public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, TField value)
         {
             if (condition)
             {
@@ -85,7 +90,7 @@ namespace LightORM.Providers
             SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
-                ResolveOptions = SqlResolveOptions.Where
+                ResolveOptions = SqlResolveOptions.UpdateWhere
             });
             return this;
         }
@@ -95,7 +100,7 @@ namespace LightORM.Providers
             if (condition)
             {
                 return Where(exp);
-            }    
+            }
             return this;
         }
         public string ToSql() => SqlBuilder.ToSqlString();

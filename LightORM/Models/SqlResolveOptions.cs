@@ -43,7 +43,7 @@ public class SqlResolveOptions
     public int ParameterIndex { get; set; }
     public BinaryPosition BinaryPosition { get; set; }
     public SqlPartial SqlType { get; private set; }
-    public DbBaseType DbType { get; set; } = DbBaseType.Oracle;
+    public DbBaseType DbType { get; set; }
     private bool CheckRequiredValue()
     {
         return BinaryPosition == BinaryPosition.Right &&

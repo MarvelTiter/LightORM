@@ -14,6 +14,7 @@ internal class DeleteBuilder : SqlBuilder
     }
     public override string ToSqlString()
     {
+        //TODO 处理批量删除
         ResolveExpressions();
         StringBuilder sql = new StringBuilder();
         sql.AppendFormat("DELETE FROM {0}\n", GetTableName(TableInfo, false));
@@ -21,13 +22,13 @@ internal class DeleteBuilder : SqlBuilder
         {
             if (TargetObject == null)
             {
-                throw new ArgumentNullException("Where Condition is null and not provider a entity value");
+                throw new LightOrmException("Where Condition is null and not provider a entity value");
             }
             var primary = TableInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
-            if (!primary.Any()) throw new InvalidOperationException($"Where Condition is null and Model of [{TableInfo.Type}] do not has a PrimaryKey");
+            if (!primary.Any()) throw new LightOrmException($"Where Condition is null and Model of [{TableInfo.Type}] do not has a PrimaryKey");
             var wheres = primary.Select(c =>
              {
-                 DbParameters.Add(c.ColumnName, c.GetValue(TargetObject));
+                 DbParameters.Add(c.ColumnName, c.GetValue(TargetObject)!);
                  return $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.ColumnName)}";
              });
             Where.AddRange(wheres);

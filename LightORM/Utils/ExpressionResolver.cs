@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Collections;
 using LightORM.SqlMethodResolver;
+using System.Xml.Linq;
 namespace LightORM.Utils;
 
 internal static class ExpressionExtensions
@@ -17,6 +18,7 @@ internal static class ExpressionExtensions
         {
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
+            Members = resolve.ResolvedMembers,
         };
     }
 
@@ -53,6 +55,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
+    public List<string> ResolvedMembers { get; set; } = [];
     public bool IsNot { get; set; }
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
     public Expression? Visit(Expression? expression)
@@ -145,6 +148,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     {
         for (int i = 0; i < exp.Arguments.Count; i++)
         {
+            ResolvedMembers.Add(exp.Members[i].Name);
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(exp.Arguments[i]);
@@ -216,6 +220,10 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
 
     Expression? VisitMember(MemberExpression exp)
     {
+        if (bodyExpression?.NodeType == ExpressionType.MemberAccess)
+        {
+            ResolvedMembers.Add(exp.Member.Name);
+        }
         if (exp.Expression?.NodeType == ExpressionType.Parameter)
         {
             var type = exp.Type;
@@ -224,7 +232,14 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 type = type.GetGenericArguments()[0];
             }
             var col = TableContext.GetTableInfo(exp.Member!.DeclaringType!).Columns.First(c => c.Property.Name == exp.Member.Name);
-            Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+            if (Options.RequiredTableAlias)
+            {
+                Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+            }
+            else
+            {
+                Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)}");
+            }
             return null;
         }
         Members.Push(exp.Member);
@@ -276,9 +291,18 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             }
             if (exp.Type == typeof(bool) || exp.Type == typeof(DateTime))
             {
-                var name = $"Const_{Options.ParameterIndex}";
-                Sql.Append($"{Options.DbType.AttachPrefix(name)}");
-                AddDbParameter(name, value);
+                if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
+                {
+                    var b = (bool)value;
+                    Sql.Append("1 = ");
+                    Sql.Append(b ? "1" : "0");
+                }
+                else
+                {
+                    var name = $"Const_{Options.ParameterIndex}";
+                    Sql.Append($"{Options.DbType.AttachPrefix(name)}");
+                    AddDbParameter(name, value);
+                }
             }
             else
             {

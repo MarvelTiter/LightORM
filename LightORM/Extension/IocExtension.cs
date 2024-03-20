@@ -14,10 +14,11 @@ public static class IocExtension
     {
         var option = new ExpressionSqlOptions();
         options(option);
-        //services.AddSingleton(typeof(IExpressionContext), provider => builder.Build());
-        services.AddSingleton(provider =>
+        services.AddSingleton(option);
+        services.AddTransient(provider =>
         {
-            var builder = new ExpressionSqlBuilder(option);
+            var o = provider.GetService<ExpressionSqlOptions>()!;
+            var builder = new ExpressionSqlBuilder(o);
             var ins = builder.Build(provider);
             return ins;
         });

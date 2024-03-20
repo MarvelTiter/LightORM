@@ -1,19 +1,11 @@
 ﻿using LightORM.Cache;
-using LightORM.DbEntity.Attributes;
 using LightORM.Extension;
-using LightORM.SqlExecutor.Service;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.SqlExecutor;
 
@@ -73,9 +65,10 @@ internal class ExpressionBuilder
         var type = typeof(T);
 
         var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}";
+
         return StaticCache<Func<IDataReader, object>>.GetOrAdd(cacheKey, () =>
         {
-            return BuildFunc<T>(reader, CultureInfo.CurrentCulture);
+            return BuildFunc<T>(reader, CultureInfo.CurrentCulture); 
         });
     }
 
@@ -99,7 +92,7 @@ internal class ExpressionBuilder
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
-        DataTable SchemaTable = reader.GetSchemaTable() ?? throw new NullReferenceException("GetSchemaTable 结果为 null");
+        DataTable SchemaTable = reader.GetSchemaTable() ?? throw new LightOrmException("GetSchemaTable 结果为 null");
         Expression? Body = default;
 
         // 元组处理
@@ -107,7 +100,7 @@ internal class ExpressionBuilder
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
             if (Constructors.Count() != 1)
-                throw new ArgumentException("Tuple must have one Constructor");
+                throw new LightOrmException("Tuple must have one Constructor");
             var Constructor = Constructors[0];
 
             var Parameters = Constructor.GetParameters();
@@ -218,7 +211,7 @@ internal class ExpressionBuilder
 
         }
         //Compile as Delegate
-        var lambdaExp = Expression.Lambda<Func<IDataRecord, object>>(Body, recordInstanceExp);
+        var lambdaExp = Expression.Lambda<Func<IDataReader, object>>(Body, recordInstanceExp);
         return lambdaExp.Compile();
     }
 
@@ -345,7 +338,7 @@ internal class ExpressionBuilder
         }
         else
         {
-            throw new ArgumentException("Cannot convert a byte array to " + targetType.Name);
+            throw new LightOrmException("Cannot convert a byte array to " + targetType.Name);
         }
         return TargetExpression;
     }
@@ -384,7 +377,7 @@ internal class ExpressionBuilder
                     ParseExpression = GetGenericParseExpression(SourceExpression, UnderlyingType);
                     break;
                 default:
-                    throw new ArgumentException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType));
+                    throw new LightOrmException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType));
             }
             if (Nullable.GetUnderlyingType(TargetType) == null)
             {

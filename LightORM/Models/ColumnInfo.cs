@@ -14,6 +14,7 @@ internal sealed record ColumnInfo
 {
     public TableEntity Table { get; }
     public string ColumnName => CustomName ?? Property.Name;
+    public string PropName => Property.Name;
     public string? CustomName { get; set; }
     public bool? AutoIncrement { get; }
     public bool? NotNull { get; }
@@ -30,7 +31,7 @@ internal sealed record ColumnInfo
     public bool IsNotMapped { get; set; }
     public bool IsPrimaryKey { get; set; }
     readonly Func<object, object>? valueGetter;
-    public object GetValue(object target) => valueGetter?.Invoke(target) ?? throw new Exception("valueGetter is null");
+    public object? GetValue(object target) => valueGetter?.Invoke(target);
     public ColumnInfo(TableEntity table, PropertyInfo property)
     {
         Table = table;

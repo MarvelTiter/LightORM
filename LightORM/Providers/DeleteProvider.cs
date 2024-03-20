@@ -53,7 +53,7 @@ namespace LightORM.Providers
         {
             SqlBuilder.Expressions.Add(new ExpressionInfo
             {
-                ResolveOptions = SqlResolveOptions.Where,
+                ResolveOptions = SqlResolveOptions.DeleteWhere,
                 Expression = exp,
             });
             return this;

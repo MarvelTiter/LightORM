@@ -10,7 +10,7 @@ public interface IExpressionContext : IDbAction
 
     IExpSelect<T> Select<T>();
     IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
-    IExpInsert<T> Insert<T>();
+    //IExpInsert<T> Insert<T>();
     IExpInsert<T> Insert<T>(T entity);
     IExpInsert<T> Insert<T>(IEnumerable<T> entities);
     IExpUpdate<T> Update<T>();

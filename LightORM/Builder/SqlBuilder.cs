@@ -15,6 +15,7 @@ internal abstract class SqlBuilder : ISqlBuilder
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
+    public List<string> Members { get; set; } = [];
     protected IDbHelper DbHelper => DbType.GetDbHelper();
     protected string AttachPrefix(string content) => DbType.AttachPrefix(content);
     protected string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
