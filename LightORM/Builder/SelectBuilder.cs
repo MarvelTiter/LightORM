@@ -18,6 +18,7 @@ namespace LightORM.Builder
         public List<JoinInfo> Joins { get; set; } = [];
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
+        public object? AdditionalValue { get; set; }
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
@@ -51,6 +52,7 @@ namespace LightORM.Builder
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.OrderBy)
             {
                 OrderBy.Add(result.SqlString!);
+                AdditionalValue = expInfo.AdditionalParameter;
             }
         }
 
@@ -78,7 +80,7 @@ namespace LightORM.Builder
             }
             if (OrderBy.Count > 0)
             {
-                sb.AppendFormat("ORDER BY {0}", string.Join("\nAND ", OrderBy));
+                sb.AppendFormat("ORDER BY {0} {1}\n", string.Join("\nAND ", OrderBy), $"{AdditionalValue}");
             }
             if (PageIndex * PageSize > 0)
             {

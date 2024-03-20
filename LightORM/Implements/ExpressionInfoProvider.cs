@@ -24,7 +24,9 @@ namespace LightORM.Implements
             var exp = ExpressionInfos.FirstOrDefault(info => info.Id == id);
             if (exp != null)
             {
-                update.Invoke(exp);
+                var newExp = exp with { };
+                update.Invoke(newExp);
+                Update(id, newExp);
             }
         }
 

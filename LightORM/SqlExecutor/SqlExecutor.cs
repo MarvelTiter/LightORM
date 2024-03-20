@@ -89,6 +89,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     private bool PrepareCommand(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
+        Console.WriteLine(commandText);
         var needToClose = false;
         if (DbConnection.State != ConnectionState.Open)
         {
@@ -114,6 +115,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public async Task<bool> PrepareCommandAsync(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
+        Console.WriteLine(commandText);
         var needToClose = false;
         if (DbConnection.State != ConnectionState.Open)
         {
@@ -238,8 +240,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
+            //cmd.Parameters.Clear();
+            //cmd.Dispose();
         }
     }
 

@@ -12,8 +12,22 @@ public enum PowerType
     Button
 }
 
+public interface IPower
+{
+    string PowerId { get; set; }
+    string PowerName { get; set; }
+    string ParentId { get; set; }
+    PowerType PowerType { get; set; }
+    int PowerLevel { get; set; }
+    string Icon { get; set; }
+    string Path { get; set; }
+    int Sort { get; set; }
+    bool GenerateCRUDButton { get; set; }
+    IEnumerable<IPower> Children { get; set; }
+}
+
 [LightTable(Name = "POWERS")]
-public class Power
+public class Power : IPower
 {
     [Required]
     [LightColumn(Name = "POWER_ID", PrimaryKey = true)]
@@ -38,4 +52,10 @@ public class Power
     [LightColumn(Name = "SORT")]
     public int Sort { get; set; }
 
+    [NotMapped]
+    public IEnumerable<Power> Children { get; set; }
+
+    [NotMapped]
+    public bool GenerateCRUDButton { get; set; }
+    IEnumerable<IPower> IPower.Children { get => Children; set => Children = value.Cast<Power>(); }
 }

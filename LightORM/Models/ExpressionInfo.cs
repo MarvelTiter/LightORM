@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LightORM.Models
 {
-    internal class ExpressionInfo
+    internal record ExpressionInfo
     {
         /// <summary>
         /// ID

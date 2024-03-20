@@ -9,6 +9,15 @@ using System.Text;
 
 namespace LightORM.Cache
 {
+    internal class AbstractTableType
+    {
+        public AbstractTableType(Type type)
+        {
+            Type = type;
+        }
+
+        public Type Type { get; }
+    }
     internal static class TableContext
     {
         public static TableEntity GetTableInfo<T>()
@@ -17,7 +26,18 @@ namespace LightORM.Cache
         }
         public static TableEntity GetTableInfo(Type type)
         {
-            var cacheKey = $"DbTable_{type.FullName}";
+            var cacheKey = $"DbTable_{type.GUID}";
+
+            var realType = type;
+            if (type.IsAbstract || type.IsInterface)
+            {
+                realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
+                {
+                    var rt= StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
+                    return new AbstractTableType(rt);
+                }).Type;
+                return GetTableInfo(realType);
+            }
 
             var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
             {

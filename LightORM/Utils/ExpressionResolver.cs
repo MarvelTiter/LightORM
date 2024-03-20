@@ -195,9 +195,22 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     }
     Expression? VisitParameter(ParameterExpression exp)
     {
-        var alias = TableContext.GetTableInfo(exp.Type).Alias;
-        Sql.Append($"{Options.DbType.AttachEmphasis(alias!)}.*");
-        NotAs = true;
+        if (Options.SqlType == SqlPartial.Select)
+        {
+            var alias = TableContext.GetTableInfo(exp.Type).Alias;
+            Sql.Append($"{Options.DbType.AttachEmphasis(alias!)}.*");
+            NotAs = true;
+        }
+        else
+        {
+            if (Members.Count > 0)
+            {
+                var member = Members.Pop();
+                var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
+                Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+            }
+        }
+
         return null;
     }
 
@@ -231,7 +244,17 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 type = type.GetGenericArguments()[0];
             }
-            var col = TableContext.GetTableInfo(exp.Member!.DeclaringType!).Columns.First(c => c.Property.Name == exp.Member.Name);
+            var memberType = exp.Member!.DeclaringType!;
+            var name = exp.Member.Name;
+            if (Members.Count > 0)
+            {
+                // w.Tb1.Property
+                var member = Members.Pop();
+                //var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
+                memberType = member.DeclaringType!;
+                name = member.Name;
+            }
+            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
             if (Options.RequiredTableAlias)
             {
                 Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
@@ -240,6 +263,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)}");
             }
+            Members.Clear();
             return null;
         }
         Members.Push(exp.Member);

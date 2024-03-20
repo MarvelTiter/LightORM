@@ -12,7 +12,7 @@ public class TestBase
     public TestBase()
     {
         var options = new ExpressionSqlOptions();
-        var path = Path.GetFullPath("../../../Demo.db");
+        var path = Path.GetFullPath("../../../test.db");
         options.SetDatabase(LightORM.Context.DbBaseType.Sqlite, "DataSource=" + path, SqliteFactory.Instance);
         var builder = new ExpressionSqlBuilder(options);
         Context = builder.Build();

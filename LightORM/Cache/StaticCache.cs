@@ -25,5 +25,7 @@ namespace LightORM.Cache
         }
 
         public static int Count => caches.Count;
+
+        public static IEnumerable<T> Values => caches.Values.Select(l => l.Value);
     }
 }

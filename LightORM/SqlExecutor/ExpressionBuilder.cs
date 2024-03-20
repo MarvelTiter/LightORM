@@ -64,11 +64,17 @@ internal class ExpressionBuilder
     {
         var type = typeof(T);
 
-        var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}";
 
+        var columns = reader.GetColumnSchema().Select(col =>
+          {
+              var nullable = col.AllowDBNull.HasValue ? $"{col.AllowDBNull}" : "True";
+              return $"{col.ColumnName}_{col.DataTypeName}_{nullable}";
+          });
+
+        var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}_{string.Join("&", columns)}";
         return StaticCache<Func<IDataReader, object>>.GetOrAdd(cacheKey, () =>
         {
-            return BuildFunc<T>(reader, CultureInfo.CurrentCulture); 
+            return BuildFunc<T>(reader, CultureInfo.CurrentCulture);
         });
     }
 
@@ -223,9 +229,9 @@ internal class ExpressionBuilder
         string GetColumnNameAttribute()
         {
 #if NET6_0_OR_GREATER
-            return Member.GetAttribute<LightColumnAttribute>()?.Name 
-                ?? Member.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name 
-                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name 
+            return Member.GetAttribute<LightColumnAttribute>()?.Name
+                ?? Member.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
+                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name
                 ?? "";
 #else
             return Member.GetAttribute<LightColumnAttribute>()?.Name 
