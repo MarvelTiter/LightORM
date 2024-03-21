@@ -27,4 +27,26 @@ public class WhereTest : TestBase
         Expression<Func<Product, bool>> where = e => e.DeleteMark == true;
         var result = where.Resolve(SqlResolveOptions.UpdateWhere);
     }
+
+    [TestMethod]
+    public void WhereEnumerable()
+    {
+        var nums = Get().ToArray();
+
+        Expression<Func<Product, bool>> where = e => nums.Contains(e.ProductId);
+        var option = SqlResolveOptions.UpdateWhere;
+        option.DbType = DbBaseType.Sqlite;
+        var result = where.Resolve(option);
+
+
+        IEnumerable<int> Get()
+        {
+            int i = 0;
+            while (i < 10)
+            {
+                yield return i;
+                i++;
+            }
+        }
+    }
 }

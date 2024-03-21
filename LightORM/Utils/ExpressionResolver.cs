@@ -299,24 +299,35 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 Sql.Append("NULL");
                 return null;
             }
-            if (value is IList list)
+            //if (value is IList list)
+            //{
+            //    var names = new List<string>();
+            //    for (int i = 0; i < list.Count; i++)
+            //    {
+            //        var n = $"{name}_{i}";
+            //        var parameterName = AddDbParameter(n, list[i]!);
+            //        names.Add(parameterName);
+            //    }
+            //    Sql.Append(string.Join(",", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
+            //}
+            //if (value is string str)
+            //{
+            //    var parameterName = AddDbParameter(name, str);
+            //    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
+            //}
+            //else
+            if (value is IEnumerable enumerable && value is not string)
             {
-#if NET48_OR_GREATER
-                if (value.GetType().IsArray)
-#else
-                if (value.GetType().IsVariableBoundArray)
-#endif
-                {
-                    return Expression.Constant(value);
-                }
                 var names = new List<string>();
-                for (int i = 0; i < list.Count; i++)
+                int i = 0;
+                foreach (var item in enumerable)
                 {
                     var n = $"{name}_{i}";
-                    var parameterName = AddDbParameter(n, list[i]!);
+                    var parameterName = AddDbParameter(n, item);
                     names.Add(parameterName);
+                    i++;
                 }
-                Sql.Append(string.Join(",", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
+                Sql.Append(string.Join(", ", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
             }
             else
             {
