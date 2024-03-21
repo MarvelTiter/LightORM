@@ -1,6 +1,9 @@
 ﻿#if NET40
 #else
-using MDbContext.SqlExecutor;
+using LightORM.ExpressionSql;
+using LightORM.ExpressionSql.Ado;
+using LightORM.Interfaces;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Ado
+namespace LightORM.ExpressionSql.Ado
 {
     public partial class AdoImpl
     {
@@ -29,56 +32,32 @@ namespace MDbContext.ExpressionSql.Ado
         }
         public Task<int> ExecuteAsync(string sql, object? param = null)
         {
-            return InternalExecuteAsync(sql, param, () =>
-            {
-                return CurrentConnection.ExecuteAsync(sql, CancelToken, param);
-            });
+            throw new NotImplementedException();
         }
         public Task<DataTable> ExecuteDataTableAsync(string sql, object? param = null)
         {
-            return InternalExecuteAsync(sql, param, () =>
-            {
-                return CurrentConnection.ExecuteTableAsync(sql, CancelToken, param);
-            });
+            throw new NotImplementedException();
+
         }
-        public async Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false)
+        public Task<IList<T>> QueryAsync<T>(string sql, object? param = null, bool threadPool = false)
         {
-            var ret = await InternalExecuteAsync(sql, param, () =>
-               {
-                   if (threadPool)
-                   {
-                       return CurrentConnection.ThreadPoolQueryAsync<T>(sql, param);
-                   }
-                   else
-                   {
-                       return CurrentConnection.QueryAsync<T>(sql, CancelToken, param);
-                   }
-               });
-            return ret;
+            throw new NotImplementedException();
+
         }
-        public async Task<IList<dynamic>> QueryAsync(string sql, object? param = null)
+        public Task<IList<dynamic>> QueryAsync(string sql, object? param = null)
         {
-            var ret = await InternalExecuteAsync(sql, param, async () =>
-              {
-                  var result = await CurrentConnection.QueryAsync(sql, CancelToken, param);
-                  return result.ToList();
-              });
-            return ret;
+            throw new NotImplementedException();
+
         }
         public Task<T?> SingleAsync<T>(string sql, object? param = null)
         {
-            return InternalExecuteAsync(sql, param, () =>
-            {
-                return CurrentConnection.QuerySingleAsync<T>(sql, CancelToken, param);
-            });
+            throw new NotImplementedException();
+
         }
-        public async Task QueryAsync(string sql, object? param, Func<IDataReader, Task> callback)
+        public Task QueryAsync(string sql, object? param, Func<IDataReader, Task> callback)
         {
-            await InternalExecuteAsync<int>(sql, param, async () =>
-            {
-                await CurrentConnection.ExecuteReaderAsync(sql, CancelToken, param, callback);
-                return 0;
-            });
+            throw new NotImplementedException();
+
         }
     }
 }

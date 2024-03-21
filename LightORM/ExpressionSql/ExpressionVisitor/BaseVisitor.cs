@@ -5,17 +5,17 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal abstract class BaseVisitor<T> : IExpressionVisitor where T : Expression
 {
     private string _expressionType => typeof(T).Name;
-    public void Visit(Expression expression, SqlConfig config, SqlContext context)
+    public void Visit(Expression expression, SqlResolveOptions config, SqlContext context)
     {
         DoVisit((T)expression, config, context);
     }
 
-    public abstract void DoVisit(T exp, SqlConfig config, SqlContext context);
+    public abstract void DoVisit(T exp, SqlResolveOptions config, SqlContext context);
     public void Select(Expression exp, SqlContext context) => Select((T)exp, context);
     public virtual void Select(T exp, SqlContext context) =>
         throw new NotImplementedException($"[{_expressionType}] 未实现 {nameof(Select)}");

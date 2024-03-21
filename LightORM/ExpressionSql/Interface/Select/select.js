@@ -17,66 +17,57 @@ let genericParam = function (count) {
 let genericInit = function (count) {
     let types = [];
     for (let index = 1; index < count; index++) {
-        types.push(`context.AddTable(typeof(T${index + 1}));`);
+        types.push(`SelectExpression = new ExpressionInfo()
+        {
+            Expression = exp,
+            ResolveOptions = SqlResolveOptions.Select
+        };
+        SqlBuilder.Expressions.Add(SelectExpression);`);
     }
     return types.join("\n");
 };
 
 function GenerateProvider(count) {
     let template = `
-internal partial class SelectProvider${count}<${genericType(count)}> : BasicSelect0<IExpSelect<${genericType(count)}>, T1>, IExpSelect<${genericType(count)}>
+internal partial class SelectProvider${count}<${genericType(count)}> : SelectProvider0<IExpSelect<${genericType(count)}>, T1>, IExpSelect<${genericType(count)}>
 {
-    public SelectProvider${count}(string key, ITableContext getContext, DbConnectInfo connectInfos, SqlExecuteLife life)
-     : base(key, getContext, connectInfos, life)
+    public SelectProvider${count}(Expression exp, ISqlExecutor executor): base(executor)
     {
-        ${genericInit(count)}
+        SelectExpression = new ExpressionInfo()
+        {
+            Expression = exp,
+            ResolveOptions = SqlResolveOptions.Select
+        };
+        SqlBuilder.Expressions.Add(SelectExpression);
     }
 
-    public IExpSelect<${genericType(count)}> InnerJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    public IExpSelect<${genericType(count)}> InnerJoin<TJoin>(Expression<Func<TypeSet<${genericType(count)}>, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.InnerJoin, exp.Body);
-        return this;
+        return JoinHandle<TAnother>(exp, ExpressionSql.TableLinkType.InnerJoin);
     }
 
-    public IExpSelect<${genericType(count)}> LeftJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    public IExpSelect<${genericType(count)}> LeftJoin<TJoin>(Expression<Func<TypeSet<${genericType(count)}>, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.LeftJoin, exp.Body);
-        return this;
+        return JoinHandle<TAnother>(exp, ExpressionSql.TableLinkType.LeftJoin);
     }
-    public IExpSelect<${genericType(count)}> RightJoin<TAnother>(Expression<Func<TypeSet<TAnother, ${genericType(count)}>, bool>> exp)
+    public IExpSelect<${genericType(count)}> RightJoin<TJoin>(Expression<Func<TypeSet<${genericType(count)}>, bool>> exp)
     {
-        JoinHandle<TAnother>(TableLinkType.RightJoin, exp.Body);
-        return this;
+        return JoinHandle<TAnother>(exp, ExpressionSql.TableLinkType.RightJoin);
     }
 
     public IExpSelect<${genericType(count)}> GroupBy(Expression<Func<TypeSet<${genericType(count)}>, object>> exp)
     {
-        GroupByHandle(exp.Body);
-        return this;
+        return GroupByHandle(exp);
     }
 
     public IExpSelect<${genericType(count)}> OrderBy(Expression<Func<TypeSet<${genericType(count)}>, object>> exp, bool asc = true)
     {
-        OrderByHandle(exp.Body, asc);
-        return this;
+        return OrderByHandle(exp, asc);
     }
-
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<${genericType(count)}>, object>> exp)
-    {
-        SelectHandle(exp.Body);
-        return InternalQuery<TReturn>();
-    }   
-
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<${genericType(count)}>, object>> exp)
-    {
-        SelectHandle(exp.Body);
-        return InternalQueryAsync<TReturn>();
-    }    
-
+        
     public IExpSelect<${genericType(count)}> Where(Expression<Func<TypeSet<${genericType(count)}>, bool>> exp)
     {
-        WhereHandle(exp.Body);
-        return this;
+        return WhereHandle(exp);
     }
 }
 `;

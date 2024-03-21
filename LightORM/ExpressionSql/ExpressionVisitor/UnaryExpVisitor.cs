@@ -1,14 +1,11 @@
-﻿using MDbContext.ExpressionSql;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace MDbContext.NewExpSql.ExpressionVisitor
+namespace LightORM.ExpressionSql.ExpressionVisitor;
+
+internal class UnaryExpVisitor : BaseVisitor<UnaryExpression>
 {
-    internal class UnaryExpVisitor : BaseVisitor<UnaryExpression>
+    public override void DoVisit(UnaryExpression exp, SqlResolveOptions config, SqlContext context)
     {
-        public override void DoVisit(UnaryExpression exp, SqlConfig config, SqlContext context)
-        {
-            ExpressionVisit.Visit(exp.Operand, config, context);
-        }
+        ExpressionVisit.Visit(exp.Operand, config, context);
     }
 }

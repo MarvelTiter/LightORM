@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
 {
-    Dictionary<string, Action<MethodCallExpression, SqlConfig, SqlContext>> methodDic = new Dictionary<string, Action<MethodCallExpression, SqlConfig, SqlContext>>()
+    Dictionary<string, Action<MethodCallExpression, SqlResolveOptions, SqlContext>> methodDic = new Dictionary<string, Action<MethodCallExpression, SqlResolveOptions, SqlContext>>()
         {
             {"Like",LikeMethod },
             {"NotLike",NotLikeMethod },
@@ -18,7 +18,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
             {"GroupConcat",SelectGroupConcat },
             {"Coalesce",SelectCoalesce }
         };
-    public override void DoVisit(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var key = exp.Method.Name;
         if (methodDic.TryGetValue(key, out var func))
@@ -27,7 +27,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         }
     }
 
-    public static void LikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void LikeMethod(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
@@ -36,7 +36,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
-    public static void NotLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void NotLikeMethod(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
@@ -45,7 +45,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
-    public static void LeftLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void LeftLikeMethod(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
@@ -54,7 +54,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
-    public static void RightLikeMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void RightLikeMethod(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Arguments[0], config, context);
@@ -63,7 +63,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         config.BinaryPosition = BinaryPosition.Right;
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
     }
-    public static void InMethod(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void InMethod(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         // Where 条件中 In
         if (config.SqlType != SqlPartial.Where) throw new InvalidOperationException("In函数仅能用于Where子句中");
@@ -74,12 +74,12 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         ExpressionVisit.Visit(exp.Arguments[1], config, context);
         context.Append(")");
     }
-    public static void SelectSum(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void SelectSum(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var a = exp.Arguments[0];
         var current = context.GetCurrentFragment();
         context.SetFragment(new SqlFragment());
-        ExpressionVisit.Visit(a, SqlConfig.SelectFunc, context);
+        ExpressionVisit.Visit(a, SqlResolveOptions.SelectFunc, context);
         var temp = context.GetCurrentFragment();
         var newLine = current.Length > 0 ? "\n" : "";
         if (a is UnaryExpression)
@@ -92,7 +92,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
         }
         context.SetFragment(current);
     }
-    public static void SelectCount(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void SelectCount(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         if (exp.Arguments.Count == 0)
         {
@@ -103,7 +103,7 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
             var a = exp.Arguments[0];
             var current = context.GetCurrentFragment();
             context.SetFragment(new SqlFragment());
-            ExpressionVisit.Visit(a, SqlConfig.SelectFunc, context);
+            ExpressionVisit.Visit(a, SqlResolveOptions.SelectFunc, context);
             var temp = context.GetCurrentFragment();
             var newLine = current.Length > 0 ? "\n" : "";
             if (a is UnaryExpression)
@@ -117,16 +117,16 @@ internal class MethodCallExpVisitor : BaseVisitor<MethodCallExpression>
             context.SetFragment(current);
         }
     }
-    public static void SelectGroupConcat(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void SelectGroupConcat(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
 
     }
-    public static void SelectCoalesce(MethodCallExpression exp, SqlConfig config, SqlContext context)
+    public static void SelectCoalesce(MethodCallExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var arg = exp.Arguments[0];
         var current = context.GetCurrentFragment();
         context.SetFragment(new SqlFragment());
-        ExpressionVisit.Visit(arg, SqlConfig.SelectFunc, context);
+        ExpressionVisit.Visit(arg, SqlResolveOptions.SelectFunc, context);
         var temp = context.GetCurrentFragment();
         var finalName = "Coalesce";
         if (exp.Arguments.Count > 1)

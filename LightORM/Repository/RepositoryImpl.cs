@@ -1,89 +1,139 @@
-﻿using MDbContext.ExpressionSql;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Linq.Expressions;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace MDbContext.Repository;
-internal partial class RepositoryImpl<T> : IRepository<T>
+namespace LightORM.Repository
 {
-    private readonly IExpressionContext context;
-    private string _dbKey = ConstString.Main;
-    public RepositoryImpl(IExpressionContext context)
+    internal class RepositoryImpl<T> : IRepository<T>
     {
-        this.context = context;
-    }
+        private readonly IExpressionContext context;
 
-    public IRepository<T> SwitchDatabase(string key)
-    {
-        _dbKey = key;
-        context.SwitchDatabase(key);
-        return this;
-    }
+        public RepositoryImpl(IExpressionContext context)
+        {
+            this.context = context;
+        }
 
-    public int Delete(Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression == null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Delete<T>().Where(whereExpression).Execute();
-    }    
+        public int Count(Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            return context.Select<T>().Where(whereExp).Count();
+        }
 
-    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
-    {
-        var select = context.Select<T>();
-        if (whereExpression != null)
-            select = select.Where(whereExpression);
-        if (index * size > 0)
-            select = select.Paging(index, size);
-        if (orderByExpression != null)
-            select = select.OrderBy(orderByExpression, asc);
-        return select.Count(out total).ToList<T>();
-    }
+        public Task<int> CountAsync(Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            return context.Select<T>().Where(whereExp).CountAsync();
+        }
 
-    public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
-    {
-        var select = context.Select<T>();
-        if (whereExpression != null)
-            select = select.Where(whereExpression);
-        if (orderByExpression != null)
-            select = select.OrderBy(orderByExpression, asc);
-        return select.ToList<T>();
-    }    
+        public int Delete(Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression == null) return 0;
+            return context.Delete<T>().Where(whereExpression).Execute();
+        }
 
-    public T? GetSingle(Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        var list = context.Select<T>().Where(whereExpression).ToList<T>();
-        return list.FirstOrDefault();
-    }    
+        public Task<int> DeleteAsync(Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression == null) return Task.FromResult(0);
+            return context.Delete<T>().Where(whereExpression).ExecuteAsync();
+        }
 
-    public T? Insert(T item)
-    {
-        var flag = context.Insert<T>().AppendData(item).Execute();
-        return flag > 0 ? item : default;
-    }   
 
-    public int Update(T item, Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>().AppendData(item).Where(whereExpression).Execute();
-    }
+        public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            if (orderByExpression == null)
+                return context.Select<T>().Where(whereExp).Count(out total).Paging(index, size).ToList();
+            else
+                return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression, asc).Paging(index, size).ToList();
 
-    public int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Update<T>().UpdateColumns(updateExpression).Where(whereExpression).Execute();
-    }
+        }
 
-    public int Count(Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Select<T>().Where(whereExpression).Count();
-    }
+        public IEnumerable<T> GetList(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            if (orderByExpression == null)
+                return context.Select<T>().Where(whereExp).ToList();
+            else
+                return context.Select<T>().Where(whereExp).OrderBy(orderByExpression, asc).ToList();
+        }
 
-    public TMember Max<TMember>(Expression<Func<T, TMember>> maxExpression, Expression<Func<T, bool>>? whereExpression)
-    {
-        if (whereExpression is null) throw new ArgumentNullException(nameof(whereExpression));
-        return context.Select<T>().Where(whereExpression).Max(maxExpression);
+        public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            if (orderByExpression == null)
+                return context.Select<T>().Where(whereExp).Count(out total).Paging(index, size).ToListAsync();
+            else
+                return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression, asc).Paging(index, size).ToListAsync();
+        }
+
+        public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            if (orderByExpression == null)
+                return context.Select<T>().Where(whereExp).ToListAsync();
+            else
+                return context.Select<T>().Where(whereExp).OrderBy(orderByExpression, asc).ToListAsync();
+        }
+
+        public T? GetSingle(Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            return context.Select<T>().Where(whereExp).ToList().FirstOrDefault();
+        }
+
+        public async Task<T?> GetSingleAsync(Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            var list = await context.Select<T>().Where(whereExp).ToListAsync();
+            return list.FirstOrDefault();
+        }
+
+        public int Insert(T item)
+        {
+            return context.Insert(item).Execute();
+        }
+
+        public Task<int> InsertAsync(T item)
+        {
+            return context.Insert(item).ExecuteAsync();
+        }
+
+        public TMember Max<TMember>(Expression<Func<T, TMember>> maxExpression, Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            return context.Select<T>().Where(whereExp).Max(maxExpression);
+        }
+
+        public Task<TMember> MaxAsync<TMember>(Expression<Func<T, TMember>> maxExpression, Expression<Func<T, bool>>? whereExpression)
+        {
+            Expression<Func<T, bool>> whereExp = whereExpression ?? (e => 1 == 1);
+            return context.Select<T>().Where(whereExp).MaxAsync(maxExpression);
+        }
+
+        public int Update(T item, Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression == null) return 0;
+            return context.Update(item).Where(whereExpression).Execute();
+        }
+
+        public int Update(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> UpdateAsync(T item, Expression<Func<T, bool>>? whereExpression)
+        {
+            if (whereExpression == null) return Task.FromResult(0);
+            return context.Update(item).Where(whereExpression).ExecuteAsync();
+        }
+
+        public Task<int> UpdateAsync(Expression<Func<object>> updateExpression, Expression<Func<T, bool>>? whereExpression)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

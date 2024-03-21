@@ -1,7 +1,15 @@
-﻿using MDbContext;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
+
+/* 项目“LightORM (net4.0)”的未合并的更改
+在此之前:
+using MDbContext;
+在此之后:
+using LightORM.ExpressionSql.Providers;
+using MDbContext;
+*/
+using LightORM.ExpressionSql.Providers;
+using LightORM.Interfaces;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers;
+namespace LightORM.ExpressionSql.Providers;
 
 internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
 {
@@ -20,11 +28,11 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         DbKey = key;
     }
 
-    protected override SqlConfig WhereConfig => SqlConfig.DeleteWhere;
+    protected override SqlResolveOptions WhereConfig => SqlResolveOptions.DeleteWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
+        //Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public int Execute()
@@ -56,14 +64,14 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         return InternalExecuteAsync(args);
     }
 
-	public IExpDelete<T> AttachCancellationToken(CancellationToken token)
-	{
-		CancellToken = token;
-		return this;
-	}
+    public IExpDelete<T> AttachCancellationToken(CancellationToken token)
+    {
+        CancellToken = token;
+        return this;
+    }
 
 #endif
-	public string ToSql()
+    public string ToSql()
     {
         StringBuilder sql = new StringBuilder();
         var table = context.Tables.First();
@@ -96,7 +104,7 @@ internal partial class DeleteProvider<T> : BasicProvider<T>, IExpDelete<T>
         Expression<Func<object>> exp = () => item!;
         delete ??= new SqlFragment();
         context.SetFragment(delete);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Delete, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.Delete, context);
         return this;
     }
 

@@ -1,18 +1,17 @@
-﻿using MDbContext.ExpSql.Extension;
-using MDbContext.Extension;
-using MDbContext.Utils;
-using MDbEntity.Attributes;
+﻿using LightORM.DbEntity.Attributes;
+using LightORM.Extension;
+using LightORM.Utils;
 using System;
 using System.Collections;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class MemberExpVisitor : BaseVisitor<MemberExpression>
 {
 
-    public override void DoVisit(MemberExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(MemberExpression exp, SqlResolveOptions config, SqlContext context)
     {
         if (config.RequiredResolveEntity)
         {
@@ -64,7 +63,7 @@ internal class MemberExpVisitor : BaseVisitor<MemberExpression>
         }
     }
 
-    private void ResolveEntity(MemberExpression exp, SqlConfig config, SqlContext context)
+    private void ResolveEntity(MemberExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var e = Expression.Lambda(exp).Compile().DynamicInvoke();
         var eType = e.GetType();

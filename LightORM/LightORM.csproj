@@ -1,32 +1,51 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net4.0;net45;net4.8;netstandard2.1;netcoreapp3.1;net6.0;net7.0;net8.0;</TargetFrameworks>
-		<RootNamespace>MDbContext</RootNamespace>
+		<TargetFrameworks>net4.8;net6.0;net7.0;net8.0;</TargetFrameworks>
 		<AssemblyName>MT.LightORM</AssemblyName>
 		<Authors>MarvelTiter</Authors>
 		<Nullable>enable</Nullable>
-		<LangVersion>10.0</LangVersion>
-		<Description>使用表达式树（ExpressionTree）构建Sql，仅用于学习</Description>
-		<Version>1.3.1</Version>
-		<AssemblyVersion>1.3.1</AssemblyVersion>
+		<LangVersion>latest</LangVersion>
+		<Description>使用表达式树（ExpressionTree）构建Sql</Description>
+		<Version>1.3.6</Version>
+		<AssemblyVersion>1.3.6</AssemblyVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<FileVersion>1.3.1</FileVersion>
+		<FileVersion>1.3.6</FileVersion>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="ExpressionSql\Ado\**" />
 	  <Compile Remove="ExpressionSql\DbGenerator\**" />
+	  <Compile Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <Compile Remove="ExpressionSql\Interface\**" />
+	  <Compile Remove="ExpressionSql\Providers\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Ado\**" />
 	  <EmbeddedResource Remove="ExpressionSql\DbGenerator\**" />
+	  <EmbeddedResource Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Interface\**" />
+	  <EmbeddedResource Remove="ExpressionSql\Providers\**" />
+	  <None Remove="ExpressionSql\Ado\**" />
 	  <None Remove="ExpressionSql\DbGenerator\**" />
+	  <None Remove="ExpressionSql\ExpressionVisitor\**" />
+	  <None Remove="ExpressionSql\Interface\**" />
+	  <None Remove="ExpressionSql\Providers\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Handle.cs" />
 		<Compile Remove="ExpressionSql\ExpressionSqlCore.Result.cs" />
+		<Compile Remove="ExpressionSql\ITableContext.cs" />
+		<Compile Remove="ExpressionSql\SelectColumn.cs" />
+		<Compile Remove="ExpressionSql\SqlContext.cs" />
+		<Compile Remove="ExpressionSql\SqlFieldInfo.cs" />
+		<Compile Remove="ExpressionSql\SqlFragment.cs" />
+		<Compile Remove="SqlExecutor\CacheInfo.cs" />
+		<Compile Remove="SqlExecutor\Certificate.cs" />
+		<Compile Remove="SqlExecutor\CommandDefinition.cs" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
@@ -58,9 +77,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="ExpressionSql\Interface\Select\select.js">
-			<SubType>Code</SubType>
-		</None>
 		<None Update="README.md">
 		  <Pack>True</Pack>
 		  <PackagePath>\</PackagePath>

@@ -1,12 +1,12 @@
-﻿using MDbContext.ExpSql.Extension;
+﻿using LightORM.Extension;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class MemberInitExpVisitor : BaseVisitor<MemberInitExpression>
 {
-    public override void DoVisit(MemberInitExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(MemberInitExpression exp, SqlResolveOptions config, SqlContext context)
     {
         var bindings = exp.Bindings;
         if ((bindings?.Count) > 0)

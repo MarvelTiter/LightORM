@@ -1,7 +1,7 @@
-﻿using MDbContext;
-using MDbContext.ExpressionSql.ExpressionVisitor;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.SqlExecutor;
+﻿using LightORM.ExpressionSql.ExpressionVisitor;
+using LightORM.ExpressionSql.Interface;
+using LightORM.ExpressionSql.Providers;
+using LightORM.SqlExecutor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MDbContext.ExpressionSql.Providers;
+namespace LightORM.ExpressionSql.Providers;
 
 internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
 {
@@ -22,11 +22,11 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         DbKey = key;
     }
 
-    protected override SqlConfig WhereConfig => SqlConfig.UpdateWhere;
+    protected override SqlResolveOptions WhereConfig => SqlResolveOptions.UpdateWhere;
 
     public void AttachTransaction()
     {
-        Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
+        //Life.Core!.Attch(ToSql(), context.GetParameters(), DbKey!);
     }
 
     public IExpUpdate<T> AppendData(T item)
@@ -34,7 +34,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         update ??= new SqlFragment();
         Expression<Func<object>> exp = () => item!;
         context.SetFragment(update);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.Update, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.Update, context);
         return this;
     }
 
@@ -67,26 +67,26 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         //return await conn.ExecuteAsync(ToSql(), param);
     }
 
-	public IExpUpdate<T> AttachCancellationToken(CancellationToken token)
-	{
-		CancellToken = token;
-		return this;
-	}
+    public IExpUpdate<T> AttachCancellationToken(CancellationToken token)
+    {
+        CancellToken = token;
+        return this;
+    }
 
 #endif
 
-	public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
+    public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
         ignore ??= new SqlFragment();
         context.SetFragment(ignore);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.UpdateIgnore, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.UpdateIgnore, context);
         return this;
     }
     public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, object value)
     {
         update ??= new SqlFragment();
         context.SetFragment(update);
-        ExpressionVisit.Visit(exp.Body, SqlConfig.UpdatePartial, context);
+        ExpressionVisit.Visit(exp.Body, SqlResolveOptions.UpdatePartial, context);
         context.AppendDbParameter(value);
         return this;
     }
@@ -103,7 +103,7 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         var table = context.Tables.First();
         var primary = table.Fields!.Values.Where(f => f.IsPrimaryKey);
         bool updateKey = false;
-        if (update!.Names.Count == primary.Count())
+        if (update!.Names.Count == primary.Count() && IsAllPrimary())
         {
             throw new InvalidOperationException("There is no column need to update, because all the columns are primary column");
         }
@@ -136,13 +136,20 @@ internal partial class UpdateProvider<T> : BasicProvider<T>, IExpUpdate<T>
         sql.Append($"\nWHERE {where}");
         //Life.BeforeExecute?.Invoke(new SqlArgs { Sql = sql.ToString(), SqlParameter = context.GetParameters(), Action = SqlAction.Update });
         return sql.ToString();
+
+
+        bool IsAllPrimary()
+        {
+            return update!.Names.All(n => primary.Any(p => p.FieldName == n));
+        }
+
     }
 
     public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
     {
         update ??= new SqlFragment();
         context.SetFragment(update);
-        ExpressionVisit.Visit(columns.Body, SqlConfig.Update, context);
+        ExpressionVisit.Visit(columns.Body, SqlResolveOptions.Update, context);
         return this;
     }
 

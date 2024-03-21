@@ -1,15 +1,11 @@
-﻿using MDbContext.ExpressionSql;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LightORM.Repository;
 
-namespace MDbContext.Repository
+namespace LightORM;
+
+public static class RepositoryExtension
 {
-    public static class RepositoryExtension
+    public static IRepository<T> Repository<T>(this IExpressionContext sql)
     {
-        public static IRepository<T> Repository<T>(this IExpressionContext sql)
-        {
-            return new RepositoryImpl<T>(sql);
-        }
+        return new RepositoryImpl<T>(sql);
     }
 }

@@ -1,190 +1,188 @@
-﻿using MDbContext.ExpressionSql.Ado;
-using MDbContext.ExpressionSql.Interface;
-using MDbContext.ExpressionSql.Interface.Select;
-using MDbContext.ExpressionSql.Providers;
-using MDbContext.ExpressionSql.Providers.Select;
-using MDbContext.SqlExecutor;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using LightORM.Cache;
 
-namespace MDbContext.ExpressionSql
-{
+namespace LightORM.ExpressionSql;
+
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-    internal partial class ExpressionCoreSql
+internal partial class ExpressionCoreSql
+{
+    public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
+}
+#endif
+internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
+{
+    // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
+    private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
+    internal readonly SqlAopProvider Aop;
+    //private IAdo ado;
+
+    public ISqlExecutor Ado => GetExecutor(CurrentKey);
+
+    internal ExpressionCoreSql(SqlAopProvider aop)
     {
-        public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
+        Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
+        this.Aop = aop;
     }
 
-#endif
-    internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
+    internal ISqlExecutor GetExecutor(string key)
     {
-        private readonly ConcurrentDictionary<string, ITableContext> tableContexts = new ConcurrentDictionary<string, ITableContext>();
-        private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
-        internal readonly SqlExecuteLife Life;
-        //private IAdo ado;
-
-        public IAdo Ado
+        return executors.GetOrAdd(key, k =>
         {
-            get
+            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
+            //TODO AOPlog
+            ado.DbLog = Aop.DbLog;
+            //TODO Trans setting
+            if (useTrans)
             {
-                return new AdoImpl(GetDbInfo(CurrentKey), Life);
+                ado.BeginTran();
             }
-        }//new AdoImpl(dbFactories);//
+            return ado;
+        });
+    }
 
-        internal ExpressionCoreSql(ConcurrentDictionary<string, DbConnectInfo> dbFactories, SqlExecuteLife life, IAdo? ado = null)
+    internal static DbConnectInfo GetDbInfo(string key)
+    {
+        return StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
+    }
+
+    private readonly string MainDb = ConstString.Main;
+    private string? _dbKey = null;
+
+    internal string CurrentKey
+    {
+        get
         {
-            this.dbFactories = dbFactories;
-            this.Life = life;
-            this.Life.Core = this;
-            //this.ado = ado ?? new AdoImpl(dbFactories);
+            var k = _dbKey ?? MainDb;
+            _dbKey = null;
+            return k;
         }
+    }
 
-        internal ITableContext GetContext(string key)
+    public IExpressionContext SwitchDatabase(string key)
+    {
+        _dbKey = key;
+        return this;
+    }
+
+    public IExpSelect<T> Select<T>() => Select<T>(t => t!);
+
+    public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
+
+    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) =>
+        new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
+
+    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
+    public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(CurrentKey, entity);
+    public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(CurrentKey, entities);
+
+    IExpInsert<T> CreateInsertProvider<T>(string key, T? entity = default) =>
+        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entity);
+    IExpInsert<T> CreateInsertProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entities);
+
+
+    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
+    public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(CurrentKey, entity);
+    public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(CurrentKey, entities);
+
+    IExpUpdate<T> CreateUpdateProvider<T>(string key, T? entity = default) =>
+        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entity);
+    IExpUpdate<T> CreateUpdateProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entities);
+
+    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
+    public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(CurrentKey, entity);
+    public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(CurrentKey, entities);
+
+    IExpDelete<T> CreateDeleteProvider<T>(string key, T? entity = default) =>
+        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entity);
+    IExpDelete<T> CreateDeleteProvider<T>(string key, IEnumerable<T> entities) =>
+        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entities);
+    bool useTrans;
+    public void BeginTran()
+    {
+        useTrans = true;
+        foreach (var item in executors.Values)
         {
-            if (dbFactories.TryGetValue(key, out var dbInfo))
+            try { item.BeginTran(); } catch { }
+        }
+    }
+
+    public async Task BeginTranAsync()
+    {
+        useTrans = true;
+        foreach (var item in executors.Values)
+        {
+            try
             {
-                if (!tableContexts.TryGetValue(key, out var dbContext))
+                await item.BeginTranAsync();
+            }
+            catch { }
+        }
+    }
+
+    public void CommitTran()
+    {
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { item.CommitTran(); } catch { }
+        }
+    }
+
+    public async Task CommitTranAsync()
+    {
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try
+            {
+                await item.CommitTranAsync();
+            }
+            catch { }
+        }
+    }
+
+    public void RollbackTran()
+    {
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { item.RollbackTran(); } catch { }
+        }
+    }
+
+    public async Task RollbackTranAsync()
+    {
+        useTrans = false;
+        foreach (var item in executors.Values)
+        {
+            try { await item.RollbackTranAsync(); } catch { }
+        }
+    }
+
+
+    private bool disposedValue;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                foreach (var item in executors)
                 {
-                    dbContext = new TableContext(dbInfo.DbBaseType);
-                    tableContexts[key] = dbContext;
-                }
-                return dbContext;
-            }
-            throw new ArgumentException($"{key}异常");
-        }
-
-        internal DbConnectInfo GetDbInfo(string key)
-        {
-            if (dbFactories.TryGetValue(key, out var dbInfo))
-            {
-                return dbInfo;
-            }
-            throw new ArgumentException($"{key}异常");
-        }
-
-        private readonly string MainDb = ConstString.Main;
-        private string? _dbKey = null;
-        internal string CurrentKey
-        {
-            get
-            {
-                var k = _dbKey ?? MainDb;
-                _dbKey = null;
-                return k;
-            }
-        }
-        public IExpressionContext SwitchDatabase(string key)
-        {
-            _dbKey = key;
-            return this;
-        }
-        public IExpSelect<T> Select<T>() => Select<T>(t => new { t });
-
-        public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
-
-        IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) => new SelectProvider1<T>(body, GetContext(key), GetDbInfo(key), Life);
-
-        public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
-        IExpInsert<T> CreateInsertProvider<T>(string key) => new InsertProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
-
-        public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
-        IExpUpdate<T> CreateUpdateProvider<T>(string key) => new UpdateProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
-
-        public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
-        IExpDelete<T> CreateDeleteProvider<T>(string key) => new DeleteProvider<T>(key, GetContext(key), GetDbInfo(key), Life);
-
-
-        private struct TransactionInfo
-        {
-            public string Sql { get; set; }
-            public object Parameters { get; set; }
-            public string Key { get; set; }
-        }
-        List<TransactionInfo> transactions = new List<TransactionInfo>();
-        internal void Attch(string sql, object param, string key = ConstString.Main)
-        {
-            transactions.Add(new TransactionInfo
-            {
-                Key = key,
-                Sql = sql,
-                Parameters = param,
-            });
-        }
-
-        public IExpressionContext BeginTransaction()
-        {
-            return new ExpressionCoreSql(dbFactories, Life);
-        }
-
-        public bool CommitTransaction()
-        {
-            if (transactions.Count == 0) return false;
-            var groups = transactions.GroupBy(i => i.Key);
-            Dictionary<IDbConnection, IDbTransaction> allTrans = new Dictionary<IDbConnection, IDbTransaction>();
-            foreach (var g in groups)
-            {
-                var conn = dbFactories[g.Key].CreateConnection();
-                conn.Open();
-                var trans = conn.BeginTransaction();
-                allTrans.Add(conn, trans);
-                foreach (var item in g)
-                {
-                    try
-                    {
-                        conn.Execute(item.Sql, item.Parameters, trans);
-                    }
-                    catch (Exception ex)
-                    {
-                        foreach (var kv in allTrans)
-                        {
-                            kv.Value.Rollback();
-                            kv.Key.Close();
-                        }
-                        throw ex;
-                    }
+                    item.Value.Dispose();
                 }
             }
-            foreach (var kv in allTrans)
-            {
-                kv.Value.Commit();
-                kv.Key.Close();
-            }
-            return true;
+
+            disposedValue = true;
         }
-
-        private bool disposedValue;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // 释放托管状态(托管对象)
-                }
-
-                // 释放未托管的资源(未托管的对象)并重写终结器
-                // 将大型字段设置为 null
-                disposedValue = true;
-            }
-        }
-
-        // // 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-        // ~ExpressionCoreSql()
-        // {
-        //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        //     Dispose(disposing: false);
-        // }
-
-        public void Dispose()
-        {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+    }
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

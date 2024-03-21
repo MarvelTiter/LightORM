@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace MDbContext.ExpressionSql.ExpressionVisitor;
+namespace LightORM.ExpressionSql.ExpressionVisitor;
 
 internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
 {
@@ -75,7 +75,7 @@ internal class BinaryExpVisitor : BaseVisitor<BinaryExpression>
         };
     }
 
-    public override void DoVisit(BinaryExpression exp, SqlConfig config, SqlContext context)
+    public override void DoVisit(BinaryExpression exp, SqlResolveOptions config, SqlContext context)
     {
         config.BinaryPosition = BinaryPosition.Left;
         ExpressionVisit.Visit(exp.Left, config, context);

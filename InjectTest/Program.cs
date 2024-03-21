@@ -1,5 +1,7 @@
+using LightORM.ExpressionSql;
+using LightORM.Interfaces;
+using LightORM.Models;
 using MDbContext;
-using MDbContext.ExpressionSql.Interface;
 using MDbEntity.Attributes;
 using Microsoft.Data.Sqlite;
 
@@ -11,7 +13,7 @@ class User
     [Column(NotNull = true)]
     public string Name { get; set; }
 }
-internal class DbContext : ExpressionContext
+internal class DbContext : DbInitialContext
 {
     public override void Initialized(IDbInitial db)
     {
