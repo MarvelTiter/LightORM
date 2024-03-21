@@ -1,5 +1,4 @@
-﻿using LightORM.ExpressionSql.Interface;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using LightORM.Cache;
 
@@ -15,16 +14,15 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
     private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
-    internal readonly SqlExecuteLife Life;
+    internal readonly SqlAopProvider Aop;
     //private IAdo ado;
 
     public ISqlExecutor Ado => GetExecutor(CurrentKey);
 
-    internal ExpressionCoreSql(SqlExecuteLife life)
+    internal ExpressionCoreSql(SqlAopProvider aop)
     {
-        this.Life = life;
-        this.Life.Core = this;
-        //this.ado = ado ?? new AdoImpl(dbFactories);
+        Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
+        this.Aop = aop;
     }
 
     internal ISqlExecutor GetExecutor(string key)
@@ -33,6 +31,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
             //TODO AOPlog
+            ado.DbLog = Aop.DbLog;
             //TODO Trans setting
             if (useTrans)
             {

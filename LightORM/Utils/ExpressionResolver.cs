@@ -5,8 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Collections;
 using LightORM.SqlMethodResolver;
-using System.Xml.Linq;
-namespace LightORM.Utils;
+namespace LightORM;
 
 internal static class ExpressionExtensions
 {
@@ -91,8 +90,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         {
             var index = Convert.ToInt32(Expression.Lambda(exp.Right).Compile().DynamicInvoke());
             var array = Expression.Lambda(exp.Left).Compile().DynamicInvoke() as Array;
-            var parameterName = $"Const_{Options.ParameterIndex}";
-            AddDbParameter(parameterName, array!.GetValue(index)!);
+            var parameterName = AddDbParameter("Const", array!.GetValue(index)!);
             Sql.Append(Options.DbType.AttachPrefix(parameterName));
             return null;
         }
@@ -148,22 +146,32 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     {
         for (int i = 0; i < exp.Arguments.Count; i++)
         {
-            ResolvedMembers.Add(exp.Members[i].Name);
-            if (Options.SqlType == SqlPartial.Select)
+            var member = exp.Members![i];
+            if (member.Name.StartsWith("Tb") && member is PropertyInfo prop)
             {
-                Visit(exp.Arguments[i]);
-                if (!NotAs)
-                    Sql.Append($" AS {Options.DbType.AttachEmphasis(exp.Members![i].Name)}");
-            }
-            else if (Options.SqlType == SqlPartial.Insert)
-            {
-                var col = TableContext.GetTableInfo(exp.Type).Columns.First(c => c.Property.Name == exp.Members![i].Name);
-                Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
-                Visit(exp.Arguments[i]);
+                ParameterExpression p = Expression.Parameter(prop.PropertyType);
+                Visit(p);
+                NotAs = false;
             }
             else
             {
-                Visit(exp.Arguments[i]);
+                ResolvedMembers.Add(exp.Members[i].Name);
+                if (Options.SqlType == SqlPartial.Select)
+                {
+                    Visit(exp.Arguments[i]);
+                    if (!NotAs)
+                        Sql.Append($" AS {Options.DbType.AttachEmphasis(exp.Members![i].Name)}");
+                }
+                else if (Options.SqlType == SqlPartial.Insert)
+                {
+                    var col = TableContext.GetTableInfo(exp.Type).Columns.First(c => c.Property.Name == exp.Members![i].Name);
+                    Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
+                    Visit(exp.Arguments[i]);
+                }
+                else
+                {
+                    Visit(exp.Arguments[i]);
+                }
             }
             if (i + 1 < exp.Arguments.Count)
             {
@@ -176,6 +184,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     Expression? VisitUnary(UnaryExpression exp)
     {
         IsNot = exp.NodeType == ExpressionType.Not;
+        isVisitConvert = exp.NodeType == ExpressionType.Convert;
         Visit(exp.Operand);
         return null;
     }
@@ -193,6 +202,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         }
         set => notAs = value;
     }
+    bool isVisitConvert;
     Expression? VisitParameter(ParameterExpression exp)
     {
         if (Options.SqlType == SqlPartial.Select)
@@ -203,11 +213,19 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         }
         else
         {
-            if (Members.Count > 0)
+            if (isVisitConvert && Members.Count > 0)
             {
+                isVisitConvert = false;
                 var member = Members.Pop();
                 var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
-                Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                if (Options.RequiredTableAlias)
+                {
+                    Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                }
+                else
+                {
+                    Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                }
             }
         }
 
@@ -294,16 +312,16 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 var names = new List<string>();
                 for (int i = 0; i < list.Count; i++)
                 {
-                    var n = $"{name}_{i}_{Options.ParameterIndex}";
-                    names.Add(n);
-                    AddDbParameter(n, list[i]!);
+                    var n = $"{name}_{i}";
+                    var parameterName = AddDbParameter(n, list[i]!);
+                    names.Add(parameterName);
                 }
                 Sql.Append(string.Join(",", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
             }
             else
             {
-                AddDbParameter(name, value);
-                Sql.Append($"{Options.DbType.AttachPrefix(name)}");
+                var parameterName = AddDbParameter(name, value);
+                Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
             }
         }
         else
@@ -323,9 +341,8 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 }
                 else
                 {
-                    var name = $"Const_{Options.ParameterIndex}";
-                    Sql.Append($"{Options.DbType.AttachPrefix(name)}");
-                    AddDbParameter(name, value);
+                    var parameterName = AddDbParameter("Const", value);
+                    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
                 }
             }
             else
@@ -343,10 +360,12 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         return null;
     }
 
-    private void AddDbParameter(string parameterName, object v)
+    private string AddDbParameter(string name, object v)
     {
+        var parameterName = $"{name}_{Options.ParameterIndex}";
         DbParameters.Add(parameterName, v);
         Options.ParameterIndex++;
+        return parameterName;
     }
 
     /// <summary>

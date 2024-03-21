@@ -1,4 +1,4 @@
-﻿namespace LightORM.DbEntity.Attributes;
+﻿namespace LightORM;
 
 [Obsolete]
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]

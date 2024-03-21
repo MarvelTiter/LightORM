@@ -1,48 +1,17 @@
-﻿using LightORM.Context;
-using LightORM.DbEntity;
-using LightORM.Extension;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
-using System.Linq.Expressions;
+﻿using System.Data.Common;
 using LightORM.Cache;
+using LightORM.ExpressionSql;
 
-namespace LightORM.ExpressionSql;
+namespace LightORM;
 
-public enum SqlAction
-{
-    Select,
-    Update,
-    Insert,
-    Delete,
-    ExecuteSql,
-    CreateTable
-}
-
-public class ConstString
+internal class ConstString
 {
     public const string Main = "MainDb";
 }
-public class SqlArgs : EventArgs
-{
-    public object? SqlParameter { get; set; }
-    public SqlAction Action { get; set; }
-    public string? Sql { get; set; }
-    public bool Done { get; set; } = false;
-}
-public class SqlExecuteLife
-{
-    public Action<SqlArgs>? BeforeExecute { get; set; }
-    public Action<SqlArgs>? AfterExecute { get; set; }
-    internal ExpressionCoreSql? Core { get; set; }
-}
 
-public class DbLogAop
+public class SqlAopProvider
 {
-    public Action<SqlArgs>? BeforeExecute { get; set; }
-    public Action<SqlArgs>? AfterExecute { get; set; }
+    public Action<string, object?>? DbLog { get; set; }
 }
 
 public class ExpressionSqlOptions
@@ -59,10 +28,10 @@ public class ExpressionSqlOptions
         return this;
     }
     
-    internal SqlExecuteLife Life { get; } = new SqlExecuteLife();
-    public ExpressionSqlOptions SetWatcher(Action<SqlExecuteLife> option)
+    internal SqlAopProvider Aop { get; } = new SqlAopProvider();
+    public ExpressionSqlOptions SetWatcher(Action<SqlAopProvider> option)
     {
-        option(Life);
+        option(Aop);
         return this;
     }
     internal DbInitialContext? ContextInitializer { get; set; }
@@ -87,14 +56,9 @@ public partial class ExpressionSqlBuilder
         this.options = options;
     }
     
-
     internal IExpressionContext InnerBuild()
     {
-        // if ((options.DbFactories?.Count ?? 0) < 1)
-        // {
-        //     throw new Exception("未设置连接数据库");
-        // }
-        return new ExpressionCoreSql(options.Life);
+        return new ExpressionCoreSql(options.Aop);
     }
 
     public IExpressionContext Build()

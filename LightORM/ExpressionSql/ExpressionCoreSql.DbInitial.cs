@@ -1,5 +1,4 @@
-﻿using LightORM.Context;
-using LightORM.DbStruct;
+﻿using LightORM.DbStruct;
 using LightORM.Interfaces;
 using System.Collections.Generic;
 using System.Data;

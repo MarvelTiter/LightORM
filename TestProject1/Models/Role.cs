@@ -1,5 +1,4 @@
 ﻿
-using LightORM.DbEntity.Attributes;
 
 namespace TestProject1.Models;
 

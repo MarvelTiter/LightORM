@@ -1,13 +1,7 @@
-﻿using LightORM.Context;
-using System;
+﻿using System;
 
-namespace LightORM.Models;
+namespace LightORM;
 
-public enum BinaryPosition
-{
-    Left,
-    Right,
-}
 public enum SqlPartial
 {
     Default,
@@ -33,7 +27,6 @@ public class SqlResolveOptions
     public bool RequiredColumnAlias { get; private set; }
     public bool RequiredTableAlias { get; private set; }
     public bool IsUnitColumn => SqlType == SqlPartial.Select || SqlType == SqlPartial.GroupBy || SqlType == SqlPartial.OrderBy;
-    public bool RequiredValue => CheckRequiredValue();
     /// <summary>
     /// 是否需要列标注（防止关键字冲突
     /// </summary>
@@ -41,19 +34,9 @@ public class SqlResolveOptions
     public bool RequiredResolveEntity => SqlType == SqlPartial.Update || SqlType == SqlPartial.Insert || SqlType == SqlPartial.Delete;
     public bool RequiredComma { get; private set; }
     public int ParameterIndex { get; set; }
-    public BinaryPosition BinaryPosition { get; set; }
     public SqlPartial SqlType { get; private set; }
     public DbBaseType DbType { get; set; }
-    private bool CheckRequiredValue()
-    {
-        return BinaryPosition == BinaryPosition.Right &&
-            SqlType == SqlPartial.Where ||
-            SqlType == SqlPartial.Insert ||
-            SqlType == SqlPartial.Update ||
-            BinaryPosition == BinaryPosition.Right &&
-            SqlType == SqlPartial.SelectFunc
-            ;
-    }
+    
 
     public static SqlResolveOptions Select = new SqlResolveOptions() { RequiredColumnAlias = true, RequiredTableAlias = true, RequiredComma = true, SqlType = SqlPartial.Select };
     public static SqlResolveOptions SelectFunc = new SqlResolveOptions() { RequiredTableAlias = true, SqlType = SqlPartial.SelectFunc };

@@ -1,4 +1,4 @@
-﻿using LightORM.ExpressionSql;
+﻿using LightORM;
 #if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,7 +15,7 @@ public static class IocExtension
         var option = new ExpressionSqlOptions();
         options(option);
         services.AddSingleton(option);
-        services.AddTransient(provider =>
+        services.AddScoped(provider =>
         {
             var o = provider.GetService<ExpressionSqlOptions>()!;
             var builder = new ExpressionSqlBuilder(o);

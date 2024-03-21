@@ -1,6 +1,4 @@
-﻿using LightORM.DbEntity.Attributes;
-
-namespace TestProject1.Models;
+﻿namespace TestProject1.Models;
 
 
 [LightTable(Name = "ROLE_POWER")]

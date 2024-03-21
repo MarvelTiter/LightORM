@@ -240,8 +240,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            //cmd.Parameters.Clear();
-            //cmd.Dispose();
+            cmd.Parameters.Clear();
+            cmd.Dispose();
         }
     }
 
@@ -262,7 +262,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-
+            cmd.Parameters.Clear();
+            cmd.Dispose();
         }
     }
 

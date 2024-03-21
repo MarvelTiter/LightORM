@@ -5,21 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.Models
+namespace LightORM;
+
+public class LightOrmException : Exception
 {
-    public class LightOrmException : Exception
+    public LightOrmException(string message) : base(message)
     {
-        public LightOrmException(string message) : base(message)
-        {
 
-        }
-
-        //public static void ThrowIf(bool condition, string message)
-        //{
-        //    if (condition)
-        //    {
-        //        throw new LightOrmException(message);
-        //    }
-        //}
     }
+
+    //public static void ThrowIf(bool condition, string message)
+    //{
+    //    if (condition)
+    //    {
+    //        throw new LightOrmException(message);
+    //    }
+    //}
 }

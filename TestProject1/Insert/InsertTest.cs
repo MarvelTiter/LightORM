@@ -33,4 +33,17 @@ public class InsertTest : TestBase
         var sql = Context.Insert(p).IgnoreColumns(p => new { p.CreateTime }).ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void InsertGeneric()
+    {
+        var p = new Power();
+        var s = Context.Select<Power>().ToSql();
+        var sql = I(p);
+
+        string I<T>(T val) where T : IPower
+        {
+            return Context.Insert(val).ToSql();
+        }
+    }
 }

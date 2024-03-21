@@ -1,16 +1,7 @@
 ﻿using LightORM.DbStruct;
-using System;
-using System.Collections.Generic;
-namespace LightORM.DbEntity.Attributes;
-public class TableNameAttribute : Attribute
-{
-    public string TableName { get; set; }
-    public TableNameAttribute(string name)
-    {
-        TableName = name;
-    }
-}
-[Obsolete]
+namespace LightORM;
+
+[Obsolete("use LightTableAttribute instead")]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class TableAttribute : Attribute
 {
@@ -26,14 +17,14 @@ public class LightTableAttribute : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class TableIndexAttribute : Attribute
+public class LightTableIndexAttribute : Attribute
 {
     public IList<string>? Indexs { get; set; }
     public IndexType DbIndexType { get; set; }
     public string? Name { get; set; }
     public bool IsUnique { get; set; }
     public bool IsClustered { get; set; }
-    public TableIndexAttribute(params string[] indexs)
+    public LightTableIndexAttribute(params string[] indexs)
     {
         Indexs = indexs;
     }

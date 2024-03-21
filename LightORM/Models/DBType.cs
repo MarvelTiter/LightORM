@@ -1,4 +1,4 @@
-﻿namespace LightORM.Context;
+﻿namespace LightORM;
 public enum DbBaseType
 {
     SqlServer = 0,

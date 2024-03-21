@@ -1,10 +1,7 @@
-﻿using LightORM.DbEntity;
-using LightORM.ExpressionSql;
+﻿using LightORM.ExpressionSql;
 using System.Linq;
-using System.Reflection;
-using LightORM.Interfaces;
 
-namespace LightORM.Extension;
+namespace LightORM;
 
 public abstract class DbInitialContext
 {

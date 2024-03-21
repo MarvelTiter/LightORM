@@ -1,4 +1,4 @@
-﻿namespace LightORM.DbStruct;
+﻿namespace LightORM;
 
 public class TableGenerateOption
 {

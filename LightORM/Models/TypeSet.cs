@@ -1,4 +1,4 @@
-﻿namespace LightORM.Models;
+﻿namespace LightORM;
 
 public class TypeSet<T1, T2>
 {

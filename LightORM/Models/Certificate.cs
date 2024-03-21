@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace LightORM.Models;
-public class Certificate
+internal class Certificate
 {
     public Certificate(string commandText, Type parameterType)
     {

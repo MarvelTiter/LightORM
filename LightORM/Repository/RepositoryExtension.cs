@@ -1,4 +1,6 @@
-﻿namespace LightORM.Repository;
+﻿using LightORM.Repository;
+
+namespace LightORM;
 
 public static class RepositoryExtension
 {

@@ -231,11 +231,11 @@ internal class ExpressionBuilder
 #if NET6_0_OR_GREATER
             return Member.GetAttribute<LightColumnAttribute>()?.Name
                 ?? Member.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
-                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name
+                ?? Member.GetAttribute<ColumnAttribute>()?.Name
                 ?? "";
 #else
             return Member.GetAttribute<LightColumnAttribute>()?.Name 
-                ?? Member.GetAttribute<LightORM.DbEntity.Attributes.ColumnAttribute>()?.Name 
+                ?? Member.GetAttribute<ColumnAttribute>()?.Name 
                 ?? "";
 #endif
 

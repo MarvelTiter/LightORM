@@ -1,6 +1,4 @@
-﻿using LightORM.Context;
-
-namespace LightORM.DbStruct;
+﻿namespace LightORM.DbStruct;
 
 internal static class DbTypeEx
 {

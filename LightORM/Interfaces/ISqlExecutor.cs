@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Threading.Tasks;
 
-namespace LightORM.Interfaces;
+namespace LightORM;
 
 public interface ISqlExecutor : IDisposable
 {

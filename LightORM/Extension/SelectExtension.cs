@@ -1,10 +1,7 @@
 ﻿using LightORM.ExpressionSql;
 using LightORM.Providers.Select;
-using System;
-using System.Linq.Expressions;
-using System.Runtime.InteropServices.ComTypes;
 
-namespace LightORM.Extension;
+namespace LightORM;
 
 public static class SelectExtension
 {

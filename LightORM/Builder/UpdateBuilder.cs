@@ -49,22 +49,28 @@ internal class UpdateBuilder : SqlBuilder
             //参数处理
             foreach (var item in autoUpdateCols)
             {
-                //对象为null，并且参数值中没有对应的列，不更新null值列
-                if (TargetObject == null || !DbParameters.ContainsKey(item.PropName))
+                //参数中有对应属性的值，优先级更高
+                if (DbParameters.ContainsKey(item.PropName))
                 {
+                    Members.Add(item.PropName);
                     continue;
                 }
-                var val = item.GetValue(TargetObject);
-                if (val == null) continue;
-                if (DbParameters.ContainsKey(item.PropName)) continue;
-                DbParameters.Add(item.PropName, val);
-                Members.Add(item.PropName);
+                else
+                {
+                    if (TargetObject != null)
+                    {
+                        var val = item.GetValue(TargetObject);
+                        if (val == null) continue;
+                        DbParameters.Add(item.PropName, val);
+                        Members.Add(item.PropName);
+                    }
+                }
             }
         }
 
-        var finalUpdateCol = TableInfo.Columns.Where(c=>Members.Contains(c.PropName));
+        var finalUpdateCol = TableInfo.Columns.Where(c => Members.Contains(c.PropName));
 
-        sb.AppendFormat("UPDATE {0} SET\n{1}\n", GetTableName(TableInfo,false), string.Join(",\n", finalUpdateCol.Select(c=>$"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropName)}")));
+        sb.AppendFormat("UPDATE {0} SET\n{1}\n", GetTableName(TableInfo, false), string.Join(",\n", finalUpdateCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropName)}")));
 
         sb.AppendFormat("WHERE {0}", string.Join("\nAND ", Where));
 

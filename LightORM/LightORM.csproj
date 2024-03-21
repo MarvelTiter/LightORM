@@ -43,6 +43,9 @@
 		<Compile Remove="ExpressionSql\SqlContext.cs" />
 		<Compile Remove="ExpressionSql\SqlFieldInfo.cs" />
 		<Compile Remove="ExpressionSql\SqlFragment.cs" />
+		<Compile Remove="SqlExecutor\CacheInfo.cs" />
+		<Compile Remove="SqlExecutor\Certificate.cs" />
+		<Compile Remove="SqlExecutor\CommandDefinition.cs" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">

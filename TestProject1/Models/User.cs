@@ -1,6 +1,4 @@
-﻿using LightORM.DbEntity.Attributes;
-using System.ComponentModel.DataAnnotations;
-#nullable disable
+﻿#nullable disable
 namespace TestProject1.Models;
 
 

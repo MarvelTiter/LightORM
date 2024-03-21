@@ -1,10 +1,5 @@
-﻿using LightORM.DbEntity.Attributes;
-using LightORM.DbStruct;
-using System;
-using System.Collections.Generic;
+﻿using LightORM.DbStruct;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 
 namespace LightORM.Extension;
 
@@ -12,7 +7,7 @@ internal static class TypeExtension
 {
     internal static DbTable CollectDbTableInfo(this Type tableType)
     {
-        var tableName = tableType.GetAttribute<TableAttribute>()?.Name ?? tableType.Name;
+        var tableName = tableType.GetAttribute<LightTableAttribute>()?.Name ?? tableType.Name;
         var columns = CollectColumns(tableType);
         var indexs = CollectIndexs(tableType, columns);
         return new DbTable { Name = tableName, Columns = columns, Indexs = indexs };
@@ -30,9 +25,9 @@ internal static class TypeExtension
 
     private static List<DbIndex> CollectIndexs(Type tableType, List<DbColumn> columns)
     {
-        IEnumerable<TableIndexAttribute> attrs = tableType.GetCustomAttributes(false).Where(a => a is TableIndexAttribute).Cast<TableIndexAttribute>();
+        IEnumerable<LightTableIndexAttribute> attrs = tableType.GetCustomAttributes(false).Where(a => a is LightTableIndexAttribute).Cast<LightTableIndexAttribute>();
         var indexs = new List<DbIndex>();
-        foreach (TableIndexAttribute item in attrs)
+        foreach (LightTableIndexAttribute item in attrs)
         {
             indexs.Add(new()
             {
@@ -52,7 +47,7 @@ internal static class TypeExtension
         {
             var ignore = prop.GetAttribute<IgnoreAttribute>();
             if (ignore != null) { continue; }
-            var columnInfo = prop.GetAttribute<ColumnAttribute>();
+            var columnInfo = prop.GetAttribute<LightColumnAttribute>();
             columns.Add(new DbColumn
             {
                 Name = columnInfo?.Name ?? prop.Name,

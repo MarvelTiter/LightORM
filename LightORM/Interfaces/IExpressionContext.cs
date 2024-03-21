@@ -1,9 +1,6 @@
-﻿using LightORM.ExpressionSql.Interface;
-#if NET40
-#else
-using System.Threading.Tasks;
-#endif
-namespace LightORM.Interfaces;
+﻿using System.Threading.Tasks;
+
+namespace LightORM;
 
 public interface IExpressionContext : IDbAction
 {

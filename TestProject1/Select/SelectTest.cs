@@ -1,11 +1,4 @@
-﻿using LightORM.Providers.Select;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TestProject1.Select;
+﻿namespace TestProject1.Select;
 
 [TestClass]
 public class SelectTest : TestBase
@@ -33,20 +26,13 @@ public class SelectTest : TestBase
     {
         //Context.Select<User>().ToSql();
 
-        //var sql = Context.Select<Power, RolePower, UserRole>(w => new { w.Tb1.PowerId, w.Tb1.PowerName, w.Tb1.ParentId, w.Tb1.PowerType, w.Tb1.PowerLevel, w.Tb1.Icon, w.Tb1.Path, w.Tb1.Sort })
-        //                              .Distinct()
-        //                              .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
-        //                              .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-        //                              .Where(w => w.Tb3.UserId == "admin")
-        //                              .OrderBy(w => w.Tb1.Sort)
-        //                              .ToSql();
-        //Context.Select<Power>().ToSql();
-        var sql2 = Select<Power>();
+        var sql = Context.Select<Power, RolePower, UserRole>(w => new { w.Tb1, w.Tb2.RoleId })
+                                      .Distinct()
+                                      .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
+                                      .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+                                      .Where(w => w.Tb3.UserId == "admin")
+                                      .OrderBy(w => w.Tb1.Sort)
+                                      .ToSql();
     }
 
-
-    private int[] Select<T>() where T : IPower
-    {
-        return Context.Select<T>().OrderBy(p => p.Sort, false).ToList().Select(p => p.Sort).ToArray();
-    }
 }

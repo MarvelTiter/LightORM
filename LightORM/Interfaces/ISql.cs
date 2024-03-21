@@ -1,15 +1,5 @@
-﻿using System;
-using System.Linq.Expressions;
-#if NET40
-#else
-using System.Threading;
-using System.Threading.Tasks;
-using LightORM;
-using LightORM.ExpressionSql;
-using LightORM.ExpressionSql.Interface;
-using LightORM.Interfaces;
-#endif
-namespace LightORM.Interfaces;
+﻿using System.Threading.Tasks;
+namespace LightORM;
 
 public interface ISql
 {

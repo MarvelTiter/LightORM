@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using LightORM.Interfaces;
 
-namespace LightORM.ExpressionSql.Interface;
+namespace LightORM;
 
 public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>
 {

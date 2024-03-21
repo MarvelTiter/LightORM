@@ -1,12 +1,12 @@
-﻿namespace LightORM.DbEntity;
+﻿namespace LightORM;
 
-[Table(Name = "DB_INITIAL_INFO")]
+[LightTable(Name = "DB_INITIAL_INFO")]
 public class DbInfo
 {
-    [Column(Name = "CREATED_TIME")]
+    [LightColumn(Name = "CREATED_TIME")]
     public DateTime CreatedTime { get; } = DateTime.Now;
-    [Column(Name = "INITIALIZED")]
+    [LightColumn(Name = "INITIALIZED")]
     public bool Initialized { get; internal set; }
-    [Column(Name = "APP_NAME")]
+    [LightColumn(Name = "APP_NAME")]
     public string? AppName { get; set; }
 }

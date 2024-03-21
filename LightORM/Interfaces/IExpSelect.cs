@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Threading.Tasks;
 
-namespace LightORM.Interfaces;
+namespace LightORM;
 
 public interface IExpSelect0 : ISql
 {

@@ -1,9 +1,4 @@
-using System.Linq.Expressions;
-using LightORM.ExpressionSql;
-using LightORM.Interfaces;
-using LightORM.Models;
-using LightORM.Utils;
-using Microsoft.Data.Sqlite;
+using System.Data.SQLite;
 namespace TestProject1;
 
 public class TestBase
@@ -13,7 +8,7 @@ public class TestBase
     {
         var options = new ExpressionSqlOptions();
         var path = Path.GetFullPath("../../../test.db");
-        options.SetDatabase(LightORM.Context.DbBaseType.Sqlite, "DataSource=" + path, SqliteFactory.Instance);
+        options.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
         var builder = new ExpressionSqlBuilder(options);
         Context = builder.Build();
     }

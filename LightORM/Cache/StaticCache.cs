@@ -8,24 +8,29 @@ namespace LightORM.Cache
 {
     internal static class StaticCache<T>
     {
-        private readonly static ConcurrentDictionary<string, Lazy<T>> caches;
+        private readonly static ConcurrentDictionary<string, T> caches;
         static StaticCache()
         {
             caches = new();
         }
 
+        public static T GetOrAdd(string key, Func<string, T> func)
+        {
+            return caches.GetOrAdd(key, func);
+        }
+
         public static T GetOrAdd(string key, Func<T> func)
         {
-            return caches.GetOrAdd(key, new Lazy<T>(func)).Value;
+            return caches.GetOrAdd(key, k => func());
         }
 
         public static T? Get(string key)
         {
-            return caches.TryGetValue(key, out var lazy) ? lazy.Value : default;
+            return caches.TryGetValue(key, out var val) ? val : default;
         }
 
         public static int Count => caches.Count;
 
-        public static IEnumerable<T> Values => caches.Values.Select(l => l.Value);
+        public static IEnumerable<T> Values => caches.Values;
     }
 }

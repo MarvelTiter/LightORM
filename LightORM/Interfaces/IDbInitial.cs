@@ -5,7 +5,7 @@ using System.Text;
 using LightORM.DbStruct;
 using LightORM.ExpressionSql;
 
-namespace LightORM.Interfaces;
+namespace LightORM;
 
 public interface IDbInitial
 {
