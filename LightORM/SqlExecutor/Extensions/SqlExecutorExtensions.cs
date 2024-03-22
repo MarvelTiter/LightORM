@@ -1,10 +1,12 @@
-﻿using System.Data;
+﻿using LightORM.SqlExecutor;
+using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace LightORM.SqlExecutor.Extensions;
+namespace LightORM;
 
 public static class SqlExecutorExtensions
 {
@@ -27,6 +29,7 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
+            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
         }
     }
     public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -50,11 +53,8 @@ public static class SqlExecutorExtensions
         finally
         {
             if (reader != null)
-#if NET6_0_OR_GREATER
                 await reader.CloseAsync();
-#else
-                reader.Close();
-#endif
+            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
         }
     }
     public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -95,11 +95,7 @@ public static class SqlExecutorExtensions
         finally
         {
             if (reader != null)
-#if NET6_0_OR_GREATER
                 await reader.CloseAsync();
-#else
-                reader.Close();
-#endif
         }
     }
 

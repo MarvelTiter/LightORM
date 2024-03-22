@@ -59,7 +59,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
     public Expression? Visit(Expression? expression)
     {
-        System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
+        //System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
         return expression switch
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),

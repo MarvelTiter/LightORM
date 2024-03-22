@@ -33,16 +33,11 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public async Task BeginTranAsync()
     {
-#if NET45_OR_GREATER
-        await Task.Yield();
-        throw new NotSupportedException();
-#else
         if (DbConnection.State != ConnectionState.Open)
         {
             await DbConnection.OpenAsync();
         }
         DbTransaction ??= await DbConnection.BeginTransactionAsync();
-#endif
     }
 
     public void CommitTran()
@@ -54,14 +49,9 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public async Task CommitTranAsync()
     {
-#if NET45_OR_GREATER
-        await Task.Yield();
-        throw new NotSupportedException();
-#else
         await DbTransaction!.CommitAsync();
         DbTransaction = null;
         await DbConnection.CloseAsync();
-#endif
     }
 
     public void RollbackTran()
@@ -73,17 +63,12 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public async Task RollbackTranAsync()
     {
-#if NET45_OR_GREATER
-        await Task.Yield();
-        throw new NotSupportedException();
-#else
         if (DbTransaction != null)
         {
             await DbTransaction.RollbackAsync();
             DbTransaction = null;
             await DbConnection.CloseAsync();
         }
-#endif
     }
 
     private bool PrepareCommand(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
@@ -115,7 +100,6 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public async Task<bool> PrepareCommandAsync(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
-        Console.WriteLine(commandText);
         var needToClose = false;
         if (DbConnection.State != ConnectionState.Open)
         {
@@ -384,9 +368,12 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             if (disposing)
             {
+#if DEBUG
+                Console.WriteLine("SqlExecutor disposing.........");
+#endif
                 DbTransaction?.Rollback();
                 DbTransaction = null;
-                if (DbConnection != null && DbConnection.State == ConnectionState.Open)
+                if (DbConnection?.State == ConnectionState.Open)
                 {
                     DbConnection.Close();
                 }

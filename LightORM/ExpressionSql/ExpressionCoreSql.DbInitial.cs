@@ -6,14 +6,12 @@ using System.Linq;
 
 namespace LightORM.ExpressionSql;
 
-internal partial class ExpressionCoreSql : IDbInitial
+public partial class ExpressionCoreSql : IDbInitial
 {
     public void Log(string message)
     {
-#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
         if (Logger != null)
             Microsoft.Extensions.Logging.LoggerExtensions.LogInformation(Logger, message);
-#endif
     }
     public string GenerateCreateSql<T>(string key = ConstString.Main)
     {
@@ -24,7 +22,8 @@ internal partial class ExpressionCoreSql : IDbInitial
     }
     public IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas)
     {
-        using var info = GetExecutor(key);
+        SwitchDatabase(key);
+        using var info = Ado;
         try
         {
             DoCreateTable(info, GenerateCreateSql<T>(key));

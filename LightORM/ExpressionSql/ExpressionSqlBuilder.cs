@@ -16,7 +16,6 @@ public class SqlAopProvider
 
 public class ExpressionSqlOptions
 {
-    // internal ConcurrentDictionary<string, DbConnectInfo> DbFactories { get; } = new ConcurrentDictionary<string, DbConnectInfo>();
     public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, string connStr, DbProviderFactory factory)
     {
         return SetDatabase(ConstString.Main, dbBaseType, connStr, factory);
@@ -27,7 +26,8 @@ public class ExpressionSqlOptions
         _ = StaticCache<DbConnectInfo>.GetOrAdd(key, () => info);
         return this;
     }
-    
+
+
     internal SqlAopProvider Aop { get; } = new SqlAopProvider();
     public ExpressionSqlOptions SetWatcher(Action<SqlAopProvider> option)
     {
@@ -53,38 +53,21 @@ public partial class ExpressionSqlBuilder
 
     public ExpressionSqlBuilder(ExpressionSqlOptions options)
     {
+        // TODO数据库初始化
         this.options = options;
     }
     
     internal IExpressionContext InnerBuild()
     {
-        return new ExpressionCoreSql(options.Aop);
+        return new ExpressionCoreSql(options);
     }
 
     public IExpressionContext Build()
     {
-        var context = (InnerBuild() as ExpressionCoreSql)!;
+        //var context = (InnerBuild() as ExpressionCoreSql)!;
 
-        options.ContextInitializer?.Check(context);
-        return context;
+        ////options.ContextInitializer?.Check(context);
+        //return context;
+        return InnerBuild();
     }
-
-#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-    public IExpressionContext Build(IServiceProvider provider)
-    {
-        var context = (InnerBuild() as ExpressionCoreSql)!;
-        if (options.ContextInitializer != null)
-        {
-            var logger = provider?.GetService(typeof(Microsoft.Extensions.Logging.ILogger<IExpressionContext>)) as Microsoft.Extensions.Logging.ILogger<IExpressionContext>;
-            context.Logger = logger;
-            //var instance = Activator.CreateInstance(options.ContextInitialType);
-            //var methodExp = Expression.Call(Expression.Constant(instance)
-            //    , ExpressionContext.InitializedMethod
-            //    , Expression.Convert(Expression.Constant(context), typeof(IDbInitial)));
-            //Expression.Lambda(methodExp).Compile().DynamicInvoke();
-            options.ContextInitializer.Check(context);
-        }
-        return context;
-    }
-#endif
 }

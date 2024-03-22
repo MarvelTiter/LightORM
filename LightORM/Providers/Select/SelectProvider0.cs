@@ -7,7 +7,6 @@ using LightORM.Cache;
 using LightORM.ExpressionSql;
 using System.Data;
 using System.Threading.Tasks;
-using LightORM.SqlExecutor.Extensions;
 using LightORM.Builder;
 
 namespace LightORM.Providers.Select;

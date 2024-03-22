@@ -1,45 +1,54 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using LightORM.Cache;
-
+using LightORM.Providers;
 namespace LightORM.ExpressionSql;
 
-#if NET6_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
-internal partial class ExpressionCoreSql
+public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
-}
-#endif
-internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
-{
     // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
-    private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
+    //private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlAopProvider Aop;
     //private IAdo ado;
-
-    public ISqlExecutor Ado => GetExecutor(CurrentKey);
-
-    internal ExpressionCoreSql(SqlAopProvider aop)
+    private readonly List<ISqlExecutor> executors = [];
+    public ISqlExecutor Ado
     {
-        Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
-        this.Aop = aop;
-    }
-
-    internal ISqlExecutor GetExecutor(string key)
-    {
-        return executors.GetOrAdd(key, k =>
+        get
         {
-            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
-            //TODO AOPlog
-            ado.DbLog = Aop.DbLog;
-            //TODO Trans setting
+            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(CurrentKey));
+            executors.Add(ado);
+            //System.Diagnostics.Debug.WriteLine($"创建 sqlexecutor [{directlyUsed.Count}]");
             if (useTrans)
             {
                 ado.BeginTran();
             }
             return ado;
-        });
+        }
     }
+
+    public ExpressionCoreSql(ExpressionSqlOptions option)
+    {
+        Debug.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
+        this.Aop = option.Aop;
+    }
+
+    //internal ISqlExecutor GetExecutor(string key)
+    //{
+    //    return executors.GetOrAdd(key, k =>
+    //    {
+    //        var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
+    //        //TODO AOPlog
+    //        ado.DbLog = Aop.DbLog;
+    //        //TODO Trans setting
+    //        if (useTrans)
+    //        {
+    //            ado.BeginTran();
+    //        }
+    //        return ado;
+    //    });
+    //}
 
     internal static DbConnectInfo GetDbInfo(string key)
     {
@@ -67,43 +76,36 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public IExpSelect<T> Select<T>() => Select<T>(t => t!);
 
-    public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(CurrentKey, exp.Body);
+    public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(exp.Body);
 
-    IExpSelect<T> CreateSelectProvider<T>(string key, Expression body) =>
-        new LightORM.Providers.Select.SelectProvider1<T>(body, GetExecutor(key));
+    Providers.Select.SelectProvider1<T> CreateSelectProvider<T>(Expression body) => new(body, Ado);
 
-    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>(CurrentKey);
-    public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(CurrentKey, entity);
-    public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(CurrentKey, entities);
+    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();
+    public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
+    public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
 
-    IExpInsert<T> CreateInsertProvider<T>(string key, T? entity = default) =>
-        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entity);
-    IExpInsert<T> CreateInsertProvider<T>(string key, IEnumerable<T> entities) =>
-        new LightORM.Providers.InsertProvider<T>(GetExecutor(key), entities);
+    InsertProvider<T> CreateInsertProvider<T>(T? entity = default) => new(Ado, entity);
+    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
 
 
-    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>(CurrentKey);
-    public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(CurrentKey, entity);
-    public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(CurrentKey, entities);
+    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
+    public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(entity);
+    public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(entities);
 
-    IExpUpdate<T> CreateUpdateProvider<T>(string key, T? entity = default) =>
-        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entity);
-    IExpUpdate<T> CreateUpdateProvider<T>(string key, IEnumerable<T> entities) =>
-        new LightORM.Providers.UpdateProvider<T>(GetExecutor(key), entities);
+    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default) => new(Ado, entity);
+    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
 
-    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>(CurrentKey);
-    public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(CurrentKey, entity);
-    public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(CurrentKey, entities);
+    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
+    public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
+    public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
 
-    IExpDelete<T> CreateDeleteProvider<T>(string key, T? entity = default) =>
-        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entity);
-    IExpDelete<T> CreateDeleteProvider<T>(string key, IEnumerable<T> entities) =>
-        new LightORM.Providers.DeleteProvider<T>(GetExecutor(key), entities);
+    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(Ado, entity);
+    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
     bool useTrans;
     public void BeginTran()
     {
         useTrans = true;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try { item.BeginTran(); } catch { }
         }
@@ -112,7 +114,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public async Task BeginTranAsync()
     {
         useTrans = true;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try
             {
@@ -125,7 +127,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public void CommitTran()
     {
         useTrans = false;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try { item.CommitTran(); } catch { }
         }
@@ -134,7 +136,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public async Task CommitTranAsync()
     {
         useTrans = false;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try
             {
@@ -147,7 +149,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public void RollbackTran()
     {
         useTrans = false;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try { item.RollbackTran(); } catch { }
         }
@@ -156,7 +158,7 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public async Task RollbackTranAsync()
     {
         useTrans = false;
-        foreach (var item in executors.Values)
+        foreach (var item in executors)
         {
             try { await item.RollbackTranAsync(); } catch { }
         }
@@ -171,10 +173,12 @@ internal partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             if (disposing)
             {
+                Debug.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
                 foreach (var item in executors)
                 {
-                    item.Value.Dispose();
+                    item.Dispose();
                 }
+                executors.Clear();
             }
 
             disposedValue = true;
