@@ -28,9 +28,9 @@ internal abstract class SqlBuilder : ISqlBuilder
         foreach (var item in Expressions.ExpressionInfos.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
-            item.DbParameterIndex += dbParameterStartIndex;
+            item.ResolveOptions!.ParameterIndex = dbParameterStartIndex;
             var result = item.Expression.Resolve(item.ResolveOptions!);
-            dbParameterStartIndex = item.DbParameterIndex;
+            dbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
             {

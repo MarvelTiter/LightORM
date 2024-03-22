@@ -51,7 +51,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         {
             ResolveOptions = SqlResolveOptions.Join,
             Expression = exp,
-            DbParameterIndex = SqlBuilder.DbParameters.Count + 1
         };
 
         SqlBuilder.Expressions.Add(expression);
