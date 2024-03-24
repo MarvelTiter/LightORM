@@ -36,7 +36,7 @@ internal class OracleDbTable : DbTableBase
         #region Table
         sql.Append($@"
 CREATE TABLE {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(col => BuildColumn(col)))}
+{string.Join($",{Environment.NewLine}", table.Columns.Select(BuildColumn))}
 ){tableSpace};
 ");
         #endregion
@@ -70,7 +70,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
         int i = 1;
         foreach (DbIndex index in table.Indexs)
         {
-            string columnNames = string.Join(",", index.Columns.ForEach(c => $"{DbEmphasis(c)}"));
+            string columnNames = string.Join(",", index.Columns.Select(c => $"{DbEmphasis(c)}"));
             var type = "";
             if (index.IsUnique || index.DbIndexType == IndexType.Unique)
             {

@@ -10,21 +10,22 @@ public abstract class DbInitialContext
     public DbInfo? Info { get; set; }
     internal void Check(ExpressionCoreSql context)
     {
-        try
-        {
-            var d = context.Select<DbInfo>().ToList().FirstOrDefault();
-            if (d != null)
-                Info = d;
-        }
-        catch
-        {
-            context.CreateTable<DbInfo>();
-        }
-        if (!Info!.Initialized)
-        {
-            Initialized(context);
-            Info!.Initialized = true;
-            context.Insert(Info).Execute();
-        }
+        //TODO 数据库初始化
+        //try
+        //{
+        //    var d = context.Select<DbInfo>().ToList().FirstOrDefault();
+        //    if (d != null)
+        //        Info = d;
+        //}
+        //catch
+        //{
+        //    context.CreateTable<DbInfo>();
+        //}
+        //if (!Info!.Initialized)
+        //{
+        //    Initialized(context);
+        //    Info!.Initialized = true;
+        //    context.Insert(Info).Execute();
+        //}
     }
 }

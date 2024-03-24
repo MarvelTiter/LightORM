@@ -20,7 +20,7 @@ public static class IocExtension
         //    var ins = builder.Build();
         //    return ins;
         //});
-        services.AddScoped<IExpressionContext, ExpressionCoreSql>();
+        services.AddTransient<IExpressionContext, ExpressionCoreSql>();
         return services;
     }
 

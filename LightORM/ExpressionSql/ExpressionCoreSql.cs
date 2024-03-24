@@ -3,22 +3,23 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using LightORM.Cache;
 using LightORM.Providers;
+using LightORM.Utils;
 namespace LightORM.ExpressionSql;
 
-public partial class ExpressionCoreSql : IExpressionContext, IDisposable
+public class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
     // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
-    //private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
+    private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlAopProvider Aop;
     //private IAdo ado;
-    private readonly List<ISqlExecutor> executors = [];
+    private readonly List<ISqlExecutor> queryExecutors = [];
     public ISqlExecutor Ado
     {
         get
         {
             var ado = new SqlExecutor.SqlExecutor(GetDbInfo(CurrentKey));
-            executors.Add(ado);
+            queryExecutors.Add(ado);
             //System.Diagnostics.Debug.WriteLine($"创建 sqlexecutor [{directlyUsed.Count}]");
             if (useTrans)
             {
@@ -34,21 +35,21 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         this.Aop = option.Aop;
     }
 
-    //internal ISqlExecutor GetExecutor(string key)
-    //{
-    //    return executors.GetOrAdd(key, k =>
-    //    {
-    //        var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
-    //        //TODO AOPlog
-    //        ado.DbLog = Aop.DbLog;
-    //        //TODO Trans setting
-    //        if (useTrans)
-    //        {
-    //            ado.BeginTran();
-    //        }
-    //        return ado;
-    //    });
-    //}
+    internal ISqlExecutor GetExecutor(string key)
+    {
+        return executors.GetOrAdd(key, k =>
+        {
+            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
+            //TODO AOPlog
+            ado.DbLog = Aop.DbLog;
+            //TODO Trans setting
+            if (useTrans)
+            {
+                ado.BeginTran();
+            }
+            return ado;
+        });
+    }
 
     internal static DbConnectInfo GetDbInfo(string key)
     {
@@ -84,84 +85,88 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
     public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
     public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
 
-    InsertProvider<T> CreateInsertProvider<T>(T? entity = default) => new(Ado, entity);
-    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    InsertProvider<T> CreateInsertProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
+    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
 
 
     public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
     public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(entity);
     public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(entities);
 
-    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default) => new(Ado, entity);
-    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
+    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
 
     public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
     public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
     public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
 
-    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(Ado, entity);
-    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
+    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
     bool useTrans;
     public void BeginTran()
     {
         useTrans = true;
-        foreach (var item in executors)
+        executors.ForEach(ado =>
         {
-            try { item.BeginTran(); } catch { }
-        }
+            try { ado.BeginTran(); } catch { }
+        });
     }
 
     public async Task BeginTranAsync()
     {
         useTrans = true;
-        foreach (var item in executors)
-        {
-            try
-            {
-                await item.BeginTranAsync();
-            }
-            catch { }
-        }
+        await executors.ForEachAsync(async ado =>
+         {
+             try
+             {
+                 await ado.BeginTranAsync();
+             }
+             catch { }
+         });
     }
 
     public void CommitTran()
     {
         useTrans = false;
-        foreach (var item in executors)
+        executors.ForEach(ado =>
         {
-            try { item.CommitTran(); } catch { }
-        }
+            try { ado.CommitTran(); } catch { }
+        });
     }
 
     public async Task CommitTranAsync()
     {
         useTrans = false;
-        foreach (var item in executors)
+        await executors.ForEachAsync(async ado =>
         {
             try
             {
-                await item.CommitTranAsync();
+                await ado.CommitTranAsync();
             }
             catch { }
-        }
+        });
     }
 
     public void RollbackTran()
     {
         useTrans = false;
-        foreach (var item in executors)
+        executors.ForEach(ado =>
         {
-            try { item.RollbackTran(); } catch { }
-        }
+            try { ado.RollbackTran(); } catch { }
+        });
     }
 
     public async Task RollbackTranAsync()
     {
         useTrans = false;
-        foreach (var item in executors)
+        await executors.ForEachAsync(async ado =>
         {
-            try { await item.RollbackTranAsync(); } catch { }
-        }
+            try
+            {
+                await ado.RollbackTranAsync();
+            }
+            catch { }
+        });
     }
 
 
@@ -174,7 +179,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
             if (disposing)
             {
                 Debug.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
-                foreach (var item in executors)
+                foreach (var item in executors.Values)
                 {
                     item.Dispose();
                 }
