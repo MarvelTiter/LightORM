@@ -31,7 +31,9 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public ExpressionCoreSql(ExpressionSqlOptions option)
     {
-        Debug.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
+#if DEBUG
+        Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
+#endif
         this.Aop = option.Aop;
     }
 
@@ -178,12 +180,18 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             if (disposing)
             {
-                Debug.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
+#if DEBUG
+                Console.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
+#endif
                 foreach (var item in executors.Values)
                 {
                     item.Dispose();
                 }
                 executors.Clear();
+                foreach (var item in queryExecutors)
+                {
+                    item.Dispose();
+                }
             }
 
             disposedValue = true;
