@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -7,10 +8,10 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
-    public static Action<IDbCommand, object?>? GetDbParameterReader(string commandText, Type paramaterType)
+    public static Action<DbCommand, object?>? GetDbParameterReader(this DbCommand cmd, Type paramaterType)
     {
-        Models.Certificate cer = new Models.Certificate(commandText, paramaterType);
-        return StaticCache<Action<IDbCommand, object?>>.GetOrAdd($"DbParameterReader_{cer}", () =>
+        Certificate cer = new(cmd.Connection!.ConnectionString, cmd.CommandText, paramaterType);
+        return StaticCache<Action<DbCommand, object?>>.GetOrAdd($"DbParameterReader_{cer}", () =>
         {
             return (cmd, obj) =>
             {
@@ -20,15 +21,17 @@ internal static class DbParameterReader
                 }
                 else
                 {
-                    var reader = CreateReader(commandText, paramaterType);
+                    var reader = CreateReader(cmd.CommandText, paramaterType);
                     reader?.Invoke(cmd, obj!);
                     SetDbType(cmd);
                 }
             };
         });
+
+
     }
 
-    private static void SetDbType(IDbCommand cmd)
+    private static void SetDbType(DbCommand cmd)
     {
         foreach (IDbDataParameter p in cmd.Parameters)
         {
@@ -38,7 +41,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static void ReadDictionary(IDbCommand cmd, object obj)
+    private static void ReadDictionary(DbCommand cmd, object obj)
     {
         var dic = (Dictionary<string, object>)obj!;
         foreach (var item in dic)
@@ -52,7 +55,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static Action<IDbCommand, object> CreateReader(string commandText, Type parameterType)
+    private static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
     {
         /*
      * (cmd, obj) => { 
@@ -63,11 +66,11 @@ internal static class DbParameterReader
      * }
      */
         // (cmd, obj) => 
-        MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
-        PropertyInfo parameterCollection = typeof(IDbCommand).GetProperty("Parameters")!;
+        MethodInfo createParameterMethodInfo = typeof(DbCommand).GetMethod("CreateParameter")!;
+        PropertyInfo parameterCollection = typeof(DbCommand).GetProperty("Parameters")!;
         MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
 
-        ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
+        ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
         ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
         var objType = parameterType;
         //TODO 优化
@@ -103,7 +106,7 @@ internal static class DbParameterReader
             body.Add(addToList);
         }
         var block = Expression.Block(new[] { tempExp, p1 }, body);
-        var lambda = Expression.Lambda<Action<IDbCommand, object>>(block, cmdExp, objExp);
+        var lambda = Expression.Lambda<Action<DbCommand, object>>(block, cmdExp, objExp);
         return lambda.Compile();
 
     }
@@ -119,7 +122,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static IDbDataParameter CreateParameter(this IDbCommand cmd, string parameterName)
+    private static IDbDataParameter CreateParameter(this DbCommand cmd, string parameterName)
     {
         if (cmd.Parameters.Contains(parameterName))
             return (IDbDataParameter)cmd.Parameters[parameterName];
@@ -134,6 +137,7 @@ internal static class DbParameterReader
     private static DbType? GetDbType(object value)
     {
         var t = value.GetType();
+        t = Nullable.GetUnderlyingType(t) ?? t;
         if (t.IsEnum)
         {
             t = Enum.GetUnderlyingType(t);

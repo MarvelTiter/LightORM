@@ -2,8 +2,10 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Reflection.Emit;
+using System.Reflection;
 using System.Threading.Tasks;
-
+using LightORM.Cache;
 namespace LightORM.SqlExecutor;
 
 internal class SqlExecutor : ISqlExecutor, IDisposable
@@ -74,8 +76,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     private bool PrepareCommand(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
-        Console.WriteLine(commandText);
         var needToClose = false;
+        GetInit(command.GetType())?.Invoke(command);
         if (DbConnection.State != ConnectionState.Open)
         {
             connection.Open();
@@ -90,7 +92,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = Cache.DbParameterReader.GetDbParameterReader(commandText, dbParameters.GetType());
+            var action = command.GetDbParameterReader(dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
 
@@ -100,6 +102,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public async Task<bool> PrepareCommandAsync(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
+        GetInit(command.GetType())?.Invoke(command);
         var needToClose = false;
         if (DbConnection.State != ConnectionState.Open)
         {
@@ -115,7 +118,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = Cache.DbParameterReader.GetDbParameterReader(commandText, dbParameters.GetType());
+            var action = command.GetDbParameterReader(dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
         return needToClose;
@@ -359,6 +362,63 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         return (T)Convert.ChangeType(value, conversionType);
     }
+
+    private static Dictionary<Type, Action<DbCommand>> commandInitCache = new Dictionary<Type, Action<DbCommand>>();
+    private static Action<DbCommand>? GetInit(Type commandType)
+    {
+        if (commandType == null)
+        {
+            return null;
+        }
+
+        if (commandInitCache.TryGetValue(commandType, out Action<DbCommand> value))
+        {
+            return value;
+        }
+
+        MethodInfo? basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+        MethodInfo? basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+        if (basicPropertySetter != null || basicPropertySetter2 != null)
+        {
+            /*
+             * (DbCommand cmd) => {
+             *     (OracleCommand)cmd.set_BindByName(true);
+             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
+             * }
+             */
+            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
+            List<Expression> body = new List<Expression>();
+            if (basicPropertySetter != null)
+            {
+                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, basicPropertySetter, Expression.Constant(true, typeof(bool)));
+                body.Add(setter1Exp);
+            }
+            if (basicPropertySetter2 != null)
+            {
+                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, basicPropertySetter2, Expression.Constant(-1, typeof(int)));
+                body.Add(setter2Exp);
+            }
+            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
+            value = lambda.Compile();
+
+            commandInitCache.Add(commandType, value);
+        }
+
+        return value;
+    }
+
+    private static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+    {
+        PropertyInfo property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+        if ((object)property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
+        {
+            return property.GetSetMethod();
+        }
+        return null;
+    }
+
 
     private bool disposedValue;
 
