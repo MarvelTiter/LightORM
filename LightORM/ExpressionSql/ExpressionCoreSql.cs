@@ -21,6 +21,7 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
             var ado = new SqlExecutor.SqlExecutor(GetDbInfo(CurrentKey));
             queryExecutors.Add(ado);
             //System.Diagnostics.Debug.WriteLine($"创建 sqlexecutor [{directlyUsed.Count}]");
+            ado.DbLog = Aop.DbLog;
             if (useTrans)
             {
                 ado.BeginTran();

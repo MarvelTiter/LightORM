@@ -27,8 +27,6 @@ internal static class DbParameterReader
                 }
             };
         });
-
-
     }
 
     private static void SetDbType(DbCommand cmd)

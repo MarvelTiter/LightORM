@@ -45,8 +45,23 @@ internal abstract class SqlBuilder : ISqlBuilder
 
     protected string GetTableName(TableEntity table, bool useAlias = true)
     {
-        return $"{AttachEmphasis(table.TableName!)} {(useAlias ? AttachEmphasis(table.Alias!) : "")}";
+        return $"{NpTableName(table.TableName!)}{(useAlias ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }
+
+    //TODO Oracle?
+    private string NpTableName(string tablename)
+    {
+        if (!tablename.Contains('.'))
+        {
+            return AttachEmphasis(tablename);
+        }
+        else
+        {
+            var prs = tablename.Split('.');
+            return string.Join(".", prs.Select(AttachEmphasis));
+        }
+    }
+
     protected abstract void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result);
 
     public abstract string ToSqlString();
