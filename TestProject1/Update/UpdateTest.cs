@@ -14,6 +14,7 @@ public class UpdateTest : TestBase
     {
         var p = new Product();
         var sql = Context.Update<Product>().Set(p => p.ProductCode, "100").Where(p => p.ProductId == 100).ToSql();
+        Console.WriteLine(sql);
     }
 
     [TestMethod]
@@ -22,5 +23,6 @@ public class UpdateTest : TestBase
         var p = new Product();
         p.ProductCode = "100";
         var sql = Context.Update<Product>().UpdateColumns(() => new { p.DeleteMark, p.ProductCode }).Where(p => p.ProductId == 100).ToSql();
+        Console.WriteLine(sql);
     }
 }
