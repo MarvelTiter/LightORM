@@ -406,7 +406,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     {
         if (obj == null)
         {
-            return null;
+            return null!;
         }
         if (memberInfo.MemberType == MemberTypes.Property)
         {

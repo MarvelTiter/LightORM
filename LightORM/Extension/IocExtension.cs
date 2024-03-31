@@ -1,4 +1,5 @@
-﻿using LightORM;
+﻿#if NET6_0_OR_GREATER
+using LightORM;
 using LightORM.ExpressionSql;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,3 +32,4 @@ public static class IocExtension
     //}
 
 }
+#endif

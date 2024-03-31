@@ -33,7 +33,7 @@ internal static class DbParameterReader
     {
         foreach (IDbDataParameter p in cmd.Parameters)
         {
-            var dbType = GetDbType(p.Value);
+            var dbType = GetDbType(p.Value!);
             if (dbType.HasValue)
                 p.DbType = dbType.Value;
         }

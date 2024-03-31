@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Reflection;
 using System.Text;
 
@@ -15,5 +16,13 @@ internal static class AttributeExtension
     public static bool HasAttribute<T>(this MemberInfo self) where T : Attribute
     {
         return self.IsDefined(typeof(T), false);
+    }
+
+    public static IEnumerable<T> Select<T>(this DataTable table, Func<DataRow, T> selector)
+    {
+        foreach (DataRow row in table.Rows)
+        {
+            yield return selector(row);
+        }
     }
 }

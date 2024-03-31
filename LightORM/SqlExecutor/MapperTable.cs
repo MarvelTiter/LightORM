@@ -8,8 +8,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+#nullable disable
 namespace LightORM.SqlExecutor;
-
 internal class MapperTable
 {
     private string[] fieldNames;

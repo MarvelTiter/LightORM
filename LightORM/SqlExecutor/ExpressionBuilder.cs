@@ -65,10 +65,11 @@ internal class ExpressionBuilder
         var type = typeof(T);
 
 
-        var columns = reader.GetColumnSchema().Select(col =>
+        var columns = reader.GetSchemaTable()!.Select(col =>
           {
-              var nullable = col.AllowDBNull.HasValue ? $"{col.AllowDBNull}" : "True";
-              return $"{col.ColumnName}_{col.DataTypeName}_{nullable}";
+              var columnAllowDbNull = col["AllowDBNull"];
+              var nullable = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
+              return $"{col["ColumnName"]}_{col["ColumnName"]}_{nullable}";
           });
 
         var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}_{string.Join("&", columns)}";

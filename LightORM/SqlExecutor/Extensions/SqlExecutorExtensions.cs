@@ -32,6 +32,14 @@ public static class SqlExecutorExtensions
             Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
         }
     }
+    public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
+    {
+        return Query<MapperRow>(self, sql, param, trans, commandType);
+    }
+    public static T? QuerySingle<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
+    {
+        return Query<T>(self, sql, param, trans, commandType).FirstOrDefault();
+    }
     public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
@@ -52,27 +60,15 @@ public static class SqlExecutorExtensions
         }
         finally
         {
-            if (reader != null)
-                await reader.CloseAsync();
+            reader?.Close();
             Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
         }
     }
-    public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
-    {
-        return Query<MapperRow>(self, sql, param, trans, commandType);
-    }
-
     public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         var list = await QueryAsync<MapperRow>(self, sql, param, trans, commandType);
         return list.Cast<dynamic>().ToList();
     }
-
-    public static T? QuerySingle<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
-    {
-        return Query<T>(self, sql, param, trans, commandType).FirstOrDefault();
-    }
-
     public static async Task<T?> QuerySingleAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
@@ -94,11 +90,9 @@ public static class SqlExecutorExtensions
         }
         finally
         {
-            if (reader != null)
-                await reader.CloseAsync();
+            reader?.Close();
         }
     }
-
     private static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
     {
 
@@ -136,39 +130,39 @@ public static class SqlExecutorExtensions
                     values[0] = r.GetValue(0);
                     if (values[0] is DBNull)
                     {
-                        return null;
+                        return null!;
                     }
                 }
                 var begin = returnNullIfFirstMissing ? 1 : 0;
                 for (var iter = begin; iter < fieldCount; ++iter)
                 {
                     object obj = r.GetValue(iter);
-                    values[iter] = obj is DBNull ? null : obj;
+                    values[iter] = obj is DBNull ? null! : obj;
                 }
                 return new MapperRow(table, values);
             };
     }
 
-    private static T? GetValue<T>(object? val)
-    {
-        if (val is T t)
-        {
-            return t;
-        }
-        Type effectiveType = typeof(T);
-        if (val == null && (!effectiveType.IsValueType || Nullable.GetUnderlyingType(effectiveType) != null))
-        {
-            return default;
-        }
+    //private static T? GetValue<T>(object? val)
+    //{
+    //    if (val is T t)
+    //    {
+    //        return t;
+    //    }
+    //    Type effectiveType = typeof(T);
+    //    if (val == null && (!effectiveType.IsValueType || Nullable.GetUnderlyingType(effectiveType) != null))
+    //    {
+    //        return default;
+    //    }
 
-        try
-        {
-            Type conversionType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
-            return (T)Convert.ChangeType(val, conversionType, CultureInfo.InvariantCulture);
-        }
-        catch (Exception)
-        {
-            return default;
-        }
-    }
+    //    try
+    //    {
+    //        Type conversionType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+    //        return (T)Convert.ChangeType(val, conversionType, CultureInfo.InvariantCulture);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return default;
+    //    }
+    //}
 }

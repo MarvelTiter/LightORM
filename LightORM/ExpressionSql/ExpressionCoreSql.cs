@@ -8,7 +8,6 @@ namespace LightORM.ExpressionSql;
 
 public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
-    public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
     private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlAopProvider Aop;
     //private IAdo ado;
