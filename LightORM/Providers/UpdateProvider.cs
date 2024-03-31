@@ -59,7 +59,15 @@ namespace LightORM.Providers
             return this;
         }
 
-
+        public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
+        {
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = columns,
+                ResolveOptions = SqlResolveOptions.Update,
+            });
+            return this;
+        }
         public IExpUpdate<T> UpdateColumns(Expression<Func<T, object>> columns)
         {
             SqlBuilder.Expressions.Add(new ExpressionInfo()
@@ -99,5 +107,7 @@ namespace LightORM.Providers
             return this;
         }
         public string ToSql() => SqlBuilder.ToSqlString();
+
+       
     }
 }

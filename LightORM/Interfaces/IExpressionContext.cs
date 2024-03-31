@@ -29,6 +29,14 @@ public interface IDbAction
     Task CommitTranAsync();
     void RollbackTran();
     Task RollbackTranAsync();
+
+    void BeginTran(string key);
+    Task BeginTranAsync(string key);
+    void CommitTran(string key);
+    Task CommitTranAsync(string key);
+    void RollbackTran(string key);
+    Task RollbackTranAsync(string key);
+
 }
 
 public static class ExpSqlExtensions

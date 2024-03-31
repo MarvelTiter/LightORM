@@ -192,6 +192,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return ToList<TMember>().First();
     }
 
+    public TMember Min<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
+        {
+            e.Expression = exp;
+            e.Template = "MIN({0})";
+        });
+        return ToList<TMember>().First();
+    }
+
     public double Sum(Expression<Func<T1, object>> exp)
     {
         SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
@@ -220,6 +230,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             e.Template = "COUNT(*)";
         });
         return ToList<int>().First();
+    }
+
+    public double Avg(Expression<Func<T1, object>> exp)
+    {
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
+        {
+            e.Expression = exp;
+            e.Template = "AVG({0})";
+        });
+        return ToList<double>().First();
     }
 
     public TSelect Count(out long total)
@@ -338,6 +358,17 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return list.First();
     }
 
+    public async Task<TMember> MinAsync<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
+        {
+            e.Expression = exp;
+            e.Template = "MIN({0})";
+        });
+        var list = await ToListAsync<TMember>();
+        return list.First();
+    }
+
     public async Task<double> SumAsync(Expression<Func<T1, object>> exp)
     {
         SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
@@ -368,6 +399,17 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             e.Template = "COUNT(*)";
         });
         var list = await ToListAsync<int>();
+        return list.First();
+    }
+
+    public async Task<double> AvgAsync(Expression<Func<T1, object>> exp)
+    {
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, e =>
+        {
+            e.Expression = exp;
+            e.Template = "AVG({0})";
+        });
+        var list = await ToListAsync<double>();
         return list.First();
     }
 

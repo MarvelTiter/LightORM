@@ -14,7 +14,7 @@ namespace LightORM.SqlMethodResolver
         {
             if (!methods.TryGetValue(expression.Method.Name, out var action))
             {
-                throw new NotSupportedException(expression.Method.Name);
+                throw new NotSupportedException($"{resolver.Options.DbType}: {expression.Method.Name}");
             }
             action.Invoke(resolver, expression);
         }

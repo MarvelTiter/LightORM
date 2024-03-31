@@ -35,4 +35,13 @@ public class SelectTest : TestBase
                                       .ToSql();
     }
 
+    [TestMethod]
+    public void SelectFunc()
+    {
+        var sql = Context.Select<Product>(p => new
+        {
+            Code = SqlFn.Sum(p.ProductId > 100, p.ProductId)
+        }).ToSql();
+    }
+
 }

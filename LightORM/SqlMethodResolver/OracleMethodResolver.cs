@@ -12,6 +12,32 @@ namespace LightORM.SqlMethodResolver
     {
         public OracleMethodResolver()
         {
+            #region Count, Sum
+            methods.Add(nameof(SqlFn.Count), (resolver, methodCall) =>
+            {
+                resolver.Sql.Append("COUNT( CASE WHEN ");
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append(" THEN 1 ElSE 0 END )");
+            });
+            methods.Add(nameof(SqlFn.Sum), (resolver, methodCall) =>
+            {
+                resolver.Sql.Append("SUM( CASE WHEN ");
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append(" THEN ");
+                resolver.Visit(methodCall.Arguments[1]);
+                resolver.Sql.Append(" ElSE 0 END )");
+            });
+            methods.Add(nameof(SqlFn.Avg), (resolver, methodCall) =>
+            {
+                resolver.Sql.Append("AVG( CASE WHEN ");
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append(" THEN ");
+                resolver.Visit(methodCall.Arguments[1]);
+                resolver.Sql.Append(" ElSE 0 END )");
+            });
+            #endregion
+
+            #region Like, Trim
             methods.Add(nameof(string.StartsWith), (resolver, methodCall) =>
             {
                 resolver.Visit(methodCall.Object);
@@ -101,6 +127,7 @@ namespace LightORM.SqlMethodResolver
                 resolver.Visit(methodCall.Object);
                 resolver.Sql.Append(" )");
             });
+            #endregion
         }
     }
 }

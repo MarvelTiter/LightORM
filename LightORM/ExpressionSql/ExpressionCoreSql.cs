@@ -6,10 +6,9 @@ using LightORM.Providers;
 using LightORM.Utils;
 namespace LightORM.ExpressionSql;
 
-public class ExpressionCoreSql : IExpressionContext, IDisposable
+public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     public Microsoft.Extensions.Logging.ILogger<IExpressionContext>? Logger { get; set; }
-    // private readonly ConcurrentDictionary<string, DbConnectInfo> dbFactories;
     private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
     internal readonly SqlAopProvider Aop;
     //private IAdo ado;
@@ -43,9 +42,7 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
         return executors.GetOrAdd(key, k =>
         {
             var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
-            //TODO AOPlog
             ado.DbLog = Aop.DbLog;
-            //TODO Trans setting
             if (useTrans)
             {
                 ado.BeginTran();
@@ -82,95 +79,85 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(exp.Body);
 
-    Providers.Select.SelectProvider1<T> CreateSelectProvider<T>(Expression body) => new(body, Ado);
+    Providers.Select.SelectProvider1<T> CreateSelectProvider<T>(Expression body)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            _dbKey = table.TargetDatabase;
+        }
+        return new(body, Ado);
+    }
 
     public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();
     public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
     public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
 
-    InsertProvider<T> CreateInsertProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
-    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
-
+    InsertProvider<T> CreateInsertProvider<T>(T? entity = default)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entity);
+    }
+    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entities);
+    }
 
     public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
     public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(entity);
     public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(entities);
 
-    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
-    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
+    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entity);
+    }
+    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entities);
+    }
 
     public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
     public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
     public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
 
-    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(GetExecutor(CurrentKey), entity);
-    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(GetExecutor(CurrentKey), entities);
-    bool useTrans;
-    public void BeginTran()
+    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default)
     {
-        useTrans = true;
-        executors.ForEach(ado =>
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
         {
-            try { ado.BeginTran(); } catch { }
-        });
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entity);
     }
-
-    public async Task BeginTranAsync()
+    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities)
     {
-        useTrans = true;
-        await executors.ForEachAsync(async ado =>
-         {
-             try
-             {
-                 await ado.BeginTranAsync();
-             }
-             catch { }
-         });
-    }
-
-    public void CommitTran()
-    {
-        useTrans = false;
-        executors.ForEach(ado =>
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
         {
-            try { ado.CommitTran(); } catch { }
-        });
+            _dbKey = table.TargetDatabase;
+        }
+        return new(GetExecutor(CurrentKey), entities);
     }
-
-    public async Task CommitTranAsync()
-    {
-        useTrans = false;
-        await executors.ForEachAsync(async ado =>
-        {
-            try
-            {
-                await ado.CommitTranAsync();
-            }
-            catch { }
-        });
-    }
-
-    public void RollbackTran()
-    {
-        useTrans = false;
-        executors.ForEach(ado =>
-        {
-            try { ado.RollbackTran(); } catch { }
-        });
-    }
-
-    public async Task RollbackTranAsync()
-    {
-        useTrans = false;
-        await executors.ForEachAsync(async ado =>
-        {
-            try
-            {
-                await ado.RollbackTranAsync();
-            }
-            catch { }
-        });
-    }
+    
 
 
     private bool disposedValue;
@@ -203,4 +190,6 @@ public class ExpressionCoreSql : IExpressionContext, IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+
+    
 }

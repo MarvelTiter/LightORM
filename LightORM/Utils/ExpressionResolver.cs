@@ -342,19 +342,11 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 Sql.Append("NULL");
                 return null;
             }
-            if (exp.Type == typeof(bool) || exp.Type == typeof(DateTime))
+            if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
             {
-                if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
-                {
-                    var b = (bool)value;
-                    Sql.Append("1 = ");
-                    Sql.Append(b ? "1" : "0");
-                }
-                else
-                {
-                    var parameterName = AddDbParameter("Const", value);
-                    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
-                }
+                var b = (bool)value;
+                Sql.Append("1 = ");
+                Sql.Append(b ? "1" : "0");
             }
             else
             {
@@ -364,7 +356,8 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 }
                 else
                 {
-                    Sql.Append($"'{value}'");
+                    var parameterName = AddDbParameter("Const", value);
+                    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
                 }
             }
         }

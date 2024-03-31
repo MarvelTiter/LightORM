@@ -39,16 +39,20 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     Task<IList<TReturn>> ToListAsync<TReturn>();
     Task<DataTable> ToDataTableAsync();
     Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
+    Task<TMember> MinAsync<TMember>(Expression<Func<T1, TMember>> exp);
     Task<double> SumAsync(Expression<Func<T1, object>> exp);
     Task<int> CountAsync(Expression<Func<T1, object>> exp);
     Task<int> CountAsync();
+    Task<double> AvgAsync(Expression<Func<T1, object>> exp);
     Task<bool> AnyAsync();
 
     TSelect Paging(int pageIndex, int pageSize);
     TMember Max<TMember>(Expression<Func<T1, TMember>> exp);
+    TMember Min<TMember>(Expression<Func<T1, TMember>> exp);
     double Sum(Expression<Func<T1, object>> exp);
     int Count(Expression<Func<T1, object>> exp);
     int Count();
+    double Avg(Expression<Func<T1, object>> exp);
     bool Any();
     TSelect RollUp();
     TSelect Distinct();
