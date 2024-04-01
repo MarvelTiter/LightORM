@@ -93,6 +93,21 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
 #endif
 
+    public Task CloseAsync()
+    {
+#if NET45
+        DbConnection?.Close();
+        return Task.FromResult(true);
+
+#else
+        if (DbConnection != null)
+        {
+            return DbConnection.CloseAsync();
+        }
+        return Task.CompletedTask;
+#endif
+    }
+
 
     private bool PrepareCommand(DbCommand command, DbConnection connection, DbTransaction? transaction, CommandType commandType, string commandText, object? dbParameters)
     {
@@ -210,7 +225,6 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
     }
 
-
     public DataSet ExecuteDataSet(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
@@ -231,7 +245,6 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         return ds;
     }
-
 
     public DataTable ExecuteDataTable(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
@@ -268,11 +281,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             cmd.Dispose();
             if (needToClose)
             {
-#if !NET45
-                await DbConnection.CloseAsync();
-#else
-                DbConnection.Close();
-#endif
+                await CloseAsync();
             }
         }
     }
@@ -297,11 +306,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             cmd.Dispose();
             if (needToClose)
             {
-#if !NET45
-                await DbConnection.CloseAsync();
-#else
-                DbConnection.Close();
-#endif
+                await CloseAsync();
             }
         }
     }
@@ -344,11 +349,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             cmd.Dispose();
             if (needToClose)
             {
-#if !NET45
-                await DbConnection.CloseAsync();
-#else
-                DbConnection.Close();
-#endif
+                await CloseAsync();
             }
         }
         return ds;
@@ -371,11 +372,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             cmd.Dispose();
             if (needToClose)
             {
-#if !NET45
-                await DbConnection.CloseAsync();
-#else
-                DbConnection.Close();
-#endif
+                await CloseAsync();
             }
         }
         return ds;
