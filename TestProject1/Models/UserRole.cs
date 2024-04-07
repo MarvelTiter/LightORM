@@ -9,4 +9,10 @@ public class UserRole
     public string UserId { get; set; }
     [LightColumn(Name = "ROLE_ID", PrimaryKey = true)]
     public string RoleId { get; set; }
+
+    [LightNavigate(nameof(UserId))]
+    public User User { get; set; }
+
+    [LightNavigate(nameof(RoleId))]
+    public Role Role { get; set; }
 }

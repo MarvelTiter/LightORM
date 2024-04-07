@@ -34,7 +34,7 @@ public class ColumnAttribute : Attribute
     public string? Comment { get; set; }
 }
 
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Property)]
 public class LightColumnAttribute : Attribute
 {
     /// <summary>
@@ -65,4 +65,23 @@ public class LightColumnAttribute : Attribute
     /// 注释
     /// </summary>
     public string? Comment { get; set; }
+}
+
+[AttributeUsage(AttributeTargets.Property)]
+public class LightNavigate : Attribute
+{
+    public Type? ManyToMany { get; set; }
+    public string? MainName { get; set; }
+    public string? SubName { get; set; }
+
+    public LightNavigate()
+    {
+
+    }
+
+    public LightNavigate(string main)
+    {
+
+    }
+
 }

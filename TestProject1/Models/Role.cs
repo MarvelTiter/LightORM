@@ -1,8 +1,4 @@
-﻿
-
-namespace TestProject1.Models;
-
-
+﻿namespace TestProject1.Models;
 
 [LightTable(Name = "ROLE")]
 public class Role
@@ -11,4 +7,7 @@ public class Role
     public string RoleId { get; set; }
     [LightColumn(Name = "ROLE_NAME")]
     public string RoleName { get; set; }
+
+    [LightNavigate]
+    public ICollection<User> Users { get; set; }
 }
