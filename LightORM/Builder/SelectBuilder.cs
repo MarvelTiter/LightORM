@@ -1,4 +1,5 @@
-﻿using LightORM.ExpressionSql;
+﻿using LightORM.Cache;
+using LightORM.ExpressionSql;
 using LightORM.Extension;
 using LightORM.Interfaces;
 using System;
@@ -24,6 +25,47 @@ namespace LightORM.Builder
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
             {
                 Where.Add(result.SqlString!);
+                if (result.UseNavigate)
+                {
+                    foreach (var navColumn in TableInfo.GetNavigateColumns())
+                    {
+                        var navInfo = navColumn.NavigateInfo!;
+                        var mainCol = TableInfo.GetColumnInfo(navInfo.MainName!);
+                        var targetType = navInfo.NavigateType;
+                        var targetTable = TableContext.GetTableInfo(targetType);
+                        if (navInfo.MappingType != null)
+                        {
+                            var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
+                            var targetCol = targetTable.GetColumnInfo(targetNav.MainName!);
+                            var mapTable = TableContext.GetTableInfo(navInfo.MappingType);
+                            var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
+                            Joins.Add(new JoinInfo
+                            {
+                                EntityInfo = mapTable,
+                                JoinType = TableLinkType.LeftJoin,
+                                Where = $"( {AttachEmphasis(TableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                            });
+
+                            subCol = mapTable.GetColumnInfo(targetNav.SubName!);
+                            Joins.Add(new JoinInfo
+                            {
+                                EntityInfo = targetTable,
+                                JoinType = TableLinkType.LeftJoin,
+                                Where = $"( {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                            });
+                        }
+                        else
+                        {
+                            var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
+                            Joins.Add(new JoinInfo
+                            {
+                                EntityInfo = targetTable,
+                                JoinType = TableLinkType.LeftJoin,
+                                Where = $"( {AttachEmphasis(TableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} )"
+                            });
+                        }
+                    }
+                }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Join)
             {

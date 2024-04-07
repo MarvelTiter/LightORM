@@ -47,14 +47,16 @@ public class SelectTest : TestBase
     [TestMethod]
     public void NavigateSelect()
     {
-        var sql = Context.Select<User>().Where(u => u.UserRoles.Any(ur => ur.RoleName.Contains("管理"))).ToSql();
-
-
-        Context.Select<User, UserRole, Role>()
-            .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
-            .InnerJoin<Role>(w => w.Tb3.RoleId == w.Tb2.RoleId)
-            .Where(w => w.Tb3.RoleName.Contains("管理"))
-            .ToSql();
+        //var sql1 = Context.Select<Role>().Where(u => u.Users.Any(ur => ur.UserName.Contains("管理"))).ToSql();
+        //Console.WriteLine(sql1);
+        //var sql2 = Context.Select<User, UserRole, Role>()
+        //      .LeftJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
+        //      .LeftJoin<Role>(w => w.Tb3.RoleId == w.Tb2.RoleId)
+        //      .Where(w => w.Tb3.RoleName.Contains("管理"))
+        //      .ToSql();
+        //Console.WriteLine(sql2);
+        var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理") || ur.Role.RoleName.Contains("Admin")).ToSql();
+        Console.WriteLine(sql3);
 
     }
 

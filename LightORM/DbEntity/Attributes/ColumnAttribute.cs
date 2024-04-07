@@ -66,22 +66,3 @@ public class LightColumnAttribute : Attribute
     /// </summary>
     public string? Comment { get; set; }
 }
-
-[AttributeUsage(AttributeTargets.Property)]
-public class LightNavigate : Attribute
-{
-    public Type? ManyToMany { get; set; }
-    public string? MainName { get; set; }
-    public string? SubName { get; set; }
-
-    public LightNavigate()
-    {
-
-    }
-
-    public LightNavigate(string main)
-    {
-
-    }
-
-}

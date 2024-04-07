@@ -61,8 +61,6 @@ namespace LightORM.Cache
 
                 var propertyInfos = type.GetProperties();
 
-                var fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
-
                 var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
                 entityInfo.Columns.AddRange(propertyColumnInfos);
                 entityInfo.Alias = $"a{StaticCache<TableEntity>.Count}";

@@ -18,6 +18,7 @@ internal static class ExpressionExtensions
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
+            UseNavigate = resolve.UseNavigate,
         };
     }
 
@@ -56,6 +57,8 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
     public bool IsNot { get; set; }
+    public bool UseNavigate { get; set; }
+    internal List<string> NavigateMembers { get; set; } = [];
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
     public Expression? Visit(Expression? expression)
     {
@@ -264,6 +267,12 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             }
             var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
+            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
+            if (col.IsNavigate)
+            {
+                UseNavigate = true;
+                NavigateMembers.Add(col.PropName);
+            }
             if (Members.Count > 0)
             {
                 // w.Tb1.Property
@@ -272,7 +281,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 memberType = member.DeclaringType!;
                 name = member.Name;
             }
-            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
+            col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
             if (Options.RequiredTableAlias)
             {
                 Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");

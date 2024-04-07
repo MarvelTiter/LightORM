@@ -17,6 +17,7 @@ public abstract class SqlMethod
             try
             {
                 TryResolveExpression(resolver, expression);
+                return;
             }
             catch
             {
@@ -28,7 +29,7 @@ public abstract class SqlMethod
 
     private static void TryResolveExpression(ExpressionResolver resolver, MethodCallExpression expression)
     {
-        //var 
+        resolver.Visit(expression.Arguments[0]);
         resolver.Visit(expression.Arguments[1]);
     }
 }

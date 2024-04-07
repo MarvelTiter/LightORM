@@ -16,8 +16,17 @@ internal sealed record NavigateInfo
     {
         NavigateType = mainType;
     }
-    public Type NavigateType { get; set; }
+    /// <summary>
+    /// 多对多类型
+    /// </summary>
+    public Type NavigateType { get; }
+    /// <summary>
+    /// 多对多关联表
+    /// </summary>
     public Type? MappingType { get; set; }
+
+    public string? MainName { get; set; }
+    public string? SubName { get; set; }
 
 }
 internal sealed record ColumnInfo
@@ -82,7 +91,21 @@ internal sealed record ColumnInfo
         if (navigateInfo != null)
         {
             IsNavigate = true;
-
+            Type elType = property.PropertyType;
+            if (property.PropertyType.IsArray)
+            {
+                elType = property.PropertyType.GetElementType();
+            }
+            else if (property.PropertyType.IsGenericType)
+            {
+                elType = property.PropertyType.GetGenericArguments()[0];
+            }
+            NavigateInfo = new NavigateInfo(elType)
+            {
+                MappingType = navigateInfo.ManyToMany,
+                MainName = navigateInfo.MainName,
+                SubName = navigateInfo.SubName,
+            };
         }
 
     }

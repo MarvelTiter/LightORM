@@ -8,6 +8,6 @@ public class Role
     [LightColumn(Name = "ROLE_NAME")]
     public string RoleName { get; set; }
 
-    [LightNavigate]
+    [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(RoleId), SubName = nameof(UserRole.RoleId))]
     public ICollection<User> Users { get; set; }
 }
