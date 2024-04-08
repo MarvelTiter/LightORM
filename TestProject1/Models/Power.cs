@@ -51,10 +51,17 @@ public class Power : IPower
     [LightColumn(Name = "SORT")]
     public int Sort { get; set; }
 
-    [NotMapped]
-    public IEnumerable<Power> Children { get; set; }
+    [LightNavigate(typeof(RolePower), nameof(PowerId), nameof(RolePower.PowerId))]
+    public ICollection<Role> Roles { get; set; }
+
+    //[LightNavigate(typeof())]
+    //public ICollection<User> Users { get; set; }
+
+    [LightNavigate(nameof(PowerId), nameof(ParentId))]
+    public ICollection<Power> Children { get; set; }
+
 
     [NotMapped]
     public bool GenerateCRUDButton { get; set; }
-    IEnumerable<IPower> IPower.Children { get => Children; set => Children = value.Cast<Power>(); }
+    IEnumerable<IPower> IPower.Children { get => Children; set => Children = value.Cast<Power>().ToList(); }
 }

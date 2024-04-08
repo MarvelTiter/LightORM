@@ -19,6 +19,8 @@ internal static class ExpressionExtensions
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
             UseNavigate = resolve.UseNavigate,
+            NavigateDeep = resolve.NavigateDeep,
+            NavigateMembers = resolve.NavigateMembers,
         };
     }
 
@@ -58,6 +60,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     public List<string> ResolvedMembers { get; set; } = [];
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
+    public int NavigateDeep { get; set; }
     internal List<string> NavigateMembers { get; set; } = [];
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
     public Expression? Visit(Expression? expression)
@@ -272,6 +275,14 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 UseNavigate = true;
                 NavigateMembers.Add(col.PropName);
+                if (NavigateDeep == 0)
+                {
+                    Members.Clear();
+                }
+                else
+                {
+                    return null;
+                }
             }
             if (Members.Count > 0)
             {
@@ -280,8 +291,8 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 //var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
                 memberType = member.DeclaringType!;
                 name = member.Name;
+                col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
             }
-            col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
             if (Options.RequiredTableAlias)
             {
                 Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
