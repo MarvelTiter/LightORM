@@ -49,14 +49,17 @@ public class SelectTest : TestBase
     {
         //var sql1 = Context.Select<Role>().Where(u => u.Users.Any(ur => ur.UserName.Contains("管理"))).ToSql();
         //Console.WriteLine(sql1);
-        //var sql2 = Context.Select<User, UserRole, Role>()
-        //      .LeftJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
-        //      .LeftJoin<Role>(w => w.Tb3.RoleId == w.Tb2.RoleId)
-        //      .Where(w => w.Tb3.RoleName.Contains("管理"))
-        //      .ToSql();
+
+
+        //var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.Users.Any(u => u.UserId == "123"))).ToSql();
         //Console.WriteLine(sql2);
-        var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理") || ur.Role.RoleName.Contains("Admin")).ToSql();
-        Console.WriteLine(sql3);
+
+        //var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理")).ToSql();
+        //Console.WriteLine(sql3);
+
+        var sql4 = Context.Select<Power>().Where(p => p.Children.Any(child => child.PowerName == "123")).ToSql();
+        Console.WriteLine(sql4);
+
 
     }
 
