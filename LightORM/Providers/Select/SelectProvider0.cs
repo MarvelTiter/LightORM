@@ -11,7 +11,7 @@ using LightORM.Builder;
 
 namespace LightORM.Providers.Select;
 
-internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect0
+internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
     protected SelectBuilder SqlBuilder { get; }
     protected ISqlExecutor Executor { get; }
@@ -418,9 +418,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         var c = await CountAsync();
         return c > 0;
     }
+    public TSelect From(Func<IExpSelect> sub)
+    {
+        var subSelect = sub.Invoke();
+        //TODO 子查询
+        return (this as TSelect)!;
+    }
 
     public string ToSql()
     {
         return SqlBuilder.ToSqlString();
     }
+
 }

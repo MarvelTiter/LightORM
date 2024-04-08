@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 
 namespace LightORM;
 
-public interface IExpSelect0 : ISql
+public interface IExpSelect : ISql
 {
 
 }
-public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSelect0
+public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelect
 {
     TSelect InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
     TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
@@ -56,7 +56,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect0 where TSelect : IExpSele
     bool Any();
     TSelect RollUp();
     TSelect Distinct();
-    //TSelect From(Func<IExpressionContext, TSelect> sub);
+    TSelect From(Func<IExpSelect> sub);
 }
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 {

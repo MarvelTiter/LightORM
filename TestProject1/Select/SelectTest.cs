@@ -44,4 +44,23 @@ public class SelectTest : TestBase
         }).ToSql();
     }
 
+    [TestMethod]
+    public void NavigateSelect()
+    {
+        //var sql1 = Context.Select<Role>().Where(u => u.Users.Any(ur => ur.UserName.Contains("管理"))).ToSql();
+        //Console.WriteLine(sql1);
+
+
+        //var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.Users.Any(u => u.UserId == "123"))).ToSql();
+        //Console.WriteLine(sql2);
+
+        //var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理")).ToSql();
+        //Console.WriteLine(sql3);
+
+        var sql4 = Context.Select<Power>().Where(p => p.Children.Any(child => child.PowerName == "123")).ToSql();
+        Console.WriteLine(sql4);
+
+
+    }
+
 }

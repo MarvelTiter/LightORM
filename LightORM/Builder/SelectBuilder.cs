@@ -1,4 +1,5 @@
-﻿using LightORM.ExpressionSql;
+﻿using LightORM.Cache;
+using LightORM.ExpressionSql;
 using LightORM.Extension;
 using LightORM.Interfaces;
 using System;
@@ -24,6 +25,11 @@ namespace LightORM.Builder
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
             {
                 Where.Add(result.SqlString!);
+                if (result.UseNavigate)
+                {
+                    if (result.NavigateDeep == 0) result.NavigateDeep = 1;
+                    ScanNavigate(result, TableInfo);
+                }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Join)
             {
@@ -53,6 +59,69 @@ namespace LightORM.Builder
             {
                 OrderBy.Add(result.SqlString!);
                 AdditionalValue = expInfo.AdditionalParameter;
+            }
+        }
+
+        private void ScanNavigate(ExpressionResolvedResult result, TableEntity mainTableInfo)
+        {
+            foreach (var navColumn in mainTableInfo.GetNavigateColumns())
+            {
+                if (!(result.NavigateMembers?.Contains(navColumn.PropName) ?? true))
+                {
+                    continue;
+                }
+                var navInfo = navColumn.NavigateInfo!;
+                var mainCol = mainTableInfo.GetColumnInfo(navInfo.MainName!);
+                var targetType = navInfo.NavigateType;
+                var targetTable = TableContext.GetTableInfo(targetType);
+                if (navInfo.MappingType != null)
+                {
+                    var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
+                    var targetCol = targetTable.GetColumnInfo(targetNav.MainName!);
+                    var mapTable = TableContext.GetTableInfo(navInfo.MappingType);
+                    var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
+                    TryJoin(mapTable);
+                    Joins.Add(new JoinInfo
+                    {
+                        EntityInfo = mapTable,
+                        JoinType = TableLinkType.LeftJoin,
+                        Where = $"( {AttachEmphasis(mainTableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                    });
+
+                    subCol = mapTable.GetColumnInfo(targetNav.SubName!);
+                    TryJoin(targetTable);
+                    Joins.Add(new JoinInfo
+                    {
+                        EntityInfo = targetTable,
+                        JoinType = TableLinkType.LeftJoin,
+                        Where = $"( {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                    });
+                }
+                else
+                {
+                    var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
+                    TryJoin(targetTable);
+                    Joins.Add(new JoinInfo
+                    {
+                        EntityInfo = targetTable,
+                        JoinType = TableLinkType.LeftJoin,
+                        Where = $"( {AttachEmphasis(mainTableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} )"
+                    });
+                }
+
+                if (result.NavigateDeep > 1)
+                {
+                    ScanNavigate(result, targetTable);
+                    result.NavigateDeep--;
+                }
+            }
+        }
+
+        void TryJoin(TableEntity joined)
+        {
+            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || TableInfo.Type == joined.Type)
+            {
+                joined.Alias = joined.Alias!.Replace('a', 'j');
             }
         }
 

@@ -9,7 +9,6 @@ using System.Xml.Linq;
 using LightORM.Utils;
 
 namespace LightORM.Models;
-
 internal sealed record ColumnInfo
 {
     public TableEntity Table { get; }
@@ -25,6 +24,9 @@ internal sealed record ColumnInfo
     public Type PropertyType { get; }
     public Type? UnderlyingType { get; }
     public bool IsNullable { get; }
+    public bool IsNavigate { get; set; }
+    public NavigateInfo? NavigateInfo { get; set; }
+
 #if NET6_0_OR_GREATER
     public System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedOption? DatabaseGeneratedOption { get; set; }
 #endif
@@ -57,12 +59,34 @@ internal sealed record ColumnInfo
         IsNotMapped = property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = (lightColAttr?.PrimaryKey ?? false);
 #endif
+
         CustomName = lightColAttr?.Name;
         AutoIncrement = lightColAttr?.AutoIncrement;
         NotNull = lightColAttr?.NotNull;
         Length = lightColAttr?.Length;
         Default = lightColAttr?.Default;
         Comment = lightColAttr?.Comment;
+
+        var navigateInfo = property.GetAttribute<LightNavigate>();
+        if (navigateInfo != null)
+        {
+            IsNavigate = true;
+            Type elType = property.PropertyType;
+            if (property.PropertyType.IsArray)
+            {
+                elType = property.PropertyType.GetElementType();
+            }
+            else if (property.PropertyType.IsGenericType)
+            {
+                elType = property.PropertyType.GetGenericArguments()[0];
+            }
+            NavigateInfo = new NavigateInfo(elType)
+            {
+                MappingType = navigateInfo.ManyToMany,
+                MainName = navigateInfo.MainName,
+                SubName = navigateInfo.SubName,
+            };
+        }
 
     }
 }

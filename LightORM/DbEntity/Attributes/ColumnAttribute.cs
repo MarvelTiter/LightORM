@@ -34,7 +34,7 @@ public class ColumnAttribute : Attribute
     public string? Comment { get; set; }
 }
 
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Property)]
 public class LightColumnAttribute : Attribute
 {
     /// <summary>
