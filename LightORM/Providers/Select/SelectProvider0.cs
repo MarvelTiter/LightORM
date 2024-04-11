@@ -17,19 +17,13 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     protected ISqlExecutor Executor { get; }
     protected DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
     protected ExpressionInfo? SelectExpression;
+    public List<IncludeInfo> Includes { get; set; } = [];
     public SelectProvider0(ISqlExecutor executor)
     {
         Executor = executor;
         SqlBuilder = new SelectBuilder();
         SqlBuilder.DbType = DbType;
         SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T1>();
-    }
-
-
-
-    public bool Any()
-    {
-        return Count() > 0;
     }
 
     protected TSelect OrderByHandle(Expression exp, bool asc)
@@ -149,14 +143,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #endregion
 
-    public TSelect Paging(int pageIndex, int pageSize)
-    {
-        SqlBuilder.PageIndex = pageIndex;
-        SqlBuilder.PageSize = pageSize;
-        return (this as TSelect)!;
-    }
-
-
     #region group
 
     protected TSelect GroupByHandle(Expression exp)
@@ -181,6 +167,64 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     }
 
     #endregion
+
+    #region 
+
+    public TSelect Count(out long total)
+    {
+        total = Count();
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
+        return (this as TSelect)!;
+    }
+
+    public TSelect RollUp()
+    {
+        SqlBuilder.IsRollup = true;
+        return (this as TSelect)!;
+    }
+
+    public TSelect Distinct()
+    {
+        SqlBuilder.IsDistinct = true;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As(string tableName)
+    {
+        SqlBuilder.TableInfo.CustomName = tableName;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As(Type type)
+    {
+        var info = Cache.TableContext.GetTableInfo(type);
+        SqlBuilder.TableInfo.CustomName = info.TableName;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As<TOther>()
+    {
+        return As(typeof(TOther));
+    }
+
+    public TSelect Where(string whereString)
+    {
+        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = null,
+            ResolveOptions = SqlResolveOptions.Where,
+            Template = whereString
+        });
+        return (this as TSelect)!;
+    }
+
+    #endregion
+
+    #region ToResult
+    public bool Any()
+    {
+        return Count() > 0;
+    }
 
     public TMember Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
@@ -242,60 +286,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return ToList<double>().First();
     }
 
-    public TSelect Count(out long total)
-    {
-        total = Count();
-        SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
-        return (this as TSelect)!;
-    }
-
-    public TSelect RollUp()
-    {
-        SqlBuilder.IsRollup = true;
-        return (this as TSelect)!;
-    }
-
-    public TSelect Distinct()
-    {
-        SqlBuilder.IsDistinct = true;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As(string tableName)
-    {
-        SqlBuilder.TableInfo.CustomName = tableName;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As(Type type)
-    {
-        var info = Cache.TableContext.GetTableInfo(type);
-        SqlBuilder.TableInfo.CustomName = info.TableName;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As<TOther>()
-    {
-        return As(typeof(TOther));
-    }
-
-    public TSelect Where(string whereString)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = null,
-            ResolveOptions = SqlResolveOptions.Where,
-            Template = whereString
-        });
-        return (this as TSelect)!;
-    }
-
-
     public IEnumerable<T1> ToList()
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return Executor.Query<T1>(sql, parameters);
+        var results = Executor.Query<T1>(sql, parameters);
+        if (Includes.Count > 0)
+        {
+
+        }
+        return results;
     }
 
     public IEnumerable<dynamic> ToDynamicList()
@@ -418,6 +418,40 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         var c = await CountAsync();
         return c > 0;
     }
+
+    #endregion
+
+    public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp)
+    {
+        return new IncludeProvider<T1, TMember>(Executor);
+    }
+
+    public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        var result = exp.Resolve(SqlResolveOptions.Select);
+        if (result.NavigateDeep == 0)
+        {
+            //没有筛选条件
+
+        }
+        //Includes.Add(new IncludeInfo
+        //{
+        //    ExpressionInfo = new ExpressionInfo
+        //    {
+        //        Expression = exp,
+        //        ResolveOptions = SqlResolveOptions.Select
+        //    },
+        //});
+        return new IncludeProvider<T1, TMember>(Executor);
+    }
+
+    public TSelect Paging(int pageIndex, int pageSize)
+    {
+        SqlBuilder.PageIndex = pageIndex;
+        SqlBuilder.PageSize = pageSize;
+        return (this as TSelect)!;
+    }
+
     public TSelect From(Func<IExpSelect> sub)
     {
         var subSelect = sub.Invoke();
@@ -429,5 +463,5 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     {
         return SqlBuilder.ToSqlString();
     }
-
+   
 }

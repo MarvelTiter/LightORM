@@ -28,7 +28,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
     TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp);
     TSelect GroupBy<Another>(Expression<Func<Another, object>> exp);
-    TSelect GroupByIf<Another>(bool ifGroupby,  Expression<Func<Another, bool>> exp);
+    TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp);
     IEnumerable<T1> ToList();
     IEnumerable<dynamic> ToDynamicList();
     IEnumerable<TReturn> ToList<TReturn>();
@@ -57,7 +57,15 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect RollUp();
     TSelect Distinct();
     TSelect From(Func<IExpSelect> sub);
+    IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
+    IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp);
 }
+
+public interface IExpInclude<T1, TMember> : IExpSelect0<IExpInclude<T1, TMember>, T1>
+{
+    ISqlExecutor SqlExecutor { get; }
+}
+
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 {
     //IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);

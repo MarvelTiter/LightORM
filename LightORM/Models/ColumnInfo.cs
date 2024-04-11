@@ -71,15 +71,7 @@ internal sealed record ColumnInfo
         if (navigateInfo != null)
         {
             IsNavigate = true;
-            Type elType = property.PropertyType;
-            if (property.PropertyType.IsArray)
-            {
-                elType = property.PropertyType.GetElementType();
-            }
-            else if (property.PropertyType.IsGenericType)
-            {
-                elType = property.PropertyType.GetGenericArguments()[0];
-            }
+            Type elType = property.PropertyType.GetRealType();
             NavigateInfo = new NavigateInfo(elType)
             {
                 MappingType = navigateInfo.ManyToMany,
