@@ -51,16 +51,26 @@ public class SelectTest : TestBase
         //Console.WriteLine(sql1);
 
 
-        //var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.Users.Any(u => u.UserId == "123"))).ToSql();
-        //Console.WriteLine(sql2);
+        var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.Users.Any(u => u.UserId == "123"))).ToSql();
+        Console.WriteLine(sql2);
 
         //var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理")).ToSql();
         //Console.WriteLine(sql3);
 
-        var sql4 = Context.Select<Power>().Where(p => p.Children.Any(child => child.PowerName == "123")).ToSql();
-        Console.WriteLine(sql4);
+        //var sql4 = Context.Select<Power>().Where(p => p.Children.Any(child => child.PowerName == "123")).ToSql();
+        //Console.WriteLine(sql4);
 
 
+    }
+
+    [TestMethod]
+    public void SelectInclude()
+    {
+        var sql = Context.Select<Power>()
+            .Include(p => p.Roles.Where(r => r.RoleId == "P01"))
+            .ThenInclude(r=>r.Users.Where(u => u.UserId == "admin"))
+            .Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
+            .ToSql();
     }
 
 }

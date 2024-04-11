@@ -66,7 +66,7 @@ namespace LightORM.Builder
         {
             foreach (var navColumn in mainTableInfo.GetNavigateColumns())
             {
-                if (!(result.NavigateMembers?.Contains(navColumn.PropName) ?? true))
+                if (!result.NavigateMembers!.Contains(navColumn.PropName))
                 {
                     continue;
                 }
