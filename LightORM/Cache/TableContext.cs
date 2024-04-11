@@ -28,12 +28,13 @@ namespace LightORM.Cache
         {
             var cacheKey = $"DbTable_{type.GUID}";
 
-            var realType = type;
-            if (type.IsAbstract || type.IsInterface)
+            var realType = type.GetRealType();
+            
+            if (realType.IsAbstract || realType.IsInterface)
             {
                 realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
                 {
-                    var rt= StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
+                    var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
                     return new AbstractTableType(rt);
                 }).Type;
                 return GetTableInfo(realType);
