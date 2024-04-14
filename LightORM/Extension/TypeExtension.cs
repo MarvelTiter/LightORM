@@ -13,16 +13,19 @@ internal static class TypeExtension
         return new DbTable { Name = tableName, Columns = columns, Indexs = indexs };
     }
 
-    public static Type GetRealType(this Type type)
+    public static Type GetRealType(this Type type, out bool isCollection)
     {
         var t = type;
+        isCollection = false;
         if (type.IsArray)
         {
             t = type.GetElementType()!;
+            isCollection = true;
         }
         else if (type.IsGenericType)
         {
             t = type.GetGenericArguments()[0]!;
+            isCollection = true;
         }
         return t;
     }

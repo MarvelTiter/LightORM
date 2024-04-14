@@ -15,22 +15,22 @@ internal abstract class SqlBuilder : ISqlBuilder
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
-    protected IDbHelper DbHelper => DbType.GetDbHelper();
-    protected string AttachPrefix(string content) => DbType.AttachPrefix(content);
-    protected string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
+    public IDbHelper DbHelper => DbType.GetDbHelper();
+    public string AttachPrefix(string content) => DbType.AttachPrefix(content);
+    public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
+    public int DbParameterStartIndex {  get; set; }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
             return;
         }
-        var dbParameterStartIndex = 0;
         foreach (var item in Expressions.ExpressionInfos.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
-            item.ResolveOptions!.ParameterIndex = dbParameterStartIndex;
+            item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
             var result = item.Expression.Resolve(item.ResolveOptions!);
-            dbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
+            DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
             {
@@ -43,7 +43,7 @@ internal abstract class SqlBuilder : ISqlBuilder
         }
     }
 
-    protected string GetTableName(TableEntity table, bool useAlias = true)
+    public string GetTableName(TableEntity table, bool useAlias = true)
     {
         return $"{NpTableName(table.TableName!)}{(useAlias ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }

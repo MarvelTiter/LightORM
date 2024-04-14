@@ -21,6 +21,22 @@ internal static class ObjectExtensions
         return lambda.Compile();
     }
 
+    public static Action<object, object> GetPropertySetter(this Type type, PropertyInfo property)
+    {
+        if (!property.CanWrite)
+        {
+            throw new LightOrmException($"{property.DeclaringType!.FullName}.{property.Name} is readonly");
+        }
+        var setMethod = property.GetSetMethod()!;
+        var p = Expression.Parameter(typeof(object), "obj");
+        var v = Expression.Parameter(typeof(object), "value");
+        var ins = Expression.Convert(p, type);
+        var typedV = Expression.Convert(v, property.PropertyType);
+        var body = Expression.Call(ins, setMethod, typedV);
+        var lambda = Expression.Lambda<Action<object, object>>(body, p, v);
+        return lambda.Compile();
+    }
+
     //public static Dictionary<string, object> AccessObjectValues<T>(this T obj, IEnumerable<string> props)
     //{
     //    /*

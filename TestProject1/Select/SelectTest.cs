@@ -50,9 +50,10 @@ public class SelectTest : TestBase
         //var sql1 = Context.Select<Role>().Where(u => u.Users.Any(ur => ur.UserName.Contains("管理"))).ToSql();
         //Console.WriteLine(sql1);
 
+        //var roles = Context.Select<Role>().ToList();
 
-        var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.Users.Any(u => u.UserId == "123"))).ToSql();
-        Console.WriteLine(sql2);
+        var sql2 = Context.Select<Power>().Where(p => p.Roles.Any(r => r.RoleId == "Admin")).ToList();
+        //Console.WriteLine(sql2);
 
         //var sql3 = Context.Select<UserRole>().Where(ur => ur.User.UserName.Contains("管理")).ToSql();
         //Console.WriteLine(sql3);
@@ -67,10 +68,18 @@ public class SelectTest : TestBase
     public void SelectInclude()
     {
         var sql = Context.Select<Power>()
-            .Include(p => p.Roles.Where(r => r.RoleId == "P01"))
-            .ThenInclude(r=>r.Users.Where(u => u.UserId == "admin"))
-            .Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
-            .ToSql();
+            .Include(p => p.Roles)
+            //.ThenInclude(r=>r.Users.Where(u => u.UserId == "admin"))
+            //.Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
+            .ToList();
     }
-
+    [TestMethod]
+    public void SelectInclude2()
+    {
+        var sql = Context.Select<User>()
+            .Include(p => p.UserRoles)
+            .ThenInclude(r => r.Powers)
+            //.Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
+            .ToList();
+    }
 }

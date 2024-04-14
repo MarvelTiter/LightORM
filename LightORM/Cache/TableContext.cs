@@ -28,7 +28,7 @@ namespace LightORM.Cache
         {
             var cacheKey = $"DbTable_{type.GUID}";
 
-            var realType = type.GetRealType();
+            var realType = type.GetRealType(out _);
             
             if (realType.IsAbstract || realType.IsInterface)
             {
