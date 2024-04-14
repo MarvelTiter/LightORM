@@ -1,4 +1,5 @@
-﻿using LightORM.Providers.Select;
+﻿using LightORM.Builder;
+using LightORM.Providers.Select;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,16 +10,27 @@ namespace LightORM.Providers
 {
     internal class IncludeProvider<T1, TMember> : SelectProvider0<IExpInclude<T1, TMember>, T1>, IExpInclude<T1, TMember>
     {
-        public ISqlExecutor SqlExecutor => Executor;
-        public IncludeProvider(ISqlExecutor executor) : base(executor)
+        public IncludeInfo IncludeInfo { get; set; }
+        SelectBuilder IExpInclude<T1, TMember>.SqlBuilder { get => SqlBuilder; set => SqlBuilder = value; }
+        ISqlExecutor IExpInclude<T1, TMember>.Executor => Executor;
+
+        public IncludeProvider(ISqlExecutor executor, SelectBuilder builder, IncludeInfo includeInfo) : base(executor)
         {
+            SqlBuilder = builder;
+            IncludeInfo = includeInfo;
         }
 
-        //public IExpInclude<T1, TMember> ThenInclude(Expression<Func<TMember, object>> exp)
-        //{
-        //    var result = exp.Resolve(SqlResolveOptions.Select);
+        public override IEnumerable<T1> ToList()
+        {
+            var result = base.ToList().ToList();
+            return result;
+        }
 
-        //    return this;
-        //}
+        public override async Task<IList<T1>> ToListAsync()
+        {
+            var result = await base.ToListAsync();
+
+            return result;
+        }
     }
 }

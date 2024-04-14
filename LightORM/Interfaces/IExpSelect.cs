@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using LightORM.Builder;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace LightORM;
@@ -58,12 +59,13 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect Distinct();
     TSelect From(Func<IExpSelect> sub);
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
-    IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp);
+    //IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp);
 }
 
 public interface IExpInclude<T1, TMember> : IExpSelect0<IExpInclude<T1, TMember>, T1>
 {
-    ISqlExecutor SqlExecutor { get; }
+    internal SelectBuilder SqlBuilder { get; set; }
+    internal ISqlExecutor Executor { get; }
 }
 
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>

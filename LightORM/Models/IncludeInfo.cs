@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LightORM.Builder;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +9,11 @@ namespace LightORM.Models;
 
 internal class IncludeInfo
 {
-    public ExpressionInfo? ExpressionInfo { get; set; }
+    public TableEntity? SelectedTable { get; set; }
+    public NavigateInfo? NavigateInfo { get; set; }
+    public ColumnInfo? ParentNavigateColumn { get; set; }
+    public ColumnInfo? ParentWhereColumn { get; set; }
+    public SelectBuilder? SqlBuilder { get; set; }
+    public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
+
 }

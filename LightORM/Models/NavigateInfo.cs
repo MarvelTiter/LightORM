@@ -17,6 +17,6 @@ internal sealed record NavigateInfo
 
     public string? MainName { get; set; }
     public string? SubName { get; set; }
-
+    public bool IsMultiResult { get; set; }
 }
 

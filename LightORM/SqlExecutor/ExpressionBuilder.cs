@@ -64,7 +64,6 @@ internal class ExpressionBuilder
     {
         var type = typeof(T);
 
-
         var columns = reader.GetSchemaTable()!.Select(col =>
           {
               var columnAllowDbNull = col["AllowDBNull"];
@@ -154,47 +153,21 @@ internal class ExpressionBuilder
         else
         {
             SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
-            // 字段处理 Field
-            foreach (FieldInfo TargetMember in TargetType.GetFields(BindingFlags.Public | BindingFlags.Instance))
-            {
-                Action work = delegate
-                {
-                    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                    {
-                        //Check if the RecordFieldName matches the TargetMember
-                        if (MemberMatchesName(TargetMember, reader.GetName(Ordinal)))
-                        {
-                            Expression TargetValueExpression = GetTargetValueExpression(
-                                                                    reader,
-                                                                    Culture,
-                                                                    recordInstanceExp,
-                                                                    SchemaTable,
-                                                                    Ordinal,
-                                                                    TargetMember.FieldType);
-
-                            //Create a binding to the target member
-                            MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                            Bindings.Add(Ordinal, BindExpression);
-                            return;
-                        }
-                    }
-                };
-                work();
-            }
+            var columns = TableContext.GetTableInfo(TargetType).Columns;
             // 属性处理 Property
-            foreach (PropertyInfo TargetMember in TargetType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
             {
+                var TargetMember = col.Property;
                 if (!TargetMember.CanWrite)
                 {
                     continue;
                 }
-                Action work = delegate
+                void work()
                 {
-
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                     {
                         //Check if the RecordFieldName matches the TargetMember
-                        if (MemberMatchesName(TargetMember, reader.GetName(Ordinal)))
+                        if (string.Equals(col.ColumnName, reader.GetName(Ordinal), StringComparison.CurrentCultureIgnoreCase))
                         {
                             Expression TargetValueExpression = GetTargetValueExpression(
                                                                     reader,
@@ -210,7 +183,7 @@ internal class ExpressionBuilder
                             return;
                         }
                     }
-                };
+                }
                 work();
             }
 
@@ -235,8 +208,8 @@ internal class ExpressionBuilder
                 ?? Member.GetAttribute<ColumnAttribute>()?.Name
                 ?? "";
 #else
-            return Member.GetAttribute<LightColumnAttribute>()?.Name 
-                ?? Member.GetAttribute<ColumnAttribute>()?.Name 
+            return Member.GetAttribute<LightColumnAttribute>()?.Name
+                ?? Member.GetAttribute<ColumnAttribute>()?.Name
                 ?? "";
 #endif
 
@@ -453,6 +426,7 @@ public static class Ex
         {
                 typeof(string),
                 typeof(byte),
+                typeof(byte[]),
                 typeof(sbyte),
                 typeof(short),
                 typeof(int),

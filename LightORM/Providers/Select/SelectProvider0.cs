@@ -8,16 +8,17 @@ using LightORM.ExpressionSql;
 using System.Data;
 using System.Threading.Tasks;
 using LightORM.Builder;
+using LightORM.Extension;
 
 namespace LightORM.Providers.Select;
 
 internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
-    protected SelectBuilder SqlBuilder { get; }
-    protected ISqlExecutor Executor { get; }
+    internal SelectBuilder SqlBuilder { get; set; }
+    internal ISqlExecutor Executor { get; }
     protected DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
+
     protected ExpressionInfo? SelectExpression;
-    public List<IncludeInfo> Includes { get; set; } = [];
     public SelectProvider0(ISqlExecutor executor)
     {
         Executor = executor;
@@ -286,16 +287,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return ToList<double>().First();
     }
 
-    public IEnumerable<T1> ToList()
+    public virtual IEnumerable<T1> ToList()
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        var results = Executor.Query<T1>(sql, parameters);
-        if (Includes.Count > 0)
-        {
-
-        }
-        return results;
+        return Executor.Query<T1>(sql, parameters);
     }
 
     public IEnumerable<dynamic> ToDynamicList()
@@ -319,11 +315,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public Task<IList<T1>> ToListAsync()
+    public virtual async Task<IList<T1>> ToListAsync()
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QueryAsync<T1>(sql, parameters);
+        return await Executor.QueryAsync<T1>(sql, parameters);
     }
 
     public Task<IList<dynamic>> ToDynamicListAsync()
@@ -421,28 +417,26 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #endregion
 
-    public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp)
-    {
-        return new IncludeProvider<T1, TMember>(Executor);
-    }
-
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        var result = exp.Resolve(SqlResolveOptions.Select);
-        if (result.NavigateDeep == 0)
+        var option = SqlResolveOptions.Select;
+        option.DbType = SqlBuilder.DbType;
+        var result = exp.Resolve(option);
+        var navName = result.NavigateMembers!.First();
+        var navCol = SqlBuilder.TableInfo.GetColumnInfo(navName);
+        var navInfo = navCol.NavigateInfo!;
+        var table = TableContext.GetTableInfo(navCol.NavigateInfo!.NavigateType);
+        var parentWhereColumn = SqlBuilder.TableInfo.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var includeInfo = new IncludeInfo
         {
-            //没有筛选条件
-
-        }
-        //Includes.Add(new IncludeInfo
-        //{
-        //    ExpressionInfo = new ExpressionInfo
-        //    {
-        //        Expression = exp,
-        //        ResolveOptions = SqlResolveOptions.Select
-        //    },
-        //});
-        return new IncludeProvider<T1, TMember>(Executor);
+            SelectedTable = table,
+            NavigateInfo = navInfo,
+            ParentNavigateColumn = navCol,
+            ParentWhereColumn = parentWhereColumn,
+            ExpressionResolvedResult = result
+        };
+        SqlBuilder.Includes.Add(includeInfo);
+        return new IncludeProvider<T1, TMember>(Executor, SqlBuilder, includeInfo);
     }
 
     public TSelect Paging(int pageIndex, int pageSize)
@@ -463,5 +457,5 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     {
         return SqlBuilder.ToSqlString();
     }
-   
+
 }
