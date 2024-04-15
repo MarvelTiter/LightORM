@@ -8,14 +8,17 @@ using LightORM.ExpressionSql;
 using System.Data;
 using System.Threading.Tasks;
 using LightORM.Builder;
+using LightORM.Extension;
 
 namespace LightORM.Providers.Select;
 
 internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
-    protected SelectBuilder SqlBuilder { get; }
-    protected ISqlExecutor Executor { get; }
-    protected DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
+    public SelectBuilder SqlBuilder { get; set; }
+    public ISqlExecutor Executor { get; }
+    public IncludeContext IncludeContext { get; set; }
+    public DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
+
     protected ExpressionInfo? SelectExpression;
     public SelectProvider0(ISqlExecutor executor)
     {
@@ -23,13 +26,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         SqlBuilder = new SelectBuilder();
         SqlBuilder.DbType = DbType;
         SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T1>();
-    }
-
-
-
-    public bool Any()
-    {
-        return Count() > 0;
+        IncludeContext = new(DbType);
     }
 
     protected TSelect OrderByHandle(Expression exp, bool asc)
@@ -149,14 +146,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #endregion
 
-    public TSelect Paging(int pageIndex, int pageSize)
-    {
-        SqlBuilder.PageIndex = pageIndex;
-        SqlBuilder.PageSize = pageSize;
-        return (this as TSelect)!;
-    }
-
-
     #region group
 
     protected TSelect GroupByHandle(Expression exp)
@@ -181,6 +170,64 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     }
 
     #endregion
+
+    #region 
+
+    public TSelect Count(out long total)
+    {
+        total = Count();
+        SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
+        return (this as TSelect)!;
+    }
+
+    public TSelect RollUp()
+    {
+        SqlBuilder.IsRollup = true;
+        return (this as TSelect)!;
+    }
+
+    public TSelect Distinct()
+    {
+        SqlBuilder.IsDistinct = true;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As(string tableName)
+    {
+        SqlBuilder.TableInfo.CustomName = tableName;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As(Type type)
+    {
+        var info = Cache.TableContext.GetTableInfo(type);
+        SqlBuilder.TableInfo.CustomName = info.TableName;
+        return (this as TSelect)!;
+    }
+
+    public TSelect As<TOther>()
+    {
+        return As(typeof(TOther));
+    }
+
+    public TSelect Where(string whereString)
+    {
+        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = null,
+            ResolveOptions = SqlResolveOptions.Where,
+            Template = whereString
+        });
+        return (this as TSelect)!;
+    }
+
+    #endregion
+
+    #region ToResult
+    public bool Any()
+    {
+        return Count() > 0;
+    }
 
     public TMember Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
@@ -242,56 +289,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return ToList<double>().First();
     }
 
-    public TSelect Count(out long total)
-    {
-        total = Count();
-        SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
-        return (this as TSelect)!;
-    }
-
-    public TSelect RollUp()
-    {
-        SqlBuilder.IsRollup = true;
-        return (this as TSelect)!;
-    }
-
-    public TSelect Distinct()
-    {
-        SqlBuilder.IsDistinct = true;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As(string tableName)
-    {
-        SqlBuilder.TableInfo.CustomName = tableName;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As(Type type)
-    {
-        var info = Cache.TableContext.GetTableInfo(type);
-        SqlBuilder.TableInfo.CustomName = info.TableName;
-        return (this as TSelect)!;
-    }
-
-    public TSelect As<TOther>()
-    {
-        return As(typeof(TOther));
-    }
-
-    public TSelect Where(string whereString)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = null,
-            ResolveOptions = SqlResolveOptions.Where,
-            Template = whereString
-        });
-        return (this as TSelect)!;
-    }
-
-
-    public IEnumerable<T1> ToList()
+    public virtual IEnumerable<T1> ToList()
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
@@ -319,11 +317,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public Task<IList<T1>> ToListAsync()
+    public virtual async Task<IList<T1>> ToListAsync()
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QueryAsync<T1>(sql, parameters);
+        return await Executor.QueryAsync<T1>(sql, parameters);
     }
 
     public Task<IList<dynamic>> ToDynamicListAsync()
@@ -418,6 +416,38 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         var c = await CountAsync();
         return c > 0;
     }
+
+    #endregion
+
+    public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        var option = SqlResolveOptions.Select;
+        option.DbType = SqlBuilder.DbType;
+        var result = exp.Resolve(option);
+        var navName = result.NavigateMembers!.First();
+        var navCol = SqlBuilder.TableInfo.GetColumnInfo(navName);
+        var navInfo = navCol.NavigateInfo!;
+        var table = TableContext.GetTableInfo(navCol.NavigateInfo!.NavigateType);
+        var parentWhereColumn = SqlBuilder.TableInfo.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var includeInfo = new IncludeInfo
+        {
+            SelectedTable = table,
+            NavigateInfo = navInfo,
+            ParentNavigateColumn = navCol,
+            ParentWhereColumn = parentWhereColumn,
+            ExpressionResolvedResult = result
+        };
+        IncludeContext.Includes.Add(includeInfo);
+        return new IncludeProvider<T1, TMember>(Executor, SqlBuilder, IncludeContext);
+    }
+
+    public TSelect Paging(int pageIndex, int pageSize)
+    {
+        SqlBuilder.PageIndex = pageIndex;
+        SqlBuilder.PageSize = pageSize;
+        return (this as TSelect)!;
+    }
+
     public TSelect From(Func<IExpSelect> sub)
     {
         var subSelect = sub.Invoke();

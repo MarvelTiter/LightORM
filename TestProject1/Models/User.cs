@@ -20,5 +20,5 @@ public class User
     public DateTime? LastLogin { get; set; }
 
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
-    public ICollection<Role> UserRoles { get; set; }
+    public IEnumerable<Role> UserRoles { get; set; }
 }

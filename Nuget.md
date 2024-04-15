@@ -11,9 +11,6 @@ IExpressionSqlContext context = builder.Build(provider);
 ```
 builder.Services.AddLightOrm(option =>
 {
-    option.SetDatabase(DbBaseType.Sqlite, () =>
-    {
-        return new SqliteConnection("DataSource=DB01.db");
-    }).InitializedContext<DbContext>();
+    option.SetDatabase(DbBaseType.Sqlite, "DataSource=DB01.db", SQLiteFactory.Instance).InitializedContext<DbContext>();
 });
 ```

@@ -40,8 +40,10 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
     {
         return executors.GetOrAdd(key, k =>
         {
-            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key));
-            ado.DbLog = Aop.DbLog;
+            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key))
+            {
+                DbLog = Aop.DbLog
+            };
             if (useTrans)
             {
                 ado.BeginTran();

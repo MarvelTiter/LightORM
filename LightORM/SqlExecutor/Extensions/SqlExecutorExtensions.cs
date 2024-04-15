@@ -38,7 +38,27 @@ public static class SqlExecutorExtensions
     }
     public static T? QuerySingle<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
-        return Query<T>(self, sql, param, trans, commandType).FirstOrDefault();
+        DbDataReader? reader = null;
+        try
+        {
+            if (trans != null)
+            {
+                self.DbTransaction = trans;
+            }
+            reader = self.ExecuteReader(sql, param, commandType);
+            var des = BuildDeserializer<T>(reader);
+            T? result = default;
+            if (reader.Read())
+            {
+                result = (T)des.Invoke(reader);
+            }
+            return result;
+        }
+        finally
+        {
+            reader?.Close();
+            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
+        }
     }
     public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
@@ -81,10 +101,9 @@ public static class SqlExecutorExtensions
             reader = await self.ExecuteReaderAsync(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
             T? result = default;
-            while (await reader.ReadAsync())
+            if (await reader.ReadAsync())
             {
                 result = (T)des.Invoke(reader);
-                break;
             }
             return result;
         }

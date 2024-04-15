@@ -9,26 +9,6 @@ using System.Xml.Linq;
 using LightORM.Utils;
 
 namespace LightORM.Models;
-
-internal sealed record NavigateInfo
-{
-    public NavigateInfo(Type mainType)
-    {
-        NavigateType = mainType;
-    }
-    /// <summary>
-    /// 多对多类型
-    /// </summary>
-    public Type NavigateType { get; }
-    /// <summary>
-    /// 多对多关联表
-    /// </summary>
-    public Type? MappingType { get; set; }
-
-    public string? MainName { get; set; }
-    public string? SubName { get; set; }
-
-}
 internal sealed record ColumnInfo
 {
     public TableEntity Table { get; }
@@ -53,7 +33,9 @@ internal sealed record ColumnInfo
     public bool IsNotMapped { get; set; }
     public bool IsPrimaryKey { get; set; }
     readonly Func<object, object>? valueGetter;
+    readonly Action<object, object>? valueSetter;
     public object? GetValue(object target) => valueGetter?.Invoke(target);
+    public void SetValue(object target, object value) => valueSetter?.Invoke(target, value);
     public ColumnInfo(TableEntity table, PropertyInfo property)
     {
         Table = table;
@@ -66,6 +48,7 @@ internal sealed record ColumnInfo
         valueGetter = table.Type?.GetPropertyAccessor(property);
 
         var lightColAttr = property.GetAttribute<LightColumnAttribute>();
+        var oldColAttr = property.GetAttribute<ColumnAttribute>();
 #if NET6_0_OR_GREATER
         var databaseGeneratedAttribute = property.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedAttribute>(false);
         if (databaseGeneratedAttribute != null)
@@ -75,12 +58,13 @@ internal sealed record ColumnInfo
         var colAttr = property.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
         IsNotMapped = property.HasAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() || property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = property.HasAttribute<System.ComponentModel.DataAnnotations.KeyAttribute>() || (lightColAttr?.PrimaryKey ?? false);
+        CustomName = lightColAttr?.Name ?? colAttr?.Name ?? oldColAttr?.Name;
 #else
         IsNotMapped = property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = (lightColAttr?.PrimaryKey ?? false);
+        CustomName = lightColAttr?.Name ?? oldColAttr?.Name;
 #endif
 
-        CustomName = lightColAttr?.Name;
         AutoIncrement = lightColAttr?.AutoIncrement;
         NotNull = lightColAttr?.NotNull;
         Length = lightColAttr?.Length;
@@ -91,21 +75,15 @@ internal sealed record ColumnInfo
         if (navigateInfo != null)
         {
             IsNavigate = true;
-            Type elType = property.PropertyType;
-            if (property.PropertyType.IsArray)
-            {
-                elType = property.PropertyType.GetElementType();
-            }
-            else if (property.PropertyType.IsGenericType)
-            {
-                elType = property.PropertyType.GetGenericArguments()[0];
-            }
+            Type elType = property.PropertyType.GetRealType(out var multi);
             NavigateInfo = new NavigateInfo(elType)
             {
                 MappingType = navigateInfo.ManyToMany,
                 MainName = navigateInfo.MainName,
                 SubName = navigateInfo.SubName,
+                IsMultiResult = multi,
             };
+            valueSetter = table.Type?.GetPropertySetter(property);
         }
 
     }

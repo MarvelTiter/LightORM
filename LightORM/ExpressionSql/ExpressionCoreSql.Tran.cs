@@ -25,11 +25,7 @@ namespace LightORM.ExpressionSql
             useTrans = true;
             await executors.ForEachAsync(async ado =>
             {
-                try
-                {
-                    await ado.BeginTranAsync();
-                }
-                catch { }
+                try { await ado.BeginTranAsync(); } catch { }
             });
         }
 
@@ -47,11 +43,7 @@ namespace LightORM.ExpressionSql
             useTrans = false;
             await executors.ForEachAsync(async ado =>
             {
-                try
-                {
-                    await ado.CommitTranAsync();
-                }
-                catch { }
+                try { await ado.CommitTranAsync(); } catch { }
             });
         }
 
@@ -80,68 +72,32 @@ namespace LightORM.ExpressionSql
 
         public void BeginTran(string key)
         {
-            try
-            {
-                GetExecutor(key).BeginTran();
-            }
-            catch
-            {
-            }
+            try { GetExecutor(key).BeginTran(); } catch { }
         }
 
         public async Task BeginTranAsync(string key)
         {
-            try
-            {
-                await GetExecutor(key).BeginTranAsync();
-            }
-            catch
-            {
-            }
+            try { await GetExecutor(key).BeginTranAsync(); } catch { }
         }
 
         public void CommitTran(string key)
         {
-            try
-            {
-                GetExecutor(key).CommitTran();
-            }
-            catch
-            {
-            }
+            try { GetExecutor(key).CommitTran(); } catch { }
         }
 
         public async Task CommitTranAsync(string key)
         {
-            try
-            {
-                await GetExecutor(key).CommitTranAsync();
-            }
-            catch
-            {
-            }
+            try { await GetExecutor(key).CommitTranAsync(); } catch { }
         }
 
         public void RollbackTran(string key)
         {
-            try
-            {
-                GetExecutor(key).RollbackTran();
-            }
-            catch
-            {
-            }
+            try { GetExecutor(key).RollbackTran(); } catch { }
         }
 
         public async Task RollbackTranAsync(string key)
         {
-            try
-            {
-                await GetExecutor(key).RollbackTranAsync();
-            }
-            catch
-            {
-            }
+            try { await GetExecutor(key).RollbackTranAsync(); } catch { }
         }
     }
 }
