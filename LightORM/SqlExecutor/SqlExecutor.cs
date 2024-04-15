@@ -34,7 +34,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     }
     public void CommitTran()
     {
-        DbTransaction!.Commit();
+        DbTransaction?.Commit();
         DbTransaction = null;
         DbConnection.Close();
     }
@@ -57,8 +57,11 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public async Task CommitTranAsync()
     {
-        await DbTransaction!.CommitAsync();
-        DbTransaction = null;
+        if (DbTransaction != null)
+        {
+            await DbTransaction.CommitAsync();
+            DbTransaction = null;
+        }
         await DbConnection.CloseAsync();
     }
 
@@ -68,8 +71,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             await DbTransaction.RollbackAsync();
             DbTransaction = null;
-            await DbConnection.CloseAsync();
         }
+        await DbConnection.CloseAsync();
     }
 
 #else

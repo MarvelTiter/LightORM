@@ -69,7 +69,7 @@ public class SelectTest : TestBase
     {
         var sql = Context.Select<Power>()
             .Include(p => p.Roles)
-            //.ThenInclude(r=>r.Users.Where(u => u.UserId == "admin"))
+            .ThenInclude(r => r.Users.Where(u => u.UserId == "admin"))
             //.Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
             .ToList();
     }

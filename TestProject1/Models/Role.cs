@@ -9,8 +9,8 @@ public class Role
     public string RoleName { get; set; }
 
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(RoleId), SubName = nameof(UserRole.RoleId))]
-    public ICollection<User> Users { get; set; }
+    public IEnumerable<User> Users { get; set; }
 
     [LightNavigate(ManyToMany =typeof(RolePower), MainName = nameof(RoleId), SubName = nameof(RolePower.RoleId))]
-    public ICollection<Power> Powers { get; set; }
+    public IEnumerable<Power> Powers { get; set; }
 }

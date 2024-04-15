@@ -66,6 +66,7 @@ public interface IExpInclude<T1, TMember> : IExpSelect0<IExpInclude<T1, TMember>
 {
     internal SelectBuilder SqlBuilder { get; set; }
     internal ISqlExecutor Executor { get; }
+    internal IncludeContext IncludeContext { get; set; }
 }
 
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>

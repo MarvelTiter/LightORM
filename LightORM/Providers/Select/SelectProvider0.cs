@@ -14,9 +14,10 @@ namespace LightORM.Providers.Select;
 
 internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
-    internal SelectBuilder SqlBuilder { get; set; }
-    internal ISqlExecutor Executor { get; }
-    protected DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
+    public SelectBuilder SqlBuilder { get; set; }
+    public ISqlExecutor Executor { get; }
+    public IncludeContext IncludeContext { get; set; }
+    public DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
 
     protected ExpressionInfo? SelectExpression;
     public SelectProvider0(ISqlExecutor executor)
@@ -25,6 +26,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         SqlBuilder = new SelectBuilder();
         SqlBuilder.DbType = DbType;
         SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T1>();
+        IncludeContext = new(DbType);
     }
 
     protected TSelect OrderByHandle(Expression exp, bool asc)
@@ -435,8 +437,8 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             ParentWhereColumn = parentWhereColumn,
             ExpressionResolvedResult = result
         };
-        SqlBuilder.Includes.Add(includeInfo);
-        return new IncludeProvider<T1, TMember>(Executor, SqlBuilder, includeInfo);
+        IncludeContext.Includes.Add(includeInfo);
+        return new IncludeProvider<T1, TMember>(Executor, SqlBuilder, IncludeContext);
     }
 
     public TSelect Paging(int pageIndex, int pageSize)

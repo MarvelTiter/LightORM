@@ -1,32 +1,27 @@
 ﻿using LightORM.Builder;
 using LightORM.Cache;
 using LightORM.Utils;
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Extension
 {
-    internal static class SelectBuilderExtensions
+    internal static class IncludeContextExtensions
     {
         static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().Where(m => m.Name == "Query" && m.IsGenericMethod).FirstOrDefault()!;
         static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
-        public static void BindIncludeDatas(this SelectBuilder builder, ISqlExecutor executor, object data)
+        public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)
             {
                 foreach (object item in datas)
                 {
-                    foreach (IncludeInfo include in builder.Includes)
+                    foreach (IncludeInfo include in context.Includes)
                     {
                         var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
-                        var includeBuilder = BuildSql(builder, include, mainWhere);
+                        var includeBuilder = BuildSql(context, include, mainWhere);
                         var sql = includeBuilder.ToSqlString();
                         var param = includeBuilder.DbParameters;
                         var typedQuery = QueryMethod.MakeGenericMethod(include.SelectedTable!.Type!);
@@ -37,7 +32,7 @@ namespace LightORM.Extension
                             result = tolist.Invoke(null, [result]);
                         }
                         include.ParentNavigateColumn!.SetValue(item, result);
-                        builder.BindIncludeDatas(executor, result);
+                        context.ThenInclude?.BindIncludeDatas(executor, result);
                     }
                 }
             }
@@ -46,10 +41,10 @@ namespace LightORM.Extension
 
 
 
-        private static SelectBuilder BuildSql(SelectBuilder builder, IncludeInfo include, Expression mainWhere)
+        private static SelectBuilder BuildSql(IncludeContext context, IncludeInfo include, Expression mainWhere)
         {
             SelectBuilder selectSql = new SelectBuilder();
-            selectSql.DbType = builder.DbType;
+            selectSql.DbType = context.DbType;
             selectSql.TableInfo = include.SelectedTable!;
             selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
             selectSql.DbParameters.TryAddDictionary(include.ExpressionResolvedResult!.DbParameters);
@@ -103,7 +98,6 @@ namespace LightORM.Extension
             {
                 selectSql.Where.Add(include.ExpressionResolvedResult!.SqlString!);
             }
-
             return selectSql;
         }
 

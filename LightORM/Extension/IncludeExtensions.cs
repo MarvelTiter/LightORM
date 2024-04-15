@@ -30,15 +30,18 @@ public static class IncludeExtensions
             ParentWhereColumn = parentWhereColumn,
             ExpressionResolvedResult = result
         };
-        include.SqlBuilder.Includes.Add(includeInfo);
-        return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder, includeInfo);
+        include.IncludeContext.ThenInclude ??= new IncludeContext(include.Executor.ConnectInfo.DbBaseType);
+        include.IncludeContext.ThenInclude.Includes.Add(includeInfo);
+        return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder, include.IncludeContext);
     }
 
-    //public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, ICollection<TElement>> include, Expression<Func<TElement, TMember>> exp)
+    //static IncludeContext FindIncludeContext(IncludeContext context)
     //{
-    //    var p = (IncludeProvider<T1, TElement>)include;
-    //    //TODO 处理 ThenInclude
-    //    return new IncludeProvider<T1, TMember>(p.SqlExecutor);
+    //    if (context.ThenInclude == null)
+    //    {
+    //        return context;
+    //    }
+    //    return FindIncludeContext(context.ThenInclude);
     //}
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, TElement> include, Expression<Func<TElement, TMember>> exp)
