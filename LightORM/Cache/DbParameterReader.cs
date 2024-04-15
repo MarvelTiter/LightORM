@@ -8,23 +8,20 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
-    public static Action<DbCommand, object?>? GetDbParameterReader(this DbCommand cmd, Type paramaterType)
+    public static Action<DbCommand, object> GetDbParameterReader(this DbCommand cmd, Type paramaterType)
     {
+        if (paramaterType == typeof(Dictionary<string, object>))
+        {
+            return ReadDictionary;
+        }
         Certificate cer = new(cmd.Connection!.ConnectionString, cmd.CommandText, paramaterType);
-        return StaticCache<Action<DbCommand, object?>>.GetOrAdd($"DbParameterReader_{cer}", () =>
+        return StaticCache<Action<DbCommand, object>>.GetOrAdd($"DbParameterReader_{cer}", () =>
         {
             return (cmd, obj) =>
             {
-                if (obj is Dictionary<string, object>)
-                {
-                    ReadDictionary(cmd, obj);
-                }
-                else
-                {
-                    var reader = CreateReader(cmd.CommandText, paramaterType);
-                    reader?.Invoke(cmd, obj!);
-                    SetDbType(cmd);
-                }
+                var reader = CreateReader(cmd.CommandText, paramaterType);
+                reader.Invoke(cmd, obj);
+                SetDbType(cmd);
             };
         });
     }
@@ -41,7 +38,7 @@ internal static class DbParameterReader
 
     private static void ReadDictionary(DbCommand cmd, object obj)
     {
-        var dic = (Dictionary<string, object>)obj!;
+        var dic = (Dictionary<string, object>)obj;
         foreach (var item in dic)
         {
             var p = cmd.CreateParameter(item.Key);
@@ -120,10 +117,10 @@ internal static class DbParameterReader
         }
     }
 
-    private static IDbDataParameter CreateParameter(this DbCommand cmd, string parameterName)
+    private static DbParameter CreateParameter(this DbCommand cmd, string parameterName)
     {
         if (cmd.Parameters.Contains(parameterName))
-            return (IDbDataParameter)cmd.Parameters[parameterName];
+            return cmd.Parameters[parameterName];
         else
         {
             var p = cmd.CreateParameter();
