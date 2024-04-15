@@ -19,6 +19,8 @@ namespace LightORM.Builder
         public List<JoinInfo> Joins { get; set; } = [];
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
+        public List<IncludeInfo> Includes { get; set; } = [];
+
         public object? AdditionalValue { get; set; }
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
