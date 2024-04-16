@@ -45,6 +45,7 @@ internal class UpdateBuilder : SqlBuilder
             var autoUpdateCols = TableInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropName))
                .Where(c => !c.IsNotMapped)
+               .Where(c => !c.IsNavigate)
                .Where(c => !c.IsPrimaryKey).ToArray();
             //参数处理
             foreach (var item in autoUpdateCols)

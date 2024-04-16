@@ -26,12 +26,12 @@ internal class InsertBuilder : SqlBuilder
         StringBuilder sb = new StringBuilder();
         if (Members.Count == 0)
         {
-            Members.AddRange(TableInfo.Columns.Select(c => c.PropName));
+            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropName));
         }
         var insertColumns = TableInfo.Columns
             .Where(c => c.GetValue(TargetObject) != null)
             .Where(c => !IgnoreMembers.Contains(c.PropName))
-            .Where(c => Members.Contains(c.PropName) && !c.IsNotMapped).ToArray();
+            .Where(c => Members.Contains(c.PropName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
         foreach (var item in insertColumns)
         {
             var val = item.GetValue(TargetObject);

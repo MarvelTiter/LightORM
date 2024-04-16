@@ -131,6 +131,10 @@ internal static class DbParameterReader
 
     private static DbType? GetDbType(object value)
     {
+        if (value == null)
+        {
+            return DbType.String;
+        }
         var t = value.GetType();
         t = Nullable.GetUnderlyingType(t) ?? t;
         if (t.IsEnum)

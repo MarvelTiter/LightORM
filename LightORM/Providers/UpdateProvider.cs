@@ -42,7 +42,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-            //TODO 
+            //TODO null处理
             var result = exp.Resolve(SqlResolveOptions.Update);
             var member = result.Members!.First();
             SqlBuilder.Members.Add(member);

@@ -25,7 +25,7 @@ internal class DeleteBuilder : SqlBuilder
                 throw new LightOrmException("Where Condition is null and not provider a entity value");
             }
             var primary = TableInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
-            if (!primary.Any()) throw new LightOrmException($"Where Condition is null and Model of [{TableInfo.Type}] do not has a PrimaryKey");
+            if (primary.Length == 0) throw new LightOrmException($"Where Condition is null and Model of [{TableInfo.Type}] do not has a PrimaryKey");
             var wheres = primary.Select(c =>
              {
                  DbParameters.Add(c.ColumnName, c.GetValue(TargetObject)!);
