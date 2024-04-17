@@ -167,7 +167,7 @@ internal class ExpressionBuilder
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                     {
                         //Check if the RecordFieldName matches the TargetMember
-                        if (string.Equals(col.ColumnName, reader.GetName(Ordinal), StringComparison.CurrentCultureIgnoreCase))
+                        if (MemberMatchesName(col, reader.GetName(Ordinal)))
                         {
                             Expression TargetValueExpression = GetTargetValueExpression(
                                                                     reader,
@@ -195,25 +195,10 @@ internal class ExpressionBuilder
         return lambdaExp.Compile();
     }
 
-    private static bool MemberMatchesName(MemberInfo Member, string Name)
+    private static bool MemberMatchesName(ColumnInfo col, string Name)
     {
-        string FieldnameAttribute = GetColumnNameAttribute();
-        return FieldnameAttribute.ToLower() == Name.ToLower() || Member.Name.ToLower() == Name.ToLower();
-
-        string GetColumnNameAttribute()
-        {
-#if NET6_0_OR_GREATER
-            return Member.GetAttribute<LightColumnAttribute>()?.Name
-                ?? Member.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>()?.Name
-                ?? Member.GetAttribute<ColumnAttribute>()?.Name
-                ?? "";
-#else
-            return Member.GetAttribute<LightColumnAttribute>()?.Name
-                ?? Member.GetAttribute<ColumnAttribute>()?.Name
-                ?? "";
-#endif
-
-        }
+        return string.Equals(col.PropName, Name, StringComparison.CurrentCultureIgnoreCase)
+            || string.Equals(col.ColumnName, Name, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private static Expression GetTargetValueExpression(
