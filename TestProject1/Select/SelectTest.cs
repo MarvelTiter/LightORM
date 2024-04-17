@@ -82,4 +82,13 @@ public class SelectTest : TestBase
             //.Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
             .ToList();
     }
+
+    [TestMethod]
+    public void SelectDynamic()
+    {
+        var sql = Context.Select("POWERS").Where("1=1").ToList(() => new
+        {
+            POWER_ID = ""
+        });
+    }
 }

@@ -20,23 +20,34 @@ namespace LightORM.Extension
                 {
                     foreach (IncludeInfo include in context.Includes)
                     {
-                        var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
-                        var includeBuilder = BuildSql(context, include, mainWhere);
-                        var sql = includeBuilder.ToSqlString();
-                        var param = includeBuilder.DbParameters;
-                        var typedQuery = QueryMethod.MakeGenericMethod(include.SelectedTable!.Type!);
-                        var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
-                        if (include.NavigateInfo!.IsMultiResult)
-                        {
-                            var tolist = ToList.MakeGenericMethod(include.SelectedTable!.Type!);
-                            result = tolist.Invoke(null, [result]);
-                        }
-                        include.ParentNavigateColumn!.SetValue(item, result);
-                        context.ThenInclude?.BindIncludeDatas(executor, result);
+                        Do(context, executor, item, include);
                     }
                 }
             }
+            else
+            {
+                foreach (IncludeInfo include in context.Includes)
+                {
+                    Do(context, executor, data, include);
+                }
+            }
 
+            static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
+            {
+                var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
+                var includeBuilder = BuildSql(context, include, mainWhere);
+                var sql = includeBuilder.ToSqlString();
+                var param = includeBuilder.DbParameters;
+                var typedQuery = QueryMethod.MakeGenericMethod(include.SelectedTable!.Type!);
+                var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
+                if (include.NavigateInfo!.IsMultiResult)
+                {
+                    var tolist = ToList.MakeGenericMethod(include.SelectedTable!.Type!);
+                    result = tolist.Invoke(null, [result]);
+                }
+                include.ParentNavigateColumn!.SetValue(item, result);
+                context.ThenInclude?.BindIncludeDatas(executor, result);
+            }
         }
 
 

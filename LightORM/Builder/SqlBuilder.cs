@@ -18,7 +18,7 @@ internal abstract class SqlBuilder : ISqlBuilder
     public IDbHelper DbHelper => DbType.GetDbHelper();
     public string AttachPrefix(string content) => DbType.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
-    public int DbParameterStartIndex {  get; set; }
+    public int DbParameterStartIndex { get; set; }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
@@ -45,7 +45,7 @@ internal abstract class SqlBuilder : ISqlBuilder
 
     public string GetTableName(TableEntity table, bool useAlias = true)
     {
-        return $"{NpTableName(table.TableName!)}{(useAlias ? $" {AttachEmphasis(table.Alias!)}" : "")}";
+        return $"{NpTableName(table.TableName!)}{((useAlias && !string.IsNullOrEmpty(table.Alias)) ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }
 
     //TODO Oracle?

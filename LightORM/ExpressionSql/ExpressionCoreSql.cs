@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using LightORM.Cache;
 using LightORM.Providers;
+using LightORM.Providers.Select;
 using LightORM.Utils;
 namespace LightORM.ExpressionSql;
 
@@ -77,6 +78,8 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
     }
 
     public IExpSelect<T> Select<T>() => Select<T>(t => t!);
+
+    public IExpSelect Select(string tableName) => new SelectProvider0(tableName, Ado);
 
     public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(exp.Body);
 
@@ -158,7 +161,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         }
         return new(GetExecutor(CurrentKey), entities);
     }
-    
+
 
 
     private bool disposedValue;
@@ -192,5 +195,5 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    
+
 }

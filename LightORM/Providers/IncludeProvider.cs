@@ -17,6 +17,22 @@ namespace LightORM.Providers
             IncludeContext = context;
         }
 
+        public override T1? First()
+        {
+            var t = base.First();
+            if (t != null)
+                IncludeContext.BindIncludeDatas(Executor, t);
+            return t;
+        }
+
+        public override async Task<T1?> FirstAsync()
+        {
+            var t = await base.FirstAsync();
+            if (t != null)
+                IncludeContext.BindIncludeDatas(Executor, t);
+            return t;
+        }
+
         public override IEnumerable<T1> ToList()
         {
             var result = base.ToList().ToList();

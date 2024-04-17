@@ -6,6 +6,7 @@ public interface IExpressionContext : IDbAction
 {
 
     IExpSelect<T> Select<T>();
+    IExpSelect Select(string tableName);
     IExpSelect<T> Select<T>(Expression<Func<T, object>> exp);
     //IExpInsert<T> Insert<T>();
     IExpInsert<T> Insert<T>(T entity);

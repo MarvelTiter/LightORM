@@ -44,7 +44,7 @@ namespace LightORM.Builder
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
             {
-                if (!string.IsNullOrWhiteSpace(result.SqlString))
+                if (!string.IsNullOrWhiteSpace(result.SqlString) && !TableInfo.IsAnonymousType)
                 {
                     SelectValue = result.SqlString;
                 }

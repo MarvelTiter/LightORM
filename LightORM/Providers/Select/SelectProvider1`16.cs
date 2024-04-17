@@ -1,5 +1,27 @@
 ﻿namespace LightORM.Providers.Select;
 
+//TODO Select 匿名类
+internal sealed class SelectProvider0 : SelectProvider0<IExpSelect<object>, object>, IExpSelect
+{
+    public SelectProvider0(string table, ISqlExecutor executor) : base(executor)
+    {
+        SqlBuilder.TableInfo = new TableEntity
+        {
+            CustomName = table,
+            IsAnonymousType = true,
+        };
+    }
+    public IExpSelect<object> GroupBy(Expression<Func<object, object>> exp)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IExpSelect<object> OrderBy(Expression<Func<object, object>> exp, bool asc = true)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 internal sealed class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 {
     public SelectProvider1(Expression exp, ISqlExecutor executor) : base(executor)

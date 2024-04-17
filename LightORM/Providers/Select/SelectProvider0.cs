@@ -144,6 +144,17 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
+    public IExpSelect Where(string whereString)
+    {
+        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = null,
+            ResolveOptions = SqlResolveOptions.Where,
+            Template = whereString
+        });
+        return this;
+    }
+
     #endregion
 
     #region group
@@ -208,17 +219,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public TSelect As<TOther>()
     {
         return As(typeof(TOther));
-    }
-
-    public TSelect Where(string whereString)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = null,
-            ResolveOptions = SqlResolveOptions.Where,
-            Template = whereString
-        });
-        return (this as TSelect)!;
     }
 
     #endregion
@@ -289,6 +289,13 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return ToList<double>().First();
     }
 
+    public virtual T1? First()
+    {
+        var sql = SqlBuilder.ToSqlString();
+        var parameters = SqlBuilder.DbParameters;
+        return Executor.QuerySingle<T1>(sql, parameters);
+    }
+
     public virtual IEnumerable<T1> ToList()
     {
         var sql = SqlBuilder.ToSqlString();
@@ -315,6 +322,13 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return Executor.ExecuteDataTable(sql, parameters);
+    }
+
+    public virtual async Task<T1?> FirstAsync()
+    {
+        var sql = SqlBuilder.ToSqlString();
+        var parameters = SqlBuilder.DbParameters;
+        return await Executor.QuerySingleAsync<T1>(sql, parameters);
     }
 
     public virtual async Task<IList<T1>> ToListAsync()
@@ -417,6 +431,17 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return c > 0;
     }
 
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TReturn>> exp)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TReturn>> exp)
+    {
+        throw new NotImplementedException();
+    }
+
+
     #endregion
 
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
@@ -459,5 +484,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     {
         return SqlBuilder.ToSqlString();
     }
+
 
 }

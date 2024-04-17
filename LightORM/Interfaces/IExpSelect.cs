@@ -6,7 +6,13 @@ namespace LightORM;
 
 public interface IExpSelect : ISql
 {
-
+    IExpSelect Where(string whereString);
+    IEnumerable<TReturn> ToList<TReturn>();
+    //IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TReturn>> exp);
+    IEnumerable<dynamic> ToDynamicList();
+    Task<IList<TReturn>> ToListAsync<TReturn>();
+    //Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TReturn>> exp);
+    Task<IList<dynamic>> ToDynamicListAsync();
 }
 public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelect
 {
@@ -23,7 +29,6 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect As(Type type);
     TSelect As<TOther>();
     TSelect Count(out long total);
-    TSelect Where(string whereString);
     TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
@@ -31,13 +36,11 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect GroupBy<Another>(Expression<Func<Another, object>> exp);
     TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp);
     IEnumerable<T1> ToList();
-    IEnumerable<dynamic> ToDynamicList();
-    IEnumerable<TReturn> ToList<TReturn>();
+    T1? First();
     DataTable ToDataTable();
 
     Task<IList<T1>> ToListAsync();
-    Task<IList<dynamic>> ToDynamicListAsync();
-    Task<IList<TReturn>> ToListAsync<TReturn>();
+    Task<T1?> FirstAsync();
     Task<DataTable> ToDataTableAsync();
     Task<TMember> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
     Task<TMember> MinAsync<TMember>(Expression<Func<T1, TMember>> exp);
