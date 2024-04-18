@@ -6,6 +6,7 @@ namespace LightORM.Builder;
 internal class UpdateBuilder : SqlBuilder
 {
     List<string> IgnoreMembers { get; set; } = [];
+    public List<string> SetNullMembers { get; set; } = [];
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
@@ -69,11 +70,18 @@ internal class UpdateBuilder : SqlBuilder
             }
         }
 
-        var finalUpdateCol = TableInfo.Columns.Where(c => Members.Contains(c.PropName));
+        var customCols = TableInfo.Columns.Where(c => Members.Contains(c.PropName));
+        var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropName)}");
 
-        sb.AppendFormat("UPDATE {0} SET\n{1}\n", GetTableName(TableInfo, false), string.Join(",\n", finalUpdateCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropName)}")));
+        var setNullCol = TableInfo.Columns.Where(c => SetNullMembers.Contains(c.PropName)).ToArray();
+        if (setNullCol.Length > 0)
+        {
+            finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));
+        }
 
-        sb.AppendFormat("WHERE {0}", string.Join("\nAND ", Where));
+        sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(TableInfo, false), string.Join(",\n", finalUpdateCol));
+
+        sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
 
         return sb.ToString();
     }

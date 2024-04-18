@@ -38,15 +38,36 @@ namespace LightORM.Providers
             return executor.ExecuteNonQueryAsync(sql, dbParameters);
         }
 
+        public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
+        {
+            var result = exp.Resolve(SqlResolveOptions.Update);
+            var member = result.Members!.First();
+            SqlBuilder.SetNullMembers.Add(member);
+            return this;
+        }
 
+        public IExpUpdate<T> SetNullIf<TField>(bool condition, Expression<Func<T, TField>> exp)
+        {
+            if (condition)
+            {
+                SetNull(exp);
+            }
+            return this;
+        }
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-            //TODO null处理
             var result = exp.Resolve(SqlResolveOptions.Update);
             var member = result.Members!.First();
-            SqlBuilder.Members.Add(member);
-            SqlBuilder.DbParameters.Add(member, value!);
+            if (value is null)
+            {
+                SqlBuilder.SetNullMembers.Add(member);
+            }
+            else
+            {
+                SqlBuilder.Members.Add(member);
+                SqlBuilder.DbParameters.Add(member, value!);
+            }
             return this;
         }
 
@@ -108,6 +129,6 @@ namespace LightORM.Providers
         }
         public string ToSql() => SqlBuilder.ToSqlString();
 
-       
+
     }
 }

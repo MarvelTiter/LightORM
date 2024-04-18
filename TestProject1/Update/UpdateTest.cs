@@ -25,4 +25,11 @@ public class UpdateTest : TestBase
         var sql = Context.Update<Product>().UpdateColumns(() => new { p.DeleteMark, p.ProductCode }).Where(p => p.ProductId == 100).ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void UpdateSetNull()
+    {
+        var sql = Context.Update<Product>().Set(p => p.DeleteMark, true).Where(p => p.ProductId == 100).ToSql();
+        Console.WriteLine(sql);
+    }
 }
