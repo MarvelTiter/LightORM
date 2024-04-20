@@ -9,7 +9,6 @@ namespace LightORM;
 
 public interface IDbInitial
 {
-    IDbInitial CreateTable<T>(string key = ConstString.Main, params T[]? datas);
+    IDbInitial CreateTable<T>(params T[]? datas);
     IDbInitial Configuration(Action<TableGenerateOption> option);
-    //string GenerateCreateSql<T>(string key = ConstString.Main);
 }

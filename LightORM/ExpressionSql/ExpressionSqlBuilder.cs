@@ -34,16 +34,23 @@ public class ExpressionSqlOptions
         option(Aop);
         return this;
     }
-    internal DbInitialContext? ContextInitializer { get; set; }
-   
-
+    internal List<DbInitialContext> InitialContexts { get; set; } = [];
     public ExpressionSqlOptions InitializedContext<T>(Action<DbInfo>? option = null) where T : DbInitialContext, new()
     {
         DbInfo info = new DbInfo();
         option?.Invoke(info);
-        ContextInitializer = new T();
-        ContextInitializer.Info = info;
+        var ctx = new T();
+        ctx.Info = info;
+        InitialContexts.Add(ctx);
         return this;
+    }
+
+    internal void Check()
+    {
+        foreach (var ctx in InitialContexts)
+        {
+            ctx.Check(this);
+        }
     }
 }
 
@@ -56,7 +63,7 @@ public partial class ExpressionSqlBuilder
         // TODO数据库初始化
         this.options = options;
     }
-    
+
     internal IExpressionContext InnerBuild()
     {
         return new ExpressionCoreSql(options);

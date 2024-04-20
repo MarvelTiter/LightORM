@@ -28,6 +28,8 @@ public interface IPower
 [LightTable(Name = "POWERS")]
 public class Power : IPower
 {
+    [LightColumn(Name = "ID", PrimaryKey = true)]
+    public int Id { get; set; }
     [Required]
     [LightColumn(Name = "POWER_ID", PrimaryKey = true)]
     public string PowerId { get; set; }

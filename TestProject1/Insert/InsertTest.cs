@@ -46,4 +46,11 @@ public class InsertTest : TestBase
             return Context.Insert(val).ToSql();
         }
     }
+
+    [TestMethod]
+    public void InsertBatch()
+    {
+        var effect = Context.Insert<Product>(DataHelper.GetProductList()).Execute();
+        Assert.IsTrue(effect == 100);
+    }
 }

@@ -11,7 +11,7 @@ namespace LightORM.ExpressionSql
     {
         public static ISqlExecutor GetExecutor(string key = ConstString.Main)
         {
-            var dbInfo = StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
+            var dbInfo = StaticCache<DbConnectInfo>.Get(key) ?? throw new LightOrmException($"{key} not register");
             return new SqlExecutor.SqlExecutor(dbInfo);
         }
     }

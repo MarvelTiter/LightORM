@@ -7,7 +7,6 @@ public class SelectTest : TestBase
     public void Select()
     {
         var sql = Context.Select<Product>()
-            .InnerJoin<ProductV2>((p1, p2) => p1.CategoryId == p2.ProductId)
             .Where(p => p.ProductName.Contains("123")).ToSql();
         Console.WriteLine(sql);
     }

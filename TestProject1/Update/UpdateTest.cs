@@ -32,4 +32,11 @@ public class UpdateTest : TestBase
         var sql = Context.Update<Product>().Set(p => p.DeleteMark, true).Where(p => p.ProductId == 100).ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void UpdateBatch()
+    {
+        var effect = Context.Update<Product>(DataHelper.GetProductList()).Execute();
+        Assert.IsTrue(effect == 100);
+    }
 }

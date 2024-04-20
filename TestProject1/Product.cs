@@ -10,9 +10,9 @@ public class Product
 
     public int CategoryId { get; set; }
 
-    public string? ProductCode { get; set; }
+    public string ProductCode { get; set; }
 
-    public string? ProductName { get; set; } = "Hello";
+    public string ProductName { get; set; }
 
     public bool DeleteMark { get; set; }
 
@@ -20,21 +20,4 @@ public class Product
 
     public DateTime? ModifyTime { get; set; }
     public DateTime? Last { get; set; } = DateTime.Now;
-}
-
-public class ProductV2
-{
-    public int ProductId { get; set; }
-
-    public int CategoryId { get; set; }
-
-    public string? ProductCode { get; set; }
-
-    public string? ProductName { get; set; }
-
-    public bool DeleteMark { get; set; }
-
-    public DateTime CreateTime { get; set; }
-
-    public DateTime? ModifyTime { get; set; }
 }

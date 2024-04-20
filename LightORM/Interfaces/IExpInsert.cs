@@ -13,6 +13,7 @@ public interface IExpInsert<T>
     IExpInsert<T> SetColumns(Expression<Func<T, object>> columns);
     IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns);
     int Execute();
+    //IExpInsert<T> NoParameter();
     Task<int> ExecuteAsync();
     string ToSql();
 }

@@ -6,17 +6,19 @@ public class TestBase
     protected IExpressionContext Context { get; }
     public TestBase()
     {
-        var options = new ExpressionSqlOptions();
         var path = Path.GetFullPath("../../../test.db");
-        options.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
-        options.SetWatcher(aop =>
+
+        ExpSqlFactory.Configuration(option =>
         {
-            aop.DbLog = (sql, p) =>
+            option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+            option.SetWatcher(aop =>
             {
-                Console.WriteLine(sql);
-            };
+                aop.DbLog = (sql, p) =>
+                {
+                    Console.WriteLine(sql);
+                };
+            }).InitializedContext<TestInitContext>();
         });
-        var builder = new ExpressionSqlBuilder(options);
-        Context = builder.Build();
+        Context = ExpSqlFactory.GetContext();
     }
 }

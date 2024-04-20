@@ -22,7 +22,7 @@ internal sealed record ColumnInfo
     public string? Comment { get; }
     public PropertyInfo Property { get; }
     public Type PropertyType { get; }
-    public Type? UnderlyingType { get; }
+    public Type UnderlyingType { get; }
     public bool IsNullable { get; }
     public bool IsNavigate { get; set; }
     public NavigateInfo? NavigateInfo { get; set; }

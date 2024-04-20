@@ -14,6 +14,10 @@ namespace LightORM
         public static void Configuration(Action<ExpressionSqlOptions> config)
         {
             config.Invoke(option);
+            if (option.InitialContexts.Count > 0)
+            {
+                option.Check();
+            }
         }
         static IExpressionContext? context;
         static object locker = new object();

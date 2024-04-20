@@ -13,7 +13,7 @@ public interface IExpressionContext : IDbAction
     IExpInsert<T> Insert<T>(IEnumerable<T> entities);
     IExpUpdate<T> Update<T>();
     IExpUpdate<T> Update<T>(T entity);
-    //IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(T entity);
     //IExpDelete<T> Delete<T>(IEnumerable<T> entities);

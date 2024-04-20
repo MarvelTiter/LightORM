@@ -12,6 +12,10 @@ public static class IocExtension
     {
         var option = new ExpressionSqlOptions();
         options(option);
+        if (option.InitialContexts.Count > 0)
+        {
+            option.Check();
+        }
         services.AddSingleton(option);
         //var builder = new ExpressionSqlBuilder(option);
         //services.AddSingleton(builder);

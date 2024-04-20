@@ -1,10 +1,14 @@
-﻿using System.Linq;
+﻿using LightORM.Extension;
+using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
 
-internal class InsertBuilder : SqlBuilder
+internal class InsertBuilder<T> : SqlBuilder
 {
+    public new T? TargetObject { get; set; }
+    public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
+    public List<BatchSqlInfo>? BatchInfos { get; set; }
     public List<string> IgnoreMembers { get; set; } = [];
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -17,10 +21,64 @@ internal class InsertBuilder : SqlBuilder
             IgnoreMembers.AddRange(result.Members!);
         }
     }
-    public bool IsInsertList { get; set; }
+    public bool IsBatchInsert { get; set; }
+    bool batchDone;
+    public void CreateInsertBatchSql()
+    {
+        if (batchDone)
+        {
+            return;
+        }
+        ResolveExpressions();
+
+        if (Members.Count == 0)
+        {
+            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropName));
+        }
+        var insertColumns = TableInfo.Columns
+            .Where(c => !IgnoreMembers.Contains(c.PropName))
+            .Where(c => Members.Contains(c.PropName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
+
+        BatchInfos = insertColumns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
+        var insert = $"INSERT INTO {GetTableName(TableInfo, false)} \n({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) \nVALUES \n";
+        foreach (var item in BatchInfos)
+        {
+            StringBuilder sb = new StringBuilder(insert);
+            List<string> values = new List<string>();
+            foreach (var dic in item.Parameters)
+            {
+                var rowValues = dic.Select(c =>
+                 {
+                     var val = c.Value;
+                     if (val is null)
+                     {
+                         return "NULL";
+                     }
+                     //if (c.UnderlyingType.IsNumber() || c.UnderlyingType == typeof(string))
+                     //{
+                     //    return $"'{val}'";
+                     //}
+                     return AttachPrefix(c.ParameterName);
+                 });
+                values.Add($"({string.Join(", ", rowValues)})");
+            }
+            sb.AppendLine($"{string.Join(",\n", values)}");
+            item.Sql = sb.ToString();
+        }
+        batchDone = true;
+
+    }
+
+
     public override string ToSqlString()
     {
         //TODO 处理批量插入
+        if (IsBatchInsert)
+        {
+            CreateInsertBatchSql();
+            return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
+        }
+
         if (TargetObject == null) throw new LightOrmException("insert null entity");
         ResolveExpressions();
         StringBuilder sb = new StringBuilder();
@@ -43,6 +101,4 @@ internal class InsertBuilder : SqlBuilder
             , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropName))));
         return sb.ToString();
     }
-
-
 }

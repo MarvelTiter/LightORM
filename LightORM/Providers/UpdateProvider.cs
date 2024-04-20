@@ -1,4 +1,5 @@
 ﻿using LightORM.Builder;
+using LightORM.Extension;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,7 +8,7 @@ namespace LightORM.Providers
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
         private readonly ISqlExecutor executor;
-        UpdateBuilder SqlBuilder = new UpdateBuilder();
+        UpdateBuilder<T> SqlBuilder = new UpdateBuilder<T>();
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
@@ -21,21 +22,90 @@ namespace LightORM.Providers
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
             SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
-            SqlBuilder.TargetObject = entities;
+            SqlBuilder.IsBatchUpdate = true;
+            SqlBuilder.TargetObjects = entities;
         }
 
         public int Execute()
         {
             var sql = SqlBuilder.ToSqlString();
-            var dbParameters = SqlBuilder.DbParameters;
-            return executor.ExecuteNonQuery(sql, dbParameters);
+            if (SqlBuilder.IsBatchUpdate)
+            {
+                var isTran = executor.DbTransaction == null;
+                try
+                {
+                    var effectRows = 0;
+                    if (!isTran)
+                    {
+                        executor.BeginTran();
+                        isTran = true;
+                    }
+                    foreach (var item in SqlBuilder.BatchInfos!)
+                    {
+                        effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
+                    }
+                    if (isTran)
+                    {
+                        executor.CommitTran();
+                    }
+                    return effectRows;
+                }
+                catch
+                {
+                    if (isTran)
+                    {
+                        executor.RollbackTran();
+                    }
+                    throw;
+                }
+
+            }
+            else
+            {
+                var dbParameters = SqlBuilder.DbParameters;
+                return executor.ExecuteNonQuery(sql, dbParameters);
+            }
         }
 
-        public Task<int> ExecuteAsync()
+        public async Task<int> ExecuteAsync()
         {
             var sql = SqlBuilder.ToSqlString();
-            var dbParameters = SqlBuilder.DbParameters;
-            return executor.ExecuteNonQueryAsync(sql, dbParameters);
+            if (SqlBuilder.IsBatchUpdate)
+            {
+                var isTran = executor.DbTransaction == null;
+                try
+                {
+                    var effectRows = 0;
+                    if (!isTran)
+                    {
+                        await executor.BeginTranAsync();
+                        isTran = true;
+                    }
+                    foreach (var item in SqlBuilder.BatchInfos!)
+                    {
+                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters());
+                    }
+                    if (isTran)
+                    {
+                        await executor.CommitTranAsync();
+                    }
+                    return effectRows;
+                }
+                catch
+                {
+                    if (isTran)
+                    {
+                        await executor.RollbackTranAsync();
+                    }
+                    throw;
+                }
+
+            }
+            else
+            {
+                var dbParameters = SqlBuilder.DbParameters;
+                return await executor.ExecuteNonQueryAsync(sql, dbParameters);
+            }
         }
 
         public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
