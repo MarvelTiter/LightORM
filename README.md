@@ -1,132 +1,76 @@
 # DbContext 新版本用法
 
-## 该库本质是使用`IDbConnection`对象执行 Sql 语句，`IExpressionContext`的调用，尽量还原原生 sql 的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`ColumnAttribute`匹配）。
+## 该库本质是使用`IDbConnection`对象执行 Sql 语句，`IExpressionContext`的调用，尽量还原原生 sql 的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`LightColumnAttribute`匹配）。
 
-## 创建 IExpressionContext 对象
-
-```csharp
-var option = new ExpressionSqlOptions();
-option.SetDatabase(DbBaseType.Sqlite, Func<IDbConnection>);
-static IExpressionContext db = new ExpressionSqlBuilder(option)
-                .Build();
-```
-
-## 使用事务
+## 直接使用。获取`IExpressionContext`对象
 
 ```csharp
-private void Watch(Action<IExpressionContext> action)
+var path = Path.GetFullPath("../../../test.db");
+ExpSqlFactory.Configuration(option =>
 {
-   var option = new ExpressionSqlOptions().SetDatabase(DbBaseType.Sqlite, SqliteDbContext)
-   	.SetSalveDatabase("Mysql", DbBaseType.MySql, () => new SqliteConnection())
-   	.SetWatcher(option =>
-   	{
-   		option.BeforeExecute = e =>
-   		{
-   			Console.Write(DateTime.Now);
-   			Console.WriteLine(" Sql => \n" + e.Sql + "\n");
-   		};
-   	});
-
-   IExpressionContext eSql = new ExpressionSqlBuilder(option).Build();
-   Stopwatch stopwatch = new Stopwatch();
-   stopwatch.Start();
-   action(eSql);
-   stopwatch.Stop();
-   Console.WriteLine($"Cost {stopwatch.ElapsedMilliseconds} ms");
-   Console.WriteLine(eSql);
-   Console.WriteLine("====================================");
-}
-public void TransactionTest()
-{
-    Watch(db =>
+    option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+    option.SetWatcher(aop =>
     {
-        var u = new User();
-        u.UserId = "User002";
-        u.UserName = "测试001";
-        u.Password = "0000";
-        // 返回独立的 IExpressionContext 对象
-        db.BeginTransAsync();
-        db.Update<User>().UpdateColumns(() => new { u.UserName }).Where(u => u.UserId == "admin").Execute();
-        db.Insert<User>(u).Execute()
-        db.CommitTransaction();
-    });
-}
-```
+        aop.DbLog = (sql, p) =>
+        {
+            Console.WriteLine(sql);
+        };
+    }).InitializedContext<TestInitContext>();
+});
 
+// get IExpressionContext instance
+IExpressionContext context = ExpSqlFactory.GetContext();
+```
+## 容器中使用。依赖注入
+```csharp
+var path = Path.GetFullPath("../../../test.db");
+builder.Services.AddLightOrm(option =>
+{
+    option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance).InitializedContext<TestInitContext>();
+});
+```
 ## 查询
 
 ```csharp
-public void V2Select()
-{
-    Watch(db =>
-    {
-        db.Select<Power, RolePower, UserRole>()
-        .InnerJoin<RolePower>(w => w.Tb1.PowerId == w.Tb2.PowerId)
-        .InnerJoin<UserRole>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-        .Where(w => w.Tb3.UserId == "admin")
-        .ToList();
-    });
-}
+// 普通查询
+context.Select<T>().Where(Expression<Func<T, bool>>).ToList();
+// 指定列
+context.Select<T>(t => new {  }).Where(Expression<Func<T, bool>>).ToList();
+// Max, Count, Avg, Sum 
+context.Select<T>().Where(Expression<Func<T, bool>>).Sum();
+// 分页
+context.Select<T>().Count(out long total).Where(Expression<Func<T, bool>>).Paging(index, size).ToList();
+...
 ```
-
-## 查询 Count、Max 等
-
-```csharp
-public void V2SelectFunc()
-{
-    Watch(db =>
-    {
-        var s = "sss";
-        db.Select<Users>(w => new
-        {
-            UM = SqlFn.Count(() => w.Age > 10),
-            UM2 = SqlFn.Count(() => w.Duty == s),
-        }).ToDynamicList();
-    });
-}
-```
-
 ## 插入
 
 ```csharp
-public void V2Insert()
-{
-    Watch(db =>
-    {
-        var u = new User();
-        u.UserId = "User001";
-        u.UserName = "测试001";
-        u.Password = "0000";
-        db.Insert<User>(u).ExecuteAsync();
-    });
-}
+// 插入实体
+context.Insert<T>(entity).Execute();
+// 忽略指定列
+context.Insert<T>(entity).IgnoreColumns(t => new {  }).Execute();
+// 批量插入 entities 为集合类型
+context.Insert<T>(entities).Execute();
 ```
 
 ## 更新
 
 ```csharp
-public void V2Update()
-{
-    Watch(db =>
-    {
-        var u = new Users();
-        db.Update<Users>(u).IgnoreColumns(u => new { u.Tel }).Where(u => u.Age == 10).ExecuteAsync();
-    });
-}
+// 根据主键更新实体。配置了主键列，where可选
+context.Update<T>(entity).Execute();
+// 实体更新，更新指定列。
+context.Update<T>(entity).UpdateColumns(t => new {}).Execute();
+// 一般更新，更新指定列
+context.Update<T>().UpdateColumns(() => new {}).Where(Expression<Func<T, bool>>).Execute();
+context.Update<T>().Set<TProp>(t => t.Prop, value).Where(Expression<Func<T, bool>>).Execute();
+// 忽略指定列
+context.Update<T>(entity).IgnoreColumns(t => new {}).Execute();
+// 批量更新 entities 为集合类型
+context.Insert<T>(entities).Execute();
 ```
 
 ## ADO 对象
 
 ```csharp
-public void AdoTest()
-{
-    Watch(db =>
-    {
-        var users = db.Ado.Query<User>("select * from user").ToList();
-        foreach (var u in users)
-        {
-            Console.WriteLine($"{u.UserId} - {u.UserName}");
-        }
-    });
-}
+context.Ado
 ```
