@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AntDesign" Version="0.18.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.20" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="MySqlConnector" Version="2.3.6" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.140" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+
+</Project>

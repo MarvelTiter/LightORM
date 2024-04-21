@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.ExpressionSql
+namespace LightORM.Utils
 {
-    internal class SqlExecutorProvider
+    public class SqlExecutorProvider
     {
         public static ISqlExecutor GetExecutor(string key = ConstString.Main)
         {

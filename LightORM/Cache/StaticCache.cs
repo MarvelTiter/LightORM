@@ -23,7 +23,10 @@ namespace LightORM.Cache
         {
             return caches.GetOrAdd(key, k => func());
         }
-
+        public static bool HasKey(string key)
+        {
+            return caches.ContainsKey(key);
+        }
         public static T? Get(string key)
         {
             return caches.TryGetValue(key, out var val) ? val : default;

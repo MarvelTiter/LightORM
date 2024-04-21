@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightORM", "LightORM\LightO
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProject1", "TestProject1\TestProject1.csproj", "{304AC9E8-0A01-466A-BDF1-D63BDC4F175D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseUtils", "DatabaseUtils\DatabaseUtils.csproj", "{F17FA142-2757-441D-A442-2E588F90A21D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{304AC9E8-0A01-466A-BDF1-D63BDC4F175D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{304AC9E8-0A01-466A-BDF1-D63BDC4F175D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{304AC9E8-0A01-466A-BDF1-D63BDC4F175D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F17FA142-2757-441D-A442-2E588F90A21D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F17FA142-2757-441D-A442-2E588F90A21D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F17FA142-2757-441D-A442-2E588F90A21D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F17FA142-2757-441D-A442-2E588F90A21D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

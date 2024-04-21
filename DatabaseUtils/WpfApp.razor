@@ -1,0 +1,30 @@
+<AntContainer/>
+<Flex Gap="small">
+    <EnumSelect Style="width:150px;" AllowClear Placeholder="选择数据库" TEnum="DbBaseType?" @bind-Value="@selectedDb" DropdownMatchSelectWidth="@false"></EnumSelect>
+    <Input @bind-Value="@connectstring"></Input>
+    <Button Type="primary" OnClick="@Connect">连接</Button>
+    <Button Type="primary" OnClick="@Build">生成</Button>
+    <Button OnClick="@(()=> showSetting = true)">设置</Button>
+</Flex>
+<Flex>
+    <AntList DataSource="@Tables" Style="width:200px;">
+        <Header>数据库列表</Header>
+        <ChildContent>
+            <ListItem>
+                <Checkbox @bind-Checked="@context.IsSelected">
+                    @context.TableName
+                </Checkbox>
+            </ListItem>
+        </ChildContent>
+    </AntList>
+</Flex>
+<Modal @bind-Visible="@showSetting" Width="300">
+    <Form Model="Config" LabelColSpan="6">
+        <FormItem Label="前缀">
+            <Input @bind-Value="@context.Prefix"></Input>
+        </FormItem>
+        <FormItem Label="分隔符">
+            <Input @bind-Value="@context.Separator"></Input>
+        </FormItem>
+    </Form>
+</Modal>
