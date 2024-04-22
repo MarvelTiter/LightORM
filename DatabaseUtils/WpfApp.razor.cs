@@ -4,6 +4,7 @@ using DatabaseUtils.Models;
 using DatabaseUtils.Services;
 using DatabaseUtils.Template;
 using LightORM;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -95,6 +96,16 @@ namespace DatabaseUtils
                 }
                 await File.WriteAllTextAsync(path, item.GeneratedResult);
             }
+        }
+
+        void SelectPath()
+        {
+            OpenFolderDialog dialog = new OpenFolderDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                Config.SavedPath = dialog.FolderName;
+            }
+
         }
 
         void AllHandle(bool newValue)

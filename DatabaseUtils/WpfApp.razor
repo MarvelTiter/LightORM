@@ -43,7 +43,7 @@
     </section>
 </section>
 
-<Modal @bind-Visible="@showSetting" Width="300">
+<Modal @bind-Visible="@showSetting" Width="450">
     <Form Model="Config" LabelColSpan="6">
         <FormItem Label="前缀">
             <Input @bind-Value="@context.Prefix"></Input>
@@ -53,6 +53,11 @@
         </FormItem>
         <FormItem Label="命名空间">
             <Input @bind-Value="@context.Namespace"></Input>
+        </FormItem>
+        <FormItem Label="保存路径">
+            <div @onclick="e => SelectPath()">
+                <Input @bind-Value="@context.SavedPath" ReadOnly></Input>
+            </div>
         </FormItem>
     </Form>
 </Modal>
