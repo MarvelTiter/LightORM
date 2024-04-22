@@ -6,6 +6,7 @@ using DatabaseUtils.Template;
 using LightORM;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,6 +34,8 @@ namespace DatabaseUtils
             Tables = await dbOperator.GetTablesAsync();
         }
 
+        List<DatabaseTable> GeneratedTables = [];
+
         async Task Build()
         {
             if (string.IsNullOrEmpty(Config.Namespace))
@@ -48,6 +51,7 @@ namespace DatabaseUtils
             }
             var prefix = Config.Prefix ?? "";
             var separator = Config.Separator ?? "";
+            GeneratedTables.Clear();
             foreach (var table in selected)
             {
                 try
@@ -56,13 +60,40 @@ namespace DatabaseUtils
                     string formatted = table.PascalName(prefix, separator);
                     var content = table.BuildContent(prefix, separator);
                     var classcontent = string.Format(ClassTemplate.Class, Config.Namespace, table.TableName, formatted, content);
-                    table.GeneratedResult = classcontent;
+                    GeneratedTables.Add(new()
+                    {
+                        TableName = table.TableName,
+                        CsFileName = formatted,
+                        GeneratedResult = classcontent,
+                    });
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
-               
+
+            }
+        }
+
+        async Task SaveToLocal()
+        {
+            if (string.IsNullOrEmpty(Config.SavedPath))
+            {
+                MessageBox.Show("保存路径为空!");
+                return;
+            }
+            if (!Directory.Exists(Config.SavedPath))
+            {
+                Directory.CreateDirectory(Config.SavedPath);
+            }
+            foreach (var item in GeneratedTables)
+            {
+                var path = Path.Combine(Config.SavedPath, $"{item.CsFileName}.cs");
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+                await File.WriteAllTextAsync(path, item.GeneratedResult);
             }
         }
 
