@@ -2,6 +2,7 @@
 using DatabaseUtils.Helper;
 using DatabaseUtils.Models;
 using DatabaseUtils.Services;
+using DatabaseUtils.Template;
 using LightORM;
 using System;
 using System.Collections.Generic;
@@ -34,29 +35,42 @@ namespace DatabaseUtils
 
         async Task Build()
         {
+            if (string.IsNullOrEmpty(Config.Namespace))
+            {
+                MessageBox.Show("未设置命名空间!");
+                return;
+            }
             var selected = Tables.Where(t => t.IsSelected);
             if (!selected.Any())
             {
                 MessageBox.Show("未选择表!");
                 return;
             }
-            foreach (var item in selected)
-            {
-                item.Columns = await dbOperator!.GetTableStructAsync(item.TableName);
-            }
             var prefix = Config.Prefix ?? "";
             var separator = Config.Separator ?? "";
             foreach (var table in selected)
             {
-                // TODO 生成CS文件
-                //string formatted = table.PascalName(prefix, separator);
-                //var temp = item.Template.Replace("${TableName}", table.TableName).Replace("${TableNameFormatted}", formatted);
-                //if (item.HasContent)
-                //{
-                //    string content = table.BuildContent(prefix, separator);
-                //    temp = temp.Replace("${Content}", content);
-                //}
-                //await item.SaveFile(item.FileNameTemplate.Replace("${TableNameFormatted}", formatted), temp);
+                try
+                {
+                    table.Columns = await dbOperator!.GetTableStructAsync(table.TableName);
+                    string formatted = table.PascalName(prefix, separator);
+                    var content = table.BuildContent(prefix, separator);
+                    var classcontent = string.Format(ClassTemplate.Class, Config.Namespace, table.TableName, formatted, content);
+                    table.GeneratedResult = classcontent;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+               
+            }
+        }
+
+        void AllHandle(bool newValue)
+        {
+            foreach (var table in Tables)
+            {
+                table.IsSelected = newValue;
             }
         }
     }

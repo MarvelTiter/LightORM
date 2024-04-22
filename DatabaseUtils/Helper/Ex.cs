@@ -8,19 +8,6 @@ namespace DatabaseUtils.Helper
 {
     public static class Ex
     {
-        public static async Task SaveFile(this ClassTemplate self, string filename, string content)
-        {
-            var path = self.SavePath;
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            using var fs = File.Open(Path.Combine(path, filename), FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite);
-            byte[] data = Encoding.UTF8.GetBytes(content);
-            await fs.WriteAsync(data, 0, data.Length);
-            await fs.FlushAsync();
-        }
-
         public static string PascalName(this DatabaseTable self, string prefix, string separator)
         {
             return Parse(self.TableName, prefix, separator);
@@ -32,13 +19,11 @@ namespace DatabaseUtils.Helper
             var content = new StringBuilder();
             foreach (var item in columns)
             {
-                content.Append($@"
-        /// <summary>
-        /// {item.Comments}
-        /// </summary>
-        [LightColumnName(""{item.ColumnName}"")]
-        public {item.ParseDataType()} {item.PascalName(prefix, separator)} {{ get; set; }}
-");
+                if (!item.ParseDataType(out var type))
+                {
+                    continue;
+                }
+                content.AppendLine(string.Format(ClassTemplate.Property, item.Comments, item.ColumnName, type, item.PascalName(prefix, separator)));
             }
             return content.ToString();
         }
@@ -48,9 +33,9 @@ namespace DatabaseUtils.Helper
             return Parse(self.ColumnName, prefix, separator);
         }
 
-        public static string ParseDataType(this TableColumn self)
+        public static bool ParseDataType(this TableColumn self, out string type)
         {
-            return TypeMap.Map(self.DataType, self.Nullable);
+            return TypeMap.Map(self.DataType, self.Nullable, out type);
         }
 
         private static string Parse(string text, string prefix, string separator)

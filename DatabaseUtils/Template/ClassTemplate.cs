@@ -8,11 +8,33 @@ namespace DatabaseUtils.Template
 {
     public class ClassTemplate
     {
-        public string Name { get; set; }
-        public bool HasContent { get; set; }
-        public string Template { get; set; }
-        public string SavePath { get; set; }
-        public string Content { get; set; }
-        public string FileNameTemplate { get; set; }
+        /// <summary>
+        /// 参数顺序 命名空间 -> 表名 -> 类名 -> 内容
+        /// </summary>
+        public static string Class => 
+$@"/*
+ * 该文件由代码生成
+ * 时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}
+ * 作者：yaoqinglin
+ */
+namespace {{0}};
+
+[LightTable(Name = ""{{1}}"")]
+public class {{2}}
+{{{{
+    {{3}}
+}}}}
+";
+        /// <summary>
+        /// 参数顺序 注释-> 列名 -> 类型 -> 属性名
+        /// </summary>
+        public static string Property =>
+@"
+    /// <summary>
+    /// {0}
+    /// </summary>
+    [LightColumnName(""{1}"")]
+    public {2} {3} {{ get; set; }}
+";
     }
 }

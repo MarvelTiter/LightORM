@@ -12,7 +12,7 @@ namespace DatabaseUtils.Models
     {
         [NotNull] public string? TableName { get; set; }
         [NotNull] public IEnumerable<TableColumn>? Columns { get; set; }
-
+        public string? GeneratedResult { get; set; }
         public bool IsSelected { get; set; }
     }
 }
