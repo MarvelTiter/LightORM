@@ -14,6 +14,7 @@ public interface IExpInsert<T>
     IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns);
     int Execute();
     //IExpInsert<T> NoParameter();
+    IExpInsert<T> ReturnIdentity();
     Task<int> ExecuteAsync();
     string ToSql();
 }

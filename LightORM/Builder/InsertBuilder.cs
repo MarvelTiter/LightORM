@@ -10,6 +10,7 @@ internal class InsertBuilder<T> : SqlBuilder
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     public List<string> IgnoreMembers { get; set; } = [];
+    public bool IsReturnIdentity { get; set; }
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions?.SqlType == SqlPartial.Insert)
@@ -72,7 +73,6 @@ internal class InsertBuilder<T> : SqlBuilder
 
     public override string ToSqlString()
     {
-        //TODO 处理批量插入
         if (IsBatchInsert)
         {
             CreateInsertBatchSql();
@@ -99,6 +99,13 @@ internal class InsertBuilder<T> : SqlBuilder
             , GetTableName(TableInfo, false)
             , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
             , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropName))));
+
+        if (IsReturnIdentity)
+        {
+            sb.Append(';');
+            sb.Append(DbHelper.ReturnIdentitySql());
+        }
+
         return sb.ToString();
     }
 }

@@ -121,6 +121,12 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         return this;
     }
 
+    public IExpInsert<T> ReturnIdentity()
+    {
+        SqlBuilder.IsReturnIdentity = true;
+        return this;
+    }
+
     public IExpInsert<T> SetColumns(Expression<Func<T, object>> columns)
     {
         SqlBuilder.Expressions.Add(new ExpressionInfo()

@@ -9,4 +9,5 @@ namespace LightORM.ExpressionSql.DbHandle;
 internal interface IDbHelper
 {
     void Paging(SelectBuilder builder, StringBuilder sql);
+    string ReturnIdentitySql();
 }

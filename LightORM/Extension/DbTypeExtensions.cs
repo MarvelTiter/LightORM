@@ -40,9 +40,6 @@ internal static class DbTypeExtensions
     public static string AttachEmphasis(this DbBaseType dbBaseType, string name) => emphasis[dbBaseType].Insert(1, name);
     public static string GetEmphasis(this DbBaseType dbBaseType) => emphasis[dbBaseType];
 
-
-
-
     public static SqlMethod GetSqlMethodResolver(this DbBaseType dbBaseType)
     {
         var cacheKey = $"SqlMethodResolver_{dbBaseType}";
@@ -69,4 +66,14 @@ internal static class DbTypeExtensions
             _ => throw new NotSupportedException()
         };
     }
+
+    //public static void Paging(this DbBaseType dbBaseType, Builder.SelectBuilder builder, StringBuilder sql)
+    //{
+    //    GetDbHelper(dbBaseType).Paging(builder, sql);
+    //}
+
+    //public static string ReturnIdentitySql(this DbBaseType dbBaseType)
+    //{
+    //    return GetDbHelper(dbBaseType).ReturnIdentitySql();
+    //}
 }
