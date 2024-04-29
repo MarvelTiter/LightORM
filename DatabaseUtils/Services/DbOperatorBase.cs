@@ -5,14 +5,15 @@ namespace DatabaseUtils.Services
     public abstract class DbOperatorBase
     {
         protected readonly string ConnectionString;
+        protected readonly IExpressionContext context;
 
-        public DbOperatorBase(string connStr)
+        public DbOperatorBase(IExpressionContext context, string connStr)
         {
             ConnectionString = connStr;
+            this.context = context;
         }
-        public ISqlExecutor Db => CreateDbContext();
 
-        protected abstract ISqlExecutor CreateDbContext();
+        protected abstract DbConnectInfo GetConnectInfo();
 
     }
 }

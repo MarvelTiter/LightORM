@@ -10,56 +10,73 @@ namespace LightORM.ExpressionSql
     public partial class ExpressionCoreSql : IExpressionContext
     {
         bool useTrans;
+        public bool UseTrans { get => useTrans; set => useTrans = value; }
 
-        public void BeginTran()
+        public IExpressionContext Use(DbConnectInfo db)
         {
-            useTrans = true;
-            executors.ForEach(ado =>
+            // 确保Use之后，拿到的ISqlExecutor是对应的
+            switchSign.Wait();
+            useCustom = true;
+            executorProvider.UseCustomExecutor((k, t) =>
+            {
+                var executor = new SqlExecutor.SqlExecutor(db);
+                if (t)
+                {
+                    executor.BeginTran();
+                }
+                return executor;
+            });
+            return this;
+        }
+        public void BeginTranAll()
+        {
+            UseTrans = true;
+            executorProvider.Executors.ForEach(ado =>
             {
                 try { ado.BeginTran(); } catch { }
             });
         }
 
-        public async Task BeginTranAsync()
+        public async Task BeginTranAllAsync()
         {
-            useTrans = true;
-            await executors.ForEachAsync(async ado =>
+            UseTrans = true;
+            await executorProvider.Executors.ForEachAsync(async ado =>
             {
                 try { await ado.BeginTranAsync(); } catch { }
             });
         }
 
-        public void CommitTran()
+        public void CommitTranAll()
         {
-            useTrans = false;
-            executors.ForEach(ado =>
+            UseTrans = false;
+            executorProvider.Executors.ForEach(ado =>
             {
                 try { ado.CommitTran(); } catch { }
             });
         }
 
-        public async Task CommitTranAsync()
+        public async Task CommitTranAllAsync()
         {
-            useTrans = false;
-            await executors.ForEachAsync(async ado =>
+            UseTrans = false;
+            await executorProvider.Executors.ForEachAsync(async ado =>
             {
                 try { await ado.CommitTranAsync(); } catch { }
             });
         }
 
-        public void RollbackTran()
+        public void RollbackTranAll()
         {
-            useTrans = false;
-            executors.ForEach(ado =>
+            UseTrans = false;
+            executorProvider.Executors.ForEach(ado =>
             {
                 try { ado.RollbackTran(); } catch { }
             });
         }
 
-        public async Task RollbackTranAsync()
+        public async Task RollbackTranAllAsync()
         {
-            useTrans = false;
-            await executors.ForEachAsync(async ado =>
+            UseTrans = false;
+            await executorProvider.Executors.ForEachAsync(async ado =>
             {
                 try
                 {
@@ -70,34 +87,36 @@ namespace LightORM.ExpressionSql
         }
 
 
-        public void BeginTran(string key)
+        public void BeginTran(string key = ConstString.Main)
         {
-            try { GetExecutor(key).BeginTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(CurrentKey, false).BeginTran(); } catch { }
         }
 
-        public async Task BeginTranAsync(string key)
+        public async Task BeginTranAsync(string key = ConstString.Main)
         {
-            try { await GetExecutor(key).BeginTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
         }
 
-        public void CommitTran(string key)
+        public void CommitTran(string key = ConstString.Main)
         {
-            try { GetExecutor(key).CommitTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(CurrentKey, false).CommitTran(); } catch { }
         }
 
-        public async Task CommitTranAsync(string key)
+        public async Task CommitTranAsync(string key = ConstString.Main)
         {
-            try { await GetExecutor(key).CommitTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(CurrentKey, false).CommitTranAsync(); } catch { }
         }
 
-        public void RollbackTran(string key)
+        public void RollbackTran(string key = ConstString.Main)
         {
-            try { GetExecutor(key).RollbackTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(CurrentKey, false).RollbackTran(); } catch { }
         }
 
-        public async Task RollbackTranAsync(string key)
+        public async Task RollbackTranAsync(string key = ConstString.Main)
         {
-            try { await GetExecutor(key).RollbackTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(CurrentKey, false).RollbackTranAsync(); } catch { }
         }
+
+
     }
 }

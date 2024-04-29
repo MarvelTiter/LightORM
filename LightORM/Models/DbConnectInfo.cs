@@ -2,9 +2,9 @@
 using System.Data;
 using System.Data.Common;
 
-namespace LightORM.Models;
+namespace LightORM;
 
-internal class DbConnectInfo
+public record DbConnectInfo
 {
 
     public DbConnectInfo(DbBaseType db, string connectString, DbProviderFactory factory) 

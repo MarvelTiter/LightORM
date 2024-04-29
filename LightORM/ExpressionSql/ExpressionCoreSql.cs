@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using LightORM.Cache;
 using LightORM.Providers;
@@ -9,23 +10,17 @@ namespace LightORM.ExpressionSql;
 
 public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
-    private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
-    internal readonly SqlAopProvider Aop;
-    //private IAdo ado;
-    private readonly List<ISqlExecutor> queryExecutors = [];
+    internal SqlExecutorProvider executorProvider;
+    SemaphoreSlim switchSign = new SemaphoreSlim(1, 1);
+    bool useCustom;
     public ISqlExecutor Ado
     {
         get
         {
-            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(CurrentKey));
-            queryExecutors.Add(ado);
-            //System.Diagnostics.Debug.WriteLine($"创建 sqlexecutor [{directlyUsed.Count}]");
-            ado.DbLog = Aop.DbLog;
-            if (useTrans)
-            {
-                ado.BeginTran();
-            }
-            return ado;
+            var e = executorProvider.GetSelectExecutor(_dbKey ?? MainDb, useCustom);
+            if (switchSign.CurrentCount == 0) switchSign.Release();
+            useCustom = false;
+            return e;
         }
     }
 
@@ -34,28 +29,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 #if DEBUG
         Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
 #endif
-        this.Aop = option.Aop;
-    }
-
-    internal ISqlExecutor GetExecutor(string key)
-    {
-        return executors.GetOrAdd(key, k =>
-        {
-            var ado = new SqlExecutor.SqlExecutor(GetDbInfo(key))
-            {
-                DbLog = Aop.DbLog
-            };
-            if (useTrans)
-            {
-                ado.BeginTran();
-            }
-            return ado;
-        });
-    }
-
-    internal static DbConnectInfo GetDbInfo(string key)
-    {
-        return StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
+        executorProvider = new SqlExecutorProvider(option.Aop);
     }
 
     private readonly string MainDb = ConstString.Main;
@@ -67,12 +41,15 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             var k = _dbKey ?? MainDb;
             _dbKey = null;
+            if (switchSign.CurrentCount == 0) switchSign.Release();
             return k;
         }
     }
 
+
     public IExpressionContext SwitchDatabase(string key)
     {
+        switchSign.Wait();
         _dbKey = key;
         return this;
     }
@@ -104,7 +81,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entity);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities)
     {
@@ -113,7 +90,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entities);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 
     public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
@@ -127,7 +104,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entity);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities)
     {
@@ -136,7 +113,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entities);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 
     public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
@@ -150,7 +127,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entity);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities)
     {
@@ -159,7 +136,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(GetExecutor(CurrentKey), entities);
+        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 
 
@@ -175,15 +152,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 #if DEBUG
                 Console.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
 #endif
-                foreach (var item in executors.Values)
-                {
-                    item.Dispose();
-                }
-                executors.Clear();
-                foreach (var item in queryExecutors)
-                {
-                    item.Dispose();
-                }
+                executorProvider.Dispose();
             }
 
             disposedValue = true;

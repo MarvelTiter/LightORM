@@ -12,7 +12,7 @@ public interface ISqlExecutor : IDisposable
     public Action<string, object?>? DbLog { get; set; }
 
     internal DbConnectInfo ConnectInfo { get; }
-
+    internal bool DisposeImmediately { get; set; }
     /// <summary>
     /// 数据库事务
     /// </summary>

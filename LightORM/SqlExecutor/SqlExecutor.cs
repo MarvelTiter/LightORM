@@ -11,7 +11,7 @@ namespace LightORM.SqlExecutor;
 internal class SqlExecutor : ISqlExecutor, IDisposable
 {
     public Action<string, object?>? DbLog { get; set; }
-
+    public bool DisposeImmediately { get; set; }
     public DbConnectInfo ConnectInfo { get; private set; }
     /// <summary>
     /// 数据库事务
@@ -96,19 +96,26 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
 #endif
 
-    public Task CloseAsync()
+    public Task TryCloseAsync(bool needToClose)
     {
 #if NET45
-        DbConnection?.Close();
+        if (needToClose)
+            DbConnection?.Close();
         return Task.FromResult(true);
 
 #else
-        if (DbConnection != null)
+        if (DbConnection != null && needToClose)
         {
             return DbConnection.CloseAsync();
         }
         return Task.CompletedTask;
 #endif
+    }
+
+    public void TryClose(bool needToClose)
+    {
+        if (needToClose)
+            DbConnection.Close();
     }
 
 
@@ -175,10 +182,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                DbConnection.Close();
-            }
+            TryClose(needToClose);
         }
     }
 
@@ -199,10 +203,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                DbConnection.Close();
-            }
+            TryClose(needToClose);
         }
     }
 
@@ -243,8 +244,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-                DbConnection.Close();
+            TryClose(needToClose);
         }
         return ds;
     }
@@ -264,8 +264,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-                DbConnection.Close();
+            TryClose(needToClose);
         }
         return ds;
     }
@@ -282,13 +281,9 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                await CloseAsync();
-            }
+            await TryCloseAsync(needToClose);
         }
     }
-
 
     public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
@@ -307,10 +302,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                await CloseAsync();
-            }
+            await TryCloseAsync(needToClose);
         }
     }
     public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
@@ -350,10 +342,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                await CloseAsync();
-            }
+            await TryCloseAsync(needToClose);
         }
         return ds;
     }
@@ -373,10 +362,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             cmd.Parameters.Clear();
             cmd.Dispose();
-            if (needToClose)
-            {
-                await CloseAsync();
-            }
+            await TryCloseAsync(needToClose);
         }
         return ds;
     }
@@ -479,6 +465,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
                 {
                     DbConnection.Close();
                 }
+                DbConnection?.Dispose();
             }
             disposedValue = true;
         }
