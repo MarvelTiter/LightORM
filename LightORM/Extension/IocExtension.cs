@@ -1,10 +1,8 @@
 ﻿#if NET6_0_OR_GREATER
-using LightORM;
 using LightORM.ExpressionSql;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MDbContext;
-
+namespace LightORM;
 public static class IocExtension
 {
 
@@ -25,7 +23,7 @@ public static class IocExtension
         //    var ins = builder.Build();
         //    return ins;
         //});
-        services.AddTransient<IExpressionContext, ExpressionCoreSql>();
+        services.AddScoped<IExpressionContext, ExpressionCoreSql>();
         return services;
     }
 

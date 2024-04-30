@@ -8,8 +8,7 @@ namespace DatabaseUtils.Services
     public class MySqlDb : DbOperatorBase, IDbOperator
     {
         private readonly string database;
-
-        public MySqlDb(string connStr) : base(connStr)
+        public MySqlDb(IExpressionContext context, string connStr) : base(context, connStr)
         {
             var match = Regex.Match(connStr, @"(?<=Database\=)([A-Z|a-z]+)", RegexOptions.IgnoreCase);
             if (!match.Success)
@@ -26,7 +25,7 @@ A.TABLE_NAME TableName
 FROM INFORMATION_SCHEMA.TABLES A
 WHERE a.TABLE_SCHEMA = '{database}'
 ";
-            return Db.QueryAsync<DatabaseTable>(sql, null);
+            return context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql, null);
         }
 
         public Task<IList<TableColumn>> GetTableStructAsync(string table)
@@ -42,13 +41,12 @@ WHERE A.TABLE_SCHEMA='{database}'
 AND A.TABLE_NAME = '{table}'
 ORDER BY A.TABLE_SCHEMA,A.TABLE_NAME,A.ORDINAL_POSITION
 ";
-            return Db.QueryAsync<TableColumn>(sql, null);
+            return context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql, null);
         }
 
-        protected override ISqlExecutor CreateDbContext()
+        protected override DbConnectInfo GetConnectInfo()
         {
-            DbConnectHelper.TryAddConnectionInfo(ConnectionString, DbBaseType.MySql, ConnectionString, MySqlConnector.MySqlConnectorFactory.Instance);
-            return SqlExecutorProvider.GetExecutor(ConnectionString);
+            return new DbConnectInfo(DbBaseType.MySql, ConnectionString, MySqlConnector.MySqlConnectorFactory.Instance);
         }
     }
 }

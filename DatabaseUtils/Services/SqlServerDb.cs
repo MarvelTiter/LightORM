@@ -7,24 +7,19 @@ namespace DatabaseUtils.Services
 {
     public class SqlServerDb : DbOperatorBase, IDbOperator
     {
-        public SqlServerDb(string connStr) : base(connStr)
+        public SqlServerDb(IExpressionContext context, string connStr) : base(context, connStr)
         {
 
         }
         public async Task<IList<DatabaseTable>> GetTablesAsync()
         {
-            using (Db)
-            {
-                string sql = "SELECT NAME FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
-                return await Db.QueryAsync<DatabaseTable>(sql);
-            }
+            string sql = "SELECT NAME FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
+            return await context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql);
         }
 
         public async Task<IList<TableColumn>> GetTableStructAsync(string table)
         {
-            using (Db)
-            {
-                string sql = $@"
+            string sql = $@"
 SELECT 
 --表名 =case when a.colorder = 1 then d.name else '' end, 
 --表说明 =case when a.colorder = 1 then isnull(f.value,'') else '' end, 
@@ -51,14 +46,13 @@ left join sys.extended_properties f on d.id = f.major_id and f.minor_id = 0
 where d.name = '{table}'--如果只查询指定表,加上此条件 
 order by a.id,a.colorder 
 ";
-                return await Db.QueryAsync<TableColumn>(sql);
-            }
+            return await context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql);
+
         }
 
-        protected override ISqlExecutor CreateDbContext()
+        protected override DbConnectInfo GetConnectInfo()
         {
-            DbConnectHelper.TryAddConnectionInfo(ConnectionString, DbBaseType.SqlServer, ConnectionString, Microsoft.Data.SqlClient.SqlClientFactory.Instance);
-            return SqlExecutorProvider.GetExecutor(ConnectionString);
+            return new DbConnectInfo(DbBaseType.SqlServer, ConnectionString, Microsoft.Data.SqlClient.SqlClientFactory.Instance);
         }
     }
 }

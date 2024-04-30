@@ -4,9 +4,11 @@ using DatabaseUtils.Models;
 using DatabaseUtils.Services;
 using DatabaseUtils.Template;
 using LightORM;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -24,6 +26,9 @@ namespace DatabaseUtils
         IDbOperator? dbOperator = null;
         Config Config = new Config();
         bool showSetting;
+
+        [Inject, NotNull] IExpressionContext? Context {  get; set; }
+        
         async Task Connect()
         {
             if (!selectedDb.HasValue || string.IsNullOrWhiteSpace(connectstring))
@@ -31,7 +36,7 @@ namespace DatabaseUtils
                 MessageBox.Show("数据库类型和连接字符串不能为空");
                 return;
             }
-            dbOperator = DbFactory.GetDbOperator(selectedDb!.Value, connectstring!);
+            dbOperator = DbFactory.GetDbOperator(Context, selectedDb!.Value, connectstring!);
             Tables = await dbOperator.GetTablesAsync();
         }
 

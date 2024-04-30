@@ -29,7 +29,10 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
-            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
+            if (self.DisposeImmediately)
+            {
+                self.Dispose();
+            }
         }
     }
     public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -57,7 +60,10 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
-            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
+            if (self.DisposeImmediately)
+            {
+                self.Dispose();
+            }
         }
     }
     public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -81,7 +87,10 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
-            Debug.WriteLine($"QueryAsync finally reader close: {reader?.IsClosed}");
+            if (self.DisposeImmediately)
+            {
+                self.Dispose();
+            }
         }
     }
     public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -110,6 +119,10 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
+            if (self.DisposeImmediately)
+            {
+                self.Dispose();
+            }
         }
     }
     private static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
