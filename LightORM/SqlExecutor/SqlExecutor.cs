@@ -101,12 +101,20 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 #if NET45
         if (needToClose)
             DbConnection?.Close();
+        if (DisposeImmediately)
+        {
+            Dispose(true);
+        }
         return Task.FromResult(true);
 
 #else
         if (DbConnection != null && needToClose)
         {
             return DbConnection.CloseAsync();
+        }
+        if (DisposeImmediately)
+        {
+            Dispose(true);
         }
         return Task.CompletedTask;
 #endif

@@ -9,7 +9,8 @@ namespace LightORM
 {
     public static class ExpSqlFactory
     {
-        static ExpressionSqlOptions option = new ExpressionSqlOptions();
+        private static readonly ExpressionSqlOptions option = new();
+        private static readonly Lazy<IExpressionContext> lazyContext;
 
         public static void Configuration(Action<ExpressionSqlOptions> config)
         {
@@ -19,22 +20,15 @@ namespace LightORM
                 option.Check();
             }
         }
-        static IExpressionContext? context;
-        static object locker = new object();
-        public static IExpressionContext GetContext()
+        static ExpSqlFactory()
         {
-            lock (locker)
+            lazyContext = new Lazy<IExpressionContext>(() =>
             {
-                if (context == null)
-                {
-                    lock (locker)
-                    {
-                        context = new ExpressionCoreSql(option);
-                    }
-                }
-            }
-            return context;
+                return new ExpressionCoreSql(option);
+            });
         }
+
+        public static IExpressionContext GetContext() => lazyContext.Value;
 
         /// <summary>
         /// 需要自己释放对象

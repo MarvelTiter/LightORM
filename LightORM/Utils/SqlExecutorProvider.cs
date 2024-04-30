@@ -22,7 +22,6 @@ namespace LightORM.Utils
             return StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
         }
 
-
         private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
         //private readonly List<ISqlExecutor> queryExecutors = [];
         private readonly SqlAopProvider sqlAop;
@@ -60,10 +59,10 @@ namespace LightORM.Utils
             if (ado.DbConnection.State == System.Data.ConnectionState.Open)
             {
                 var info = GetDbInfo(key);
-                var nado = new SqlExecutor.SqlExecutor(info);
-                nado.DbLog = sqlAop.DbLog;
-
-                return nado;
+                var temp = new SqlExecutor.SqlExecutor(info);
+                temp.DbLog = sqlAop.DbLog;
+                temp.DisposeImmediately = true;
+                return temp;
             }
             //queryExecutors.Add(ado);
             return ado;

@@ -49,6 +49,7 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public IExpressionContext SwitchDatabase(string key)
     {
+        // 确保切换key之后，Provider拿到的ISqlExecutor是对应的
         switchSign.Wait();
         _dbKey = key;
         return this;
