@@ -14,12 +14,27 @@ namespace LightORM
             return default;
         }
 
+        public static int Count()
+        {
+            return default;
+        }
+
         public static T Sum<T>(bool exp, T val)
         {
             return default;
         }
 
-        public static double Avg(bool exp, double val)
+        public static T Sum<T>(T val)
+        {
+            return default;
+        }
+
+        public static double Avg<T>(bool exp, T val)
+        {
+            return default;
+        }
+
+        public static double Avg<T>(T val)
         {
             return default;
         }
