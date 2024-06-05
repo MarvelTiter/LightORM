@@ -53,7 +53,7 @@ namespace LightORM.Utils
             return executor;
         }
 
-        public ISqlExecutor GetSelectExecutor(string key, bool useCustom = false)
+        public ISqlExecutor GetSelectExecutor(string key)
         {
             ISqlExecutor ado = GetSqlExecutor(key, false);
             if (ado.DbConnection.State == System.Data.ConnectionState.Open)

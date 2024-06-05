@@ -12,14 +12,12 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     internal SqlExecutorProvider executorProvider;
     SemaphoreSlim switchSign = new SemaphoreSlim(1, 1);
-    bool useCustom;
     public ISqlExecutor Ado
     {
         get
         {
-            var e = executorProvider.GetSelectExecutor(_dbKey ?? MainDb, useCustom);
+            var e = executorProvider.GetSelectExecutor(_dbKey ?? MainDb);
             if (switchSign.CurrentCount == 0) switchSign.Release();
-            useCustom = false;
             return e;
         }
     }

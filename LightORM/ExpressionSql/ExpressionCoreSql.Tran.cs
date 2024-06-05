@@ -16,7 +16,6 @@ namespace LightORM.ExpressionSql
         {
             // 确保Use之后，拿到的ISqlExecutor是对应的
             switchSign.Wait();
-            useCustom = true;
             executorProvider.UseCustomExecutor((k, t) =>
             {
                 var executor = new SqlExecutor.SqlExecutor(db);

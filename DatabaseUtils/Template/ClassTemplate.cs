@@ -36,5 +36,17 @@ public class {{2}}
     [LightColumnName(""{1}"")]
     public {2} {3} {{ get; set; }}
 ";
+        /// <summary>
+        /// 参数顺序 注释-> 列名 -> 类型 -> 属性名
+        /// </summary>
+        public static string PropertyWidthTableColumn =>
+@"
+    /// <summary>
+    /// {0}
+    /// </summary>
+    [LightColumnName(""{1}"")]
+    [ColumnDefinition(""{0}"")]
+    public {2} {3} {{ get; set; }}
+";
     }
 }
