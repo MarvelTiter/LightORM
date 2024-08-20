@@ -11,7 +11,7 @@ namespace LightORM.ExpressionSql;
 public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 {
     internal SqlExecutorProvider executorProvider;
-    SemaphoreSlim switchSign = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim switchSign = new(1, 1);
     public ISqlExecutor Ado
     {
         get

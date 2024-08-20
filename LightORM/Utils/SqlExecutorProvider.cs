@@ -25,47 +25,51 @@ namespace LightORM.Utils
         private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
         //private readonly List<ISqlExecutor> queryExecutors = [];
         private readonly SqlAopProvider sqlAop;
-        Func<string, bool, ISqlExecutor> sqlExecutorCreator;
+        Func<string, bool, ISqlExecutor>? customHandler;
 
         public SqlExecutorProvider(SqlAopProvider sqlAop)
         {
             this.sqlAop = sqlAop;
-            sqlExecutorCreator = InternalCreator;
         }
 
 
         public void UseCustomExecutor(Func<string, bool, ISqlExecutor> customHandler)
         {
-            sqlExecutorCreator = customHandler;
+            this.customHandler = customHandler;
         }
 
-        private void ResetCreator()
-        {
-            sqlExecutorCreator = InternalCreator;
-        }
+        //private void ResetCreator()
+        //{
+        //    sqlExecutorCreator = InternalCreator;
+        //}
 
         public ConcurrentDictionary<string, ISqlExecutor> Executors => executors;
 
         public ISqlExecutor GetSqlExecutor(string key, bool useTrans)
         {
-            var executor = sqlExecutorCreator.Invoke(key, useTrans);
-            ResetCreator();
+            var executor = customHandler?.Invoke(key, useTrans) ?? InternalCreator(key, useTrans);
+            //ResetCreator();
             return executor;
         }
 
         public ISqlExecutor GetSelectExecutor(string key)
         {
-            ISqlExecutor ado = GetSqlExecutor(key, false);
-            if (ado.DbConnection.State == System.Data.ConnectionState.Open)
+            return customHandler?.Invoke(key, false) ?? new SqlExecutor.SqlExecutor(GetDbInfo(key))
             {
-                var info = GetDbInfo(key);
-                var temp = new SqlExecutor.SqlExecutor(info);
-                temp.DbLog = sqlAop.DbLog;
-                temp.DisposeImmediately = true;
-                return temp;
-            }
-            //queryExecutors.Add(ado);
-            return ado;
+                DbLog = sqlAop.DbLog,
+                DisposeImmediately = true
+            };
+            //ISqlExecutor ado = GetSqlExecutor(key, false);
+            //if (ado.DbConnection.State == System.Data.ConnectionState.Open)
+            //{
+            //    var info = GetDbInfo(key);
+            //    var temp = new SqlExecutor.SqlExecutor(info);
+            //    temp.DbLog = sqlAop.DbLog;
+            //    temp.DisposeImmediately = true;
+            //    return temp;
+            //}
+            ////queryExecutors.Add(ado);
+            //return ado;
         }
 
         private ISqlExecutor InternalCreator(string key, bool useTrans)
