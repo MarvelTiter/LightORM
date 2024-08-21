@@ -26,7 +26,7 @@ namespace LightORM.Utils
         //private readonly List<ISqlExecutor> queryExecutors = [];
         private readonly SqlAopProvider sqlAop;
         Func<string, bool, ISqlExecutor>? customHandler;
-
+        private static ConcurrentQueue<WeakReference<SqlExecutor.SqlExecutor>> selectWeaks = [];
         public SqlExecutorProvider(SqlAopProvider sqlAop)
         {
             this.sqlAop = sqlAop;
@@ -38,38 +38,49 @@ namespace LightORM.Utils
             this.customHandler = customHandler;
         }
 
-        //private void ResetCreator()
-        //{
-        //    sqlExecutorCreator = InternalCreator;
-        //}
+        private ISqlExecutor? CreateCustomExecutor(string key, bool useTrans)
+        {
+            if (customHandler == null) return null;
+            var e = customHandler.Invoke(key, useTrans);
+            customHandler = null;
+            return e;
+        }
 
         public ConcurrentDictionary<string, ISqlExecutor> Executors => executors;
 
-        public ISqlExecutor GetSqlExecutor(string key, bool useTrans)
-        {
-            var executor = customHandler?.Invoke(key, useTrans) ?? InternalCreator(key, useTrans);
-            //ResetCreator();
-            return executor;
-        }
+        public ISqlExecutor GetSqlExecutor(string key, bool useTrans) => CreateCustomExecutor(key, useTrans) ?? InternalCreator(key, useTrans);
 
         public ISqlExecutor GetSelectExecutor(string key)
         {
-            return customHandler?.Invoke(key, false) ?? new SqlExecutor.SqlExecutor(GetDbInfo(key))
+            var custom = CreateCustomExecutor(key, false);
+            if (custom != null) return custom;
+            while (selectWeaks.TryDequeue(out var weak))
             {
-                DbLog = sqlAop.DbLog,
-                DisposeImmediately = true
-            };
-            //ISqlExecutor ado = GetSqlExecutor(key, false);
-            //if (ado.DbConnection.State == System.Data.ConnectionState.Open)
-            //{
-            //    var info = GetDbInfo(key);
-            //    var temp = new SqlExecutor.SqlExecutor(info);
-            //    temp.DbLog = sqlAop.DbLog;
-            //    temp.DisposeImmediately = true;
-            //    return temp;
-            //}
-            ////queryExecutors.Add(ado);
-            //return ado;
+                if (weak.TryGetTarget(out var executor))
+                {
+                    if (executor.DbConnection.State != System.Data.ConnectionState.Closed)
+                    {
+                        return CreateExecutor();
+                    }
+                    else
+                    {
+                        return executor;
+                    }
+                }
+            }
+
+            return CreateExecutor();
+
+            ISqlExecutor CreateExecutor()
+            {
+                var n = new SqlExecutor.SqlExecutor(GetDbInfo(key))
+                {
+                    DbLog = sqlAop.DbLog,
+                };
+                var w = new WeakReference<SqlExecutor.SqlExecutor>(n);
+                selectWeaks.Enqueue(w);
+                return n;
+            }
         }
 
         private ISqlExecutor InternalCreator(string key, bool useTrans)
