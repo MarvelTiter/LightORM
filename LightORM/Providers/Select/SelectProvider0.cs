@@ -205,14 +205,14 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public TSelect As(string tableName)
     {
-        SqlBuilder.TableInfo.CustomName = tableName;
+        SqlBuilder.TableInfo.CustomName = (tableName);
         return (this as TSelect)!;
     }
 
     public TSelect As(Type type)
     {
         var info = Cache.TableContext.GetTableInfo(type);
-        SqlBuilder.TableInfo.CustomName = info.TableName;
+        SqlBuilder.TableInfo.CustomName = (info.TableName);
         return (this as TSelect)!;
     }
 

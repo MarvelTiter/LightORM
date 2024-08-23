@@ -20,7 +20,7 @@ namespace LightORM.Interfaces
         /// <summary>
         /// 实体信息
         /// </summary>
-        TableEntity TableInfo { get; }
+        ITableEntityInfo TableInfo { get; }
 
         /// <summary>
         /// 参数信息

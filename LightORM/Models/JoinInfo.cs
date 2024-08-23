@@ -18,5 +18,5 @@ internal record JoinInfo
     /// </summary>
     public string? Where { get; set; }
     public string? ExpressionId { get; set; }
-    public TableEntity? EntityInfo { get; set; }
+    public ITableEntityInfo? EntityInfo { get; set; }
 }

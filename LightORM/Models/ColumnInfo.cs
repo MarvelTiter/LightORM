@@ -9,9 +9,9 @@ using System.Xml.Linq;
 using LightORM.Utils;
 
 namespace LightORM.Models;
-internal sealed record ColumnInfo
+public sealed record ColumnInfo
 {
-    public TableEntity Table { get; }
+    public ITableEntityInfo Table { get; }
     public string ColumnName => CustomName ?? Property.Name;
     public string PropName => Property.Name;
     public string? CustomName { get; set; }
@@ -36,7 +36,7 @@ internal sealed record ColumnInfo
     readonly Action<object, object>? valueSetter;
     public object? GetValue(object target) => valueGetter?.Invoke(target);
     public void SetValue(object target, object value) => valueSetter?.Invoke(target, value);
-    public ColumnInfo(TableEntity table, PropertyInfo property)
+    public ColumnInfo(ITableEntityInfo table, PropertyInfo property)
     {
         Table = table;
         Property = property;

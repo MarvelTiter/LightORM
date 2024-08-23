@@ -1,6 +1,6 @@
 ﻿namespace LightORM.Models;
 
-internal sealed record NavigateInfo
+public sealed record NavigateInfo
 {
     public NavigateInfo(Type mainType)
     {

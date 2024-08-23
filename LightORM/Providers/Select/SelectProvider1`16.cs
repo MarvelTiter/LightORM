@@ -5,11 +5,11 @@ internal sealed class SelectProvider0 : SelectProvider0<IExpSelect<object>, obje
 {
     public SelectProvider0(string table, ISqlExecutor executor) : base(executor)
     {
-        SqlBuilder.TableInfo = new TableEntity
-        {
-            CustomName = table,
-            IsAnonymousType = true,
-        };
+        //SqlBuilder.TableInfo = new TableEntity
+        //{
+        //    CustomName = table,
+        //    IsAnonymousType = true,
+        //};
     }
     public IExpSelect<object> GroupBy(Expression<Func<object, object>> exp)
     {

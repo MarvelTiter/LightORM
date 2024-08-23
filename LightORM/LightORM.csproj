@@ -45,6 +45,11 @@
 		</PackageReference>
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
+		<!-- Package the generator in the analyzer directory of the nuget package -->
+		<None Include="..\LightOrmTableContextGenerator\bin\$(Configuration)\netstandard2.0\LightOrmTableContextGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	</ItemGroup>
+	
 	<ItemGroup>
 		<None Update="README.md">
 		  <Pack>True</Pack>
@@ -65,5 +70,7 @@
 	    <PackagePath>\</PackagePath>
 	  </None>
 	</ItemGroup>
+
+	
 
 </Project>

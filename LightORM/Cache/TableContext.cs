@@ -20,16 +20,16 @@ namespace LightORM.Cache
     }
     internal static class TableContext
     {
-        public static TableEntity GetTableInfo<T>()
+        public static ITableEntityInfo GetTableInfo<T>()
         {
             return GetTableInfo(typeof(T));
         }
-        public static TableEntity GetTableInfo(Type type)
+        public static ITableEntityInfo GetTableInfo(Type type)
         {
             var cacheKey = $"DbTable_{type.GUID}";
 
             var realType = type.GetRealType(out _);
-            
+
             if (realType.IsAbstract || realType.IsInterface)
             {
                 realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
@@ -63,12 +63,24 @@ namespace LightORM.Cache
                 var propertyInfos = type.GetProperties();
 
                 var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
-                entityInfo.Columns.AddRange(propertyColumnInfos);
+                entityInfo.Columns = propertyColumnInfos.ToArray();
                 entityInfo.Alias = $"a{StaticCache<TableEntity>.Count}";
                 return entityInfo;
             });
             // 拷贝
             return entityInfoCache with { };
+        }
+    }
+
+
+    public class StaticTableInfoContext
+    {
+        internal ITableEntityInfo this[string name]
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
