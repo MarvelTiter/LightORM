@@ -25,6 +25,7 @@ public class Product
     public DateTime? ModifyTime { get; set; }
     public DateTime? Last { get; set; } = DateTime.Now;
     public IEnumerable<Product> Products { get; set; } = [];
+    public Product[] Products2 { get; set; } = [];
 }
 
 
@@ -37,12 +38,23 @@ internal sealed record ProductContext : ITableEntityInfo
     public bool IsAnonymousType => false;
     public string? TargetDatabase => null;
     public string? Description => null;
-    public ColumnInfo[] Columns { get; } = [];
-    public object GetValue(ColumnInfo col, object target)
+    ITableColumnInfo[]? columns;
+    public ITableColumnInfo[] Columns => columns ??= CollectColumnInfo();
+
+    private ITableColumnInfo[] CollectColumnInfo()
+    {
+        columns = new ITableColumnInfo[10];
+        //columns[0] = new ColumnInfo(this)
+        return columns;
+    }
+
+    public object? GetValue(ITableColumnInfo col, object target)
     {
         var p = target as Product;
         ArgumentNullException.ThrowIfNull(p);
-        switch (col.PropName)
+        if (!col.CanRead)
+            return null;
+        switch (col.PropertyName)
         {
             case "ProductId":
                 return p.ProductId;
@@ -53,12 +65,12 @@ internal sealed record ProductContext : ITableEntityInfo
         }
     }
 
-    public void SetValue(ColumnInfo col, object target, object? value)
+    public void SetValue(ITableColumnInfo col, object target, object? value)
     {
         var p = target as Product;
         ArgumentNullException.ThrowIfNull(p);
         if (value == null) return;
-        switch (col.PropName)
+        switch (col.PropertyName)
         {
             case "ProductId":
                 p.ProductId = (int)value;

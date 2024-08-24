@@ -53,13 +53,13 @@ public class Power : IPower
     [LightColumn(Name = "SORT")]
     public int Sort { get; set; }
 
-    [LightNavigate(typeof(RolePower), nameof(PowerId), nameof(RolePower.PowerId))]
+    [LightNavigateAttribute(typeof(RolePower), nameof(PowerId), nameof(RolePower.PowerId))]
     public IEnumerable<Role> Roles { get; set; }
 
     //[LightNavigate(typeof())]
     //public ICollection<User> Users { get; set; }
 
-    [LightNavigate(nameof(PowerId), nameof(ParentId))]
+    [LightNavigateAttribute(nameof(PowerId), nameof(ParentId))]
     public IEnumerable<Power> Children { get; set; }
 
 

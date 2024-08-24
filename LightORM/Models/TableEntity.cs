@@ -22,14 +22,14 @@ internal record TableEntity : ITableEntityInfo
     public string? CustomName { get; set; }
     public string? TargetDatabase { get; set; }
     public string? Description { get; set; }
-    public ColumnInfo[] Columns { get; set; } = [];
+    public ITableColumnInfo[] Columns { get; set; } = [];
 
-    public object? GetValue(ColumnInfo col, object target)
+    public object? GetValue(ITableColumnInfo col, object target)
     {
         throw new NotImplementedException();
     }
 
-    public void SetValue(ColumnInfo col, object target, object? value)
+    public void SetValue(ITableColumnInfo col, object target, object? value)
     {
         throw new NotImplementedException();
     }

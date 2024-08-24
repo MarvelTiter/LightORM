@@ -10,24 +10,26 @@ namespace TestProject1
     [LightORMTableContext]
     internal partial class TestTableContext : ITableContext
     {
-    }
-
-    partial class TestTableContext
-    {
-        public ITableEntityInfo this[string name]
+        public void H(Type type)
         {
-            get
+            if (type == typeof(int) || type.IsAssignableFrom(typeof(int)))
             {
-                switch (name)
-                {
-                    case "Product":
-                        return Product;
-                    default:
-                        throw new ArgumentException();
-                }
+
             }
         }
+    }
 
-        public static global::LightORM.Interfaces.ITableEntityInfo Product => new ProductContext();
+    [TestClass]
+    public class TableContextTestor
+    {
+        [TestMethod]
+        public void TestTableContext()
+        {
+            var context = new TestTableContext();
+            var t1 = context.GetTableInfo("User");
+            t1.CustomName = "Test";
+            var t2 = context.GetTableInfo("User");
+            Assert.IsFalse(t1.CustomName == t2.CustomName);
+        }
     }
 }

@@ -2,5 +2,5 @@
 
 public interface ITableContext
 {
-    ITableEntityInfo this[string name] { get; }
+    ITableEntityInfo? GetTableInfo(Type type);
 }

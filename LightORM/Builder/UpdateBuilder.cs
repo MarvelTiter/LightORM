@@ -30,10 +30,10 @@ internal class UpdateBuilder<T> : SqlBuilder
         }
     }
     bool batchDone = false;
-    bool CheckMembers(ColumnInfo col)
+    bool CheckMembers(ITableColumnInfo col)
     {
         if (Members.Count == 0) return true;
-        return Members.Contains(col.PropName);
+        return Members.Contains(col.PropertyName);
     }
     private void CreateUpdateBatchSql()
     {
@@ -44,8 +44,8 @@ internal class UpdateBuilder<T> : SqlBuilder
         ResolveExpressions();
 
         var primaryCol = TableInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
-        ColumnInfo[] columns = TableInfo.Columns
-                   .Where(c => !IgnoreMembers.Contains(c.PropName))
+        ITableColumnInfo[] columns = TableInfo.Columns
+                   .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(CheckMembers)
                    .Where(c => !c.IsNotMapped)
                    .Where(c => !c.IsNavigate).ToArray();
@@ -62,7 +62,7 @@ internal class UpdateBuilder<T> : SqlBuilder
 
                 foreach (var rowDatas in batch.Parameters)
                 {
-                    var currentCol = rowDatas.First(r => r.PropName == col.PropName);
+                    var currentCol = rowDatas.First(r => r.PropName == col.PropertyName);
                     sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey).Select(r => $"{AttachEmphasis(r.ColumnName)} = {AttachPrefix(r.ParameterName)}"))} THEN {(currentCol.Value == null ? "NULL" : AttachPrefix(currentCol.ParameterName))} ");
                 }
                 sb.Append("END,");
@@ -102,15 +102,15 @@ internal class UpdateBuilder<T> : SqlBuilder
             {
                 var val = item.GetValue(TargetObject);
                 if (val == null) continue;
-                DbParameters.Add(item.PropName, val);
-                Where.Add($"{AttachEmphasis(item.ColumnName)} = {AttachPrefix(item.PropName)}");
+                DbParameters.Add(item.PropertyName, val);
+                Where.Add($"{AttachEmphasis(item.ColumnName)} = {AttachPrefix(item.PropertyName)}");
             }
         }
 
         if (Members.Count == 0)
         {
             var autoUpdateCols = TableInfo.Columns
-               .Where(c => !IgnoreMembers.Contains(c.PropName))
+               .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                .Where(c => !c.IsNotMapped)
                .Where(c => !c.IsNavigate)
                .Where(c => !c.IsPrimaryKey).ToArray();
@@ -121,16 +121,16 @@ internal class UpdateBuilder<T> : SqlBuilder
                 {
                     var val = item.GetValue(TargetObject);
                     if (val == null) continue;
-                    DbParameters.Add(item.PropName, val);
-                    Members.Add(item.PropName);
+                    DbParameters.Add(item.PropertyName, val);
+                    Members.Add(item.PropertyName);
                 }
             }
         }
 
-        var customCols = TableInfo.Columns.Where(c => Members.Contains(c.PropName));
-        var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropName)}");
+        var customCols = TableInfo.Columns.Where(c => Members.Contains(c.PropertyName));
+        var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropertyName)}");
 
-        var setNullCol = TableInfo.Columns.Where(c => SetNullMembers.Contains(c.PropName)).ToArray();
+        var setNullCol = TableInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
         if (setNullCol.Length > 0)
         {
             finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));

@@ -6,6 +6,14 @@ public sealed record NavigateInfo
     {
         NavigateType = mainType;
     }
+    public NavigateInfo(Type mainType, Type? mappingType, string? mainName, string? subName, bool isMulti)
+    {
+        NavigateType = mainType;
+        MappingType = mappingType;
+        MainName = mainName;
+        SubName = subName;
+        IsMultiResult = isMulti;
+    }
     /// <summary>
     /// 多对多类型
     /// </summary>

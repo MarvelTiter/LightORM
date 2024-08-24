@@ -10,9 +10,9 @@ public class UserRole
     [LightColumn(Name = "ROLE_ID", PrimaryKey = true)]
     public string RoleId { get; set; }
 
-    [LightNavigate(nameof(UserId), nameof(User.UserId))]
+    [LightNavigateAttribute(nameof(UserId), nameof(User.UserId))]
     public User User { get; set; }
 
-    [LightNavigate(nameof(RoleId), nameof(Role.RoleId))]
+    [LightNavigateAttribute(nameof(RoleId), nameof(Role.RoleId))]
     public Role Role { get; set; }
 }

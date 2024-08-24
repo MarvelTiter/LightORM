@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LightOrmTableContextGenerator.Builder;
+namespace Generators.Shared.Builder;
 
 internal enum NodeType
 {

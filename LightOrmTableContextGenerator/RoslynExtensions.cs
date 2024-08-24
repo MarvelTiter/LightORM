@@ -1,4 +1,4 @@
-﻿using LightOrmTableContextGenerator.Models;
+﻿using Generators.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
-namespace LightOrmTableContextGenerator;
+namespace Generators.Shared;
 
 internal static class RoslynExtensions
 {
@@ -239,7 +239,18 @@ internal static class RoslynExtensions
         }
     }
 
-
+    public static ITypeSymbol GetElementType(this ITypeSymbol typeSymbol)
+    {
+        if (typeSymbol.HasInterfaceAll("System.Collections.IEnumerable") && typeSymbol.SpecialType == SpecialType.None)
+        {
+            if (typeSymbol is IArrayTypeSymbol a)
+            {
+                return a.ElementType;
+            }
+            return typeSymbol.GetGenericTypes().First();
+        }
+        return typeSymbol;
+    }
 
     public static IEnumerable<ITypeSymbol> GetGenericTypes(this ITypeSymbol symbol)
     {

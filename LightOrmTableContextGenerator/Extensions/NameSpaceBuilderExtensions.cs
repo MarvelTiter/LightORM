@@ -1,6 +1,7 @@
-﻿using LightOrmTableContextGenerator.Builder;
+﻿using Generators.Shared;
+using Generators.Shared.Builder;
 
-namespace LightOrmTableContextGenerator.Extensions;
+namespace Generators.Shared;
 
 internal static class NameSpaceBuilderExtensions
 {

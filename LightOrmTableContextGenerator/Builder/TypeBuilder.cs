@@ -1,8 +1,8 @@
-﻿using LightOrmTableContextGenerator.Models;
+﻿using Generators.Models;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LightOrmTableContextGenerator.Builder;
+namespace Generators.Shared.Builder;
 
 internal abstract class TypeBuilder : Node
 {

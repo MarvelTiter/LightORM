@@ -1,5 +1,5 @@
 ﻿
-namespace LightOrmTableContextGenerator.Builder;
+namespace Generators.Shared.Builder;
 
 internal abstract class Node
 {

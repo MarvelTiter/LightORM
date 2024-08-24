@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace LightOrmTableContextGenerator.Builder;
+namespace Generators.Shared.Builder;
 
 internal class FieldBuilder : MemberBuilder<FieldBuilder>
 {

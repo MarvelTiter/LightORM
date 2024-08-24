@@ -1,18 +1,18 @@
 ﻿namespace LightORM;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class LightNavigate : Attribute
+public class LightNavigateAttribute : Attribute
 {
     public Type? ManyToMany { get; set; }
     public string? MainName { get; set; }
     public string? SubName { get; set; }
 
-    public LightNavigate()
+    public LightNavigateAttribute()
     {
         
     }
 
-    public LightNavigate(string? mainName, string? subName)
+    public LightNavigateAttribute(string? mainName, string? subName)
     {
         MainName = mainName;
         SubName = subName;
@@ -24,7 +24,7 @@ public class LightNavigate : Attribute
     /// <param name="manyToMany"></param>
     /// <param name="mainName"></param>
     /// <param name="subName"></param>
-    public LightNavigate(Type? manyToMany, string? mainName, string? subName)
+    public LightNavigateAttribute(Type? manyToMany, string? mainName, string? subName)
     {
         ManyToMany = manyToMany;
         MainName = mainName;

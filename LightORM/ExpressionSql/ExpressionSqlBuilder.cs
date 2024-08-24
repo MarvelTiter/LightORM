@@ -27,6 +27,11 @@ public class ExpressionSqlOptions
         return this;
     }
 
+    public ExpressionSqlOptions SetTableContext(ITableContext context)
+    {
+        TableContext.StaticContext = context;
+        return this;
+    }
 
     internal SqlAopProvider Aop { get; } = new SqlAopProvider();
     public ExpressionSqlOptions SetWatcher(Action<SqlAopProvider> option)

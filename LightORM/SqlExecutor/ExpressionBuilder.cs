@@ -157,11 +157,12 @@ internal class ExpressionBuilder
             // 属性处理 Property
             foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
             {
-                var TargetMember = col.Property;
-                if (!TargetMember.CanWrite)
+                if (!col.CanWrite)
                 {
                     continue;
                 }
+                //TODO 修改对象初始化
+                var TargetMember = TargetType.GetProperty(col.PropertyName)!;
                 void work()
                 {
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
@@ -195,9 +196,9 @@ internal class ExpressionBuilder
         return lambdaExp.Compile();
     }
 
-    private static bool MemberMatchesName(ColumnInfo col, string Name)
+    private static bool MemberMatchesName(ITableColumnInfo col, string Name)
     {
-        return string.Equals(col.PropName, Name, StringComparison.CurrentCultureIgnoreCase)
+        return string.Equals(col.PropertyName, Name, StringComparison.CurrentCultureIgnoreCase)
             || string.Equals(col.ColumnName, Name, StringComparison.CurrentCultureIgnoreCase);
     }
 

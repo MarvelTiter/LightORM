@@ -155,7 +155,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             var member = exp.Members![i];
             if (member.Name.StartsWith("Tb") && member is PropertyInfo prop)
             {
-                ParameterExpression p = Expression.Parameter(prop.PropertyType);
+                ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
                 Visit(p);
                 NotAs = false;
             }
@@ -170,7 +170,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
-                    var col = TableContext.GetTableInfo(exp.Type).Columns.First(c => c.Property.Name == exp.Members![i].Name);
+                    var col = TableContext.GetTableInfo(exp.Type).Columns.First(c => c.PropertyName == exp.Members![i].Name);
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
                     Visit(exp.Arguments[i]);
                 }
@@ -209,8 +209,14 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         set => notAs = value;
     }
     bool isVisitConvert;
+    //List<object> ps = [];
     Expression? VisitParameter(ParameterExpression exp)
     {
+        //ps.Add(new
+        //{
+        //    Alias = exp.Name,
+        //    exp.Type,
+        //});
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = TableContext.GetTableInfo(exp.Type).Alias;
@@ -223,7 +229,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 isVisitConvert = false;
                 var member = Members.Pop();
-                var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
+                var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
                 if (Options.RequiredTableAlias)
                 {
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
@@ -270,11 +276,16 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             }
             var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
-            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
+            //if (exp.Member.Name.StartsWith("Tb") && exp.Member is PropertyInfo prop)
+            //{
+            //    ParameterExpression p = Expression.Parameter(prop.PropertyType, exp.Member.Name);
+            //    Visit(p);
+            //}
+            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.PropertyName == name);
             if (col.IsNavigate)
             {
                 UseNavigate = true;
-                NavigateMembers.Add(col.PropName);
+                NavigateMembers.Add(col.PropertyName);
                 if (NavigateDeep == 0)
                 {
                     Members.Clear();
@@ -291,7 +302,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 //var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
                 memberType = member.DeclaringType!;
                 name = member.Name;
-                col = TableContext.GetTableInfo(memberType).Columns.First(c => c.Property.Name == name);
+                col = TableContext.GetTableInfo(memberType).Columns.First(c => c.PropertyName == name);
             }
             if (Options.RequiredTableAlias)
             {

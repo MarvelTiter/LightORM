@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace LightOrmTableContextGenerator.Models
+namespace Generators.Models
 {
     internal class TypeParameterInfo(string name, string[] constraints)
     {

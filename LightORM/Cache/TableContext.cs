@@ -20,12 +20,26 @@ namespace LightORM.Cache
     }
     internal static class TableContext
     {
+        internal static ITableContext? StaticContext { get; set; }
         public static ITableEntityInfo GetTableInfo<T>()
         {
+            
             return GetTableInfo(typeof(T));
         }
         public static ITableEntityInfo GetTableInfo(Type type)
         {
+            if (StaticContext != null)
+            {
+                try
+                {
+                    var table = StaticContext.GetTableInfo(type);
+                    if (table != null)
+                    {
+                        return table;
+                    }
+                }
+                catch { }
+            }
             var cacheKey = $"DbTable_{type.GUID}";
 
             var realType = type.GetRealType(out _);
@@ -39,6 +53,8 @@ namespace LightORM.Cache
                 }).Type;
                 return GetTableInfo(realType);
             }
+
+            
 
             var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
             {
@@ -64,7 +80,7 @@ namespace LightORM.Cache
 
                 var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
                 entityInfo.Columns = propertyColumnInfos.ToArray();
-                entityInfo.Alias = $"a{StaticCache<TableEntity>.Count}";
+                entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
                 return entityInfo;
             });
             // 拷贝

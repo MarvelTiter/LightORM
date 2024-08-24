@@ -9,7 +9,7 @@ public interface ITableEntityInfo
     string? CustomName { get; set; }
     string? TargetDatabase { get; }
     string? Description { get; }
-    ColumnInfo[] Columns { get; }
-    object? GetValue(ColumnInfo col, object target);
-    void SetValue(ColumnInfo col, object target, object? value);
+    ITableColumnInfo[] Columns { get; }
+    object? GetValue(ITableColumnInfo col, object target);
+    void SetValue(ITableColumnInfo col, object target, object? value);
 }

@@ -28,7 +28,7 @@ namespace LightORM.Extension
             }
             return size;
         }
-        public static List<BatchSqlInfo> GenBatchInfos<T>(this ColumnInfo[] columns, List<T> datas, int limit = 2000)
+        public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns, List<T> datas, int limit = 2000)
         {
             var list = new List<BatchSqlInfo>();
             var size = CalcBatchSize(columns.Length, limit, datas.Count, out var rows);
@@ -43,7 +43,7 @@ namespace LightORM.Extension
                     foreach (var col in columns)
                     {
                         var val = col.GetValue(obj!);
-                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.ColumnName, $"{col.PropName}_{rowIndex}", col.PropName, val)
+                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val)
                         );
                     }
                     rowIndex++;

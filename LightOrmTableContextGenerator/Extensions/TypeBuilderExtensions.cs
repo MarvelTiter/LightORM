@@ -1,8 +1,8 @@
-﻿using LightOrmTableContextGenerator.Builder;
+﻿using Generators.Shared.Builder;
 using Microsoft.CodeAnalysis;
 using System;
 
-namespace LightOrmTableContextGenerator.Extensions;
+namespace Generators.Shared;
 
 internal static class TypeBuilderExtensions
 {

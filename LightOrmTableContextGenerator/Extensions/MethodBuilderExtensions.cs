@@ -1,10 +1,10 @@
-﻿using LightOrmTableContextGenerator.Builder;
-using LightOrmTableContextGenerator.Models;
+﻿using Generators.Shared.Builder;
+using Generators.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LightOrmTableContextGenerator.Extensions;
+namespace Generators.Shared;
 
 internal static class MethodBuilderExtensions
 {
@@ -70,4 +70,60 @@ internal static class MethodBuilderExtensions
         }
         return builder;
     }
+    #region switch
+    public static T AddSwitchStatement<T>(this T builder, string switchValue, Action<SwitchStatement> action) where T : MethodBase
+    {
+        var switchStatement = SwitchStatement.Default.Switch(switchValue);
+        action.Invoke(switchStatement);
+        builder.AddBody(switchStatement);
+        return builder;
+    }
+
+    public static SwitchStatement Switch(this SwitchStatement switchStatement, string switchValue)
+    {
+        switchStatement.SwitchValue = switchValue;
+        return switchStatement;
+    }
+
+    public static SwitchStatement AddReturnCase(this SwitchStatement switchStatement, string condition, string returnItem)
+    {
+        switchStatement.SwitchCases.Add(new SwitchCaseStatement { Condition = condition, Action = $"return {returnItem}" });
+        return switchStatement;
+    }
+
+    public static SwitchStatement AddBreakCase(this SwitchStatement switchStatement, string condition, string action)
+    {
+        switchStatement.SwitchCases.Add(new SwitchCaseStatement { Condition = condition, Action = action, IsBreak = true });
+        return switchStatement;
+    }
+    public static SwitchStatement AddDefaultCase(this SwitchStatement switchStatement, string action)
+    {
+        switchStatement.DefaultCase = new DefaultCaseStatement { Action = action };
+        return switchStatement;
+    }
+    #endregion
+
+    #region if
+    public static T AddIfStatement<T>(this T builder, string condition, Action<IfStatement> action) where T : MethodBase
+    {
+        var ifs = IfStatement.Default.If(condition);
+        action.Invoke(ifs);
+        builder.AddBody(ifs);
+        return builder;
+    }
+    public static IfStatement If(this IfStatement ifStatement, string condition)
+    {
+        ifStatement.Condition = condition;
+        return ifStatement;
+    }
+
+    public static IfStatement AddStatement(this IfStatement ifStatement, params string[] statements)
+    {
+        foreach (var statement in statements)
+        {
+            ifStatement.IfContents.Add(statement);
+        }
+        return ifStatement;
+    }
+    #endregion
 }

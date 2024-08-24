@@ -1,4 +1,4 @@
-namespace LightOrmTableContextGenerator;
+namespace Generators.Shared;
 
 internal static class StringExtensions
 {
