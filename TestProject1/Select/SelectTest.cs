@@ -81,4 +81,10 @@ public class SelectTest : TestBase
             //.Include(p => p.Roles.Where(r => r.Users.Any(u => u.UserName.Contains("admin"))))
             .ToList();
     }
+
+    [TestMethod]
+    public async Task SelectTestInterface()
+    {
+        var list = await Context.Repository<RunLog>().GetListAsync(e => true, out var total, 1, 20, log => log.LogId!, false);
+    }
 }

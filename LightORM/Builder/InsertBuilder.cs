@@ -34,11 +34,11 @@ internal class InsertBuilder<T> : SqlBuilder
 
         if (Members.Count == 0)
         {
-            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropName));
+            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
         var insertColumns = TableInfo.Columns
-            .Where(c => !IgnoreMembers.Contains(c.PropName))
-            .Where(c => Members.Contains(c.PropName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
+            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
+            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
         var insert = $"INSERT INTO {GetTableName(TableInfo, false)} \n({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) \nVALUES \n";
@@ -84,21 +84,21 @@ internal class InsertBuilder<T> : SqlBuilder
         StringBuilder sb = new StringBuilder();
         if (Members.Count == 0)
         {
-            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropName));
+            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
         var insertColumns = TableInfo.Columns
             .Where(c => c.GetValue(TargetObject) != null)
-            .Where(c => !IgnoreMembers.Contains(c.PropName))
-            .Where(c => Members.Contains(c.PropName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
+            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
+            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
         foreach (var item in insertColumns)
         {
             var val = item.GetValue(TargetObject);
-            DbParameters.Add(item.PropName, val!);
+            DbParameters.Add(item.PropertyName, val!);
         }
         sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"
             , GetTableName(TableInfo, false)
             , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
-            , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropName))));
+            , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName))));
 
         if (IsReturnIdentity)
         {

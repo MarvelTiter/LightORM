@@ -1,7 +1,6 @@
 ﻿using LightORM.Cache;
 using LightORM.ExpressionSql;
 using LightORM.Extension;
-using LightORM.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,11 +63,11 @@ namespace LightORM.Builder
             }
         }
 
-        private void ScanNavigate(ExpressionResolvedResult result, TableEntity mainTableInfo)
+        private void ScanNavigate(ExpressionResolvedResult result, ITableEntityInfo mainTableInfo)
         {
             foreach (var navColumn in mainTableInfo.GetNavigateColumns())
             {
-                if (!result.NavigateMembers!.Contains(navColumn.PropName))
+                if (!result.NavigateMembers!.Contains(navColumn.PropertyName))
                 {
                     continue;
                 }
@@ -119,11 +118,11 @@ namespace LightORM.Builder
             }
         }
 
-        void TryJoin(TableEntity joined)
+        void TryJoin(ITableEntityInfo joined)
         {
             if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || TableInfo.Type == joined.Type)
             {
-                joined.Alias = joined.Alias!.Replace('a', 'j');
+                joined.Alias = (joined.Alias!.Replace('a', 'j'));
             }
         }
 

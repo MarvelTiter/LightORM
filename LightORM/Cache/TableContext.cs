@@ -20,16 +20,30 @@ namespace LightORM.Cache
     }
     internal static class TableContext
     {
-        public static TableEntity GetTableInfo<T>()
+        internal static ITableContext? StaticContext { get; set; }
+        public static ITableEntityInfo GetTableInfo<T>()
         {
+            
             return GetTableInfo(typeof(T));
         }
-        public static TableEntity GetTableInfo(Type type)
+        public static ITableEntityInfo GetTableInfo(Type type)
         {
+            if (StaticContext != null)
+            {
+                try
+                {
+                    var table = StaticContext.GetTableInfo(type);
+                    if (table != null)
+                    {
+                        return table;
+                    }
+                }
+                catch { }
+            }
             var cacheKey = $"DbTable_{type.GUID}";
 
             var realType = type.GetRealType(out _);
-            
+
             if (realType.IsAbstract || realType.IsInterface)
             {
                 realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
@@ -39,6 +53,8 @@ namespace LightORM.Cache
                 }).Type;
                 return GetTableInfo(realType);
             }
+
+            
 
             var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
             {
@@ -63,12 +79,24 @@ namespace LightORM.Cache
                 var propertyInfos = type.GetProperties();
 
                 var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
-                entityInfo.Columns.AddRange(propertyColumnInfos);
-                entityInfo.Alias = $"a{StaticCache<TableEntity>.Count}";
+                entityInfo.Columns = propertyColumnInfos.ToArray();
+                entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
                 return entityInfo;
             });
             // 拷贝
             return entityInfoCache with { };
+        }
+    }
+
+
+    public class StaticTableInfoContext
+    {
+        internal ITableEntityInfo this[string name]
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

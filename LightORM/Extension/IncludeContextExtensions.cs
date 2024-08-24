@@ -118,10 +118,10 @@ namespace LightORM.Extension
             var lambda = Expression.Lambda(p, p);
             return lambda;
         }
-        private static LambdaExpression BuildMainWhereExpression(object item, ColumnInfo col)
+        private static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col)
         {
             var p = Expression.Parameter(col.Table.Type!);
-            var equal = Expression.Equal(Expression.Property(p, col.Property), Expression.Constant(col.GetValue(item)));
+            var equal = Expression.Equal(Expression.Property(p, col.PropertyName), Expression.Constant(col.GetValue(item)));
             return Expression.Lambda(equal, p);
         }
     }

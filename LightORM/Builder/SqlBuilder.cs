@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using LightORM.ExpressionSql.DbHandle;
 using LightORM.Extension;
@@ -10,7 +11,7 @@ internal abstract class SqlBuilder : ISqlBuilder
 {
     public DbBaseType DbType { get; set; }
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
-    public TableEntity TableInfo { get; set; } = new();
+    public ITableEntityInfo TableInfo { get; set; } = default!;
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -19,7 +20,7 @@ internal abstract class SqlBuilder : ISqlBuilder
     public string AttachPrefix(string content) => DbType.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
     public int DbParameterStartIndex { get; set; }
-    protected void ResolveExpressions()
+    protected void ResolveExpressions() 
     {
         if (Expressions.Completed)
         {
@@ -43,7 +44,7 @@ internal abstract class SqlBuilder : ISqlBuilder
         }
     }
 
-    public string GetTableName(TableEntity table, bool useAlias = true)
+    public string GetTableName(ITableEntityInfo table, bool useAlias = true)
     {
         return $"{NpTableName(table.TableName!)}{((useAlias && !string.IsNullOrEmpty(table.Alias)) ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }

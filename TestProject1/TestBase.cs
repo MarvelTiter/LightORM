@@ -11,13 +11,14 @@ public class TestBase
         ExpSqlFactory.Configuration(option =>
         {
             option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+            option.SetTableContext(new TestTableContext());
             option.SetWatcher(aop =>
             {
                 aop.DbLog = (sql, p) =>
                 {
                     Console.WriteLine(sql);
                 };
-            }).InitializedContext<TestInitContext>();
+            });//.InitializedContext<TestInitContext>();
         });
         Context = ExpSqlFactory.GetContext();
     }

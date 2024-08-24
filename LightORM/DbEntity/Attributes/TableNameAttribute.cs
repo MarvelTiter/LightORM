@@ -16,6 +16,12 @@ public class LightTableAttribute : Attribute
     public string? DatabaseKey { get; set; }
 }
 
+[AttributeUsage(AttributeTargets.Class)]
+public class LightORMTableContextAttribute : Attribute
+{
+
+}
+
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class LightTableIndexAttribute : Attribute
 {

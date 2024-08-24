@@ -20,10 +20,10 @@ internal class IncludeContext
 
 internal class IncludeInfo
 {
-    public TableEntity? SelectedTable { get; set; }
+    public ITableEntityInfo? SelectedTable { get; set; }
     public NavigateInfo? NavigateInfo { get; set; }
-    public ColumnInfo? ParentNavigateColumn { get; set; }
-    public ColumnInfo? ParentWhereColumn { get; set; }
+    public ITableColumnInfo? ParentNavigateColumn { get; set; }
+    public ITableColumnInfo? ParentWhereColumn { get; set; }
     public SelectBuilder? SqlBuilder { get; set; }
     public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
 
