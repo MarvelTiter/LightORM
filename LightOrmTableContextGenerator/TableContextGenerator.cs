@@ -60,13 +60,13 @@ public class TableContextGenerator : IIncrementalGenerator
             members.Add(PropertyBuilder.Default
                 .Modifiers("public static")
                 .MemberType("global::LightORM.Interfaces.ITableEntityInfo")
-                .PropertyName(item.FormatClassName())
-                .Lambda($"new {item.FormatClassName()}Context()"));
+                .PropertyName(item.FormatClassName(true))
+                .Lambda($"new {item.FormatClassName(true)}Context()"));
         }
         List<Statement> statements = [];
         foreach (var item in items)
         {
-            var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName()}");
+            var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
             statements.Add(ifs);
         }
         statements.Add("return null");
@@ -149,14 +149,14 @@ public class TableContextGenerator : IIncrementalGenerator
 
         members.Add(CreateInitColumnInfoMethod(columns));
 
-        var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName()}Context")
+        var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}Context")
             .Interface("global::LightORM.Interfaces.ITableEntityInfo")
             .AddGeneratedCodeAttribute(typeof(TableContextGenerator))
             .AddMembers([.. members]);
 
         //var s = r.ToString();
 
-        return CodeFile.New($"{target.FormatFileName()}Context.g.cs")
+        return CodeFile.New($"{target.FormatFileName()}.Context.g.cs")
             .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
     }
 

@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -36,7 +37,26 @@ internal static class RoslynExtensions
         value = t;
         return t != null;
     }
-
+    public static bool GetNamedValue<T>(this AttributeData? a, string key, out T? value)
+    {
+        var b = GetNamedValue(a, key, out var obj);
+        if (b)
+        {
+            value = (T)obj!;
+        }
+        else
+        {
+            value = default;
+        }
+        return b;
+    }
+    /// <summary>
+    /// 获取指定索引的构造函数参数
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="index"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public static bool GetConstructorValue(this AttributeData a, int index, out object? value)
     {
         if (a.ConstructorArguments.Length <= index)
@@ -47,7 +67,13 @@ internal static class RoslynExtensions
         value = a.ConstructorArguments[index].Value;
         return true;
     }
-
+    /// <summary>
+    /// 获取指定索引的构造函数参数
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="index"></param>
+    /// <param name="values"></param>
+    /// <returns></returns>
     public static bool GetConstructorValues(this AttributeData a, int index, out object?[] values)
     {
         if (a.ConstructorArguments.Length <= index)
@@ -58,7 +84,6 @@ internal static class RoslynExtensions
         values = a.ConstructorArguments[index].Values.Select(v => v.Value).ToArray();
         return true;
     }
-
     /// <summary>
     /// 根据名称获取attribute的值
     /// </summary>
@@ -109,6 +134,21 @@ internal static class RoslynExtensions
     {
         return symbol?.AllInterfaces.Any(i => i.ToDisplayString() == fullName) == true;
     }
+    /// <summary>
+    /// 获取方法符号
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+    public static IEnumerable<IMethodSymbol> GetMethods(this INamedTypeSymbol? symbol)
+    {
+        foreach(var item in symbol?.GetMembers() ?? [])
+        {
+            if (item.Kind == SymbolKind.Method && item is IMethodSymbol method)
+            {
+                yield return method;
+            }
+        }
+    } 
 
     public static bool CheckDisableGenerator(this AnalyzerConfigOptionsProvider options, string key)
     {
@@ -188,28 +228,34 @@ internal static class RoslynExtensions
     }
 
 
-    public static string FormatClassName(this INamedTypeSymbol interfaceSymbol)
+    public static string FormatClassName(this INamedTypeSymbol symbol, bool full = false)
     {
-        var meta = interfaceSymbol.MetadataName;
+        var meta = symbol.MetadataName;
         if (meta.IndexOf('`') > -1)
         {
             meta = meta.Substring(0, meta.IndexOf('`'));
         }
-        if (interfaceSymbol.TypeKind == TypeKind.Interface && meta.StartsWith("I"))
+        if (symbol.TypeKind == TypeKind.Interface && meta.StartsWith("I"))
         {
             meta = meta.Substring(1);
+        }
+        if (full)
+        {
+            var np = symbol.ContainingNamespace.ToDisplayString().Replace(".", "_");
+            return $"{np}_{meta}";
         }
         return meta;
     }
 
-    public static string FormatFileName(this INamedTypeSymbol interfaceSymbol)
+    public static string FormatFileName(this INamedTypeSymbol symbol)
     {
-        var meta = interfaceSymbol.MetadataName;
-        if (interfaceSymbol.TypeKind == TypeKind.Interface && meta.StartsWith("I"))
+        var meta = symbol.MetadataName;
+        if (symbol.TypeKind == TypeKind.Interface && meta.StartsWith("I"))
         {
             meta = meta.Substring(1);
         }
-        return meta;
+        var np = symbol.ContainingNamespace.ToDisplayString().Replace('.', '_');
+        return $"{np}_{meta}";
     }
 
     public static IEnumerable<(IMethodSymbol Symbol, AttributeData? AttrData)> GetAllMethodWithAttribute(this INamedTypeSymbol interfaceSymbol, string fullName, INamedTypeSymbol? classSymbol = null)
@@ -285,7 +331,7 @@ internal static class RoslynExtensions
 
         foreach (var tp in tpc)
         {
-            List<string> cs = tp.ConstraintTypes.Select(t => t.Name).ToList();
+            List<string> cs = tp.ConstraintTypes.Select(t => t.ToDisplayString()).ToList();
             tp.HasNotNullConstraint.IsTrueThen(() => cs.Add("notnull"));
             tp.HasReferenceTypeConstraint.IsTrueThen(() => cs.Add("class"));
             tp.HasUnmanagedTypeConstraint.IsTrueThen(() => cs.Add("unmanaged "));
