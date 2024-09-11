@@ -22,7 +22,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     protected ExpressionInfo? SelectExpression;
     public SelectProvider0(ISqlExecutor executor)
     {
-        Executor = executor;
+        Executor = executor; 
         SqlBuilder = new SelectBuilder();
         SqlBuilder.DbType = DbType;
         SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T1>();

@@ -77,7 +77,7 @@ public static class SqlExecutorExtensions
             }
             reader = await self.ExecuteReaderAsync(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
-            List<T> list = new List<T>();
+            List<T> list = [];
             while (await reader.ReadAsync())
             {
                 list.Add((T)des.Invoke(reader));
@@ -196,5 +196,13 @@ public static class SqlExecutorExtensions
     //    {
     //        return default;
     //    }
+    //}
+}
+
+public static class DbReaderExtensions
+{
+    //public static IEnumerable<Use> ToList<T>(this DbDataReader reader)
+    //{
+
     //}
 }

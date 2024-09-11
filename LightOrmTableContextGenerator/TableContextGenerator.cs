@@ -11,26 +11,23 @@ namespace LightOrmTableContextGenerator;
 [Generator(LanguageNames.CSharp)]
 public class TableContextGenerator : IIncrementalGenerator
 {
-    public const string ContextAttributeFullName = "LightORM.LightORMTableContextAttribute";
-    public const string ContextInterfaceFullName = "LightORM.ITableContext";
-    public const string LightTableAttributeFullName = "LightORM.LightTableAttribute";
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.SyntaxProvider.ForAttributeWithMetadataName(
-            ContextAttributeFullName
+GeneratorHelpers.ContextAttributeFullName
             , static (node, _) => node is ClassDeclarationSyntax
-            , (ctx, _) => ctx);
+            , static (ctx, _) => ctx);
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
             var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
-            if (ctxSymbol.HasInterface(ContextInterfaceFullName) == false)
-            {
-                context.ReportDiagnostic(DiagnosticDefinitions.TCG00001(source.TargetNode.GetLocation()));
-                return;
-            }
+            //if (ctxSymbol.HasInterface(ContextInterfaceFullName) == false)
+            //{
+            //    context.ReportDiagnostic(DiagnosticDefinitions.TCG00001(source.TargetNode.GetLocation()));
+            //    return;
+            //}
 
-            var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
+            var allTableType = source.SemanticModel.Compilation.GetAllSymbols(GeneratorHelpers.LightTableAttributeFullName).ToArray();
             int i = 0;
             foreach (var t in allTableType)
             {
@@ -38,7 +35,9 @@ public class TableContextGenerator : IIncrementalGenerator
                 var c = GenerateTypeContextClass(t, i);
                 if (c != null)
                 {
+#if DEBUG
                     var tt = c.ToString();
+#endif
                     context.AddSource(c);
                     i++;
                 }
@@ -53,6 +52,11 @@ public class TableContextGenerator : IIncrementalGenerator
 
     private static CodeFile? CreateAggregationContextClass(INamedTypeSymbol target, INamedTypeSymbol[] items)
     {
+        var ns = NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString());
+        var ctxClass = ClassBuilder.Default.ClassName(target.FormatClassName())
+            .Interface(GeneratorHelpers.ContextInterfaceFullName)
+            .Modifiers("partial")
+            .AddGeneratedCodeAttribute(typeof(TableContextGenerator));
         List<Node> members = [];
 
         foreach (var item in items)
@@ -64,35 +68,38 @@ public class TableContextGenerator : IIncrementalGenerator
                 .Lambda($"new {item.FormatClassName(true)}Context()"));
         }
         List<Statement> statements = [];
+        var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
+            .MethodName("GetTableInfo")
+            .AddParameter("Type type");
         foreach (var item in items)
         {
             var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
             statements.Add(ifs);
         }
         statements.Add("return null");
-        var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
-            .MethodName("GetTableInfo")
-            .AddParameter("Type type")
-            .AddBody([.. statements]);
+
+        method.AddBody([.. statements]);
 
         members.Add(method);
 
-        var ctxClass = ClassBuilder.Default.ClassName(target.FormatClassName())
-            .Modifiers("partial")
-            .AddMembers([.. members])
-            .AddGeneratedCodeAttribute(typeof(TableContextGenerator));
+        ctxClass.AddMembers([.. members]);
 
         var s = ctxClass.ToString();
 
-        return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString()).AddMembers(ctxClass)).AddUsings("using LightORM.GeneratedTableContext;");
+        return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(ns.AddMembers(ctxClass)).AddUsings("using LightORM.GeneratedTableContext;");
     }
 
     private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index)
     {
 
-        _ = target.GetAttribute(LightTableAttributeFullName, out var lightTable);
+        _ = target.GetAttribute(GeneratorHelpers.LightTableAttributeFullName, out var lightTable);
         _ = target.GetAttribute("System.ComponentModel.DataAnnotations.Schema.TableAttribute", out var componentTable);
         _ = target.GetAttribute("System.ComponentModel.DescriptionAttribute", out var des);
+
+        var ns = NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext");
+        var ctx = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}Context")
+            .Interface("global::LightORM.Interfaces.ITableEntityInfo")
+            .AddGeneratedCodeAttribute(typeof(TableContextGenerator));
         List<Node> members = [
             // private LightORM.Interfaces.ITableColumnInfo[] columns;
             FieldBuilder.Default.Modifiers("private").MemberType("global::LightORM.Interfaces.ITableColumnInfo[]?").FieldName("columns"),
@@ -149,15 +156,12 @@ public class TableContextGenerator : IIncrementalGenerator
 
         members.Add(CreateInitColumnInfoMethod(columns));
 
-        var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}Context")
-            .Interface("global::LightORM.Interfaces.ITableEntityInfo")
-            .AddGeneratedCodeAttribute(typeof(TableContextGenerator))
-            .AddMembers([.. members]);
+        ctx.AddMembers([.. members]);
 
         //var s = r.ToString();
 
         return CodeFile.New($"{target.FormatFileName()}.Context.g.cs")
-            .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
+            .AddMembers(ns.AddMembers(ctx));
     }
 
     private static MethodBuilder CreateInitColumnInfoMethod(IPropertySymbol[] columns)

@@ -1,7 +1,9 @@
-﻿#nullable disable
+﻿using System;
+
+#nullable disable
 namespace TestProject1.Models;
 
-
+using System.Data.Common;
 
 [LightTable(Name = "USER")]
 public class User
