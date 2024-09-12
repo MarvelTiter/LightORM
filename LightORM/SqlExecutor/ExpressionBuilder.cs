@@ -74,6 +74,11 @@ internal class ExpressionBuilder
         var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}_{string.Join("&", columns)}";
         return StaticCache<Func<IDataReader, object>>.GetOrAdd(cacheKey, () =>
         {
+            //var t = TableContext.StaticContext?.GetTableInfo(type);
+            //if (t != null)
+            //{
+            //    return t.MapDataReader;
+            //}
             return BuildFunc<T>(reader, CultureInfo.CurrentCulture);
         });
     }

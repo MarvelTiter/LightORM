@@ -153,9 +153,10 @@ GeneratorHelpers.ContextAttributeFullName
         members.Add(CreateGetValueMethod(target, columns));
         // SetValue   void SetValue(ColumnInfo col, object target, object? value)
         members.Add(CreateSetValueMethod(target, columns));
-
+        // CollectColumnInfo
         members.Add(CreateInitColumnInfoMethod(columns));
-
+        // MapDataReader
+        members.Add(CreateMapFromDataRenderMethod(target, columns));
         ctx.AddMembers([.. members]);
 
         //var s = r.ToString();
@@ -316,6 +317,28 @@ GeneratorHelpers.ContextAttributeFullName
             ss.AddDefaultCase("throw new ArgumentException()");
         });
 
+        return method;
+    }
+
+
+
+    private static MethodBuilder CreateMapFromDataRenderMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
+    {
+        var method = MethodBuilder.Default.MethodName("MapDataReader")
+            .ReturnType("object")
+            .AddParameter("global::System.Data.IDataReader reader");
+
+        List<Statement> body = [
+            //$"var _entity_gen = new {target.ToDisplayString()}()"
+            "throw new Exception()"
+            ];
+
+        foreach (var prop in columns)
+        {
+            if (prop.IsReadOnly) continue;
+
+        }
+        method.AddBody([.. body]);
         return method;
     }
 }

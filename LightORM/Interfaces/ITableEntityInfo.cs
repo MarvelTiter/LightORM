@@ -1,4 +1,6 @@
-﻿namespace LightORM.Interfaces;
+﻿using System.Data;
+
+namespace LightORM.Interfaces;
 
 public interface ITableEntityInfo
 {
@@ -12,4 +14,5 @@ public interface ITableEntityInfo
     ITableColumnInfo[] Columns { get; }
     object? GetValue(ITableColumnInfo col, object target);
     void SetValue(ITableColumnInfo col, object target, object? value);
+    //object MapDataReader(IDataReader reader);
 }

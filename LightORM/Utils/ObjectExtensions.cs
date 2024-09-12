@@ -8,11 +8,17 @@ namespace LightORM.Utils;
 
 internal static class ObjectExtensions
 {
-    public static Func<object, object> GetPropertyAccessor(this Type type, PropertyInfo property)
+    public static Func<object, object?> GetPropertyAccessor(this Type type, PropertyInfo? property)
     {
         /*
          * obj => (object)(((T)obj).Property)
          */
+
+        if (property == null)
+        {
+            return static o => null;
+        }
+
         var p = Expression.Parameter(typeof(object), "obj");
         var ins = Expression.Convert(p, type);
         var prop = Expression.Property(ins, property);
@@ -21,8 +27,12 @@ internal static class ObjectExtensions
         return lambda.Compile();
     }
 
-    public static Action<object, object> GetPropertySetter(this Type type, PropertyInfo property)
+    public static Action<object, object?> GetPropertySetter(this Type type, PropertyInfo? property)
     {
+        if (property == null)
+        {
+            return static (_, _) => { };
+        }
         if (!property.CanWrite)
         {
             throw new LightOrmException($"{property.DeclaringType!.FullName}.{property.Name} is readonly");
@@ -33,7 +43,7 @@ internal static class ObjectExtensions
         var ins = Expression.Convert(p, type);
         var typedV = Expression.Convert(v, property.PropertyType);
         var body = Expression.Call(ins, setMethod, typedV);
-        var lambda = Expression.Lambda<Action<object, object>>(body, p, v);
+        var lambda = Expression.Lambda<Action<object, object?>>(body, p, v);
         return lambda.Compile();
     }
 

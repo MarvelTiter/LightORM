@@ -32,7 +32,8 @@ public class DataReaderExtensionGenerator : IIncrementalGenerator
 
         var exMethod = MethodBuilder.Default.MethodName($"To{@class.MetadataName}ListAsync")
             .Modifiers("public static")
-            .ReturnType($"global::System.Threading.Tasks.Task<global::System.Collections.Generic.IEnumerable<{@class.MetadataName}>>")
+            //.ReturnType($"global::System.Threading.Tasks.Task<global::System.Collections.Generic.IEnumerable<{@class.MetadataName}>>")
+            .ReturnType($"{@class.MetadataName}")
             .AddParameter("this global::System.Data.IDataReader reader")
             .AddGeneratedCodeAttribute(typeof(DataReaderExtensionGenerator));
 
