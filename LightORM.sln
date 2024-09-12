@@ -9,7 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProject1", "TestProject
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseUtils", "DatabaseUtils\DatabaseUtils.csproj", "{F17FA142-2757-441D-A442-2E588F90A21D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightOrmTableContextGenerator", "LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj", "{8B6906B1-8123-4122-8201-1165C389E874}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightOrmTableContextGenerator", "LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj", "{8B6906B1-8123-4122-8201-1165C389E874}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GenShared", "GenShared", "{C1941487-4737-4B37-A73F-D6679F44A4C7}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Generators.Shared", "GenShared\Generators.Shared\Generators.Shared.shproj", "{0C3325BB-C186-4E45-A567-69DAF5411E8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,7 +41,14 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0C3325BB-C186-4E45-A567-69DAF5411E8B} = {C1941487-4737-4B37-A73F-D6679F44A4C7}
+	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E100B2EB-6CFD-4F8B-9966-2F4050785536}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		GenShared\Generators.Shared\Generators.Shared.projitems*{0c3325bb-c186-4e45-a567-69daf5411e8b}*SharedItemsImports = 13
+		GenShared\Generators.Shared\Generators.Shared.projitems*{8b6906b1-8123-4122-8201-1165c389e874}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal
