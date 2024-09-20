@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GenShared", "GenShared", "{
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Generators.Shared", "GenShared\Generators.Shared\Generators.Shared.shproj", "{0C3325BB-C186-4E45-A567-69DAF5411E8B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightOrmExtensionGenerator", "LightOrmExtensionGenerator\LightOrmExtensionGenerator.csproj", "{4E73E004-FD0A-40ED-94FC-915926C013E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{8B6906B1-8123-4122-8201-1165C389E874}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B6906B1-8123-4122-8201-1165C389E874}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B6906B1-8123-4122-8201-1165C389E874}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E73E004-FD0A-40ED-94FC-915926C013E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E73E004-FD0A-40ED-94FC-915926C013E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E73E004-FD0A-40ED-94FC-915926C013E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E73E004-FD0A-40ED-94FC-915926C013E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -49,6 +55,7 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		GenShared\Generators.Shared\Generators.Shared.projitems*{0c3325bb-c186-4e45-a567-69daf5411e8b}*SharedItemsImports = 13
+		GenShared\Generators.Shared\Generators.Shared.projitems*{4e73e004-fd0a-40ed-94fc-915926c013e3}*SharedItemsImports = 5
 		GenShared\Generators.Shared\Generators.Shared.projitems*{8b6906b1-8123-4122-8201-1165c389e874}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

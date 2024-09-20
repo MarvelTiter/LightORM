@@ -43,15 +43,15 @@ internal class UpdateBuilder<T> : SqlBuilder
         }
         ResolveExpressions();
 
-        var primaryCol = TableInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
-        ITableColumnInfo[] columns = TableInfo.Columns
+        var primaryCol = MainTable.Columns.Where(c => c.IsPrimaryKey).ToArray();
+        ITableColumnInfo[] columns = MainTable.Columns
                    .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(CheckMembers)
                    .Where(c => !c.IsNotMapped)
                    .Where(c => !c.IsNavigate).ToArray();
 
         BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var update = $"UPDATE {GetTableName(TableInfo, false)} SET";
+        var update = $"UPDATE {GetTableName(MainTable, false)} SET";
         var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
         {
@@ -95,7 +95,7 @@ internal class UpdateBuilder<T> : SqlBuilder
         StringBuilder sb = new StringBuilder();
         if (Where.Count == 0)
         {
-            var primaryCol = TableInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
+            var primaryCol = MainTable.Columns.Where(c => c.IsPrimaryKey).ToArray();
             if (primaryCol.Length == 0) throw new LightOrmException("Where Condition is null and no primarykey");
             if (TargetObject == null) throw new LightOrmException("Where Condition is null and no entity");
             foreach (var item in primaryCol)
@@ -109,7 +109,7 @@ internal class UpdateBuilder<T> : SqlBuilder
 
         if (Members.Count == 0)
         {
-            var autoUpdateCols = TableInfo.Columns
+            var autoUpdateCols = MainTable.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                .Where(c => !c.IsNotMapped)
                .Where(c => !c.IsNavigate)
@@ -127,16 +127,16 @@ internal class UpdateBuilder<T> : SqlBuilder
             }
         }
 
-        var customCols = TableInfo.Columns.Where(c => Members.Contains(c.PropertyName));
+        var customCols = MainTable.Columns.Where(c => Members.Contains(c.PropertyName));
         var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropertyName)}");
 
-        var setNullCol = TableInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
+        var setNullCol = MainTable.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
         if (setNullCol.Length > 0)
         {
             finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));
         }
 
-        sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(TableInfo, false), string.Join(",\n", finalUpdateCol));
+        sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
 
         sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
 

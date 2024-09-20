@@ -17,7 +17,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
             SqlBuilder.TargetObject = entity;
         }
 
@@ -25,7 +25,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
             SqlBuilder.TargetObject = entities;
             SqlBuilder.IsDeleteList = true;
         }

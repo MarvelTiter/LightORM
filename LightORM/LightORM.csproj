@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net4.5;net6.0;net7.0;net8.0;</TargetFrameworks>
+		<TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
 		<AssemblyName>MT.LightORM</AssemblyName>
 		<Authors>MarvelTiter</Authors>
 		<Nullable>enable</Nullable>
@@ -48,6 +48,7 @@
 	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
 		<!-- Package the generator in the analyzer directory of the nuget package -->
 		<None Include="..\LightOrmTableContextGenerator\bin\$(Configuration)\netstandard2.0\LightOrmTableContextGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<ProjectReference Include="..\LightOrmExtensionGenerator\LightOrmExtensionGenerator.csproj" OutputItemType="Analyzer"/>
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -70,7 +71,5 @@
 	    <PackagePath>\</PackagePath>
 	  </None>
 	</ItemGroup>
-
-	
 
 </Project>

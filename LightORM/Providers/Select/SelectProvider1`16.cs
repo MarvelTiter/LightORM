@@ -38,15 +38,6 @@ internal sealed class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>,
         return GroupByHandle(exp);
     }
 
-    //public IExpSelect<T1> GroupByIf(bool ifGroupby, Expression<Func<T1, bool>> exp)
-    //{
-    //    if (ifGroupby)
-    //    {
-    //        return GroupByHandle(exp);
-    //    }
-    //    return this;
-    //}
-
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true)
     {
         return OrderByHandle(exp, asc);
@@ -95,7 +86,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         return WhereHandle(exp);
     }
 }
-
+#if NET45_OR_GREATER
 internal sealed class SelectProvider3<T1, T2, T3> : SelectProvider0<IExpSelect<T1, T2, T3>, T1>, IExpSelect<T1, T2, T3>
 {
     public SelectProvider3(Expression exp, ISqlExecutor executor) : base(executor)
@@ -683,3 +674,4 @@ internal sealed class SelectProvider16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, 
         return WhereHandle(exp);
     }
 }
+#endif

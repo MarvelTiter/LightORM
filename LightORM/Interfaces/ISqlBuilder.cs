@@ -20,8 +20,9 @@ namespace LightORM.Interfaces
         /// <summary>
         /// 实体信息
         /// </summary>
-        ITableEntityInfo TableInfo { get; }
-
+        ITableEntityInfo MainTable { get; }
+        //List<ITableEntityInfo> OtherTables { get; }
+        IEnumerable<ITableEntityInfo> AllTables { get; }
         /// <summary>
         /// 参数信息
         /// </summary>

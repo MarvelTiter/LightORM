@@ -24,11 +24,11 @@ public class TableContextGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(source, static (context, source) =>
         {
             var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
-            if (ctxSymbol.HasInterface(ContextInterfaceFullName) == false)
-            {
-                context.ReportDiagnostic(DiagnosticDefinitions.TCG00001(source.TargetNode.GetLocation()));
-                return;
-            }
+            //if (ctxSymbol.HasInterface(ContextInterfaceFullName) == false)
+            //{
+            //    context.ReportDiagnostic(DiagnosticDefinitions.TCG00001(source.TargetNode.GetLocation()));
+            //    return;
+            //}
 
             var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
             int i = 0;
@@ -79,6 +79,7 @@ public class TableContextGenerator : IIncrementalGenerator
 
         var ctxClass = ClassBuilder.Default.ClassName(target.FormatClassName())
             .Modifiers("partial")
+            .Interface(ContextInterfaceFullName)
             .AddMembers([.. members])
             .AddGeneratedCodeAttribute(typeof(TableContextGenerator));
 

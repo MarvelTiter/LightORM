@@ -19,7 +19,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\LightORM\LightORM.csproj" />
+	  <ProjectReference Include="..\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer"/>
+	  <ProjectReference Include="..\LightORM\LightORM.csproj" />
 	</ItemGroup>
 
 </Project>

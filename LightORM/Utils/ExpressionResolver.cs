@@ -9,9 +9,9 @@ namespace LightORM;
 
 internal static class ExpressionExtensions
 {
-    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options)
+    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, params ITableEntityInfo[] tables)
     {
-        var resolve = new ExpressionResolver(options);
+        var resolve = new ExpressionResolver(options, tables);
         resolve.Visit(expression);
         return new ExpressionResolvedResult
         {
@@ -22,6 +22,16 @@ internal static class ExpressionExtensions
             NavigateDeep = resolve.NavigateDeep,
             NavigateMembers = resolve.NavigateMembers,
         };
+    }
+
+    public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
+    {
+        var table = resolver.Tables.FirstOrDefault(t => t.Type == type);
+        if (table == null)
+        {
+            throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
+        }
+        return table;
     }
 
     public static string OperatorParser(this ExpressionType expressionNodeType, bool useIs)
@@ -51,9 +61,10 @@ public interface IExpressionResolver
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
+public class ExpressionResolver(SqlResolveOptions options, params ITableEntityInfo[] tables) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
+    public ITableEntityInfo[] Tables { get; } = tables;
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -63,9 +74,10 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
     public int NavigateDeep { get; set; }
     internal List<string> NavigateMembers { get; set; } = [];
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
+    //public Expression? Resolve(Expression? expression) => Visit(expression);
     public Expression? Visit(Expression? expression)
     {
-        //System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
+        System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
         return expression switch
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),
@@ -82,6 +94,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         };
     }
     Expression? bodyExpression;
+
     Expression? VisitLambda(LambdaExpression exp)
     {
         bodyExpression = exp.Body;
@@ -170,7 +183,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
-                    var col = TableContext.GetTableInfo(exp.Type).Columns.First(c => c.PropertyName == exp.Members![i].Name);
+                    var col = this.GetTable(exp.Type).Columns.First(c => c.PropertyName == exp.Members![i].Name);
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
                     Visit(exp.Arguments[i]);
                 }
@@ -219,7 +232,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
         //});
         if (Options.SqlType == SqlPartial.Select)
         {
-            var alias = TableContext.GetTableInfo(exp.Type).Alias;
+            var alias = this.GetTable(exp.Type).Alias;
             Sql.Append($"{Options.DbType.AttachEmphasis(alias!)}.*");
             NotAs = true;
         }
@@ -229,7 +242,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 isVisitConvert = false;
                 var member = Members.Pop();
-                var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
+                var col = this.GetTable(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
                 if (Options.RequiredTableAlias)
                 {
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
@@ -281,7 +294,7 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             //    ParameterExpression p = Expression.Parameter(prop.PropertyType, exp.Member.Name);
             //    Visit(p);
             //}
-            var col = TableContext.GetTableInfo(memberType).Columns.First(c => c.PropertyName == name);
+            var col = this.GetTable(memberType).Columns.First(c => c.PropertyName == name);
             if (col.IsNavigate)
             {
                 UseNavigate = true;
@@ -299,10 +312,9 @@ public class ExpressionResolver(SqlResolveOptions options) : IExpressionResolver
             {
                 // w.Tb1.Property
                 var member = Members.Pop();
-                //var col = TableContext.GetTableInfo(member.DeclaringType!).Columns.First(c => c.PropName == member.Name);
                 memberType = member.DeclaringType!;
                 name = member.Name;
-                col = TableContext.GetTableInfo(memberType).Columns.First(c => c.PropertyName == name);
+                col = this.GetTable(memberType).Columns.First(c => c.PropertyName == name);
             }
             if (Options.RequiredTableAlias)
             {

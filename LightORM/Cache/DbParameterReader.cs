@@ -8,13 +8,13 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
-    public static Action<DbCommand, object> GetDbParameterReader(this DbCommand cmd, Type paramaterType)
+    public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText, Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
         {
             return ReadDictionary;
         }
-        Certificate cer = new(cmd.Connection!.ConnectionString, cmd.CommandText, paramaterType);
+        Certificate cer = new(connectionString, commandText, paramaterType);
         return StaticCache<Action<DbCommand, object>>.GetOrAdd($"DbParameterReader_{cer}", () =>
         {
             return (cmd, obj) =>
@@ -50,7 +50,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
+    public static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
     {
         /*
      * (cmd, obj) => { 

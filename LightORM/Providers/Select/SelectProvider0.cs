@@ -25,7 +25,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         Executor = executor;
         SqlBuilder = new SelectBuilder();
         SqlBuilder.DbType = DbType;
-        SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T1>();
+        SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T1>();
         IncludeContext = new(DbType);
     }
 
@@ -58,6 +58,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             JoinType = joinType,
             EntityInfo = Cache.TableContext.GetTableInfo<TJoin>()
         });
+        //SqlBuilder.OtherTables.Add()
         return (this as TSelect)!;
     }
 
@@ -144,15 +145,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public IExpSelect Where(string whereString)
+    public TSelect WithParameters(object parameters)
     {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        return (this as TSelect)!;
+    }
+
+    public TSelect Where(string sql, object? parameters = null)
+    {
+        SqlBuilder.Where.Add(sql);
+        //SqlBuilder.AddParameters(parameters);
+        return (this as TSelect)!;
+    }
+
+    public TSelect WhereIf(bool condition, string sql, object? parameters = null)
+    {
+        if (condition)
         {
-            Expression = null,
-            ResolveOptions = SqlResolveOptions.Where,
-            Template = whereString
-        });
-        return this;
+            return Where(sql, parameters);
+        }
+        return (this as TSelect)!;
+    }
+    public TSelect GroupBy(string sql, object? parameters = null)
+    {
+        return (this as TSelect)!;
+    }
+    public TSelect Having(string sql, object? parameters = null)
+    {
+        return (this as TSelect)!;
+    }
+    public TSelect OrderBy(string sql, object? parameters = null)
+    {
+        return (this as TSelect)!;
     }
 
     #endregion
@@ -203,22 +226,28 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect As(string tableName)
-    {
-        SqlBuilder.TableInfo.CustomName = (tableName);
-        return (this as TSelect)!;
-    }
+    //public TSelect As(string tableName)
+    //{
+    //    SqlBuilder.TableInfo.CustomName = (tableName);
+    //    return (this as TSelect)!;
+    //}
 
-    public TSelect As(Type type)
-    {
-        var info = Cache.TableContext.GetTableInfo(type);
-        SqlBuilder.TableInfo.CustomName = (info.TableName);
-        return (this as TSelect)!;
-    }
+    //public TSelect As(Type type)
+    //{
+    //    var info = Cache.TableContext.GetTableInfo(type);
+    //    SqlBuilder.TableInfo.CustomName = (info.TableName);
+    //    return (this as TSelect)!;
+    //}
 
-    public TSelect As<TOther>()
+    //public TSelect As<TOther>()
+    //{
+    //    return As(typeof(TOther));
+    //}
+
+    public TSelect As(string alias)
     {
-        return As(typeof(TOther));
+        SqlBuilder.MainTable.Alias = alias;
+        return (this as TSelect)!;
     }
 
     #endregion
@@ -450,10 +479,10 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         option.DbType = SqlBuilder.DbType;
         var result = exp.Resolve(option);
         var navName = result.NavigateMembers!.First();
-        var navCol = SqlBuilder.TableInfo.GetColumnInfo(navName);
+        var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
         var navInfo = navCol.NavigateInfo!;
         var table = TableContext.GetTableInfo(navCol.NavigateInfo!.NavigateType);
-        var parentWhereColumn = SqlBuilder.TableInfo.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
         var includeInfo = new IncludeInfo
         {
             SelectedTable = table,

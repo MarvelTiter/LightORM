@@ -19,7 +19,17 @@ namespace LightORM.Builder
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
-
+        public override IEnumerable<ITableEntityInfo> AllTables
+        {
+            get
+            {
+                yield return MainTable;
+                foreach (var item in Joins)
+                {
+                    yield return item.EntityInfo!;
+                }
+            }
+        }
         public object? AdditionalValue { get; set; }
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
@@ -29,7 +39,7 @@ namespace LightORM.Builder
                 if (result.UseNavigate)
                 {
                     if (result.NavigateDeep == 0) result.NavigateDeep = 1;
-                    ScanNavigate(result, TableInfo);
+                    ScanNavigate(result, MainTable);
                     IsDistinct = true;
                 }
             }
@@ -43,7 +53,7 @@ namespace LightORM.Builder
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
             {
-                if (!string.IsNullOrWhiteSpace(result.SqlString) && !TableInfo.IsAnonymousType)
+                if (!string.IsNullOrWhiteSpace(result.SqlString) && !MainTable.IsAnonymousType)
                 {
                     SelectValue = result.SqlString;
                 }
@@ -120,7 +130,7 @@ namespace LightORM.Builder
 
         void TryJoin(ITableEntityInfo joined)
         {
-            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || TableInfo.Type == joined.Type)
+            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || MainTable.Type == joined.Type)
             {
                 joined.Alias = (joined.Alias!.Replace('a', 'j'));
             }
@@ -144,7 +154,7 @@ namespace LightORM.Builder
                 }
             }
 
-            sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, GetTableName(TableInfo));
+            sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, GetTableName(MainTable));
             if (IsDistinct)
             {
                 sb.Insert(6, " DISTINCT");

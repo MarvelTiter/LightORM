@@ -28,6 +28,8 @@ public static class SelectExtension
         return dbKeys.FirstOrDefault();
     }
 
+
+
     #region 2个类型参数
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext self) where T1 : class, new()
     {
@@ -46,7 +48,7 @@ public static class SelectExtension
         return new SelectProvider2<T1, T2>(exp, instance.Ado);
     }
     #endregion
-
+#if NET45_OR_GREATER
     #region 3个类型参数
     public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self) where T1 : class, new()
     {
@@ -383,4 +385,6 @@ public static class SelectExtension
     }
     #endregion
 
+#endif
 }
+

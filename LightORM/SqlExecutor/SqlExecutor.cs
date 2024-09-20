@@ -146,7 +146,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = command.GetDbParameterReader(dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(connection.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
 
@@ -172,7 +172,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = command.GetDbParameterReader(dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(connection.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
         return needToClose;

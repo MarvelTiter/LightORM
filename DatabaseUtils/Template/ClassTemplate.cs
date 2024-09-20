@@ -17,6 +17,7 @@ $@"/*
  * 时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}
  * 作者：yaoqinglin
  */
+using LightORM;
 namespace {{0}};
 
 [LightTable(Name = ""{{1}}"")]

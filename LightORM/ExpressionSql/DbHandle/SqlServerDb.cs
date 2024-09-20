@@ -26,7 +26,7 @@ internal class SqlServerDb : IDbHelper
         var orderByType = "";
         if (builder.OrderBy.Count == 0)
         {
-            var col = builder.TableInfo.Columns.First(c => c.IsPrimaryKey);
+            var col = builder.MainTable.Columns.First(c => c.IsPrimaryKey);
             orderByString = $"Sub.{col.ColumnName}";
             orderByType = " ASC";
         }

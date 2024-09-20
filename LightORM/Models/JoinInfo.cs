@@ -8,6 +8,7 @@ namespace LightORM.Models;
 
 internal record JoinInfo
 {
+    public JoinInfo() { }
     /// <summary>
     /// 联接类型
     /// </summary>

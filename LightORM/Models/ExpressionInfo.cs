@@ -8,6 +8,7 @@ namespace LightORM.Models
 {
     internal record ExpressionInfo
     {
+        public ExpressionInfo() { }
         /// <summary>
         /// ID
         /// </summary>
@@ -16,8 +17,7 @@ namespace LightORM.Models
         /// <summary>
         /// 解析Sql选项
         /// </summary>
-        public SqlResolveOptions? ResolveOptions { get; set; } 
-
+        public SqlResolveOptions? ResolveOptions { get; set; }
         /// <summary>
         /// 表达式
         /// </summary>

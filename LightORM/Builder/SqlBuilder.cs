@@ -11,7 +11,15 @@ internal abstract class SqlBuilder : ISqlBuilder
 {
     public DbBaseType DbType { get; set; }
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
-    public ITableEntityInfo TableInfo { get; set; } = default!;
+    public ITableEntityInfo MainTable { get; set; } = default!;
+    //public List<ITableEntityInfo> OtherTables { get; } = [];
+    public virtual IEnumerable<ITableEntityInfo> AllTables
+    {
+        get
+        {
+            yield return MainTable;
+        }
+    }
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -26,11 +34,12 @@ internal abstract class SqlBuilder : ISqlBuilder
         {
             return;
         }
+        var tables = AllTables.ToArray();
         foreach (var item in Expressions.ExpressionInfos.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!);
+            var result = item.Expression.Resolve(item.ResolveOptions!, tables);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))

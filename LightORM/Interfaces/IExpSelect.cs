@@ -6,7 +6,6 @@ namespace LightORM;
 
 public interface IExpSelect : ISql
 {
-    IExpSelect Where(string whereString);
     IEnumerable<TReturn> ToList<TReturn>();
     //IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TReturn>> exp);
     IEnumerable<dynamic> ToDynamicList();
@@ -25,9 +24,9 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
     TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
     TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
-    TSelect As(string tableName);
-    TSelect As(Type type);
-    TSelect As<TOther>();
+    //TSelect As(string tableName);
+    //TSelect As(Type type);
+    //TSelect As<TOther>();
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp);
@@ -63,6 +62,20 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect From(Func<IExpSelect> sub);
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
     //IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, object>> exp);
+
+    #region 使用原生sql
+    /// <summary>
+    /// 共享参数
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
+    TSelect WithParameters(object parameters);
+    TSelect Where(string sql, object? parameters = null);
+    TSelect WhereIf(bool condition, string sql, object? parameters = null);
+    TSelect GroupBy(string sql, object? parameters = null);
+    TSelect Having(string sql, object? parameters = null);
+    TSelect OrderBy(string sql, object? parameters = null);
+    #endregion
 }
 
 public interface IExpInclude<T1, TMember> : IExpSelect0<IExpInclude<T1, TMember>, T1>
@@ -79,7 +92,9 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true);
     IExpSelect<T1> GroupBy(Expression<Func<T1, object>> exp);
     //IExpSelect<T1> GroupByIf(bool ifGroupby, Expression<Func<T1, bool>> exp);
-
+    //IExpSelect<TTemp> WithTemp<TTemp>(Expression<Func<T1, TTemp>> temp);
+    //IExpSelect<T1> UnionAll(params IExpSelect<T1>[] querys);
+    IExpSelect<T1> As(string alias);
 }
 
 public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
