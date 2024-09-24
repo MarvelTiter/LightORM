@@ -34,9 +34,8 @@ namespace LightORM.Extension
 
             static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
             {
-                var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
-                var includeBuilder = BuildSql(context, include, mainWhere);
-                var sql = includeBuilder.ToSqlString();
+                SelectBuilder includeBuilder = BuildIncludeSqlBuilder(context.DbType, item, include);
+                string sql = includeBuilder.ToSqlString();
                 var param = includeBuilder.DbParameters;
                 var typedQuery = QueryMethod.MakeGenericMethod(include.SelectedTable!.Type!);
                 var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
@@ -50,13 +49,20 @@ namespace LightORM.Extension
             }
         }
 
-
-
-        private static SelectBuilder BuildSql(IncludeContext context, IncludeInfo include, Expression mainWhere)
+        public static SelectBuilder BuildIncludeSqlBuilder(DbBaseType dbBaseType, object item, IncludeInfo include)
         {
-            SelectBuilder selectSql = new SelectBuilder();
-            selectSql.DbType = context.DbType;
-            selectSql.MainTable = include.SelectedTable!;
+            var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
+            var includeBuilder = BuildSql(dbBaseType, include, mainWhere);
+            return includeBuilder;
+        }
+
+        private static SelectBuilder BuildSql(DbBaseType dbBaseType, IncludeInfo include, Expression mainWhere)
+        {
+            SelectBuilder selectSql = new()
+            {
+                DbType = dbBaseType
+            };
+            selectSql.SelectedTables.Add(include.SelectedTable!);
             selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
             selectSql.DbParameters.TryAddDictionary(include.ExpressionResolvedResult!.DbParameters);
             selectSql.Expressions.Add(new ExpressionInfo

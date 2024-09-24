@@ -13,7 +13,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
 
@@ -21,7 +21,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.IsBatchUpdate = true;
             SqlBuilder.TargetObjects = entities;
         }
@@ -110,7 +110,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update);
+            var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
             var member = result.Members!.First();
             SqlBuilder.SetNullMembers.Add(member);
             return this;
@@ -127,7 +127,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update);
+            var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
             var member = result.Members!.First();
             if (value is null)
             {

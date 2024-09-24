@@ -11,15 +11,17 @@ namespace LightORM.Interfaces
         /// <summary>
         /// 解析完成
         /// </summary>
-        bool Completed {  get; }
+        bool Completed { get; }
 
         /// <summary>
         /// 表达式信息
         /// </summary>
-        List<ExpressionInfo> ExpressionInfos { get; }
+        Dictionary<string, ExpressionInfo> ExpressionInfos { get; }
 
         void Add(ExpressionInfo info);
-        void Update(string? id, Action<ExpressionInfo> update);
-        void Update(string? id, ExpressionInfo? info);
+        void Remove(ExpressionInfo info);
+
+        //void Update(string? id, Action<ExpressionInfo> update);
+        //void Update(string? id, ExpressionInfo? info);
     }
 }

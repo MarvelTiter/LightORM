@@ -21,10 +21,10 @@ namespace TestProject1.ParameterTest
                 Age = 18,
                 Name = "Marvel"
             };
-            var type = p1.GetType();
-            var reader = DbParameterReader.CreateReader("@Date, @Age, @Name", type);
-            var cmd = new SQLiteCommand();
-            reader.Invoke(cmd, p1);
+            var dic = DbParameterReader.ReadToDictionary("@Date, @Age, @Name", p1);
+            Assert.IsTrue((DateTime)dic["Date"] == p1.Date);
+            Assert.IsTrue((int)dic["Age"] == p1.Age);
+            Assert.IsTrue((string)dic["Name"] == p1.Name);
         }
     }
 }

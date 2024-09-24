@@ -16,7 +16,7 @@ public abstract class SqlMethod
         {
             try
             {
-                TryResolveExpression(resolver, expression);
+                TryResolveExpression(expression.Method.Name, resolver, expression);
                 return;
             }
             catch
@@ -27,13 +27,25 @@ public abstract class SqlMethod
         action.Invoke(resolver, expression);
     }
 
-    private static void TryResolveExpression(ExpressionResolver resolver, MethodCallExpression expression)
+    private static void TryResolveExpression(string methodName, ExpressionResolver resolver, MethodCallExpression expression)
     {
+        if (methodName == nameof(IncludeExtensions.When))
+        {
+            HandleIncludeWhen(resolver, expression);
+            return;
+        }
+
         if (resolver.NavigateDeep > 0)
         {
             resolver.Sql.Clear();
         }
         resolver.NavigateDeep++;
+        resolver.Visit(expression.Arguments[0]);
+        resolver.Visit(expression.Arguments[1]);
+    }
+
+    private static void HandleIncludeWhen(ExpressionResolver resolver, MethodCallExpression expression)
+    {
         resolver.Visit(expression.Arguments[0]);
         resolver.Visit(expression.Arguments[1]);
     }

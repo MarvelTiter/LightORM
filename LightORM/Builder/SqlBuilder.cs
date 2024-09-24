@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using LightORM.Cache;
 using LightORM.ExpressionSql.DbHandle;
 using LightORM.Extension;
 using LightORM.Implements;
@@ -11,8 +12,9 @@ internal abstract class SqlBuilder : ISqlBuilder
 {
     public DbBaseType DbType { get; set; }
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
-    public ITableEntityInfo MainTable { get; set; } = default!;
-    //public List<ITableEntityInfo> OtherTables { get; } = [];
+    public ITableEntityInfo MainTable => SelectedTables[0];
+    public List<ITableEntityInfo> SelectedTables { get; set; } = [];
+    public List<ITableEntityInfo> OtherTables { get; } = [];
     public virtual IEnumerable<ITableEntityInfo> AllTables
     {
         get
@@ -28,14 +30,20 @@ internal abstract class SqlBuilder : ISqlBuilder
     public string AttachPrefix(string content) => DbType.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
     public int DbParameterStartIndex { get; set; }
-    protected void ResolveExpressions() 
+    public void TryAddParameters(string sql, object? value)
+    {
+        if (value is null) return;
+        var dic = DbParameterReader.ReadToDictionary(sql, value);
+        DbParameters.TryAddDictionary(dic);
+    }
+    protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
             return;
         }
         var tables = AllTables.ToArray();
-        foreach (var item in Expressions.ExpressionInfos.Where(item => !item.Completed))
+        foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;

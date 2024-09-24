@@ -16,7 +16,7 @@ namespace TestProject1.ExpressionTest
         public void SelectAll()
         {
             Expression<Func<Product, object>> select = p => p;
-            var table = TestTableContext.TestProject1_Product;
+            var table = TestTableContext.TestProject1_Models_Product;
             table.Alias = "a";
             var result = select.Resolve(SqlResolveOptions.Select, table);
             Console.WriteLine(result.SqlString);
@@ -26,7 +26,7 @@ namespace TestProject1.ExpressionTest
         public void SelectColumn()
         {
             Expression<Func<Product, object>> select = p => new { p.ProductId, p.ProductName };
-            var table = TestTableContext.TestProject1_Product;
+            var table = TestTableContext.TestProject1_Models_Product;
             table.Alias = "a";
             var result = select.Resolve(SqlResolveOptions.Select, table);
             Console.WriteLine(result.SqlString);
@@ -36,7 +36,7 @@ namespace TestProject1.ExpressionTest
         public void SelectFromTypeSet()
         {
             Expression<Func<TypeSet<Product, User>, object>> select = p => new { p.Tb1.ProductId, p.Tb2.UserId };
-            var t1 = TestTableContext.TestProject1_Product;
+            var t1 = TestTableContext.TestProject1_Models_Product;
             t1.Alias = "a";
             var t2 = TestTableContext.TestProject1_Models_User;
             t2.Alias = "b";

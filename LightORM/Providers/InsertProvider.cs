@@ -12,7 +12,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-        SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
+        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObject = entity;
     }
 
@@ -20,7 +20,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-        SqlBuilder.MainTable = Cache.TableContext.GetTableInfo<T>();
+        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObjects = entities;
         SqlBuilder.IsBatchInsert = true;
     }

@@ -14,16 +14,20 @@ namespace LightORM.Builder
         public int PageSize { get; set; }
         public bool IsDistinct { get; set; }
         public bool IsRollup { get; set; }
-        public string? SelectValue { get; set; }
+        public string SelectValue { get; set; } = "*";
         public List<JoinInfo> Joins { get; set; } = [];
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
+        public IncludeContext IncludeContext { get; set; } = default!;
         public override IEnumerable<ITableEntityInfo> AllTables
         {
             get
             {
-                yield return MainTable;
+                foreach (var item in SelectedTables)
+                {
+                    yield return item;
+                }
                 foreach (var item in Joins)
                 {
                     yield return item.EntityInfo!;
@@ -56,10 +60,6 @@ namespace LightORM.Builder
                 if (!string.IsNullOrWhiteSpace(result.SqlString) && !MainTable.IsAnonymousType)
                 {
                     SelectValue = result.SqlString;
-                }
-                else
-                {
-                    SelectValue = "*";
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.GroupBy)
@@ -136,6 +136,15 @@ namespace LightORM.Builder
             }
         }
 
+        private string BuildFromString()
+        {
+            if (SelectedTables.Count == 0)
+            {
+                return GetTableName(MainTable);
+            }
+            return string.Join(", ", SelectedTables.Select(t => GetTableName(t)));
+        }
+
         public override string ToSqlString()
         {
             ResolveExpressions();
@@ -154,7 +163,7 @@ namespace LightORM.Builder
                 }
             }
 
-            sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, GetTableName(MainTable));
+            sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, BuildFromString());
             if (IsDistinct)
             {
                 sb.Insert(6, " DISTINCT");

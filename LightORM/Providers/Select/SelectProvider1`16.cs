@@ -1,4 +1,5 @@
-﻿namespace LightORM.Providers.Select;
+﻿using LightORM.Extension;
+namespace LightORM.Providers.Select;
 
 //TODO Select 匿名类
 internal sealed class SelectProvider0 : SelectProvider0<IExpSelect<object>, object>, IExpSelect
@@ -11,80 +12,290 @@ internal sealed class SelectProvider0 : SelectProvider0<IExpSelect<object>, obje
         //    IsAnonymousType = true,
         //};
     }
-    public IExpSelect<object> GroupBy(Expression<Func<object, object>> exp)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IExpSelect<object> OrderBy(Expression<Func<object, object>> exp, bool asc = true)
-    {
-        throw new NotImplementedException();
-    }
 }
 
-internal sealed class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
+internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 {
-    public SelectProvider1(Expression exp, ISqlExecutor executor) : base(executor)
+    public SelectProvider1(ISqlExecutor executor, SelectBuilder? builder = null)
+        : base(executor, builder)
     {
-        SelectExpression = new ExpressionInfo()
+        if (builder == null)
         {
-            Expression = exp,
-            ResolveOptions = SqlResolveOptions.Select
-        };
-        SqlBuilder.Expressions.Add(SelectExpression);
+            SqlBuilder = new SelectBuilder
+            {
+                DbType = DbType,
+                IncludeContext = new(DbType)
+            };
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
+        }
     }
     public IExpSelect<T1> GroupBy(Expression<Func<T1, object>> exp)
     {
         return GroupByHandle(exp);
     }
-
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true)
     {
         return OrderByHandle(exp, asc);
+    }
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
+    {
+        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
+    {
+        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
+    {
+        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToList<MapperRow>();
+    }
+
+    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        var list = await ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+
+    public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
+    {
+        return CreateIncludeProvider<TMember>(exp);
+    }
+
+    internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
+    {
+        var option = SqlResolveOptions.Select;
+        option.DbType = SqlBuilder.DbType;
+        var result = exp.Resolve(option);
+        var navName = result.NavigateMembers!.First();
+        var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
+        var navInfo = navCol.NavigateInfo!;
+        var table = TableContext.GetTableInfo(navCol.NavigateInfo!.NavigateType);
+        var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var includeInfo = new IncludeInfo
+        {
+            SelectedTable = table,
+            NavigateInfo = navInfo,
+            ParentNavigateColumn = navCol,
+            ParentWhereColumn = parentWhereColumn,
+            ExpressionResolvedResult = result
+        };
+        SqlBuilder.IncludeContext.Includes.Add(includeInfo);
+        return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
+
+    public string ToSql(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToSql();
     }
 }
 
 internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
 {
-    public SelectProvider2(Expression exp, ISqlExecutor executor) : base(executor)
+    public SelectProvider2(ISqlExecutor executor, SelectBuilder? builder = null)
+        : base(executor, builder)
     {
-        SelectExpression = new ExpressionInfo()
+        if (builder == null)
         {
-            Expression = exp,
-            ResolveOptions = SqlResolveOptions.Select
-        };
-        SqlBuilder.Expressions.Add(SelectExpression);
+            SqlBuilder = new SelectBuilder
+            {
+                DbType = DbType,
+                IncludeContext = new(DbType)
+            };
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T2>());
+        }
     }
 
     public IExpSelect<T1, T2> GroupBy(Expression<Func<T1, T2, object>> exp)
     {
         return GroupByHandle(exp);
     }
-
-    public IExpSelect<T1, T2> InnerJoin<TJoin>(Expression<Func<TypeSet<TJoin, T1, T2>, bool>> exp)
+    public IExpSelect<T1, T2> GroupBy(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
-        return JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return GroupByHandle(flatExp);
     }
-
-    public IExpSelect<T1, T2> LeftJoin<TJoin>(Expression<Func<TypeSet<TJoin, T1, T2>, bool>> exp)
-    {
-        return JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
-    }
-
     public IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp, bool asc = true)
     {
         return OrderByHandle(exp, asc);
     }
-
-    public IExpSelect<T1, T2> RightJoin<TJoin>(Expression<Func<TypeSet<TJoin, T1, T2>, bool>> exp)
+    public IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp, bool asc = true)
     {
-        return JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return OrderByHandle(flatExp, asc);
     }
-
     public IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp)
     {
         return WhereHandle(exp);
     }
+    public IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return WhereHandle(flatExp);
+    }
+
+    public IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
+        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
+        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
+    }
+    public IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
+        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToList<MapperRow>();
+    }
+
+    public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToList<MapperRow>();
+    }
+
+    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp)
+    {
+        HandleResult(exp, null);
+        var list = await ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+
+    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        var list = await ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+
+    //public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
+    //{
+    //    HandleResult(exp, null);
+    //    return ToList<TReturn>();
+    //}
+
+    //public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    HandleResult(flatExp, null);
+    //    return ToList<TReturn>();
+    //}
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToList<TReturn>();
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToListAsync<TReturn>();
+    }
+
+    //public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
+    //{
+    //    HandleResult(exp, null);
+    //    return ToListAsync<TReturn>();
+    //}
+
+    //public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    HandleResult(flatExp, null);
+    //    return ToListAsync<TReturn>();
+    //}
+
+    public string ToSql(Expression<Func<T1, T2, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToSql();
+    }
+
+    public string ToSql(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToSql();
+    }
+
+
+
+
+
+
 }
 #if NET45_OR_GREATER
 internal sealed class SelectProvider3<T1, T2, T3> : SelectProvider0<IExpSelect<T1, T2, T3>, T1>, IExpSelect<T1, T2, T3>

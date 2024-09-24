@@ -3,7 +3,7 @@ namespace TestProject1;
 
 public class TestBase
 {
-    protected IExpressionContext Context { get; }
+    protected IExpressionContext Db { get; }
     public TestBase()
     {
         var path = Path.GetFullPath("../../../test.db");
@@ -20,6 +20,6 @@ public class TestBase
                 };
             });//.InitializedContext<TestInitContext>();
         });
-        Context = ExpSqlFactory.GetContext();
+        Db = ExpSqlFactory.GetContext();
     }
 }

@@ -9,19 +9,15 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers
 {
-    internal class IncludeProvider<T1, TMember> : SelectProvider0<IExpInclude<T1, TMember>, T1>, IExpInclude<T1, TMember>
+    internal class IncludeProvider<T1, TMember> : SelectProvider1<T1>, IExpInclude<T1, TMember>
     {
-        public IncludeProvider(ISqlExecutor executor, SelectBuilder builder, IncludeContext context) : base(executor)
-        {
-            SqlBuilder = builder;
-            IncludeContext = context;
-        }
+        public IncludeProvider(ISqlExecutor executor, SelectBuilder builder) : base(executor, builder) { }
 
         public override T1? First()
         {
             var t = base.First();
             if (t != null)
-                IncludeContext.BindIncludeDatas(Executor, t);
+                SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
             return t;
         }
 
@@ -29,21 +25,21 @@ namespace LightORM.Providers
         {
             var t = await base.FirstAsync();
             if (t != null)
-                IncludeContext.BindIncludeDatas(Executor, t);
+                SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
             return t;
         }
 
         public override IEnumerable<T1> ToList()
         {
             var result = base.ToList().ToList();
-            IncludeContext.BindIncludeDatas(Executor, result);
+            SqlBuilder.IncludeContext.BindIncludeDatas(Executor, result);
             return result;
         }
 
         public override async Task<IList<T1>> ToListAsync()
         {
             var result = await base.ToListAsync();
-            IncludeContext.BindIncludeDatas(Executor, result);
+            SqlBuilder.IncludeContext.BindIncludeDatas(Executor, result);
             return result;
         }
     }

@@ -1,11 +1,6 @@
-﻿using LightORM.Cache;
-using LightORM.ExpressionSql;
-using LightORM.Providers.Select;
-using System.Linq;
+﻿namespace LightORM;
 
-namespace LightORM;
-
-public static class SelectExtension
+public static partial class SelectExtension
 {
 
     static string? GetDbKey(params Type[] types)
@@ -28,51 +23,30 @@ public static class SelectExtension
         return dbKeys.FirstOrDefault();
     }
 
-
-
     #region 2个类型参数
-    public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext self) where T1 : class, new()
-    {
-        return self.Select<T1, T2>((t1, t2) => new { t1, t2 });
-    }
-    public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext self, Expression<Func<T1, T2, object>> exp) where T1 : class, new()
-    {
-        var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2>(exp, ins!);
-    }
-    static SelectProvider2<T1, T2> CreateProvider<T1, T2>(Expression exp, ExpressionCoreSql instance)
+
+    public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
     {
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
             instance.SwitchDatabase(key);
-        return new SelectProvider2<T1, T2>(exp, instance.Ado);
+        return new SelectProvider2<T1, T2>(instance.Ado);
     }
+
     #endregion
 #if NET45_OR_GREATER
+
     #region 3个类型参数
-    public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self) where T1 : class, new()
-    {
-        return self.Select<T1, T2, T3>((t1, t2, t3) => new { t1, t2, t3 });
-    }
-    public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self, Expression<Func<T1, T2, T3, object>> exp) where T1 : class, new()
-    {
-        var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3>(exp, ins!);
-    }
-    public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext self, Expression<Func<TypeSet<T1, T2, T3>, object>> exp) where T1 : class, new()
-    {
-        var ins = self as ExpressionCoreSql;
-        return CreateProvider<T1, T2, T3>(exp, ins!);
-    }
-    static SelectProvider3<T1, T2, T3> CreateProvider<T1, T2, T3>(Expression exp, ExpressionCoreSql instance)
+
+    public static IExpSelect<T1, T2, T3> Select<T1, T2, T3>(this IExpressionContext instance) where T1 : class, new()
     {
         var key = GetDbKey(typeof(T1), typeof(T2), typeof(T3));
         if (key != null)
             instance.SwitchDatabase(key);
-        return new SelectProvider3<T1, T2, T3>(exp, instance.Ado);
+        return new SelectProvider3<T1, T2, T3>(instance.Ado);
     }
-    #endregion
 
+    #endregion
     #region 4个类型参数
     public static IExpSelect<T1, T2, T3, T4> Select<T1, T2, T3, T4>(this IExpressionContext self) where T1 : class, new()
     {

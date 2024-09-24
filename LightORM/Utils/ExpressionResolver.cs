@@ -26,7 +26,8 @@ internal static class ExpressionExtensions
 
     public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
     {
-        var table = resolver.Tables.FirstOrDefault(t => t.Type == type);
+        //var table = resolver.Tables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
+        var table = TableContext.GetTableInfo(type);
         if (table == null)
         {
             throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
@@ -110,7 +111,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
             var index = Convert.ToInt32(Expression.Lambda(exp.Right).Compile().DynamicInvoke());
             var array = Expression.Lambda(exp.Left).Compile().DynamicInvoke() as Array;
             var parameterName = AddDbParameter("Const", array!.GetValue(index)!);
-            Sql.Append(Options.DbType.AttachPrefix(parameterName));
+            Sql.Append(parameterName);
             return null;
         }
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join)
@@ -370,12 +371,12 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
                     names.Add(parameterName);
                     i++;
                 }
-                Sql.Append(string.Join(", ", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
+                Sql.Append(string.Join(", ", names));
             }
             else
             {
                 var parameterName = AddDbParameter(name, value);
-                Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
+                Sql.Append(parameterName);
             }
         }
         else
@@ -400,7 +401,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
                 else
                 {
                     var parameterName = AddDbParameter("Const", value);
-                    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
+                    Sql.Append(parameterName);
                 }
             }
         }
@@ -409,10 +410,11 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
 
     private string AddDbParameter(string name, object v)
     {
+        // TODO 非参数化模式
         var parameterName = $"{name}_{Options.ParameterIndex}";
         DbParameters.Add(parameterName, v);
         Options.ParameterIndex++;
-        return parameterName;
+        return Options.DbType.AttachPrefix(parameterName);
     }
 
     /// <summary>
