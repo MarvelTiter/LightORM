@@ -29,24 +29,26 @@ public abstract class SqlMethod
 
     private static void TryResolveExpression(string methodName, ExpressionResolver resolver, MethodCallExpression expression)
     {
-        if (methodName == nameof(IncludeExtensions.When))
-        {
-            HandleIncludeWhen(resolver, expression);
-            return;
-        }
-
         if (resolver.NavigateDeep > 0)
         {
             resolver.Sql.Clear();
         }
+        if (methodName == nameof(Enumerable.Where))
+        {
+            HandleIncludeWhere(resolver, expression);
+            return;
+        }
+
         resolver.NavigateDeep++;
         resolver.Visit(expression.Arguments[0]);
         resolver.Visit(expression.Arguments[1]);
     }
 
-    private static void HandleIncludeWhen(ExpressionResolver resolver, MethodCallExpression expression)
+    private static void HandleIncludeWhere(ExpressionResolver resolver, MethodCallExpression expression)
     {
+        resolver.NavigateDeep++;
         resolver.Visit(expression.Arguments[0]);
+        resolver.Sql.Clear();
         resolver.Visit(expression.Arguments[1]);
     }
 }

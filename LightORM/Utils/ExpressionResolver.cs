@@ -6,12 +6,15 @@ using System.Text;
 using System.Collections;
 using LightORM.SqlMethodResolver;
 namespace LightORM;
+//internal struct ResolvedItem(Type type, )
+//{
 
+//}
 internal static class ExpressionExtensions
 {
-    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, params ITableEntityInfo[] tables)
+    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext? context = null)
     {
-        var resolve = new ExpressionResolver(options, tables);
+        var resolve = new ExpressionResolver(options, context);
         resolve.Visit(expression);
         return new ExpressionResolvedResult
         {
@@ -62,10 +65,10 @@ public interface IExpressionResolver
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options, params ITableEntityInfo[] tables) : IExpressionResolver
+public class ExpressionResolver(SqlResolveOptions options, ResolveContext? context = null) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
-    public ITableEntityInfo[] Tables { get; } = tables;
+    public ResolveContext? Context { get; } = context;
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -99,7 +102,10 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
     Expression? VisitLambda(LambdaExpression exp)
     {
         bodyExpression = exp.Body;
-
+        foreach (var item in exp.Parameters)
+        {
+            
+        }
         return bodyExpression;
     }
 

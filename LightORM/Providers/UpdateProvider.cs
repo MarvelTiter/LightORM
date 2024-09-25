@@ -110,9 +110,15 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            var member = result.Members!.First();
-            SqlBuilder.SetNullMembers.Add(member);
+            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
+            //var member = result.Members!.First();
+            //SqlBuilder.SetNullMembers.Add(member);
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = exp,
+                ResolveOptions = SqlResolveOptions.Update,
+                AdditionalParameter = new UpdateValue()
+            });
             return this;
         }
 
@@ -127,17 +133,26 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            var member = result.Members!.First();
-            if (value is null)
+
+            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
+            //var member = result.Members!.First();
+            //if (value is null)
+            //{
+            //    SqlBuilder.SetNullMembers.Add(member);
+            //}
+            //else
+            //{
+            //    SqlBuilder.Members.Add(member);
+            //    SqlBuilder.DbParameters.Add(member, value!);
+            //}
+
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
-                SqlBuilder.SetNullMembers.Add(member);
-            }
-            else
-            {
-                SqlBuilder.Members.Add(member);
-                SqlBuilder.DbParameters.Add(member, value!);
-            }
+                Expression = exp,
+                ResolveOptions = SqlResolveOptions.Update,
+                AdditionalParameter = new UpdateValue() { Value = value }
+            });
+
             return this;
         }
 

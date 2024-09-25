@@ -5,6 +5,11 @@ using System.Text;
 
 namespace LightORM.Builder;
 
+internal struct UpdateValue
+{
+    public object? Value { get; set; }
+}
+
 internal class UpdateBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
@@ -22,7 +27,23 @@ internal class UpdateBuilder<T> : SqlBuilder
         }
         else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Update)
         {
-            Members.AddRange(result.Members!);
+            if (expInfo.AdditionalParameter is null)
+            {
+                Members.AddRange(result.Members!);
+            }
+            else if (expInfo.AdditionalParameter is UpdateValue v)
+            {
+                var member = result.Members!.First();
+                if (v.Value is null)
+                {
+                    SetNullMembers.Add(member);
+                }
+                else
+                {
+                    Members.Add(member);
+                    DbParameters.Add(member, v.Value);
+                }
+            }
         }
         else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Ignore)
         {

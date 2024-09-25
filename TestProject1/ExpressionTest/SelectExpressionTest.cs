@@ -18,7 +18,7 @@ namespace TestProject1.ExpressionTest
             Expression<Func<Product, object>> select = p => p;
             var table = TestTableContext.TestProject1_Models_Product;
             table.Alias = "a";
-            var result = select.Resolve(SqlResolveOptions.Select, table);
+            var result = select.Resolve(SqlResolveOptions.Select);
             Console.WriteLine(result.SqlString);
         }
 
@@ -28,7 +28,7 @@ namespace TestProject1.ExpressionTest
             Expression<Func<Product, object>> select = p => new { p.ProductId, p.ProductName };
             var table = TestTableContext.TestProject1_Models_Product;
             table.Alias = "a";
-            var result = select.Resolve(SqlResolveOptions.Select, table);
+            var result = select.Resolve(SqlResolveOptions.Select);
             Console.WriteLine(result.SqlString);
         }
 
@@ -40,7 +40,7 @@ namespace TestProject1.ExpressionTest
             t1.Alias = "a";
             var t2 = TestTableContext.TestProject1_Models_User;
             t2.Alias = "b";
-            var result = FlatTypeSet.Default.Flat(select).Resolve(SqlResolveOptions.Select, t1, t2);
+            var result = FlatTypeSet.Default.Flat(select).Resolve(SqlResolveOptions.Select);
             Console.WriteLine(result.SqlString);
         }
     }

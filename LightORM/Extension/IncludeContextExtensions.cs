@@ -12,6 +12,7 @@ namespace LightORM.Extension
     {
         static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().Where(m => m.Name == "Query" && m.IsGenericMethod).FirstOrDefault()!;
         static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
+        static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault))!;
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)
@@ -43,6 +44,15 @@ namespace LightORM.Extension
                 {
                     var tolist = ToList.MakeGenericMethod(include.SelectedTable!.Type!);
                     result = tolist.Invoke(null, [result]);
+                }
+                else
+                {
+                    var firstOrDefault = FirstOrDefault.MakeGenericMethod(include.SelectedTable!.Type!);
+                    result = firstOrDefault.Invoke(null, [result]);
+                }
+                if (result == null)
+                {
+                    return;
                 }
                 include.ParentNavigateColumn!.SetValue(item, result);
                 context.ThenInclude?.BindIncludeDatas(executor, result);

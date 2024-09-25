@@ -47,7 +47,7 @@ internal abstract class SqlBuilder : ISqlBuilder
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!, tables);
+            var result = item.Expression.Resolve(item.ResolveOptions!);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))

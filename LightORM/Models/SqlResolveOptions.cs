@@ -42,18 +42,18 @@ public class SqlResolveOptions
     public DbBaseType DbType { get; set; }
 
 
-    public static SqlResolveOptions Select = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Select };
-    public static SqlResolveOptions SelectFunc = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.SelectFunc };
-    public static SqlResolveOptions Group = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.GroupBy };
-    public static SqlResolveOptions Order = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.OrderBy };
-    public static SqlResolveOptions Join = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Join };
-    public static SqlResolveOptions Where = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Where };
-    public static SqlResolveOptions Insert = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Insert };
-    public static SqlResolveOptions Update = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Update };
-    public static SqlResolveOptions UpdatePartial = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.UpdatePartial };
-    public static SqlResolveOptions Delete = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Delete };
-    public static SqlResolveOptions UpdateWhere = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Where };
-    public static SqlResolveOptions DeleteWhere = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Where };
-    public static SqlResolveOptions UpdateIgnore = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Ignore };
-    public static SqlResolveOptions InsertIgnore = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Ignore };
+    public static SqlResolveOptions Select { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Select };
+    public static SqlResolveOptions SelectFunc { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.SelectFunc };
+    public static SqlResolveOptions Group { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.GroupBy };
+    public static SqlResolveOptions Order { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.OrderBy };
+    public static SqlResolveOptions Join { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Join };
+    public static SqlResolveOptions Where { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Where };
+    public static SqlResolveOptions Insert { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Insert };
+    public static SqlResolveOptions Update { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Update };
+    public static SqlResolveOptions UpdatePartial { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.UpdatePartial };
+    public static SqlResolveOptions Delete { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Delete };
+    public static SqlResolveOptions UpdateWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Where };
+    public static SqlResolveOptions DeleteWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Where };
+    public static SqlResolveOptions UpdateIgnore { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Ignore };
+    public static SqlResolveOptions InsertIgnore { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Ignore };
 }

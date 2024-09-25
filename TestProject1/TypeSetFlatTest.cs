@@ -19,6 +19,6 @@ public class TypeSetFlatTest : TestBase
 
         var n = FlatTypeSet.Default.Flat(exp);
         ExpressionResolver resolver = new ExpressionResolver(SqlResolveOptions.Select);
-        var nn = n.Resolve(SqlResolveOptions.Select, TestTableContext.TestProject1_Models_User, TestTableContext.TestProject1_Models_Power);
+        var nn = n.Resolve(SqlResolveOptions.Select);
     }
 }

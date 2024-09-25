@@ -35,8 +35,7 @@ namespace TestProject1.SqlTest
         {
             var sql = Db.Select<Power, RolePower, Role>()
                 .Distinct()
-                .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3.RoleId)
-                .ToSql(w => w.Tb1);
+                .ToSql(w => new { w.Tb1 });
             Console.WriteLine(sql);
         }
 
@@ -56,10 +55,10 @@ namespace TestProject1.SqlTest
         }
 
         [TestMethod]
-        public void SelectIncludeWhen()
+        public void SelectIncludeWhere()
         {
             var select = Db.Select<User>()
-                .Include(u => u.UserRoles.When(r => r.RoleName.Contains("admin")));
+                .Include(u => u.UserRoles.Where(r => r.RoleName.Contains("admin")));
             var includeBuilder1 = IncludeContextExtensions.BuildIncludeSqlBuilder(DbBaseType.Sqlite, new User(), select.SqlBuilder.IncludeContext.Includes[0]);
             var includeSql1 = includeBuilder1.ToSqlString();
 

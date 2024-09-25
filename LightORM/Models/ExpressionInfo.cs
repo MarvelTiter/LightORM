@@ -29,4 +29,9 @@ namespace LightORM.Models
         public string? Template { get; set; }
         public object? AdditionalParameter { get; set; }
     }
+
+    internal record ExpressionParameter(Type Type, string Name)
+    {
+
+    }
 }

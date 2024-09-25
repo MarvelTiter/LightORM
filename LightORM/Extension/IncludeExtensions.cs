@@ -11,16 +11,16 @@ namespace LightORM;
 
 public static class IncludeExtensions
 {
-    public static IExpInclude<T1, TMember> Include<T1, TMember>(this IExpSelect<T1> select, Expression<Func<T1, bool>> exp)
-    {
-        var provider = (SelectProvider1<T1>)select;
-        return provider.Include<T1, TMember>(exp);
-    }
+    //public static IExpInclude<T1, TMember> Include<T1, TMember>(this IExpSelect<T1> select, Expression<Func<T1, bool>> exp)
+    //{
+    //    var provider = (SelectProvider1<T1>)select;
+    //    return provider.Include<T1, TMember>(exp);
+    //}
 
-    internal static IExpInclude<T1, TMember> Include<T1, TMember>(this SelectProvider1<T1> provider, Expression<Func<T1, bool>> exp)
-    {
-        return provider.CreateIncludeProvider<TMember>(exp);
-    }
+    //internal static IExpInclude<T1, TMember> Include<T1, TMember>(this SelectProvider1<T1> provider, Expression<Func<T1, bool>> exp)
+    //{
+    //    return provider.CreateIncludeProvider<TMember>(exp);
+    //}
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
@@ -62,8 +62,4 @@ public static class IncludeExtensions
         return new IncludeProvider<T1, TMember>(p.Executor, p.SqlBuilder);
     }
 
-    public static bool When<T>(this IEnumerable<T> self, Expression<Func<T, bool>> predicate)
-    {
-        return true;
-    }
 }
