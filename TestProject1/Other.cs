@@ -14,7 +14,7 @@ namespace TestProject1
         {
             StringBuilder sb = new();
             sb.Append("Hello World!");
-            //sb.Append(" Insert", 5, 7);
+            sb.Insert(5, " Insert");
         }
     }
 }

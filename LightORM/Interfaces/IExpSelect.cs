@@ -15,18 +15,6 @@ public interface IExpSelect : ISql
 }
 public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelect
 {
-    //TSelect InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
-    //TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
-    //TSelect RightJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp);
-    //TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp);
-    //TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp);
-    //TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp);
-    //TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
-    //TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
-    //TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp);
-    //TSelect As(string tableName);
-    //TSelect As(Type type);
-    //TSelect As<TOther>();
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp);

@@ -20,21 +20,14 @@ namespace LightORM.Builder
         public List<string> OrderBy { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
         public IncludeContext IncludeContext { get; set; } = default!;
-        public override IEnumerable<ITableEntityInfo> AllTables
-        {
-            get
-            {
-                foreach (var item in SelectedTables)
-                {
-                    yield return item;
-                }
-                foreach (var item in Joins)
-                {
-                    yield return item.EntityInfo!;
-                }
-            }
-        }
+
         public object? AdditionalValue { get; set; }
+
+        protected override Lazy<ITableEntityInfo[]> GetAllTables()
+        {
+            return new(() => [..SelectedTables, ..Joins.Select(j => j.EntityInfo)]);
+        }
+
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)

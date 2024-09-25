@@ -58,11 +58,10 @@ namespace TestProject1.SqlTest
         public void SelectIncludeWhere()
         {
             var select = Db.Select<User>()
-                .Include(u => u.UserRoles.Where(r => r.RoleName.Contains("admin")));
-            var includeBuilder1 = IncludeContextExtensions.BuildIncludeSqlBuilder(DbBaseType.Sqlite, new User(), select.SqlBuilder.IncludeContext.Includes[0]);
-            var includeSql1 = includeBuilder1.ToSqlString();
+                .Where(u => u.UserRoles.When(r => r.RoleId.Contains("admin")))
+                .ToSql();
 
-            Console.WriteLine(includeSql1);
+            Console.WriteLine(select);
         }
     }
 }

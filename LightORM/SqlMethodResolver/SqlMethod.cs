@@ -38,10 +38,12 @@ public abstract class SqlMethod
             HandleIncludeWhere(resolver, expression);
             return;
         }
-
-        resolver.NavigateDeep++;
-        resolver.Visit(expression.Arguments[0]);
-        resolver.Visit(expression.Arguments[1]);
+        else if (methodName == nameof(IncludeExtensions.When))
+        {
+            resolver.NavigateDeep++;
+            resolver.Visit(expression.Arguments[0]);
+            resolver.Visit(expression.Arguments[1]);
+        }
     }
 
     private static void HandleIncludeWhere(ExpressionResolver resolver, MethodCallExpression expression)

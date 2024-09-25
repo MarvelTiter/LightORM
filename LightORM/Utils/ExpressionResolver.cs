@@ -12,9 +12,9 @@ namespace LightORM;
 //}
 internal static class ExpressionExtensions
 {
-    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext? context = null)
+    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, params ITableEntityInfo[] tables)
     {
-        var resolve = new ExpressionResolver(options, context);
+        var resolve = new ExpressionResolver(options, tables);
         resolve.Visit(expression);
         return new ExpressionResolvedResult
         {
@@ -29,12 +29,9 @@ internal static class ExpressionExtensions
 
     public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
     {
-        //var table = resolver.Tables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
-        var table = TableContext.GetTableInfo(type);
-        if (table == null)
-        {
-            throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
-        }
+        var table = resolver.Tables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
+        table ??= TableContext.GetTableInfo(type);
+        //throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
         return table;
     }
 
@@ -65,10 +62,10 @@ public interface IExpressionResolver
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options, ResolveContext? context = null) : IExpressionResolver
+public class ExpressionResolver(SqlResolveOptions options, params ITableEntityInfo[] tables) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
-    public ResolveContext? Context { get; } = context;
+    public ITableEntityInfo[] Tables { get; } = tables;
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -104,7 +101,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         bodyExpression = exp.Body;
         foreach (var item in exp.Parameters)
         {
-            
+
         }
         return bodyExpression;
     }

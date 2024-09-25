@@ -15,13 +15,8 @@ internal abstract class SqlBuilder : ISqlBuilder
     public ITableEntityInfo MainTable => SelectedTables[0];
     public List<ITableEntityInfo> SelectedTables { get; set; } = [];
     public List<ITableEntityInfo> OtherTables { get; } = [];
-    public virtual IEnumerable<ITableEntityInfo> AllTables
-    {
-        get
-        {
-            yield return MainTable;
-        }
-    }
+    protected Lazy<ITableEntityInfo[]>? tables;
+    public ITableEntityInfo[] AllTables => (tables ??= GetAllTables()).Value;
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -36,18 +31,21 @@ internal abstract class SqlBuilder : ISqlBuilder
         var dic = DbParameterReader.ReadToDictionary(sql, value);
         DbParameters.TryAddDictionary(dic);
     }
+    protected virtual Lazy<ITableEntityInfo[]> GetAllTables()
+    {
+        return new(() => [MainTable]);
+    }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
             return;
         }
-        var tables = AllTables.ToArray();
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!);
+            var result = item.Expression.Resolve(item.ResolveOptions!, AllTables);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))

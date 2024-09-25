@@ -22,7 +22,7 @@ namespace LightORM.Interfaces
         /// </summary>
         ITableEntityInfo MainTable { get; }
         //List<ITableEntityInfo> OtherTables { get; }
-        IEnumerable<ITableEntityInfo> AllTables { get; }
+        ITableEntityInfo[] AllTables { get; }
         /// <summary>
         /// 参数信息
         /// </summary>
