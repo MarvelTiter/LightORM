@@ -17,9 +17,21 @@ namespace LightORM.SqlMethodResolver
             {
                 if (methodCall.Arguments.Count > 0)
                 {
-                    resolver.Sql.Append("COUNT( CASE WHEN ");
-                    resolver.Visit(methodCall.Arguments[0]);
-                    resolver.Sql.Append(" THEN 1 ElSE null END )");
+                    var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
+                        && methodCall.Arguments[0] is BinaryExpression;
+                    if (useCaseWhen)
+                    {
+                        resolver.Sql.Append("COUNT( CASE WHEN ");
+                        resolver.Visit(methodCall.Arguments[0]);
+                        resolver.Sql.Append(" THEN 1 ElSE null END )");
+                    }
+                    else
+                    {
+                        resolver.Sql.Append("COUNT( ");
+                        resolver.Visit(methodCall.Arguments[0]);
+                        resolver.Sql.Append(" )");
+                    }
+
                 }
                 else
                 {
@@ -45,13 +57,13 @@ namespace LightORM.SqlMethodResolver
             });
             methods.Add(nameof(SqlFn.Avg), (resolver, methodCall) =>
             {
-            if (methodCall.Arguments.Count > 1)
-            {
-                resolver.Sql.Append("AVG( CASE WHEN ");
-                resolver.Visit(methodCall.Arguments[0]);
-                resolver.Sql.Append(" THEN ");
-                resolver.Visit(methodCall.Arguments[1]);
-                resolver.Sql.Append(" ElSE 0 END )");
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("AVG( CASE WHEN ");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(" THEN ");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(" ElSE 0 END )");
                 }
                 else
                 {

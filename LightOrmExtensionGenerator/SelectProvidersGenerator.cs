@@ -69,14 +69,14 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         }
     }
 
-    public IExpSelect<{{argsStr}}> GroupBy(Expression<Func<{{argsStr}}, object>> exp)
+    public IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<{{argsStr}}, TGroup>> exp)
     {
-        return GroupByHandle(exp);
+        return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(exp);
     }
-    public IExpSelect<{{argsStr}}> GroupBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return GroupByHandle(flatExp);
+        return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(flatExp);
     }
     public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp, bool asc = true)
     {
@@ -125,26 +125,26 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return list.Cast<dynamic>().ToList();
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         HandleResult(exp, null);
         return ToList<TReturn>();
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         HandleResult(flatExp, null);
         return ToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         HandleResult(flatExp, null);

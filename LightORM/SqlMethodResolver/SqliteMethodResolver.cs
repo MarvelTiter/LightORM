@@ -11,9 +11,20 @@ namespace LightORM.SqlMethodResolver
             {
                 if (methodCall.Arguments.Count > 0)
                 {
-                    resolver.Sql.Append("COUNT( CASE WHEN ");
-                    resolver.Visit(methodCall.Arguments[0]);
-                    resolver.Sql.Append(" THEN 1 ElSE null END )");
+                    var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
+                        && methodCall.Arguments[0] is BinaryExpression;
+                    if (useCaseWhen)
+                    {
+                        resolver.Sql.Append("COUNT( CASE WHEN ");
+                        resolver.Visit(methodCall.Arguments[0]);
+                        resolver.Sql.Append(" THEN 1 ElSE null END )");
+                    }
+                    else
+                    {
+                        resolver.Sql.Append("COUNT( ");
+                        resolver.Visit(methodCall.Arguments[0]);
+                        resolver.Sql.Append(" )");
+                    }
                 }
                 else
                 {

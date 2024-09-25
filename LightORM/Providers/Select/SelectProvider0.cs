@@ -179,26 +179,26 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #region group
 
-    protected TSelect GroupByHandle(Expression exp)
+    protected IExpGroupSelect<TGroup, TTables> GroupByHandle<TGroup, TTables>(Expression exp)
     {
         SqlBuilder.Expressions.Add(new ExpressionInfo()
         {
             ResolveOptions = SqlResolveOptions.Group,
             Expression = exp
         });
-        return (this as TSelect)!;
+        return new GroupSelectProvider<TGroup, TTables>(Executor, SqlBuilder);
     }
 
-    public TSelect GroupBy<Another>(Expression<Func<Another, object>> exp)
-    {
-        return GroupByHandle(exp.Body);
-    }
+    //public TSelect GroupBy<Another>(Expression<Func<Another, object>> exp)
+    //{
+    //    return GroupByHandle(exp.Body);
+    //}
 
-    public TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp)
-    {
-        if (ifGroupby) return GroupByHandle(exp.Body);
-        return (this as TSelect)!;
-    }
+    //public TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp)
+    //{
+    //    if (ifGroupby) return GroupByHandle(exp.Body);
+    //    return (this as TSelect)!;
+    //}
 
     #endregion
 

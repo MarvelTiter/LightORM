@@ -150,10 +150,10 @@ namespace LightORM.Builder
                 {
                     SelectValue = groupby;
                 }
-                else
-                {
-                    SelectValue = $"{groupby}, {SelectValue}";
-                }
+                //else
+                //{
+                //    SelectValue = $"{groupby}, {SelectValue}";
+                //}
             }
 
             sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, BuildFromString());
@@ -171,7 +171,7 @@ namespace LightORM.Builder
             }
             if (GroupBy.Count > 0)
             {
-                sb.AppendFormat("GROUP BY {0}", string.Join("\n, ", GroupBy));
+                sb.AppendFormat("GROUP BY {0}", string.Join(", ", GroupBy));
             }
             if (OrderBy.Count > 0)
             {

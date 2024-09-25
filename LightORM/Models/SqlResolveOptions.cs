@@ -25,6 +25,7 @@ public enum SqlPartial
     Where,
     GroupBy,
     OrderBy,
+    Having,
 }
 public class SqlResolveOptions
 {
@@ -50,7 +51,7 @@ public class SqlResolveOptions
     public static SqlResolveOptions Where { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Where };
     public static SqlResolveOptions Insert { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Insert };
     public static SqlResolveOptions Update { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Update };
-    public static SqlResolveOptions UpdatePartial { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.UpdatePartial };
+    public static SqlResolveOptions Having { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Having };
     public static SqlResolveOptions Delete { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Delete };
     public static SqlResolveOptions UpdateWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Where };
     public static SqlResolveOptions DeleteWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Where };

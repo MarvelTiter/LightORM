@@ -19,12 +19,12 @@ namespace LightORM.Utils
             if (p.Count == 1 && p[0].Type.Name.StartsWith("TypeSet`"))
             {
                 var set = p[0];
-                parameters = set.Type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p,i) => Expression.Parameter(p.PropertyType,$"p{i}")).ToArray();
+                parameters = set.Type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
                 lambdaTypeSet = p[0];
-                var body = Visit(exp.Body);
-                return Expression.Lambda(body, parameters);
             }
-            return null;
+            var body = Visit(exp.Body);
+            return Expression.Lambda(body, parameters);
+            //return null;
         }
         /// <summary>
         /// 将属性访问的节点替换掉

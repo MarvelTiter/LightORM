@@ -29,9 +29,9 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
             SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
         }
     }
-    public IExpSelect<T1> GroupBy(Expression<Func<T1, object>> exp)
+    public IExpGroupSelect<TGroup, T1> GroupBy<TGroup>(Expression<Func<T1, TGroup>> exp)
     {
-        return GroupByHandle(exp);
+        return GroupByHandle<TGroup, T1>(exp);
     }
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true)
     {
@@ -76,6 +76,16 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
+    {
+        HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
+    {
+        HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
     public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp)
     {
         HandleResult(exp, null);
@@ -88,16 +98,17 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         var list = await ToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
-
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
-    {
-        HandleResult(exp, null);
-        return ToList<TReturn>();
-    }
-
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
     {
         return CreateIncludeProvider<TMember>(exp);
+    }
+
+    
+
+    public string ToSql(Expression<Func<T1, object>> exp)
+    {
+        HandleResult(exp, null);
+        return ToSql();
     }
 
     internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
@@ -121,18 +132,6 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         SqlBuilder.IncludeContext.Includes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
     }
-
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
-    {
-        HandleResult(exp, null);
-        return ToListAsync<TReturn>();
-    }
-
-    public string ToSql(Expression<Func<T1, object>> exp)
-    {
-        HandleResult(exp, null);
-        return ToSql();
-    }
 }
 
 internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
@@ -152,14 +151,14 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         }
     }
 
-    public IExpSelect<T1, T2> GroupBy(Expression<Func<T1, T2, object>> exp)
+    public IExpGroupSelect<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<T1, T2, TGroup>> exp)
     {
-        return GroupByHandle(exp);
+        return GroupByHandle<TGroup, TypeSet<T1, T2>>(exp);
     }
-    public IExpSelect<T1, T2> GroupBy(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    public IExpGroupSelect<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<TypeSet<T1, T2>, TGroup>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return GroupByHandle(flatExp);
+        return GroupByHandle<TGroup, TypeSet<T1,T2>>(flatExp);
     }
     public IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp, bool asc = true)
     {
@@ -241,24 +240,24 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     //    return ToList<TReturn>();
     //}
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
         HandleResult(exp, null);
         return ToList<TReturn>();
     }
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         HandleResult(flatExp, null);
         return ToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
         HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         HandleResult(flatExp, null);

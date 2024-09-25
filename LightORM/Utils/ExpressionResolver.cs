@@ -198,7 +198,11 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
             }
             if (i + 1 < exp.Arguments.Count)
             {
-                Sql.Append(", \n");
+                if (Options.SqlType == SqlPartial.Select)
+                {
+                    Sql.Append('\n');
+                }
+                Sql.Append(", ");
             }
         }
         return null;
@@ -346,23 +350,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
                 Sql.Append("NULL");
                 return null;
             }
-            //if (value is IList list)
-            //{
-            //    var names = new List<string>();
-            //    for (int i = 0; i < list.Count; i++)
-            //    {
-            //        var n = $"{name}_{i}";
-            //        var parameterName = AddDbParameter(n, list[i]!);
-            //        names.Add(parameterName);
-            //    }
-            //    Sql.Append(string.Join(",", names.Select(s => $"{Options.DbType.AttachPrefix(s)}")));
-            //}
-            //if (value is string str)
-            //{
-            //    var parameterName = AddDbParameter(name, str);
-            //    Sql.Append($"{Options.DbType.AttachPrefix(parameterName)}");
-            //}
-            //else
+           
             if (value is IEnumerable enumerable && value is not string)
             {
                 var names = new List<string>();
