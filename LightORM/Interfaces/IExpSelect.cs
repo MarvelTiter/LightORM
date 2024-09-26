@@ -63,7 +63,8 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
 
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 {
-    IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true);
+    IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp);
+    IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp);
     IExpGroupSelect<TGroup, T1> GroupBy<TGroup>(Expression<Func<T1, TGroup>> exp);
     IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp);
     IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp);
@@ -89,6 +90,8 @@ public interface IExpInclude<T1, TMember> : IExpSelect<T1>
 public interface IExpGroupSelect<TGroup, TTables>
 {
     IExpGroupSelect<TGroup, TTables> Having(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, bool>> exp);
+    IExpGroupSelect<TGroup, TTables> OrderBy(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, object>> exp);
+    IExpGroupSelect<TGroup, TTables> OrderByDesc(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, bool>> exp);
     IExpGroupSelect<TGroup, TTables> Paging(int pageIndex, int pageSize);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, TReturn>> exp);
@@ -104,16 +107,22 @@ public interface IExpGroupSelectResult<TGroup, TTables>
     int Count();
     int Count<TColumn>(TColumn column);
     decimal Sum<TColumn>(TColumn column);
+    decimal Sum<TColumn>(bool exp, TColumn column);
     decimal Avg<TColumn>(TColumn column);
+    decimal Avg<TColumn>(bool exp, TColumn column);
     TColumn Max<TColumn>(TColumn column);
+    TColumn Max<TColumn>(bool exp, TColumn column);
     TColumn Min<TColumn>(TColumn column);
-    
+    TColumn Min<TColumn>(bool exp, TColumn column);
+
 }
 
 public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 {
-    IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp, bool asc = true);
-    IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp, bool asc = true);
+    IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp);
+    IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    IExpSelect<T1, T2> OrderByDesc(Expression<Func<T1, T2, object>> exp);
+    IExpSelect<T1, T2> OrderByDesc(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp);
     IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
     IExpGroupSelect<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<T1, T2, TGroup>> exp);

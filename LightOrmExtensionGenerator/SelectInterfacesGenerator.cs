@@ -27,8 +27,11 @@ namespace LightOrmExtensionGenerator
 
 public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, T1>
 {
-    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp, bool asc = true);
-    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, bool asc = true);
+    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp);
+    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
+
+    IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<{{argsStr}}, object>> exp);
+    IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
 
     IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<{{argsStr}}, TGroup>> exp);
     IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp);

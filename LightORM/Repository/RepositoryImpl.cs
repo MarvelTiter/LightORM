@@ -47,7 +47,16 @@ namespace LightORM.Repository
             if (orderByExpression == null)
                 return context.Select<T>().Where(whereExp).Count(out total).Paging(index, size).ToList();
             else
-                return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression, asc).Paging(index, size).ToList();
+            {
+                if (asc)
+                {
+                    return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression).Paging(index, size).ToList();
+                }
+                else
+                {
+                    return context.Select<T>().Where(whereExp).Count(out total).OrderByDesc(orderByExpression).Paging(index, size).ToList();
+                }
+            }
 
         }
 
@@ -57,7 +66,16 @@ namespace LightORM.Repository
             if (orderByExpression == null)
                 return context.Select<T>().Where(whereExp).ToList();
             else
-                return context.Select<T>().Where(whereExp).OrderBy(orderByExpression, asc).ToList();
+            {
+                if (asc)
+                {
+                    return context.Select<T>().Where(whereExp).OrderBy(orderByExpression).ToList();
+                }
+                else
+                {
+                    return context.Select<T>().Where(whereExp).OrderByDesc(orderByExpression).ToList();
+                }
+            }
         }
 
         public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, out long total, int index = 0, int size = 0, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
@@ -66,7 +84,16 @@ namespace LightORM.Repository
             if (orderByExpression == null)
                 return context.Select<T>().Where(whereExp).Count(out total).Paging(index, size).ToListAsync();
             else
-                return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression, asc).Paging(index, size).ToListAsync();
+            {
+                if (asc)
+                {
+                    return context.Select<T>().Where(whereExp).Count(out total).OrderBy(orderByExpression).Paging(index, size).ToListAsync();
+                }
+                else
+                {
+                    return context.Select<T>().Where(whereExp).Count(out total).OrderByDesc(orderByExpression).Paging(index, size).ToListAsync();
+                }
+            }
         }
 
         public Task<IList<T>> GetListAsync(Expression<Func<T, bool>>? whereExpression, Expression<Func<T, object>>? orderByExpression = null, bool asc = true)
@@ -75,7 +102,16 @@ namespace LightORM.Repository
             if (orderByExpression == null)
                 return context.Select<T>().Where(whereExp).ToListAsync();
             else
-                return context.Select<T>().Where(whereExp).OrderBy(orderByExpression, asc).ToListAsync();
+            {
+                if (asc)
+                {
+                    return context.Select<T>().Where(whereExp).OrderBy(orderByExpression).ToListAsync();
+                }
+                else
+                {
+                    return context.Select<T>().Where(whereExp).OrderByDesc(orderByExpression).ToListAsync();
+                }
+            }
         }
 
         public T? GetSingle(Expression<Func<T, bool>>? whereExpression)

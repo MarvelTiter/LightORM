@@ -36,7 +36,8 @@ public class SqlResolveOptions
         || SqlType == SqlPartial.GroupBy
         || SqlType == SqlPartial.OrderBy
         || SqlType == SqlPartial.Where
-        || SqlType == SqlPartial.Join);
+        || SqlType == SqlPartial.Join
+        || SqlType == SqlPartial.Having);
     public int ParameterIndex { get; set; }
     public SqlAction SqlAction { get; set; }
     public SqlPartial SqlType { get; private set; }
@@ -51,7 +52,7 @@ public class SqlResolveOptions
     public static SqlResolveOptions Where { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Where };
     public static SqlResolveOptions Insert { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Insert, SqlType = SqlPartial.Insert };
     public static SqlResolveOptions Update { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Update };
-    public static SqlResolveOptions Having { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Having };
+    public static SqlResolveOptions Having { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Having };
     public static SqlResolveOptions Delete { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Delete };
     public static SqlResolveOptions UpdateWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Update, SqlType = SqlPartial.Where };
     public static SqlResolveOptions DeleteWhere { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Delete, SqlType = SqlPartial.Where };

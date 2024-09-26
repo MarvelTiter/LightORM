@@ -22,6 +22,12 @@ namespace LightORM.Utils
                 parameters = set.Type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
                 lambdaTypeSet = p[0];
             }
+            else if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
+            {
+                var type = p[0].Type.GenericTypeArguments[1];
+                var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
+                parameters = [.. tp, .. p];
+            }
             var body = Visit(exp.Body);
             return Expression.Lambda(body, parameters);
             //return null;
@@ -38,9 +44,7 @@ namespace LightORM.Utils
             if (node.Expression?.NodeType == ExpressionType.MemberAccess)
             {
                 var parent = node.Expression as MemberExpression;
-                if (parent?.Expression?.NodeType == ExpressionType.Parameter &&
-                    parent.Expression.Type.Name.StartsWith("TypeSet`") == true &&
-                    parent.Expression == lambdaTypeSet &&
+                if (parent?.Expression?.Type.Name.StartsWith("TypeSet`") == true &&
                     int.TryParse(parent.Member.Name.Replace("Tb", ""), out widx) && widx > 0)
                 {
                     if (parameters[widx - 1].Type != parent.Type) //解决 BaseEntity + AsTable 时报错

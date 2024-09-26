@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Collections;
 using LightORM.SqlMethodResolver;
+using System.Diagnostics;
 namespace LightORM;
 //internal struct ResolvedItem(Type type, )
 //{
@@ -12,9 +13,9 @@ namespace LightORM;
 //}
 internal static class ExpressionExtensions
 {
-    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, params ITableEntityInfo[] tables)
+    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext? context = null)
     {
-        var resolve = new ExpressionResolver(options, tables);
+        var resolve = new ExpressionResolver(options, context);
         resolve.Visit(expression);
         return new ExpressionResolvedResult
         {
@@ -27,13 +28,13 @@ internal static class ExpressionExtensions
         };
     }
 
-    public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
-    {
-        var table = resolver.Tables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
-        table ??= TableContext.GetTableInfo(type);
-        //throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
-        return table;
-    }
+    //public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
+    //{
+    //    var table = resolver.Context?.SelectedTables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
+    //    table ??= TableContext.GetTableInfo(type);
+    //    //throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
+    //    return table;
+    //}
 
     public static string OperatorParser(this ExpressionType expressionNodeType, bool useIs)
     {
@@ -62,10 +63,10 @@ public interface IExpressionResolver
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options, params ITableEntityInfo[] tables) : IExpressionResolver
+public class ExpressionResolver(SqlResolveOptions options, ResolveContext? context = null) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
-    public ITableEntityInfo[] Tables { get; } = tables;
+    public ResolveContext Context { get; } = context ?? new();
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -101,7 +102,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
         bodyExpression = exp.Body;
         foreach (var item in exp.Parameters)
         {
-
+            Context?.AddSelectedTable(item);
         }
         return bodyExpression;
     }
@@ -138,8 +139,6 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
         return null;
     }
 
-
-
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
         Members.Clear();
@@ -170,30 +169,49 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
         for (int i = 0; i < exp.Arguments.Count; i++)
         {
             var member = exp.Members![i];
+            var arg = exp.Arguments[i];
             if (member.Name.StartsWith("Tb") && member is PropertyInfo prop)
             {
                 ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
                 Visit(p);
-                NotAs = false;
+                UseAs = true;
             }
             else
             {
+                if (member.DeclaringType.IsAnonymous())
+                {
+                    if (arg.NodeType == ExpressionType.MemberAccess && arg is MemberExpression e)
+                    {
+                        var parent = e.Expression;
+                        if (parent is ParameterExpression p)
+                        {
+                            if (!p.Type.IsAnonymous())
+                            {
+                                //创建匿名类型的来源映射
+                                // member 是从 p.Type中来的
+                                Context.CreateAnonymousMap(exp.Type, p.Type, member.Name, e.Member.Name);
+                            }
+                            //else { }
+                        }
+                        //else if (parent is MemberExpression m) { }
+                    }
+                }
                 ResolvedMembers.Add(exp.Members[i].Name);
                 if (Options.SqlType == SqlPartial.Select)
                 {
-                    Visit(exp.Arguments[i]);
-                    if (!NotAs)
-                        Sql.Append($" AS {Options.DbType.AttachEmphasis(exp.Members![i].Name)}");
+                    Visit(arg);
+                    if (UseAs)
+                        Sql.Append($" AS {Options.DbType.AttachEmphasis(member.Name)}");
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
-                    var col = this.GetTable(exp.Type).Columns.First(c => c.PropertyName == exp.Members![i].Name);
+                    var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
-                    Visit(exp.Arguments[i]);
+                    Visit(arg);
                 }
                 else
                 {
-                    Visit(exp.Arguments[i]);
+                    Visit(arg);
                 }
             }
             if (i + 1 < exp.Arguments.Count)
@@ -215,19 +233,19 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
         Visit(exp.Operand);
         return null;
     }
-    bool notAs;
-    bool NotAs
+    bool useAs;
+    bool UseAs
     {
         get
         {
-            if (notAs)
+            if (useAs)
             {
-                notAs = false;
+                useAs = false;
                 return true;
             }
-            return notAs;
+            return useAs;
         }
-        set => notAs = value;
+        set => useAs = value;
     }
     bool isVisitConvert;
     //List<object> ps = [];
@@ -238,11 +256,21 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
         //    Alias = exp.Name,
         //    exp.Type,
         //});
+        Debug.WriteLine($"VisitParameter: {exp}");
         if (Options.SqlType == SqlPartial.Select)
         {
-            var alias = this.GetTable(exp.Type).Alias;
+            var alias = Context.GetTable(exp.Type).Alias;
             Sql.Append($"{Options.DbType.AttachEmphasis(alias!)}.*");
-            NotAs = true;
+            UseAs = false;
+            //foreach (var item in alias.Columns)
+            //{
+            //    var prop = Expression.Property(exp, item.PropertyName);
+            //    Visit(prop);
+            //    if (UseAs)
+            //    {
+            //        Sql.Append()
+            //    }
+            //}
         }
         else
         {
@@ -250,7 +278,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
             {
                 isVisitConvert = false;
                 var member = Members.Pop();
-                var col = this.GetTable(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
+                var col = Context.GetTable(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
                 if (Options.RequiredTableAlias)
                 {
                     Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
@@ -297,12 +325,8 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
             }
             var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
-            //if (exp.Member.Name.StartsWith("Tb") && exp.Member is PropertyInfo prop)
-            //{
-            //    ParameterExpression p = Expression.Parameter(prop.PropertyType, exp.Member.Name);
-            //    Visit(p);
-            //}
-            var col = this.GetTable(memberType).Columns.First(c => c.PropertyName == name);
+
+            var col = Context.GetTable(memberType).Columns.First(c => c.PropertyName == name);
             if (col.IsNavigate)
             {
                 UseNavigate = true;
@@ -322,8 +346,15 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
                 var member = Members.Pop();
                 memberType = member.DeclaringType!;
                 name = member.Name;
-                col = this.GetTable(memberType).Columns.First(c => c.PropertyName == name);
+                if (memberType.IsAnonymous())
+                {
+                    member = Context.GetAnonymousInfo(memberType, name);
+                    memberType = member.DeclaringType!;
+                    name = member.Name;
+                }
+                col = Context.GetTable(memberType).Columns.First(c => c.PropertyName == name);
             }
+            UseAs = col.ColumnName != col.PropertyName;
             if (Options.RequiredTableAlias)
             {
                 Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
@@ -350,7 +381,7 @@ public class ExpressionResolver(SqlResolveOptions options, params ITableEntityIn
                 Sql.Append("NULL");
                 return null;
             }
-           
+
             if (value is IEnumerable enumerable && value is not string)
             {
                 var names = new List<string>();

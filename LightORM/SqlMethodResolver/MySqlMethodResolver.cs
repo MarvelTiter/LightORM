@@ -6,7 +6,7 @@ namespace LightORM.SqlMethodResolver
     {
         public MySqlMethodResolver()
         {
-            #region Count, Sum
+            #region Count, Sum, Avg, Max, Min
             methods.Add(nameof(SqlFn.Count), (resolver, methodCall) =>
             {
                 if (methodCall.Arguments.Count > 0)
@@ -65,6 +65,43 @@ namespace LightORM.SqlMethodResolver
                     resolver.Sql.Append(')');
                 }
             });
+
+            methods.Add("Max", (resolver, methodCall) =>
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("MAX( CASE WHEN ");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(" THEN ");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(" ElSE 0 END )");
+                }
+                else
+                {
+                    resolver.Sql.Append("MAX(");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(')');
+                }
+            });
+
+            methods.Add("Min", (resolver, methodCall) =>
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("Min( CASE WHEN ");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(" THEN ");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(" ElSE 0 END )");
+                }
+                else
+                {
+                    resolver.Sql.Append("Min(");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(')');
+                }
+            });
+
             #endregion
 
             #region Like, Trim

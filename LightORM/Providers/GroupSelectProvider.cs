@@ -18,10 +18,35 @@ namespace LightORM.Providers
         }
         public IExpGroupSelect<TGroup, TTables> Having(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, bool>> exp)
         {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
             builder.Expressions.Add(new()
             {
-                Expression = exp,
+                Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Having
+            });
+            return this;
+        }
+
+        public IExpGroupSelect<TGroup, TTables> OrderBy(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, object>> exp)
+        {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
+            builder.Expressions.Add(new()
+            {
+                Expression = flatExp,
+                ResolveOptions = SqlResolveOptions.Order,
+                AdditionalParameter = "asc"
+            });
+            return this;
+        }
+
+        public IExpGroupSelect<TGroup, TTables> OrderByDesc(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, bool>> exp)
+        {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
+            builder.Expressions.Add(new()
+            {
+                Expression = flatExp,
+                ResolveOptions = SqlResolveOptions.Order,
+                AdditionalParameter = "desc"
             });
             return this;
         }
@@ -35,9 +60,10 @@ namespace LightORM.Providers
 
         public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, TReturn>> exp)
         {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
             builder.Expressions.Add(new ExpressionInfo()
             {
-                Expression = exp,
+                Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
             var sql = builder.ToSqlString();
@@ -47,9 +73,10 @@ namespace LightORM.Providers
 
         public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpGroupSelectResult<TGroup, TTables>, TReturn>> exp)
         {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
             builder.Expressions.Add(new ExpressionInfo()
             {
-                Expression = exp,
+                Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
             var sql = builder.ToSqlString();
@@ -62,7 +89,7 @@ namespace LightORM.Providers
             var flatExp = FlatTypeSet.Default.Flat(exp);
             builder.Expressions.Add(new ExpressionInfo()
             {
-                Expression = exp,
+                Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
             return builder.ToSqlString();

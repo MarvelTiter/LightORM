@@ -78,14 +78,23 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(flatExp);
     }
-    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp, bool asc = true)
+    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp)
     {
-        return OrderByHandle(exp, asc);
+        return OrderByHandle(exp, true);
     }
-    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, bool asc = true)
+    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, asc);
+        return OrderByHandle(flatExp, true);
+    }
+    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<{{argsStr}}, object>> exp)
+    {
+        return OrderByHandle(exp, false);
+    }
+    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return OrderByHandle(flatExp, false);
     }
     public IExpSelect<{{argsStr}}> Where(Expression<Func<{{argsStr}}, bool>> exp)
     {

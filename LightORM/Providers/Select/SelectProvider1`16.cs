@@ -33,9 +33,13 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         return GroupByHandle<TGroup, T1>(exp);
     }
-    public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp, bool asc = true)
+    public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp)
     {
-        return OrderByHandle(exp, asc);
+        return OrderByHandle(exp, true);
+    }
+    public IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp)
+    {
+        return OrderByHandle(exp, false);
     }
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
@@ -160,14 +164,23 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         return GroupByHandle<TGroup, TypeSet<T1,T2>>(flatExp);
     }
-    public IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp, bool asc = true)
+    public IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp)
     {
-        return OrderByHandle(exp, asc);
+        return OrderByHandle(exp, true);
     }
-    public IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp, bool asc = true)
+    public IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, asc);
+        return OrderByHandle(flatExp, true);
+    }
+    public IExpSelect<T1, T2> OrderByDesc(Expression<Func<T1, T2, object>> exp)
+    {
+        return OrderByHandle(exp, false);
+    }
+    public IExpSelect<T1, T2> OrderByDesc(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return OrderByHandle(flatExp, false);
     }
     public IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp)
     {

@@ -18,6 +18,7 @@ namespace LightORM.Builder
         public List<JoinInfo> Joins { get; set; } = [];
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
+        public List<string> Having { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
         public IncludeContext IncludeContext { get; set; } = default!;
 
@@ -25,7 +26,7 @@ namespace LightORM.Builder
 
         protected override Lazy<ITableEntityInfo[]> GetAllTables()
         {
-            return new(() => [..SelectedTables, ..Joins.Select(j => j.EntityInfo)]);
+            return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         }
 
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
@@ -63,6 +64,10 @@ namespace LightORM.Builder
             {
                 OrderBy.Add(result.SqlString!);
                 AdditionalValue = expInfo.AdditionalParameter;
+            }
+            else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Having)
+            {
+                Having.Add(result.SqlString!);
             }
         }
 
@@ -171,7 +176,11 @@ namespace LightORM.Builder
             }
             if (GroupBy.Count > 0)
             {
-                sb.AppendFormat("GROUP BY {0}", string.Join(", ", GroupBy));
+                sb.AppendFormat("GROUP BY {0}\n", string.Join(", ", GroupBy));
+            }
+            if (Having.Count > 0)
+            {
+                sb.AppendFormat("HAVING {0}\n", string.Join(", ", Having));
             }
             if (OrderBy.Count > 0)
             {

@@ -21,4 +21,28 @@ public class TypeSetFlatTest : TestBase
         ExpressionResolver resolver = new ExpressionResolver(SqlResolveOptions.Select);
         var nn = n.Resolve(SqlResolveOptions.Select);
     }
+
+    [TestMethod]
+    public void FlatNew()
+    {
+        Expression<Func<TypeSet<User, Power>, object>> exp = w => new { w.Tb1.UserName, w.Tb2.Path };
+        var n = FlatTypeSet.Default.Flat(exp);
+        Console.WriteLine(exp);
+        Console.WriteLine(n);
+    }
+
+    [TestMethod]
+    public void FlatGroup()
+    {
+        Expression<Func<IExpGroupSelectResult<string, TypeSet<User, UserRole>>, object>> exp = w => new
+        {
+            w.Group,
+            Total = w.Count(),
+            Pass = w.Count(w.Tables.Tb1.Age)
+        };
+        // (user, userrole, w) => new { w.Group, Total = w.Count(), Pass = w.Count(user.Age)  }
+        var n = FlatTypeSet.Default.Flat(exp);
+        Console.WriteLine(exp);
+        Console.WriteLine(n);
+    }
 }

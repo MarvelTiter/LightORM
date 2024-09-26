@@ -41,11 +41,12 @@ internal abstract class SqlBuilder : ISqlBuilder
         {
             return;
         }
+        var context = new ResolveContext(AllTables);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!, AllTables);
+            var result = item.Expression.Resolve(item.ResolveOptions!, context);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
@@ -57,6 +58,7 @@ internal abstract class SqlBuilder : ISqlBuilder
 
             DbParameters.TryAddDictionary(result.DbParameters);
         }
+
     }
 
     public string GetTableName(ITableEntityInfo table, bool useAlias = true)
