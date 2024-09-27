@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LightORM.Builder;
 
-internal class InsertBuilder<T> : SqlBuilder
+internal record InsertBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();

@@ -23,7 +23,7 @@ internal static class TableContext
     internal static ITableContext? StaticContext { get; set; }
     public static ITableEntityInfo GetTableInfo<T>()
     {
-        
+
         return GetTableInfo(typeof(T));
     }
     public static ITableEntityInfo GetTableInfo(Type type)
@@ -76,7 +76,14 @@ internal static class TableContext
 
             var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
             entityInfo.Columns = propertyColumnInfos.ToArray();
-            entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
+            if (entityInfo.IsAnonymousType)
+            {
+                entityInfo.Alias = $"temp{StaticCache<TableEntity>.Count}";
+            }
+            else
+            {
+                entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
+            }
             return entityInfo;
         });
         // 拷贝

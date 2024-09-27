@@ -5,7 +5,8 @@ namespace LightORM;
 public interface IExpressionContext : IDbAction
 {
     IExpSelect<T> Select<T>();
-    IExpSelect Select(string tableName);
+    //IExpSelect Select();
+    //IExpSelect Select(string tableName);
     //IExpInsert<T> Insert<T>();
     IExpInsert<T> Insert<T>(T entity);
     IExpInsert<T> Insert<T>(IEnumerable<T> entities);

@@ -2,7 +2,7 @@ using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
-internal class DeleteBuilder : SqlBuilder
+internal record DeleteBuilder : SqlBuilder
 {
     public bool IsDeleteList { get; set; }
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)

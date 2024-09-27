@@ -52,8 +52,7 @@ namespace LightORM.Extension
 
         private static SelectBuilder BuildSql(SelectBuilder builder, IncludeInfo include, Expression mainWhere)
         {
-            SelectBuilder selectSql = new SelectBuilder();
-            selectSql.DbType = builder.DbType;
+            SelectBuilder selectSql = new SelectBuilder(builder.DbType);
             selectSql.SelectedTables.Add(include.SelectedTable!);
             selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
             selectSql.DbParameters.TryAddDictionary(include.ExpressionResolvedResult!.DbParameters);

@@ -20,7 +20,7 @@ namespace LightORM.Interfaces
 
         void Add(ExpressionInfo info);
         void Remove(ExpressionInfo info);
-
+        void Clear();
         //void Update(string? id, Action<ExpressionInfo> update);
         //void Update(string? id, ExpressionInfo? info);
     }

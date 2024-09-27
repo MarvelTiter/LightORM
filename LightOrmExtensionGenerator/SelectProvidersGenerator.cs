@@ -24,6 +24,25 @@ namespace LightOrmExtensionGenerator
             string argsStr = GetTypesString(count);
 
             string join = count < 16 ? $$"""
+                    public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+
+                    public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                """ : "";
+
+            string typeSetJoin = count < 16 ? $$"""
 
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
@@ -60,62 +79,36 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder
-            {
-                DbType = DbType,
-                IncludeContext = new(DbType)
-            };
+            SqlBuilder = new SelectBuilder(DbType);
 {{string.Join("\n", selecteds)}}
         }
     }
 
-    public IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<{{argsStr}}, TGroup>> exp)
+    public IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<{{argsStr}}, TGroup>> exp)
     {
         return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(exp);
     }
-    public IExpGroupSelect<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(flatExp);
-    }
+
     public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp)
     {
         return OrderByHandle(exp, true);
     }
-    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, true);
-    }
+
     public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<{{argsStr}}, object>> exp)
     {
         return OrderByHandle(exp, false);
     }
-    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, false);
-    }
+
     public IExpSelect<{{argsStr}}> Where(Expression<Func<{{argsStr}}, bool>> exp)
     {
         return WhereHandle(exp);
     }
-    public IExpSelect<{{argsStr}}> Where(Expression<Func<TypeSet<{{argsStr}}>, bool>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return WhereHandle(flatExp);
-    }
+
 {{join}}
+
     public IEnumerable<dynamic> ToDynamicList(Expression<Func<{{argsStr}}, object>> exp)
     {
         HandleResult(exp, null);
-        return ToList<MapperRow>();
-    }
-
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
         return ToList<MapperRow>();
     }
 
@@ -126,24 +119,9 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return list.Cast<dynamic>().ToList();
     }
 
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
-
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         HandleResult(exp, null);
-        return ToList<TReturn>();
-    }
-
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
         return ToList<TReturn>();
     }
 
@@ -153,11 +131,17 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return ToListAsync<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp)
     {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        return ToListAsync<TReturn>();
+        HandleResult(exp, null);
+        SqlBuilder.Level += 1;
+        SqlBuilder.IsSubQuery = true;
+        var builder = new SelectBuilder(DbType)
+        {
+            SubQuery = SqlBuilder,
+        };
+        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
+        return new SelectProvider1<TTemp>(Executor, builder);
     }
 
     public string ToSql(Expression<Func<{{argsStr}}, object>> exp)
@@ -166,12 +150,84 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return ToSql();
     }
     
+    #region TypeSet
+
+{{typeSetJoin}}
+
+    public IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(flatExp);
+    }
+
+    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return OrderByHandle(flatExp, true);
+    }
+
+    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return OrderByHandle(flatExp, false);
+    }
+
+    public IExpSelect<{{argsStr}}> Where(Expression<Func<TypeSet<{{argsStr}}>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        return WhereHandle(flatExp);
+    }
+
+    public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToList<MapperRow>();
+    }
+
+    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        var list = await ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToList<TReturn>();
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        return ToListAsync<TReturn>();
+    }
+
+    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        HandleResult(flatExp, null);
+        SqlBuilder.Level += 1;
+        SqlBuilder.IsSubQuery = true;
+        var builder = new SelectBuilder(DbType)
+        {
+            SubQuery = SqlBuilder,
+        };
+        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
+        return new SelectProvider1<TTemp>(Executor, builder);
+    }
+
     public string ToSql(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         HandleResult(flatExp, null);
         return ToSql();
     }
+
+    #endregion
 }
 """;
             return code;

@@ -34,7 +34,7 @@ public class TypeSetFlatTest : TestBase
     [TestMethod]
     public void FlatGroup()
     {
-        Expression<Func<IExpGroupSelectResult<string, TypeSet<User, UserRole>>, object>> exp = w => new
+        Expression<Func<IExpSelectGrouping<string, TypeSet<User, UserRole>>, object>> exp = w => new
         {
             w.Group,
             Total = w.Count(),

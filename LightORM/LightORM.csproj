@@ -17,17 +17,17 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.*"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.*" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.*"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.*" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.*"/>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.*" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
@@ -53,6 +53,7 @@
 	    <Pack>True</Pack>
 	    <PackagePath>\</PackagePath>
 	  </None>
+	  <None Include="ExpressionSql\ExpressionCoreSql.From.cs" />
 	</ItemGroup>
 
 </Project>

@@ -20,4 +20,6 @@ internal record JoinInfo
     public string? Where { get; set; }
     public string? ExpressionId { get; set; }
     public ITableEntityInfo? EntityInfo { get; set; }
+    public bool IsSubQuery { get; set; }
+    public string? QuerySql { get; set; }
 }

@@ -10,7 +10,7 @@ internal struct UpdateValue
     public object? Value { get; set; }
 }
 
-internal class UpdateBuilder<T> : SqlBuilder
+internal record UpdateBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();

@@ -8,8 +8,9 @@ using LightORM.Utils;
 
 namespace LightORM.Builder;
 
-internal abstract class SqlBuilder : ISqlBuilder
+internal abstract record SqlBuilder : ISqlBuilder
 {
+    public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
     public ITableEntityInfo MainTable => SelectedTables[0];

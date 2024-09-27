@@ -32,9 +32,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    #region jion
-
-    protected void JoinHandle<TJoin>(Expression exp, TableLinkType joinType)
+    protected void JoinHandle<TJoin>(Expression exp, TableLinkType joinType, IExpSelect<TJoin>? subQuery = null)
     {
         var expression = new ExpressionInfo
         {
@@ -43,63 +41,22 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         };
 
         SqlBuilder.Expressions.Add(expression);
-
-        SqlBuilder.Joins.Add(new JoinInfo()
+        var joinInfo = new JoinInfo()
         {
             ExpressionId = expression.Id,
             JoinType = joinType,
-            EntityInfo = Cache.TableContext.GetTableInfo<TJoin>()
-        });
+            EntityInfo = Cache.TableContext.GetTableInfo<TJoin>(),
+        };
+        if (subQuery != null)
+        {
+            subQuery.SqlBuilder.Level += 1;
+            joinInfo.IsSubQuery = true;
+            joinInfo.QuerySql = subQuery.ToSql();
+        }
+        SqlBuilder.Joins.Add(joinInfo);
         //SqlBuilder.OtherTables.Add()
         //return (this as TSelect)!;
     }
-
-    //public void InnerJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother>(exp, TableLinkType.InnerJoin);
-    //}
-
-    //public TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.InnerJoin);
-    //}
-
-    //public TSelect InnerJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.InnerJoin);
-    //}
-
-    //public TSelect LeftJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother>(exp, TableLinkType.LeftJoin);
-    //}
-
-    //public TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.LeftJoin);
-    //}
-
-    //public TSelect LeftJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.LeftJoin);
-    //}
-
-    //public TSelect RightJoin<TAnother>(Expression<Func<TAnother, T1, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother>(exp, TableLinkType.RightJoin);
-    //}
-
-    //public TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.RightJoin);
-    //}
-
-    //public TSelect RightJoin<TAnother1, TAnother2>(Expression<Func<T1, TAnother1, TAnother2, bool>> exp)
-    //{
-    //    return JoinHandle<TAnother1>(exp, TableLinkType.RightJoin);
-    //}
-
-    #endregion
 
     #region where
 
@@ -179,7 +136,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #region group
 
-    protected IExpGroupSelect<TGroup, TTables> GroupByHandle<TGroup, TTables>(Expression exp)
+    protected IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(Expression exp)
     {
         SqlBuilder.Expressions.Add(new ExpressionInfo()
         {
@@ -248,12 +205,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     //{
     //    return As(typeof(TOther));
     //}
-
-    public TSelect As(string alias)
-    {
-        SqlBuilder.MainTable.Alias = alias;
-        return (this as TSelect)!;
-    }
 
     #endregion
 

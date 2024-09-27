@@ -11,6 +11,7 @@ namespace LightORM;
 //{
 
 //}
+
 internal static class ExpressionExtensions
 {
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext? context = null)
@@ -148,6 +149,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         }
         else
         {
+            if (Options.SqlType == SqlPartial.Select)
+            {
+                UseAs = true;
+            }
             MethodResolver.Invoke(this, exp);
         }
         return null;
@@ -216,10 +221,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             }
             if (i + 1 < exp.Arguments.Count)
             {
-                if (Options.SqlType == SqlPartial.Select)
-                {
-                    Sql.Append('\n');
-                }
+                //if (Options.SqlType == SqlPartial.Select)
+                //{
+                //    Sql.Append(SqlBuilder.N);
+                //}
                 Sql.Append(", ");
             }
         }
@@ -325,8 +330,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             }
             var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
-
-            var col = Context.GetTable(memberType).Columns.First(c => c.PropertyName == name);
+            var table = Context.GetTable(memberType);
+            var col = table.Columns.First(c => c.PropertyName == name);
             if (col.IsNavigate)
             {
                 UseNavigate = true;
@@ -342,7 +347,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             }
             if (Members.Count > 0)
             {
-                // w.Tb1.Property
+                // g.Group.Property
                 var member = Members.Pop();
                 memberType = member.DeclaringType!;
                 name = member.Name;

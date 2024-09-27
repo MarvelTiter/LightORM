@@ -19,6 +19,8 @@ namespace LightORM.Implements
 
         public void Add(ExpressionInfo info) => ExpressionInfos.Add(info.Id, info);
         public void Remove(ExpressionInfo info) => ExpressionInfos.Remove(info.Id);
+
+        public void Clear() => ExpressionInfos.Clear();
         //public void Update(string? id, Action<ExpressionInfo> update)
         //{
         //    var exp = ExpressionInfos.FirstOrDefault(info => info.Id == id);
