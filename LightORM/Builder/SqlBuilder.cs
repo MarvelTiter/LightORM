@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using LightORM.Cache;
 using LightORM.ExpressionSql.DbHandle;
 using LightORM.Extension;
 using LightORM.Implements;
@@ -7,11 +8,16 @@ using LightORM.Utils;
 
 namespace LightORM.Builder;
 
-internal abstract class SqlBuilder : ISqlBuilder
+internal abstract record SqlBuilder : ISqlBuilder
 {
+    public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
-    public ITableEntityInfo TableInfo { get; set; } = default!;
+    public ITableEntityInfo MainTable => SelectedTables[0];
+    public List<ITableEntityInfo> SelectedTables { get; set; } = [];
+    public List<ITableEntityInfo> OtherTables { get; } = [];
+    protected Lazy<ITableEntityInfo[]>? tables;
+    public ITableEntityInfo[] AllTables => (tables ??= GetAllTables()).Value;
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -20,17 +26,33 @@ internal abstract class SqlBuilder : ISqlBuilder
     public string AttachPrefix(string content) => DbType.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
     public int DbParameterStartIndex { get; set; }
-    protected void ResolveExpressions() 
+    public void TryAddParameters(string sql, object? value)
+    {
+        if (value is null) return;
+        var dic = DbParameterReader.ReadToDictionary(sql, value);
+        DbParameters.TryAddDictionary(dic);
+    }
+    protected virtual Lazy<ITableEntityInfo[]> GetAllTables()
+    {
+        return new(() => [MainTable]);
+    }
+    protected virtual void BeforeResolveExpressions(ResolveContext context)
+    {
+
+    }
+    protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
             return;
         }
-        foreach (var item in Expressions.ExpressionInfos.Where(item => !item.Completed))
+        var context = new ResolveContext(AllTables);
+        BeforeResolveExpressions(context);
+        foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!);
+            var result = item.Expression.Resolve(item.ResolveOptions!, context);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
@@ -42,6 +64,7 @@ internal abstract class SqlBuilder : ISqlBuilder
 
             DbParameters.TryAddDictionary(result.DbParameters);
         }
+
     }
 
     public string GetTableName(ITableEntityInfo table, bool useAlias = true)

@@ -1,76 +1,296 @@
-# DbContext 新版本用法
+- [简介](#简介)
+- [注册和配置](#注册和配置)
+- [使用生成器(可选)](#使用生成器可选)
+  - [用途](#用途)
+  - [使用](#使用)
+- [查询(示例代码中使用的Db均为IExpressionContext对象)](#查询示例代码中使用的db均为iexpressioncontext对象)
+  - [基础查询](#基础查询)
+  - [Join查询](#join查询)
+  - [多表查询](#多表查询)
+  - [子查询](#子查询)
+  - [Join 子查询](#join-子查询)
+  - [With (tempName) AS (...) 查询](#with-tempname-as--查询)
+  - [Include查询](#include查询)
+  - [Union 查询](#union-查询)
+    - [已有查询Union新的查询](#已有查询union新的查询)
+    - [使用`IExpressionContext.Union`](#使用iexpressioncontextunion)
+- [更新](#更新)
+  - [实体更新](#实体更新)
+  - [指定列更新](#指定列更新)
+  - [忽略列更新](#忽略列更新)
+  - [批量更新](#批量更新)
+- [插入](#插入)
+  - [实体插入](#实体插入)
+  - [批量插入](#批量插入)
+- [删除](#删除)
+- [Ado对象](#ado对象)
+- [待办](#待办)
 
-## 该库本质是使用`IDbConnection`对象执行 Sql 语句，`IExpressionContext`的调用，尽量还原原生 sql 的写法逻辑。同时，查询返回实体的时候，列名需要与实体属性/字段名称匹配（或者`LightColumnAttribute`匹配）。
+# 简介
+无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。除去使用生成器生成的多个泛型的扩展类型，代码行数约为5000。使用`Expression`动态构建类型映射。
 
-## 直接使用。获取`IExpressionContext`对象
-
+# 注册和配置
 ```csharp
+// IServiceCollection
+services.AddLightOrm(option => {
+    option.SetDatabase(DbBaseType, ConnectionString, DbProviderFactory);
+})
+// 直接使用
 var path = Path.GetFullPath("../../../test.db");
 ExpSqlFactory.Configuration(option =>
 {
     option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+    option.SetTableContext(new TestTableContext());
     option.SetWatcher(aop =>
     {
         aop.DbLog = (sql, p) =>
         {
             Console.WriteLine(sql);
         };
-    }).InitializedContext<TestInitContext>();
+    });//.InitializedContext<TestInitContext>();
 });
-
-// get IExpressionContext instance
-IExpressionContext context = ExpSqlFactory.GetContext();
+IExpressionContext Db = ExpSqlFactory.GetContext();
 ```
-## 容器中使用。依赖注入
+# 使用生成器(可选)
+## 用途
+用于收集实体类型信息，以及创建读写值的方法
+## 使用
 ```csharp
-var path = Path.GetFullPath("../../../test.db");
-builder.Services.AddLightOrm(option =>
+// 创建一个partial class, 例如 TestTableContext
+// 标注`LightORMTableContext`Attribute
+[LightORMTableContext]
+public partial class TestTableContext
 {
-    option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance).InitializedContext<TestInitContext>();
-});
-```
-## 查询
 
+}
+// 在配置的时候应用
+option.SetTableContext(new TestTableContext());
+```
+# 查询(示例代码中使用的Db均为IExpressionContext对象)
+## 基础查询
 ```csharp
-// 普通查询
-context.Select<T>().Where(Expression<Func<T, bool>>).ToList();
-// 指定列
-context.Select<T>(t => new {  }).Where(Expression<Func<T, bool>>).ToList();
-// Max, Count, Avg, Sum 
-context.Select<T>().Where(Expression<Func<T, bool>>).Sum();
-// 分页
-context.Select<T>().Count(out long total).Where(Expression<Func<T, bool>>).Paging(index, size).ToList();
-...
+Db.Select<Product>()
+    .Where(p => p.ModifyTime > DateTime.Now)
+    .ToSql(p => new { p.ProductId, p.ProductName });
 ```
-## 插入
-
+```sql
+SELECT `a1`.`ProductId`, `a1`.`ProductName`
+FROM `Product` `a1`
+WHERE ( `a1`.`ModifyTime` > @Now_0 )
+```
+## Join查询
 ```csharp
-// 插入实体
-context.Insert<T>(entity).Execute();
-// 忽略指定列
-context.Insert<T>(entity).IgnoreColumns(t => new {  }).Execute();
-// 批量插入 entities 为集合类型
-context.Insert<T>(entities).Execute();
+Db.Select<User>()
+    .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
+    .InnerJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+    .Where(u => u.UserId == "admin")
+    .ToSql(w => w.Tb1);
 ```
-
-## 更新
-
+```sql
+SELECT `a5`.*
+FROM `USER` `a5`
+INNER JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
+INNER JOIN `ROLE` `a2` ON ( `a6`.`ROLE_ID` = `a2`.`ROLE_ID` )
+WHERE ( `a5`.`USER_ID` = @Const_0 )
+```
+## 多表查询
 ```csharp
-// 根据主键更新实体。配置了主键列，where可选
-context.Update<T>(entity).Execute();
-// 实体更新，更新指定列。
-context.Update<T>(entity).UpdateColumns(t => new {}).Execute();
-// 一般更新，更新指定列
-context.Update<T>().UpdateColumns(() => new {}).Where(Expression<Func<T, bool>>).Execute();
-context.Update<T>().Set<TProp>(t => t.Prop, value).Where(Expression<Func<T, bool>>).Execute();
-// 忽略指定列
-context.Update<T>(entity).IgnoreColumns(t => new {}).Execute();
-// 批量更新 entities 为集合类型
-context.Insert<T>(entities).Execute();
+Db.Select<Power, RolePower, Role>()
+    .Distinct()
+    .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3RoleId)
+    .ToSql(w => new { w.Tb1 });
 ```
-
-## ADO 对象
-
+```sql
+SELECT DISTINCT `a0`.*
+FROM `POWERS` `a0`, `ROLE_POWER` `a3`, `ROLE` `a2`
+WHERE ( ( `a0`.`POWER_ID` = `a3`.`POWER_ID` ) AND ( `a3`.`ROLE_ID` = `a2`.`ROLE_ID` ) )
+```
+## 子查询
 ```csharp
-context.Ado
+Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
+    {
+        u.UserId
+    }).AsTempQuery(u => new
+    {
+        u.Group.UserId,
+        Total = u.Count()
+    })
+    .Where(t => t.UserId.Contains("admin"))
+    .ToSql();
 ```
+```sql
+SELECT *
+FROM (
+    SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
+    FROM `USER` `a5`
+    WHERE ( `a5`.`AGE` > 10 )
+    GROUP BY `a5`.`USER_ID`
+) `temp0`
+WHERE `temp0`.`UserId` LIKE '%'||@Const_0||'%'
+```
+## Join 子查询
+```csharp
+Db.Select<User>()
+    .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId })ToSelect(g => new
+    {
+        g.Group.ProductId,
+        Total = g.Count()
+    }), (u, j) => u.Age == j.ProductId)
+    .Where(w => w.Tb2.Total > 10)
+    .ToSql();
+```
+```sql
+SELECT *
+FROM `USER` `a5`
+LEFT JOIN (
+    SELECT `a1`.`ProductId`, COUNT(*) AS `Total`
+    FROM `Product` `a1`
+    GROUP BY `a1`.`ProductId`
+) `temp0` ON ( `a5`.`AGE` = `temp0`.`ProductId` )
+WHERE ( `temp0`.`Total` > 10 )
+```
+## With (tempName) AS (...) 查询
+```csharp
+var tempU = Db.Select<User>().GroupBy(u => new { u.UserId }).ToSelect(g => new
+{
+    g.Group.UserId,
+    Total = g.Count()
+}).AsTemp("us");
+
+var tempR = Db.Select<Role>().WithTempQuery(tempU)
+    .Where((r, u) => r.RoleId == u.UserId)
+    .Where(w=> w.Tb2.UserId.StartsWith("ad"))
+    .AsTemp("temp",w=>new
+    {
+        w.Tb1.RoleId,
+        w.Tb2.UserId,
+    });
+
+var sql = Db.Select<Power>().WithTempQuery(tempU, tempR)
+    .Where(w => w.Tb2.Total > 10 || w.Tb3.UserId.Contains("admin"))
+    .ToSql();
+```
+```sql
+WITH us AS (
+    SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
+    FROM `USER` `a5`
+    GROUP BY `a5`.`USER_ID`
+)
+,temp AS (
+    SELECT `a2`.`ROLE_ID` AS `RoleId`, `temp0`.`UserId`
+    FROM `ROLE` `a2`, `us` `temp0`
+    WHERE ( `a2`.`ROLE_ID` = `temp0`.`UserId` ) AND `temp0`.`UserId` LIKE @temp_Const_0||'%'
+)
+SELECT *
+FROM `POWERS` `a0`, `us` `temp0`, `temp` `temp1`
+WHERE ( ( `temp0`.`Total` > 10 ) OR `temp1`.`UserId` LIKE '%'||@Const_0||'%' )
+```
+## Include查询
+需要配置导航关系
+```csharp
+Db.Select<User>()
+    .Where(u => u.UserRoles.When(r => r.RoleId.StartsWith("ad")))
+    .ToSql();
+```
+```sql
+SELECT DISTINCT *
+FROM `USER` `a5`
+LEFT JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
+LEFT JOIN `ROLE` `a2` ON ( `a2`.`ROLE_ID` = `a6`.`ROLE_ID` )
+WHERE `a2`.`ROLE_ID` LIKE @Const_0||'%'
+```
+## Union 查询
+### 已有查询Union新的查询
+```csharp
+Db.Select<User>().Union(Db.Select<User>())
+    .Where(u => u.Age > 10)
+    .ToSql();
+```
+```sql
+SELECT *
+FROM (
+    SELECT *
+    FROM `USER` `a5`
+    UNION
+    SELECT *
+    FROM `USER` `a5`
+) `a5`
+WHERE ( `a5`.`AGE` > 10 )
+```
+### 使用`IExpressionContext.Union`
+```csharp
+Db.Union(Db.Select<User>(), Db.Select<User>())
+    .Where(u => u.Age > 10)
+    .ToSql();
+```
+```sql
+SELECT *
+FROM (
+    SELECT *
+    FROM `USER` `a5`
+    UNION
+    SELECT *
+    FROM `USER` `a5`
+) `a5`
+WHERE ( `a5`.`AGE` > 10 )
+```
+# 更新
+## 实体更新
+根据配置的主键更新实体，并且忽略null值
+```csharp
+Db.Update(p).ToSql();
+```
+```sql
+UPDATE `Product` SET
+`CategoryId` = @CategoryId,
+`ProductCode` = @ProductCode,
+`ProductName` = @ProductName,
+`DeleteMark` = @DeleteMark,
+`CreateTime` = @CreateTime,
+`Last` = @Last
+WHERE `ProductId` = @ProductId
+```
+## 指定列更新
+```csharp
+Db.Update<Product>()
+    .UpdateColumns(() => new { p.ProductName, p.CategoryId })
+    .Where(p => p.ProductId > 10)
+    .ToSql()
+```
+```sql
+UPDATE `Product` SET
+`CategoryId` = @CategoryId,
+`ProductName` = @ProductName
+WHERE ( `ProductId` > 10 )
+```
+## 忽略列更新
+```csharp
+Db.Update(p)
+    .IgnoreColumns(p => new { p.ProductName, p.CategoryId })
+    .ToSql();
+```
+```sql
+UPDATE `Product` SET
+`ProductCode` = @ProductCode,
+`DeleteMark` = @DeleteMark,
+`CreateTime` = @CreateTime,
+`Last` = @Last
+WHERE `ProductId` = @ProductId
+```
+## 批量更新
+# 插入
+## 实体插入
+```csharp
+Db.Insert(p).ToSql();
+```
+```sql
+INSERT INTO `Product` 
+(`ProductId`, `CategoryId`, `ProductCode`, `ProductName`, `DeleteMark`, `CreateTime`, `Last`) 
+VALUES 
+(@ProductId, @CategoryId, @ProductCode, @ProductName, @DeleteMark, @CreateTime, @Last)
+```
+## 批量插入
+# 删除
+# Ado对象
+直接执行sql语句, 可返回`IEnumerable<T>`,`DataTable`,`DataReader`等等
+# 待办

@@ -3,6 +3,11 @@ using Microsoft.Extensions.Hosting;
 using LightORM;
 namespace DatabaseUtils
 {
+    [LightORMTableContext]
+    public partial class DbContext
+    {
+
+    }
     public class Program
     {
         [STAThread]
@@ -11,6 +16,7 @@ namespace DatabaseUtils
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddLightOrm(option =>
             {
+                option.SetTableContext(new DbContext());
                 option.SetWatcher(aop =>
                 {
                     aop.DbLog = (s, p) =>

@@ -16,12 +16,13 @@ namespace LightORM.Interfaces
         /// 表达式
         /// </summary>
         IExpressionInfo Expressions { get; }
-
+        List<ITableEntityInfo> SelectedTables { get; set; }
         /// <summary>
         /// 实体信息
         /// </summary>
-        ITableEntityInfo TableInfo { get; }
-
+        ITableEntityInfo MainTable { get; }
+        //List<ITableEntityInfo> OtherTables { get; }
+        ITableEntityInfo[] AllTables { get; }
         /// <summary>
         /// 参数信息
         /// </summary>

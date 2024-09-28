@@ -3,18 +3,19 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
-    public static Action<DbCommand, object> GetDbParameterReader(this DbCommand cmd, Type paramaterType)
+    public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText, Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
         {
             return ReadDictionary;
         }
-        Certificate cer = new(cmd.Connection!.ConnectionString, cmd.CommandText, paramaterType);
+        Certificate cer = new(connectionString, commandText, paramaterType);
         return StaticCache<Action<DbCommand, object>>.GetOrAdd($"DbParameterReader_{cer}", () =>
         {
             return (cmd, obj) =>
@@ -24,6 +25,25 @@ internal static class DbParameterReader
                 SetDbType(cmd);
             };
         });
+    }
+
+    public static Dictionary<string, object> ReadToDictionary(string sql, object value)
+    {
+        if (value is null)
+        {
+            return [];
+        }
+        if (value is Dictionary<string, object> d)
+        {
+            return d;
+        }
+        var type = value.GetType();
+        var key = $"{sql}_{type.FullName}";
+        var func = StaticCache<Func<object, Dictionary<string, object>>>.GetOrAdd(key, () =>
+        {
+            return CreateReadToDictionary(sql, type);
+        });
+        return func.Invoke(value);
     }
 
     private static void SetDbType(DbCommand cmd)
@@ -49,21 +69,21 @@ internal static class DbParameterReader
             cmd.Parameters.Add(p);
         }
     }
-
-    private static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
+    static readonly MethodInfo createParameterMethodInfo = typeof(DbCommand).GetMethod("CreateParameter")!;
+    static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
+    static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, object>).GetMethod("Add")!;
+    public static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
     {
         /*
-     * (cmd, obj) => { 
-     *    var p = cmd.CreateParameter();
-     *    p.ParameterName = obj.XXX;
-     *    p.Value = obj.XXX;
-     *    cmd.Parameters.Add(p);
-     * }
-     */
+         * (cmd, obj) => { 
+         *    var p = cmd.CreateParameter();
+         *    p.ParameterName = obj.XXX;
+         *    p.Value = obj.XXX;
+         *    cmd.Parameters.Add(p);
+         * }
+         */
         // (cmd, obj) => 
-        MethodInfo createParameterMethodInfo = typeof(DbCommand).GetMethod("CreateParameter")!;
         PropertyInfo parameterCollection = typeof(DbCommand).GetProperty("Parameters")!;
-        MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
 
         ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
         ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
@@ -75,11 +95,10 @@ internal static class DbParameterReader
         // var p = (Type)obj;
         var p1 = Expression.Variable(objType, "p");
         var paramExp = Expression.Assign(p1, Expression.Convert(objExp, objType));
-        List<Expression> body = new List<Expression>
-        {
+        List<Expression> body = [
             tempExp,
             paramExp
-        };
+        ];
         foreach (PropertyInfo prop in props)
         {
             // cmd.CreateParameter()
@@ -100,10 +119,34 @@ internal static class DbParameterReader
             body.Add(valueAssignExp);
             body.Add(addToList);
         }
-        var block = Expression.Block(new[] { tempExp, p1 }, body);
+        var block = Expression.Block([tempExp, p1], body);
         var lambda = Expression.Lambda<Action<DbCommand, object>>(block, cmdExp, objExp);
         return lambda.Compile();
+    }
 
+    public static Func<object, Dictionary<string, object>> CreateReadToDictionary(string commandText, Type type)
+    {
+        var pExp = Expression.Parameter(typeof(object), "p");
+        var retExp = Expression.Variable(typeof(Dictionary<string, object>), "ret");
+        var realParam = Expression.Variable(type, "value");
+        var assign = Expression.Assign(realParam, Expression.Convert(pExp, type));
+        var retExpInited = Expression.Assign(retExp, Expression.New(typeof(Dictionary<string, object>)));
+        List<Expression> blockBody = [
+            assign,
+            retExpInited,
+            ];
+        var props = ExtractParameter(commandText, type.GetProperties());
+        foreach (var item in props)
+        {
+            var key = Expression.Constant(item.Name, typeof(string));
+            var value = Expression.Convert(Expression.Property(realParam, item), typeof(object));
+            var add = Expression.Call(retExp, dictionaryAdd, key, value);
+            blockBody.Add(add);
+        }
+        blockBody.Add(retExp);
+        var block = Expression.Block([realParam, retExp], blockBody);
+        var lambda = Expression.Lambda<Func<object, Dictionary<string, object>>>(block, pExp);
+        return lambda.Compile();
     }
 
     private static IEnumerable<PropertyInfo> ExtractParameter(string commandText, params PropertyInfo[] parameters)

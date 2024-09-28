@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LightORM.Extension;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ internal record TableEntity : ITableEntityInfo
     public TableEntity(Type type)
     {
         Type = type;
-        IsAnonymousType = type.FullName?.StartsWith("<>f__AnonymousType") ?? false;
+        IsAnonymousType = type.IsAnonymous();
     }
     public TableEntity()
     {

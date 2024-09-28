@@ -7,96 +7,87 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace LightORM.Cache
+namespace LightORM.Cache;
+
+internal class AbstractTableType
 {
-    internal class AbstractTableType
+    public AbstractTableType(Type type)
     {
-        public AbstractTableType(Type type)
-        {
-            Type = type;
-        }
-
-        public Type Type { get; }
+        Type = type;
     }
-    internal static class TableContext
+
+    public Type Type { get; }
+}
+internal static class TableContext
+{
+    internal static ITableContext? StaticContext { get; set; }
+    public static ITableEntityInfo GetTableInfo<T>()
     {
-        internal static ITableContext? StaticContext { get; set; }
-        public static ITableEntityInfo GetTableInfo<T>()
+
+        return GetTableInfo(typeof(T));
+    }
+    public static ITableEntityInfo GetTableInfo(Type type)
+    {
+        if (StaticContext != null)
         {
-            
-            return GetTableInfo(typeof(T));
+            try
+            {
+                var table = StaticContext.GetTableInfo(type);
+                if (table != null)
+                {
+                    return table;
+                }
+            }
+            catch { }
         }
-        public static ITableEntityInfo GetTableInfo(Type type)
+        var cacheKey = $"DbTable_{type.GUID}";
+
+        var realType = type.GetRealType(out _);
+
+        if (realType.IsAbstract || realType.IsInterface)
         {
-            if (StaticContext != null)
+            realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
             {
-                try
+                var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
+                return new AbstractTableType(rt);
+            }).Type;
+            return GetTableInfo(realType);
+        }
+
+        var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
+        {
+            var entityInfo = new TableEntity(type);
+            var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
+
+            var tableAttribute = type.GetAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
+            entityInfo.CustomName = lightTableAttribute?.Name ?? tableAttribute?.Name ?? type.Name;
+
+            if (!entityInfo.IsAnonymousType)
+            {
+                entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;
+                var descriptionAttribute = type.GetAttribute<DescriptionAttribute>();
+                if (descriptionAttribute != null)
                 {
-                    var table = StaticContext.GetTableInfo(type);
-                    if (table != null)
-                    {
-                        return table;
-                    }
+                    entityInfo.Description = descriptionAttribute.Description;
                 }
-                catch { }
-            }
-            var cacheKey = $"DbTable_{type.GUID}";
-
-            var realType = type.GetRealType(out _);
-
-            if (realType.IsAbstract || realType.IsInterface)
-            {
-                realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
-                {
-                    var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
-                    return new AbstractTableType(rt);
-                }).Type;
-                return GetTableInfo(realType);
             }
 
-            
+            var propertyInfos = type.GetProperties();
 
-            var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
+            var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
+            entityInfo.Columns = propertyColumnInfos.ToArray();
+            if (entityInfo.IsAnonymousType)
             {
-                var entityInfo = new TableEntity(type);
-                var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
-#if NET6_0_OR_GREATER
-                var tableAttribute = type.GetAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
-                entityInfo.CustomName = lightTableAttribute?.Name ?? tableAttribute?.Name ?? type.Name;
-#else
-                entityInfo.CustomName = lightTableAttribute?.Name ?? type.Name;
-#endif
-                if (!entityInfo.IsAnonymousType)
-                {
-                    entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;
-                    var descriptionAttribute = type.GetAttribute<DescriptionAttribute>();
-                    if (descriptionAttribute != null)
-                    {
-                        entityInfo.Description = descriptionAttribute.Description;
-                    }
-                }
-
-                var propertyInfos = type.GetProperties();
-
-                var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
-                entityInfo.Columns = propertyColumnInfos.ToArray();
+                entityInfo.Alias = $"temp{StaticCache<TableEntity>.Count}";
+            }
+            else
+            {
                 entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
-                return entityInfo;
-            });
-            // 拷贝
-            return entityInfoCache with { };
-        }
-    }
-
-
-    public class StaticTableInfoContext
-    {
-        internal ITableEntityInfo this[string name]
-        {
-            get
-            {
-                throw new NotImplementedException();
             }
-        }
+            return entityInfo;
+        });
+        // 拷贝
+        return entityInfoCache with { };
     }
+
 }

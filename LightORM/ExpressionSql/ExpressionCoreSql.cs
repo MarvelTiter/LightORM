@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using LightORM.Cache;
+using LightORM.Interfaces.ExpSql;
 using LightORM.Providers;
 using LightORM.Providers.Select;
 using LightORM.Utils;
@@ -53,20 +54,20 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
         return this;
     }
 
-    public IExpSelect<T> Select<T>() => Select<T>(t => t!);
+    //public IExpSelect<T> Select<T>() => Select<T>(t => t!);
 
-    public IExpSelect Select(string tableName) => new SelectProvider0(tableName, Ado);
+    public IExpSelect Select(string tableName) => throw new NotImplementedException();//new SelectProvider0(tableName, Ado);
 
-    public IExpSelect<T> Select<T>(Expression<Func<T, object>> exp) => CreateSelectProvider<T>(exp.Body);
+    public IExpSelect<T> Select<T>() => CreateSelectProvider<T>();
 
-    Providers.Select.SelectProvider1<T> CreateSelectProvider<T>(Expression body)
+    SelectProvider1<T> CreateSelectProvider<T>()
     {
         var table = TableContext.GetTableInfo<T>();
         if (table.TargetDatabase != null)
         {
             _dbKey = table.TargetDatabase;
         }
-        return new(body, Ado);
+        return new(Ado);
     }
 
     public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();

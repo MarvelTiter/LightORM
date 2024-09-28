@@ -1,5 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
+using LightORM.Interfaces.ExpSql;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,11 +10,12 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         UpdateBuilder<T> SqlBuilder = new UpdateBuilder<T>();
+
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
 
@@ -21,7 +23,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.IsBatchUpdate = true;
             SqlBuilder.TargetObjects = entities;
         }
@@ -110,9 +112,15 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update);
-            var member = result.Members!.First();
-            SqlBuilder.SetNullMembers.Add(member);
+            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
+            //var member = result.Members!.First();
+            //SqlBuilder.SetNullMembers.Add(member);
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = exp,
+                ResolveOptions = SqlResolveOptions.Update,
+                AdditionalParameter = new UpdateValue()
+            });
             return this;
         }
 
@@ -127,17 +135,26 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-            var result = exp.Resolve(SqlResolveOptions.Update);
-            var member = result.Members!.First();
-            if (value is null)
+
+            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
+            //var member = result.Members!.First();
+            //if (value is null)
+            //{
+            //    SqlBuilder.SetNullMembers.Add(member);
+            //}
+            //else
+            //{
+            //    SqlBuilder.Members.Add(member);
+            //    SqlBuilder.DbParameters.Add(member, value!);
+            //}
+
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
-                SqlBuilder.SetNullMembers.Add(member);
-            }
-            else
-            {
-                SqlBuilder.Members.Add(member);
-                SqlBuilder.DbParameters.Add(member, value!);
-            }
+                Expression = exp,
+                ResolveOptions = SqlResolveOptions.Update,
+                AdditionalParameter = new UpdateValue() { Value = value }
+            });
+
             return this;
         }
 

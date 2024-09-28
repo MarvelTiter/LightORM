@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace TestProject1
 {
     [LightORMTableContext]
-    internal partial class TestTableContext : ITableContext
+    internal partial class TestTableContext
     {
         public void H(Type type)
         {

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LightORM.Builder;
 
-internal class InsertBuilder<T> : SqlBuilder
+internal record InsertBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
@@ -34,14 +34,14 @@ internal class InsertBuilder<T> : SqlBuilder
 
         if (Members.Count == 0)
         {
-            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
-        var insertColumns = TableInfo.Columns
+        var insertColumns = MainTable.Columns
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var insert = $"INSERT INTO {GetTableName(TableInfo, false)} \n({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) \nVALUES \n";
+        var insert = $"INSERT INTO {GetTableName(MainTable, false)} \n({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) \nVALUES \n";
         foreach (var item in BatchInfos)
         {
             StringBuilder sb = new StringBuilder(insert);
@@ -84,9 +84,9 @@ internal class InsertBuilder<T> : SqlBuilder
         StringBuilder sb = new StringBuilder();
         if (Members.Count == 0)
         {
-            Members.AddRange(TableInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
-        var insertColumns = TableInfo.Columns
+        var insertColumns = MainTable.Columns
             .Where(c => c.GetValue(TargetObject) != null)
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
@@ -96,7 +96,7 @@ internal class InsertBuilder<T> : SqlBuilder
             DbParameters.Add(item.PropertyName, val!);
         }
         sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"
-            , GetTableName(TableInfo, false)
+            , GetTableName(MainTable, false)
             , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
             , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName))));
 

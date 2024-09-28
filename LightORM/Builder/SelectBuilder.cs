@@ -3,24 +3,73 @@ using LightORM.ExpressionSql;
 using LightORM.Extension;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder
 {
-    internal class SelectBuilder : SqlBuilder
+    internal struct UnionItem
     {
+        public UnionItem(SelectBuilder select, bool all)
+        {
+            SqlBuilder = select;
+            IsAll = all;
+        }
+        public SelectBuilder SqlBuilder { get; set; }
+        public bool IsAll { get; set; }
+    }
+    internal record SelectBuilder : SqlBuilder
+    {
+        public SelectBuilder(DbBaseType dbType)
+        {
+            DbType = dbType;
+            IncludeContext = new IncludeContext(dbType);
+            Indent = new Lazy<string>(() => new string(' ', 4 * Level));
+        }
+        //const string Indent = "    ";
+        private Lazy<string> Indent { get; }
+        public List<SelectBuilder> TempViews { get; } = [];
+        public SelectBuilder? SubQuery { get; set; }
+        public List<UnionItem> Unions { get; } = [];
+        public bool IsSubQuery { get; set; }
+        public bool IsTemp { get; set; }
+        public bool IsUnion { get; set; }
+        public int UnionIndex { get; set; }
+        //public bool UseTemp { get; set; }
+        public string? TempName { get; set; }
         public int PageIndex { get; set; }
         public int PageSize { get; set; }
         public bool IsDistinct { get; set; }
         public bool IsRollup { get; set; }
-        public string? SelectValue { get; set; }
+        public string SelectValue { get; set; } = "*";
+        public int Level { get; set; }
         public List<JoinInfo> Joins { get; set; } = [];
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
+        public List<string> Having { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
+        public IncludeContext IncludeContext { get; set; } = default!;
 
         public object? AdditionalValue { get; set; }
+
+        protected override Lazy<ITableEntityInfo[]> GetAllTables()
+        {
+            return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
+        }
+
+        protected override void BeforeResolveExpressions(ResolveContext context)
+        {
+            if (IsTemp)
+            {
+                context.SetParamPrefix(TempName);
+            }
+            else if (IsSubQuery)
+            {
+                context.SetParamPrefix("sub");
+            }
+        }
+
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
@@ -29,7 +78,7 @@ namespace LightORM.Builder
                 if (result.UseNavigate)
                 {
                     if (result.NavigateDeep == 0) result.NavigateDeep = 1;
-                    ScanNavigate(result, TableInfo);
+                    ScanNavigate(result, MainTable);
                     IsDistinct = true;
                 }
             }
@@ -39,17 +88,21 @@ namespace LightORM.Builder
                 if (joinInfo != null)
                 {
                     joinInfo.Where = result.SqlString!;
+                    if (expInfo.AdditionalParameter is int i && i > 0)
+                    {
+                        if (i > SelectedTables.Count - 1)
+                        {
+                            throw new LightOrmException($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
+                        }
+                        joinInfo.EntityInfo = SelectedTables[i];
+                    }
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
             {
-                if (!string.IsNullOrWhiteSpace(result.SqlString) && !TableInfo.IsAnonymousType)
+                if (!string.IsNullOrWhiteSpace(result.SqlString) && !MainTable.IsAnonymousType)
                 {
                     SelectValue = result.SqlString;
-                }
-                else
-                {
-                    SelectValue = "*";
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.GroupBy)
@@ -60,6 +113,10 @@ namespace LightORM.Builder
             {
                 OrderBy.Add(result.SqlString!);
                 AdditionalValue = expInfo.AdditionalParameter;
+            }
+            else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Having)
+            {
+                Having.Add(result.SqlString!);
             }
         }
 
@@ -120,16 +177,42 @@ namespace LightORM.Builder
 
         void TryJoin(ITableEntityInfo joined)
         {
-            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || TableInfo.Type == joined.Type)
+            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || MainTable.Type == joined.Type)
             {
                 joined.Alias = (joined.Alias!.Replace('a', 'j'));
             }
+        }
+
+        private string BuildFromString()
+        {
+            if (SelectedTables.Count == 1 || Joins.Count > 0)
+            {
+                return GetTableName(MainTable);
+            }
+            return string.Join(", ", SelectedTables.Select(t => GetTableName(t)));
         }
 
         public override string ToSqlString()
         {
             ResolveExpressions();
             StringBuilder sb = new StringBuilder();
+
+            if (TempViews.Count > 0)
+            {
+                sb.Append("WITH ");
+                foreach (var item in TempViews)
+                {
+                    sb.Append(item.ToSqlString());
+                    sb.Append(',');
+                    DbParameters.TryAddDictionary(item.DbParameters);
+                }
+                sb.Remove(sb.Length - 1, 1);
+            }
+            if (IsTemp)
+            {
+                Level += 1;
+                sb.AppendLine($"{TempName} AS (");
+            }
 
             if (GroupBy.Count > 0)
             {
@@ -138,36 +221,76 @@ namespace LightORM.Builder
                 {
                     SelectValue = groupby;
                 }
-                else
-                {
-                    SelectValue = $"{groupby}, {SelectValue}";
-                }
+                //else
+                //{
+                //    SelectValue = $"{groupby}, {SelectValue}";
+                //}
+            }
+            var dist = IsDistinct ? "DISTINCT " : "";
+            sb.AppendLine($"{Indent.Value}SELECT {dist}{SelectValue}");
+
+            if (SubQuery == null)
+            {
+                sb.AppendLine($"{Indent.Value}FROM {BuildFromString()}");
+            }
+            else
+            {
+                sb.AppendLine($"{Indent.Value}FROM (");
+                sb.Append(SubQuery.ToSqlString());
+                sb.AppendLine($") {AttachEmphasis(MainTable.Alias!)}");
+                DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
-            sb.AppendFormat("SELECT {0} \nFROM {1}\n", SelectValue, GetTableName(TableInfo));
-            if (IsDistinct)
-            {
-                sb.Insert(6, " DISTINCT");
-            }
             foreach (var item in Joins)
             {
-                sb.AppendFormat("{0} {1} ON {2}\n", item.JoinType.ToLabel(), GetTableName(item.EntityInfo!), item.Where);
+                if (item.IsSubQuery)
+                {
+
+                    sb.AppendLine($"{item.JoinType.ToLabel()} (");
+                    sb.Append(item.QuerySql);
+                    sb.AppendLine($") {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                }
+                else
+                {
+                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(item.EntityInfo!)} ON {item.Where}");
+                }
             }
             if (Where.Count > 0)
             {
-                sb.AppendFormat("WHERE {0}\n", string.Join("\nAND ", Where));
+                sb.AppendLine($"{Indent.Value}WHERE {string.Join($" AND ", Where)}");
             }
             if (GroupBy.Count > 0)
             {
-                sb.AppendFormat("GROUP BY {0}", string.Join("\n, ", GroupBy));
+                sb.AppendLine($"{Indent.Value}GROUP BY {string.Join(", ", GroupBy)}");
+            }
+            if (Having.Count > 0)
+            {
+                sb.AppendLine($"{Indent.Value}HAVING {string.Join(", ", Having)}");
             }
             if (OrderBy.Count > 0)
             {
-                sb.AppendFormat("ORDER BY {0} {1}\n", string.Join("\n, ", OrderBy), $"{AdditionalValue}");
+                sb.AppendLine($"{Indent.Value}ORDER BY {string.Join($"{N}, ", OrderBy)} {AdditionalValue}");
             }
             if (PageIndex * PageSize > 0)
             {
                 DbHelper.Paging(this, sb);
+            }
+
+            if (IsTemp)
+            {
+                sb.AppendLine(")");
+            }
+
+            // union
+            if (Unions.Count > 0)
+            {
+                foreach (var item in Unions)
+                {
+                    var union = item.IsAll ? "UNIONALL" : "UNION";
+                    sb.AppendLine($"{Indent.Value}{union}");
+                    sb.Append(item.SqlBuilder.ToSqlString());
+                    DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                }
             }
 
             return sb.ToString();

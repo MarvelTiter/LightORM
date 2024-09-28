@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LightORM.Builder;
 using LightORM.ExpressionSql;
+using LightORM.Interfaces.ExpSql;
 
 namespace LightORM.Providers
 {
@@ -12,12 +13,11 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder SqlBuilder = new DeleteBuilder();
-
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
 
@@ -25,7 +25,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
-            SqlBuilder.TableInfo = Cache.TableContext.GetTableInfo<T>();
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entities;
             SqlBuilder.IsDeleteList = true;
         }

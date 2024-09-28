@@ -5,6 +5,11 @@ namespace LightORM.Extension;
 
 internal static class TypeExtension
 {
+    public static bool IsAnonymous(this Type? type)
+    {
+        return type?.FullName?.StartsWith("<>f__AnonymousType") == true;
+    }
+
     internal static DbTable CollectDbTableInfo(this Type tableType)
     {
         var tableName = tableType.GetAttribute<LightTableAttribute>()?.Name ?? tableType.Name;

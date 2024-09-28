@@ -13,6 +13,16 @@ using System.Threading.Tasks;
 
 namespace LightORM.Extension
 {
+    internal static class BuilderExtensions
+    {
+        public static void AddUnion(this SelectBuilder builder, SelectBuilder select, bool all)
+        {
+            select.IsUnion = true;
+            select.UnionIndex = builder.Unions.Count;
+            select.Level = builder.Level;
+            builder.Unions.Add(new(select, all));
+        }
+    }
     internal static class SelectBuilderExtensions
     {
         static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().Where(m => m.Name == "Query" && m.IsGenericMethod).FirstOrDefault()!;
@@ -44,13 +54,10 @@ namespace LightORM.Extension
 
         }
 
-
-
         private static SelectBuilder BuildSql(SelectBuilder builder, IncludeInfo include, Expression mainWhere)
         {
-            SelectBuilder selectSql = new SelectBuilder();
-            selectSql.DbType = builder.DbType;
-            selectSql.TableInfo = include.SelectedTable!;
+            SelectBuilder selectSql = new SelectBuilder(builder.DbType);
+            selectSql.SelectedTables.Add(include.SelectedTable!);
             selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
             selectSql.DbParameters.TryAddDictionary(include.ExpressionResolvedResult!.DbParameters);
             selectSql.Expressions.Add(new ExpressionInfo
@@ -65,8 +72,8 @@ namespace LightORM.Extension
                 ResolveOptions = SqlResolveOptions.Where,
             });
 
-            var mainNav = selectSql.TableInfo.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
-            var mainCol = selectSql.TableInfo.GetColumnInfo(mainNav.MainName!);
+            var mainNav = selectSql.MainTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
+            var mainCol = selectSql.MainTable.GetColumnInfo(mainNav.MainName!);
             var parentTable = include.ParentWhereColumn!.Table;
             if (include.NavigateInfo!.MappingType != null)
             {
@@ -76,7 +83,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = mapTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(selectSql.TableInfo.Alias!)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 selectSql.Joins.Add(new JoinInfo
@@ -94,7 +101,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn.ColumnName)} = {selectSql.AttachEmphasis(selectSql.TableInfo.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
             }
