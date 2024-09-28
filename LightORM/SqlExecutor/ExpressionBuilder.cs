@@ -152,43 +152,81 @@ internal class ExpressionBuilder
         // 其他
         else
         {
-            SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
             var columns = TableContext.GetTableInfo(TargetType).Columns;
-            // 属性处理 Property
-            foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
+            if (TargetType.IsAnonymous())
             {
-                if (!col.CanWrite)
-                {
-                    continue;
-                }
+                Body = CreateAnonymous();
+            }
+            else
+            {
+                Body = CreateCustomEntiry();
+            }
+
+            Expression CreateAnonymous()
+            {
                 //TODO 修改对象初始化
-                var TargetMember = TargetType.GetProperty(col.PropertyName)!;
+                var props = TargetType.GetProperties();
+                List<Expression> Expressions = new List<Expression>();
                 void work()
                 {
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                     {
-                        //Check if the RecordFieldName matches the TargetMember
-                        if (MemberMatchesName(col, reader.GetName(Ordinal)))
-                        {
-                            Expression TargetValueExpression = GetTargetValueExpression(
-                                                                    reader,
-                                                                    Culture,
-                                                                    recordInstanceExp,
-                                                                    SchemaTable,
-                                                                    Ordinal,
-                                                                    TargetMember.PropertyType);
+                        var targetMember = props[Ordinal];
+                        Expression TargetValueExpression = GetTargetValueExpression(
+                                                                reader,
+                                                                Culture,
+                                                                recordInstanceExp,
+                                                                SchemaTable,
+                                                                Ordinal,
+                                                                targetMember.PropertyType);
 
-                            //Create a binding to the target member
-                            MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                            Bindings.Add(Ordinal, BindExpression);
-                            return;
-                        }
+                        //Create a binding to the target member
+                        Expressions.Add(TargetValueExpression);
                     }
                 }
                 work();
+                var ctor = TargetType.GetConstructors().First();
+                return Expression.New(ctor, Expressions);
             }
 
-            Body = Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
+            Expression CreateCustomEntiry()
+            {
+                // 属性处理 Property
+                SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
+                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
+                {
+                    if (!col.CanWrite)
+                    {
+                        continue;
+                    }
+                    //TODO 修改对象初始化
+                    var TargetMember = TargetType.GetProperty(col.PropertyName)!;
+                    void work()
+                    {
+                        for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                        {
+                            //Check if the RecordFieldName matches the TargetMember
+                            if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                            {
+                                Expression TargetValueExpression = GetTargetValueExpression(
+                                                                        reader,
+                                                                        Culture,
+                                                                        recordInstanceExp,
+                                                                        SchemaTable,
+                                                                        Ordinal,
+                                                                        TargetMember.PropertyType);
+
+                                //Create a binding to the target member
+                                MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
+                                Bindings.Add(Ordinal, BindExpression);
+                                return;
+                            }
+                        }
+                    }
+                    work();
+                }
+                return Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
+            }
 
         }
         //Compile as Delegate

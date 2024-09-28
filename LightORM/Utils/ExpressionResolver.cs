@@ -6,6 +6,7 @@ using System.Text;
 using System.Collections;
 using LightORM.SqlMethodResolver;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 namespace LightORM;
 //internal struct ResolvedItem(Type type, )
 //{
@@ -306,10 +307,21 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             {
                 continue;
             }
-            var memberAssign = exp.Bindings[i] as MemberAssignment;
+            if (exp.Bindings[i] is not MemberAssignment memberAssign)
+            {
+                continue;
+            }
             if (Options.SqlType == SqlPartial.Select)
             {
-
+                Visit(memberAssign.Expression);
+                if (UseAs)
+                {
+                    Sql.Append($" AS {Options.DbType.AttachEmphasis(memberAssign.Member.Name)}");
+                }
+                if (i + 1 < exp.Bindings.Count)
+                {
+                    Sql.Append(", ");
+                }
             }
         }
         return null;

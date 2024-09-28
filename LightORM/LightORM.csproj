@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<Description>使用表达式树（ExpressionTree）构建Sql</Description>
-		<Version>2.1.5-pre</Version>
+		<Version>2.1.7-pre</Version>
 		<AssemblyVersion>2.1.4</AssemblyVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
