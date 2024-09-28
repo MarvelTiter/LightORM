@@ -290,13 +290,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect From(Func<IExpSelect> sub)
-    {
-        var subSelect = sub.Invoke();
-        //TODO 子查询
-        return (this as TSelect)!;
-    }
-
     public string ToSql() => SqlBuilder.ToSqlString();
 
 }

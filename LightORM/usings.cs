@@ -16,3 +16,5 @@ global using System.Linq.Expressions;
 global using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
+
+//TODO SqlExecutor对象管理优化

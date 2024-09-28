@@ -1,31 +1,12 @@
-﻿using LightORM.Builder;
-using LightORM.Cache;
-using LightORM.Providers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using LightORM.Providers;
 using LightORM.Extension;
-using LightORM.Interfaces.ExpSql;
 namespace LightORM;
 
 public static class IncludeExtensions
 {
-    //public static IExpInclude<T1, TMember> Include<T1, TMember>(this IExpSelect<T1> select, Expression<Func<T1, bool>> exp)
-    //{
-    //    var provider = (SelectProvider1<T1>)select;
-    //    return provider.Include<T1, TMember>(exp);
-    //}
-
-    //internal static IExpInclude<T1, TMember> Include<T1, TMember>(this SelectProvider1<T1> provider, Expression<Func<T1, bool>> exp)
-    //{
-    //    return provider.CreateIncludeProvider<TMember>(exp);
-    //}
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
-        //TODO 处理 ThenInclude
         var option = SqlResolveOptions.Select;
         option.DbType = include.SqlBuilder.DbType;
         var result = exp.Resolve(option);
@@ -46,15 +27,6 @@ public static class IncludeExtensions
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder);
     }
-
-    //static IncludeContext FindIncludeContext(IncludeContext context)
-    //{
-    //    if (context.ThenInclude == null)
-    //    {
-    //        return context;
-    //    }
-    //    return FindIncludeContext(context.ThenInclude);
-    //}
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, TElement> include, Expression<Func<TElement, TMember>> exp)
     {

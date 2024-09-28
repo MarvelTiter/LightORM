@@ -164,7 +164,6 @@ internal class ExpressionBuilder
 
             Expression CreateAnonymous()
             {
-                //TODO 修改对象初始化
                 var props = TargetType.GetProperties();
                 List<Expression> Expressions = new List<Expression>();
                 void work()
@@ -199,7 +198,6 @@ internal class ExpressionBuilder
                     {
                         continue;
                     }
-                    //TODO 修改对象初始化
                     var TargetMember = TargetType.GetProperty(col.PropertyName)!;
                     void work()
                     {

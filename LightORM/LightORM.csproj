@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
 		<AssemblyName>MT.LightORM</AssemblyName>
 		<Authors>MarvelTiter</Authors>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<Description>使用表达式树（ExpressionTree）构建Sql</Description>
-		<Version>2.1.7-pre</Version>
+		<Version>2.1.8-pre</Version>
 		<AssemblyVersion>2.1.4</AssemblyVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
@@ -15,19 +15,9 @@
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.*" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.*" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.*" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.*" />
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="*" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="*" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
@@ -53,7 +43,6 @@
 	    <Pack>True</Pack>
 	    <PackagePath>\</PackagePath>
 	  </None>
-	  <None Include="ExpressionSql\ExpressionCoreSql.Union.cs" />
 	</ItemGroup>
 
 </Project>
