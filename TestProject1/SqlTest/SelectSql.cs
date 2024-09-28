@@ -43,16 +43,10 @@ namespace TestProject1.SqlTest
         [TestMethod]
         public void SelectInclude()
         {
-            var select = Db.Select<User>()
-                .Include(u => u.UserRoles)
-                .ThenInclude(r => r.Powers);
-            var includeBuilder1 = IncludeContextExtensions.BuildIncludeSqlBuilder(DbBaseType.Sqlite, new User(), select.SqlBuilder.IncludeContext.Includes[0]);
-            var includeBuilder2 = IncludeContextExtensions.BuildIncludeSqlBuilder(DbBaseType.Sqlite, new Role(), select.SqlBuilder.IncludeContext.ThenInclude!.Includes[0]);
-            var includeSql1 = includeBuilder1.ToSqlString();
-            var includeSql2 = includeBuilder2.ToSqlString();
-
-            Console.WriteLine(includeSql1);
-            Console.WriteLine(includeSql2);
+            var sql = Db.Select<User>()
+                .Where(u => u.UserRoles.When(r => r.RoleId.StartsWith("ad")))
+                .ToSql();
+            Console.WriteLine(sql);
         }
 
         [TestMethod]

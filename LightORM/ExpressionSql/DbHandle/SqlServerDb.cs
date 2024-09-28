@@ -12,8 +12,8 @@ internal class SqlServerDbOver2012 : IDbHelper
 {
     public void Paging(SelectBuilder builder, StringBuilder sql)
     {
-        sql.Append($"\nOFFSET {(builder.PageIndex - 1) * builder.PageSize} ROWS");
-        sql.Append($"\nFETCH NEXT {builder.PageSize} ROWS ONLY");
+        sql.AppendLine($"OFFSET {(builder.PageIndex - 1) * builder.PageSize} ROWS");
+        sql.AppendLine($"FETCH NEXT {builder.PageSize} ROWS ONLY");
     }
 
     public string ReturnIdentitySql() => "SELECT SCOPE_IDENTITY()";
@@ -36,12 +36,12 @@ internal class SqlServerDb : IDbHelper
             orderByType = (builder.AdditionalValue == null ? "" : $" {builder.AdditionalValue}");
         }
         sql.Insert(6, " TOP (100) PERCENT");
-        sql.Insert(0, $" SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM (\n ");
-        sql.Append(" \n ) Sub");
+        sql.Insert(0, $" SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM ({SqlBuilder.N} ");
+        sql.AppendLine("  ) Sub");
         // 子查询筛选 ROWNO
-        sql.Insert(0, " SELECT * FROM (\n ");
-        sql.Append(" \n ) Paging");
-        sql.Append($"\n WHERE Paging.ROWNO > {(builder.PageIndex - 1) * builder.PageSize}");
+        sql.Insert(0, $" SELECT * FROM ({SqlBuilder.N} ");
+        sql.AppendLine("  ) Paging");
+        sql.AppendLine($" WHERE Paging.ROWNO > {(builder.PageIndex - 1) * builder.PageSize}");
         sql.Append($" AND Paging.ROWNO <= {builder.PageIndex * builder.PageSize}");
     }
 

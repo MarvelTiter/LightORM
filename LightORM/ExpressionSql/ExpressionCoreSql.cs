@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using LightORM.Cache;
+using LightORM.Interfaces.ExpSql;
 using LightORM.Providers;
 using LightORM.Providers.Select;
 using LightORM.Utils;

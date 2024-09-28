@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Interfaces.ExpSql;
 namespace LightORM.Providers.Select;
 
 //TODO Select 匿名类
@@ -31,62 +32,69 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return this;
     }
 
-    public IExpSelect<T1> Named(string tableName)
+    public IExpSelect<T1> Union(IExpSelect<T1> select)
     {
-        SqlBuilder.MainTable.CustomName = tableName;
-        return this;
+        var provider = this.HandleSubQuery<T1>();
+        SqlBuilder.AddUnion(select.SqlBuilder, false);
+        return provider;
+    }
+    public IExpSelect<T1> UnionAll(IExpSelect<T1> select)
+    {
+        var provider = this.HandleSubQuery<T1>();
+        SqlBuilder.AddUnion(select.SqlBuilder, true);
+        return provider;
     }
 
     public IExpSelectGroup<TGroup, T1> GroupBy<TGroup>(Expression<Func<T1, TGroup>> exp)
     {
-        return GroupByHandle<TGroup, T1>(exp);
+        return this.GroupByHandle<TGroup, T1>(exp);
     }
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp)
     {
-        return OrderByHandle(exp, true);
+        this.OrderByHandle(exp, true);
+        return this;
     }
     public IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp)
     {
-        return OrderByHandle(exp, false);
+        this.OrderByHandle(exp, false);
+        return this;
     }
 
     #region Join
 
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
-
-
     public IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> exp)
     {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin, subQuery);
+        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
@@ -94,23 +102,23 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
     {
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         return ToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
     {
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
     public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         return ToList<MapperRow>();
     }
 
     public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         var list = await ToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
@@ -121,7 +129,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public string ToSql(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         return ToSql();
     }
 
@@ -149,243 +157,96 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp)
     {
-        HandleResult(exp, null);
-        SqlBuilder.Level += 1;
-        SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder(DbType)
-        {
-            SubQuery = SqlBuilder,
-        };
-        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
-        return new SelectProvider1<TTemp>(Executor, builder);
+        this.HandleResult(exp, null);
+        return this.HandleSubQuery<TTemp>();
     }
 
-    public IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpSelect<TTemp> temp)
+    public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp)
     {
-        temp.SqlBuilder.IsTemp = true;
-        SqlBuilder.TempViews.Add(temp.SqlBuilder);
-        var tempTable = TableContext.GetTableInfo(typeof(TTemp));
-        tempTable.CustomName = temp.SqlBuilder.MainTable.TableName;
-        SqlBuilder.SelectedTables.Add(tempTable);
+        this.HandleResult(exp, null);
+        return new TempProvider<TTemp>(name, SqlBuilder);
+    }
+
+
+    #region with temp
+    public IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp)
+    {
+        //SqlBuilder.TempViews.Add(temp.SqlBuilder);
+        //SqlBuilder.SelectedTables.Add(temp.ResultTable);
+        this.HandleTempQuery(temp);
         return new SelectProvider2<T1, TTemp>(Executor, SqlBuilder);
     }
+
+    public IExpSelect<T1, TTemp1, TTemp2> WithTempQuery<TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2)
+    {
+        //SqlBuilder.TempViews.Add(temp1.SqlBuilder);
+        //SqlBuilder.TempViews.Add(temp2.SqlBuilder);
+        //SqlBuilder.SelectedTables.Add(temp1.ResultTable);
+        //SqlBuilder.SelectedTables.Add(temp2.ResultTable);
+        this.HandleTempQuery(temp1, temp2);
+        return new SelectProvider3<T1, TTemp1, TTemp2>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TTemp1, TTemp2, TTemp3> WithTempQuery<TTemp1, TTemp2, TTemp3>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3)
+    {
+        this.HandleTempQuery(temp1, temp2, temp3);
+        return new SelectProvider4<T1, TTemp1, TTemp2, TTemp3>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4)
+    {
+        this.HandleTempQuery(temp1, temp2, temp3, temp4);
+        return new SelectProvider5<T1, TTemp1, TTemp2, TTemp3, TTemp4>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4, IExpTemp<TTemp5> temp5)
+    {
+        this.HandleTempQuery(temp1, temp2, temp3, temp4, temp5);
+        return new SelectProvider6<T1, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(Executor, SqlBuilder);
+    }
+    #endregion
 
     #region TypeSet
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
     public IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = global::LightORM.Utils.FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin, subQuery);
+        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
-    #endregion
-
-}
-
-internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
-{
-    public SelectProvider2(ISqlExecutor executor, SelectBuilder? builder = null)
-        : base(executor, builder)
-    {
-        if (builder == null)
-        {
-            SqlBuilder = new SelectBuilder(DbType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T2>());
-        }
-    }
-
-    public IExpSelectGroup<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<T1, T2, TGroup>> exp)
-    {
-        return GroupByHandle<TGroup, TypeSet<T1, T2>>(exp);
-    }
-
-    public IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp)
-    {
-        return OrderByHandle(exp, true);
-    }
-
-    public IExpSelect<T1, T2> OrderByDesc(Expression<Func<T1, T2, object>> exp)
-    {
-        return OrderByHandle(exp, false);
-    }
-    public IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp)
-    {
-        return WhereHandle(exp);
-    }
-    public IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp)
-    {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-
-    public IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp)
-    {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-    public IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp)
-    {
-        JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp)
-    {
-        HandleResult(exp, null);
-        return ToList<MapperRow>();
-    }
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp)
-    {
-        HandleResult(exp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
-    {
-        HandleResult(exp, null);
-        return ToList<TReturn>();
-    }
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
-    {
-        HandleResult(exp, null);
-        return ToListAsync<TReturn>();
-    }
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp)
-    {
-        HandleResult(exp, null);
-        SqlBuilder.Level += 1;
-        SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder(DbType)
-        {
-            SubQuery = SqlBuilder,
-        };
-        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
-        return new SelectProvider1<TTemp>(Executor, builder);
-    }
-    public string ToSql(Expression<Func<T1, T2, object>> exp)
-    {
-        HandleResult(exp, null);
-        return ToSql();
-    }
-
-    #region TypeSet
-    public IExpSelectGroup<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<TypeSet<T1, T2>, TGroup>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return GroupByHandle<TGroup, TypeSet<T1, T2>>(flatExp);
-    }
-    public IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, true);
-    }
-    public IExpSelect<T1, T2> OrderByDesc(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return OrderByHandle(flatExp, false);
-    }
-    public IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        return WhereHandle(flatExp);
-    }
-    public IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-
-    public IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-    public IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
-        return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
-    }
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        return ToList<TReturn>();
-    }
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        return ToListAsync<TReturn>();
-    }
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        return ToList<MapperRow>();
-    }
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        SqlBuilder.Level += 1;
-        SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder(DbType)
-        {
-            SubQuery = SqlBuilder,
-        };
-        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
-        return new SelectProvider1<TTemp>(Executor, builder);
-    }
-    public string ToSql(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        HandleResult(flatExp, null);
-        return ToSql();
-    }
 
     #endregion
-
 
 }
 #if NET45_OR_GREATER

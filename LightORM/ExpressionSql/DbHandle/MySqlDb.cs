@@ -12,7 +12,7 @@ internal class MySqlDb : IDbHelper
 {
     public void Paging(SelectBuilder builder, StringBuilder sql)
     {
-        sql.Append($"\nLIMIT {(builder.PageIndex - 1) * builder.PageSize}, {builder.PageSize}");
+        sql.AppendLine($"LIMIT {(builder.PageIndex - 1) * builder.PageSize}, {builder.PageSize}");
     }
 
     public string ReturnIdentitySql() => "SELECT @@IDENTITY";

@@ -28,6 +28,41 @@ public static partial class SelectExtension
             instance.SwitchDatabase(key);
         return new SelectProvider{{count}}<{{argsStr}}>(instance.Ado);
     }
+    public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.InnerJoin);
+        return select;
+    }
+    
+    public static IExpSelect<{{argsStr}}> InnerLeft<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.LeftJoin);
+        return select;
+    }
+    
+    public static IExpSelect<{{argsStr}}> InnerRight<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.RightJoin);
+        return select;
+    }
+
+    public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.InnerJoin);
+        return select;
+    }
+    
+    public static IExpSelect<{{argsStr}}> InnerLeft<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.LeftJoin);
+        return select;
+    }
+    
+    public static IExpSelect<{{argsStr}}> InnerRight<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.RightJoin);
+        return select;
+    }
 }
 
 """;

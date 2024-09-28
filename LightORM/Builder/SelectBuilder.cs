@@ -9,6 +9,16 @@ using System.Text;
 
 namespace LightORM.Builder
 {
+    internal struct UnionItem
+    {
+        public UnionItem(SelectBuilder select, bool all)
+        {
+            SqlBuilder = select;
+            IsAll = all;
+        }
+        public SelectBuilder SqlBuilder { get; set; }
+        public bool IsAll { get; set; }
+    }
     internal record SelectBuilder : SqlBuilder
     {
         public SelectBuilder(DbBaseType dbType)
@@ -21,8 +31,13 @@ namespace LightORM.Builder
         private Lazy<string> Indent { get; }
         public List<SelectBuilder> TempViews { get; } = [];
         public SelectBuilder? SubQuery { get; set; }
+        public List<UnionItem> Unions { get; } = [];
         public bool IsSubQuery { get; set; }
         public bool IsTemp { get; set; }
+        public bool IsUnion { get; set; }
+        public int UnionIndex { get; set; }
+        //public bool UseTemp { get; set; }
+        public string? TempName { get; set; }
         public int PageIndex { get; set; }
         public int PageSize { get; set; }
         public bool IsDistinct { get; set; }
@@ -43,6 +58,18 @@ namespace LightORM.Builder
             return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         }
 
+        protected override void BeforeResolveExpressions(ResolveContext context)
+        {
+            if (IsTemp)
+            {
+                context.SetParamPrefix(TempName);
+            }
+            else if (IsSubQuery)
+            {
+                context.SetParamPrefix("sub");
+            }
+        }
+
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
@@ -61,6 +88,14 @@ namespace LightORM.Builder
                 if (joinInfo != null)
                 {
                     joinInfo.Where = result.SqlString!;
+                    if (expInfo.AdditionalParameter is int i && i > 0)
+                    {
+                        if (i > SelectedTables.Count - 1)
+                        {
+                            throw new LightOrmException($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
+                        }
+                        joinInfo.EntityInfo = SelectedTables[i];
+                    }
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
@@ -150,7 +185,7 @@ namespace LightORM.Builder
 
         private string BuildFromString()
         {
-            if (SelectedTables.Count == 1)
+            if (SelectedTables.Count == 1 || Joins.Count > 0)
             {
                 return GetTableName(MainTable);
             }
@@ -169,13 +204,14 @@ namespace LightORM.Builder
                 {
                     sb.Append(item.ToSqlString());
                     sb.Append(',');
+                    DbParameters.TryAddDictionary(item.DbParameters);
                 }
                 sb.Remove(sb.Length - 1, 1);
             }
             if (IsTemp)
             {
                 Level += 1;
-                sb.AppendLine($"{MainTable.TableName} AS (");
+                sb.AppendLine($"{TempName} AS (");
             }
 
             if (GroupBy.Count > 0)
@@ -202,7 +238,7 @@ namespace LightORM.Builder
                 sb.AppendLine($"{Indent.Value}FROM (");
                 sb.Append(SubQuery.ToSqlString());
                 sb.AppendLine($") {AttachEmphasis(MainTable.Alias!)}");
-                
+                DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
             foreach (var item in Joins)
@@ -221,7 +257,7 @@ namespace LightORM.Builder
             }
             if (Where.Count > 0)
             {
-                sb.AppendLine($"{Indent.Value}WHERE {string.Join($"{N}AND ", Where)}");
+                sb.AppendLine($"{Indent.Value}WHERE {string.Join($" AND ", Where)}");
             }
             if (GroupBy.Count > 0)
             {
@@ -243,6 +279,18 @@ namespace LightORM.Builder
             if (IsTemp)
             {
                 sb.AppendLine(")");
+            }
+
+            // union
+            if (Unions.Count > 0)
+            {
+                foreach (var item in Unions)
+                {
+                    var union = item.IsAll ? "UNIONALL" : "UNION";
+                    sb.AppendLine($"{Indent.Value}{union}");
+                    sb.Append(item.SqlBuilder.ToSqlString());
+                    DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                }
             }
 
             return sb.ToString();

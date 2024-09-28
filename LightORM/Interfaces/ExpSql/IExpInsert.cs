@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LightORM;
+namespace LightORM.Interfaces.ExpSql;
 
 public interface IExpInsert<T>
 {

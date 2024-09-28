@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using LightORM.Builder;
 using LightORM.ExpressionSql;
+using LightORM.Interfaces.ExpSql;
 
 namespace LightORM.Providers
 {
@@ -12,7 +13,6 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder SqlBuilder = new DeleteBuilder();
-
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;

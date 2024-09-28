@@ -16,7 +16,7 @@ namespace LightORM.Interfaces
         /// 表达式
         /// </summary>
         IExpressionInfo Expressions { get; }
-
+        List<ITableEntityInfo> SelectedTables { get; set; }
         /// <summary>
         /// 实体信息
         /// </summary>

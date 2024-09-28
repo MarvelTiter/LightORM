@@ -36,6 +36,10 @@ internal abstract record SqlBuilder : ISqlBuilder
     {
         return new(() => [MainTable]);
     }
+    protected virtual void BeforeResolveExpressions(ResolveContext context)
+    {
+
+    }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
@@ -43,6 +47,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             return;
         }
         var context = new ResolveContext(AllTables);
+        BeforeResolveExpressions(context);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             item.ResolveOptions!.DbType = DbType;

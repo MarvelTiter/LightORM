@@ -15,7 +15,13 @@ namespace LightORM.Extension
 {
     internal static class BuilderExtensions
     {
-
+        public static void AddUnion(this SelectBuilder builder, SelectBuilder select, bool all)
+        {
+            select.IsUnion = true;
+            select.UnionIndex = builder.Unions.Count;
+            select.Level = builder.Level;
+            builder.Unions.Add(new(select, all));
+        }
     }
     internal static class SelectBuilderExtensions
     {
@@ -47,8 +53,6 @@ namespace LightORM.Extension
             }
 
         }
-
-
 
         private static SelectBuilder BuildSql(SelectBuilder builder, IncludeInfo include, Expression mainWhere)
         {

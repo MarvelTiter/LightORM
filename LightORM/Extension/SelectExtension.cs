@@ -2,7 +2,7 @@
 
 public static partial class SelectExtension
 {
-
+    
     static string? GetDbKey(params Type[] types)
     {
         List<string> keys = new List<string>();
@@ -32,6 +32,46 @@ public static partial class SelectExtension
             instance.SwitchDatabase(key);
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
+
+    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.InnerJoin);
+        return select;
+    }
+
+    public static IExpSelect<T1, T2> InnerLeft<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.LeftJoin);
+        return select;
+    }
+
+    public static IExpSelect<T1, T2> InnerRight<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.RightJoin);
+        return select;
+    }
+
+    #region TypeSet
+
+    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.InnerJoin);
+        return select;
+    }
+
+    public static IExpSelect<T1, T2> InnerLeft<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.LeftJoin);
+        return select;
+    }
+
+    public static IExpSelect<T1, T2> InnerRight<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
+    {
+        select.JoinHandle(on, TableLinkType.RightJoin);
+        return select;
+    }
+
+    #endregion
 
     #endregion
 #if NET45_OR_GREATER

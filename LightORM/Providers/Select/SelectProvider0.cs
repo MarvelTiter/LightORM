@@ -1,9 +1,4 @@
-﻿using System.Linq;
-using LightORM.Cache;
-using LightORM.ExpressionSql;
-using System.Data;
-using LightORM.Extension;
-using System.Diagnostics.CodeAnalysis;
+﻿
 
 namespace LightORM.Providers.Select;
 
@@ -20,77 +15,36 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         if (builder != null)
             SqlBuilder = builder;
     }
-
-    protected TSelect OrderByHandle(Expression exp, bool asc)
+    public IExpTemp<T1> AsTemp(string name)
     {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = exp,
-            ResolveOptions = SqlResolveOptions.Order,
-            AdditionalParameter = asc ? "ASC" : "DESC"
-        });
-        return (this as TSelect)!;
-    }
-
-    protected void JoinHandle<TJoin>(Expression exp, TableLinkType joinType, IExpSelect<TJoin>? subQuery = null)
-    {
-        var expression = new ExpressionInfo
-        {
-            ResolveOptions = SqlResolveOptions.Join,
-            Expression = exp,
-        };
-
-        SqlBuilder.Expressions.Add(expression);
-        var joinInfo = new JoinInfo()
-        {
-            ExpressionId = expression.Id,
-            JoinType = joinType,
-            EntityInfo = Cache.TableContext.GetTableInfo<TJoin>(),
-        };
-        if (subQuery != null)
-        {
-            subQuery.SqlBuilder.Level += 1;
-            joinInfo.IsSubQuery = true;
-            joinInfo.QuerySql = subQuery.ToSql();
-        }
-        SqlBuilder.Joins.Add(joinInfo);
-        //SqlBuilder.OtherTables.Add()
-        //return (this as TSelect)!;
+        return new TempProvider<T1>(name, SqlBuilder);
     }
 
     #region where
 
-    protected TSelect WhereHandle(Expression exp)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo
-        {
-            ResolveOptions = SqlResolveOptions.Where,
-            Expression = exp,
-        });
-        return (this as TSelect)!;
-    }
-
     public TSelect Where(Expression<Func<T1, bool>> exp)
     {
-        return WhereHandle(exp);
+        this.WhereHandle(exp);
+        return (this as TSelect)!;
     }
     public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
     {
-        return WhereHandle(exp);
+        this.WhereHandle(exp);
+        return (this as TSelect)!;
     }
 
     public TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp)
     {
         if (condition)
         {
-            return WhereHandle(exp);
+            this.WhereHandle(exp);
         }
         return (this as TSelect)!;
     }
 
     public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
     {
-        if (condition) return WhereHandle(exp);
+        if (condition) this.WhereHandle(exp);
         return (this as TSelect)!;
     }
 
@@ -134,31 +88,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     #endregion
 
-    #region group
-
-    protected IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(Expression exp)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            ResolveOptions = SqlResolveOptions.Group,
-            Expression = exp
-        });
-        return new GroupSelectProvider<TGroup, TTables>(Executor, SqlBuilder);
-    }
-
-    //public TSelect GroupBy<Another>(Expression<Func<Another, object>> exp)
-    //{
-    //    return GroupByHandle(exp.Body);
-    //}
-
-    //public TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp)
-    //{
-    //    if (ifGroupby) return GroupByHandle(exp.Body);
-    //    return (this as TSelect)!;
-    //}
-
-    #endregion
-
     #region 
 
     public TSelect Count(out long total)
@@ -188,24 +117,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    //public TSelect As(string tableName)
-    //{
-    //    SqlBuilder.TableInfo.CustomName = (tableName);
-    //    return (this as TSelect)!;
-    //}
-
-    //public TSelect As(Type type)
-    //{
-    //    var info = Cache.TableContext.GetTableInfo(type);
-    //    SqlBuilder.TableInfo.CustomName = (info.TableName);
-    //    return (this as TSelect)!;
-    //}
-
-    //public TSelect As<TOther>()
-    //{
-    //    return As(typeof(TOther));
-    //}
-
     #endregion
 
     #region ToResult
@@ -216,44 +127,44 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public TMember? Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        HandleResult(exp, "MAX({0})");
+        this.HandleResult(exp, "MAX({0})");
         return Single<TMember>();
     }
 
     public TMember? Min<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        HandleResult(exp, "MIN({0})");
+        this.HandleResult(exp, "MIN({0})");
         return Single<TMember>();
     }
 
     public double Sum(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "SUM({0})");
+        this.HandleResult(exp, "SUM({0})");
         return Single<double>();
     }
 
     public int Count(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "COUNT({0})");
+        this.HandleResult(exp, "COUNT({0})");
         return Single<int>();
     }
 
     public int Count()
     {
-        HandleResult(null, "COUNT(*)");
+        this.HandleResult(null, "COUNT(*)");
         return Single<int>();
     }
 
     public double Avg(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "AVG({0})");
+        this.HandleResult(exp, "AVG({0})");
         return Single<double>();
     }
 
     public virtual T1? First()
     {
         Expression<Func<T1, T1>> exp = t => t;
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return Executor.QuerySingle<T1>(sql, parameters);
@@ -262,7 +173,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public virtual IEnumerable<T1> ToList()
     {
         Expression<Func<T1, T1>> exp = t => t;
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return Executor.Query<T1>(sql, parameters);
@@ -278,7 +189,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public virtual async Task<T1?> FirstAsync()
     {
         Expression<Func<T1, T1>> exp = t => t;
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QuerySingleAsync<T1>(sql, parameters);
@@ -287,7 +198,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public virtual async Task<IList<T1>> ToListAsync()
     {
         Expression<Func<T1, T1>> exp = t => t;
-        HandleResult(exp, null);
+        this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QueryAsync<T1>(sql, parameters);
@@ -329,37 +240,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        HandleResult(exp, "MAX({0})");
+        this.HandleResult(exp, "MAX({0})");
         return SingleAsync<TMember>();
     }
 
     public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        HandleResult(exp, "MIN({0})");
+        this.HandleResult(exp, "MIN({0})");
         return SingleAsync<TMember>();
     }
 
     public Task<double> SumAsync(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "SUM({0})");
+        this.HandleResult(exp, "SUM({0})");
         return SingleAsync<double>();
     }
 
     public Task<int> CountAsync(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "COUNT({0})");
+        this.HandleResult(exp, "COUNT({0})");
         return SingleAsync<int>();
     }
 
     public Task<int> CountAsync()
     {
-        HandleResult(null, "COUNT(*)");
+        this.HandleResult(null, "COUNT(*)");
         return SingleAsync<int>();
     }
 
     public Task<double> AvgAsync(Expression<Func<T1, object>> exp)
     {
-        HandleResult(exp, "AVG({0})");
+        this.HandleResult(exp, "AVG({0})");
         return SingleAsync<double>();
     }
 
@@ -369,15 +280,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return c > 0;
     }
 
-    protected void HandleResult(Expression? exp, string? template)
-    {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = exp,
-            ResolveOptions = SqlResolveOptions.Select,
-            Template = template
-        });
-    }
 
     #endregion
 
@@ -397,8 +299,4 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public string ToSql() => SqlBuilder.ToSqlString();
 
-    public TSelect UnionAll(params IExpSelect[] querys)
-    {
-        throw new NotImplementedException();
-    }
 }

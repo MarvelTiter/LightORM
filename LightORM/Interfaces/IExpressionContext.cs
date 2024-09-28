@@ -1,10 +1,13 @@
 ﻿using System.Threading.Tasks;
+using LightORM.Interfaces.ExpSql;
 
 namespace LightORM;
 
 public interface IExpressionContext : IDbAction
 {
     IExpSelect<T> Select<T>();
+    IExpSelect<TResult> Union<TResult>(params IExpSelect<TResult>[] selects);
+    IExpSelect<TResult> UnionAll<TResult>(params IExpSelect<TResult>[] selects);
     //IExpSelect Select();
     //IExpSelect Select(string tableName);
     //IExpInsert<T> Insert<T>();

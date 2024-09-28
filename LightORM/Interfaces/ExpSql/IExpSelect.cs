@@ -3,19 +3,20 @@ using System.Data;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace LightORM;
+namespace LightORM.Interfaces.ExpSql;
 
 public interface IExpSelect : ISql
 {
+    internal ISqlExecutor Executor { get; }
     internal SelectBuilder SqlBuilder { get; }
 }
 public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelect
 {
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
-    TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp);
+    TSelect Where<TWhere>(Expression<Func<TWhere, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
-    TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp);
+    TSelect WhereIf<TWhere>(bool condition, Expression<Func<TWhere, bool>> exp);
     //TSelect GroupBy<Another>(Expression<Func<Another, object>> exp);
     //TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp);
     IEnumerable<T1> ToList();
@@ -41,6 +42,8 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     bool Any();
     TSelect RollUp();
     TSelect Distinct();
+    IExpTemp<T1> AsTemp(string name);
+
     #region 使用原生sql
     /// <summary>
     /// 共享参数
@@ -69,13 +72,22 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
     IExpSelect<T1> As(string alias);
-    IExpSelect<T1> Named(string tableName);
+    //IExpSelect<T1> Named(string tableName);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
     IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp);
-    IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpSelect<TTemp> temp);
+    IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
+    IExpSelect<T1> Union(IExpSelect<T1> select);
+    IExpSelect<T1> UnionAll(IExpSelect<T1> select);
+    #region WithTemp
+    IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp);
+    IExpSelect<T1, TTemp1, TTemp2> WithTempQuery<TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2);
+    IExpSelect<T1, TTemp1, TTemp2, TTemp3> WithTempQuery<TTemp1, TTemp2, TTemp3>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3);
+    IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4);
+    IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4, IExpTemp<TTemp5> temp5);
+    #endregion
     string ToSql(Expression<Func<T1, object>> exp);
 
     #region TypeSet
@@ -89,38 +101,14 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 
 }
 
-public interface IExpInclude<T1, TMember> : IExpSelect<T1>
+public interface IExpTemp
 {
-    internal ISqlExecutor Executor { get; }
+    ITableEntityInfo ResultTable { get; }
+    internal SelectBuilder SqlBuilder { get; }
 }
 
-public interface IExpSelectGroup<TGroup, TTables>
+public interface IExpTemp<TTemp> : IExpTemp
 {
-    IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
-    IExpSelectGroup<TGroup, TTables> OrderBy(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
-    IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
-    IExpSelectGroup<TGroup, TTables> Paging(int pageIndex, int pageSize);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
-    IExpSelect<TTemp> ToSelect<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
-    IExpSelect<TTemp> AsTempQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
-    string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
-    string ToSql();
-}
-public interface IExpSelectGrouping<TGroup, TTables>
-{
-    TGroup Group { get; set; }
-    TTables Tables { get; set; }
-    int Count();
-    int Count<TColumn>(TColumn column);
-    decimal Sum<TColumn>(TColumn column);
-    decimal Sum<TColumn>(bool exp, TColumn column);
-    decimal Avg<TColumn>(TColumn column);
-    decimal Avg<TColumn>(bool exp, TColumn column);
-    TColumn Max<TColumn>(TColumn column);
-    TColumn Max<TColumn>(bool exp, TColumn column);
-    TColumn Min<TColumn>(TColumn column);
-    TColumn Min<TColumn>(bool exp, TColumn column);
 
 }
 
@@ -138,7 +126,17 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp);
+    IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, T2, TTemp>> exp);
+
     string ToSql(Expression<Func<T1, T2, object>> exp);
+
+    #region WithTemp
+    IExpSelect<T1, T2, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp);
+    IExpSelect<T1, T2, TTemp1, TTemp2> WithTempQuery<TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2);
+    IExpSelect<T1, T2, TTemp1, TTemp2, TTemp3> WithTempQuery<TTemp1, TTemp2, TTemp3>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3);
+    IExpSelect<T1, T2, TTemp1, TTemp2, TTemp3, TTemp4> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4);
+    IExpSelect<T1, T2, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4, IExpTemp<TTemp5> temp5);
+    #endregion
 
     #region TypeSet
     IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
@@ -153,6 +151,7 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp);
+    IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<T1, T2>, TTemp>> exp);
     string ToSql(Expression<Func<TypeSet<T1, T2>, object>> exp);
     #endregion
 }

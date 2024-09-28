@@ -23,6 +23,7 @@ internal static class ExpressionExtensions
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
+            UsedTables = resolve.UsedTables,
             UseNavigate = resolve.UseNavigate,
             NavigateDeep = resolve.NavigateDeep,
             NavigateMembers = resolve.NavigateMembers,
@@ -72,12 +73,12 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
+    public List<ITableEntityInfo> UsedTables { get; set; } = [];
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     internal List<string> NavigateMembers { get; set; } = [];
     public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
-    //public Expression? Resolve(Expression? expression) => Visit(expression);
     public Expression? Visit(Expression? expression)
     {
         System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
@@ -97,7 +98,21 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         };
     }
     Expression? bodyExpression;
-
+    bool useAs;
+    bool UseAs
+    {
+        get
+        {
+            if (useAs)
+            {
+                useAs = false;
+                return true;
+            }
+            return useAs;
+        }
+        set => useAs = value;
+    }
+    bool isVisitConvert;
     Expression? VisitLambda(LambdaExpression exp)
     {
         bodyExpression = exp.Body;
@@ -238,22 +253,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         Visit(exp.Operand);
         return null;
     }
-    bool useAs;
-    bool UseAs
-    {
-        get
-        {
-            if (useAs)
-            {
-                useAs = false;
-                return true;
-            }
-            return useAs;
-        }
-        set => useAs = value;
-    }
-    bool isVisitConvert;
-    //List<object> ps = [];
+    
     Expression? VisitParameter(ParameterExpression exp)
     {
         //ps.Add(new
@@ -261,7 +261,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         //    Alias = exp.Name,
         //    exp.Type,
         //});
-        Debug.WriteLine($"VisitParameter: {exp}");
+        Debug.WriteLine($"{Options.SqlAction}:{Options.SqlType} VisitParameter: {exp}");
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = Context.GetTable(exp.Type).Alias;
@@ -324,10 +324,15 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         if (exp.Expression?.NodeType == ExpressionType.Parameter)
         {
             var type = exp.Type;
+            var parent = exp.Expression as ParameterExpression;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 type = type.GetGenericArguments()[0];
             }
+            //if (Options.SqlType == SqlPartial.Select && exp.Expression is ParameterExpression p)
+            //{
+            //    //UsedTables.Add(Context.GetTable(p.Type));
+            //}
             var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
             var table = Context.GetTable(memberType);
@@ -438,7 +443,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
     private string AddDbParameter(string name, object v)
     {
         // TODO 非参数化模式
-        var parameterName = $"{name}_{Options.ParameterIndex}";
+        var parameterName = $"{Context.ParameterPrefix}{name}_{Options.ParameterIndex}";
         DbParameters.Add(parameterName, v);
         Options.ParameterIndex++;
         return Options.DbType.AttachPrefix(parameterName);

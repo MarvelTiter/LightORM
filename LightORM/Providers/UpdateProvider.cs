@@ -1,5 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
+using LightORM.Interfaces.ExpSql;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,6 +10,7 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         UpdateBuilder<T> SqlBuilder = new UpdateBuilder<T>();
+
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;

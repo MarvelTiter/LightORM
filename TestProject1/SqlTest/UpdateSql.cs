@@ -39,5 +39,15 @@ namespace TestProject1.SqlTest
                 .ToSql();
             Console.WriteLine(sql);
         }
+
+        [TestMethod]
+        public void IgnoreColumn()
+        {
+            var p = new Product();
+            var sql = Db.Update(p)
+                .IgnoreColumns(p => new { p.ProductName, p.CategoryId })
+                .ToSql();
+            Console.WriteLine(sql);
+        }
     }
 }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LightORM.Extension;
+using LightORM.Interfaces.ExpSql;
 namespace LightORM;
 
 public static class IncludeExtensions
