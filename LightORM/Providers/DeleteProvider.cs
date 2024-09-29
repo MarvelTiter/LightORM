@@ -12,11 +12,11 @@ namespace LightORM.Providers
     internal sealed class DeleteProvider<T> : IExpDelete<T>
     {
         private readonly ISqlExecutor executor;
-        private readonly DeleteBuilder SqlBuilder = new DeleteBuilder();
+        private readonly DeleteBuilder SqlBuilder;
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder = new DeleteBuilder(this.executor.ConnectInfo.DbBaseType);
             SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
@@ -24,7 +24,7 @@ namespace LightORM.Providers
         public DeleteProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
             this.executor = executor;
-            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder = new DeleteBuilder(this.executor.ConnectInfo.DbBaseType);
             SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entities;
             SqlBuilder.IsDeleteList = true;

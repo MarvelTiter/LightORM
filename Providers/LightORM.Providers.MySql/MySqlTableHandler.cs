@@ -1,18 +1,16 @@
-﻿using System;
-using System.Data;
+﻿using LightORM.DbStruct;
+using LightORM.Implements;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace LightORM.DbStruct;
+namespace LightORM.Providers.MySql;
 
-internal class MySqlDbTable : DbTableBase
+public sealed class MySqlTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-    public MySqlDbTable(TableGenerateOption option) : base(option)
-    {
-
-    }
-
-    internal override string BuildColumn(DbColumn column)
+    protected override string BuildColumn(DbColumn column)
     {
         string dataType = ConvertToDbType(column);
         string notNull = column.NotNull ? "NOT NULL" : "NULL";
@@ -22,7 +20,7 @@ internal class MySqlDbTable : DbTableBase
         return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
     }
 
-    internal override string BuildSql(DbTable table)
+    protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
@@ -61,7 +59,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         return sql.ToString();
     }
 
-    internal override string ConvertToDbType(DbColumn type)
+    protected override string ConvertToDbType(DbColumn type)
     {
         string? typeFullName = "";
         if (type.DataType.IsEnum)
@@ -91,5 +89,5 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         };
     }
 
-    internal override string DbEmphasis(string name) => $"`{name}`";
+    protected override string DbEmphasis(string name) => $"`{name}`";
 }

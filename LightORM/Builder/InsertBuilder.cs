@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LightORM.Builder;
 
-internal record InsertBuilder<T> : SqlBuilder
+internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
@@ -79,7 +79,7 @@ internal record InsertBuilder<T> : SqlBuilder
             return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
 
-        if (TargetObject == null) throw new LightOrmException("insert null entity");
+        if (TargetObject == null) LightOrmException.Throw("insert null entity");
         ResolveExpressions();
         StringBuilder sb = new StringBuilder();
         if (Members.Count == 0)

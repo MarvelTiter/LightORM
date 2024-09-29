@@ -1,19 +1,12 @@
-﻿using LightORM.SqlExecutor;
-using System;
-using System.Data;
-using System.Linq;
-using System.Reflection;
+﻿using LightORM.DbStruct;
+using LightORM.Implements;
 using System.Text;
 
-namespace LightORM.DbStruct;
+namespace LightORM.Providers.Sqlite;
 
-internal class SqliteDbTable : DbTableBase
+public sealed class SqliteTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-    public SqliteDbTable(TableGenerateOption option) : base(option)
-    {
-
-    }
-    internal override string BuildSql(DbTable table)
+    protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
@@ -52,7 +45,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         return sql.ToString();
     }
 
-    internal override string BuildColumn(DbColumn column)
+    protected override string BuildColumn(DbColumn column)
     {
         string dataType = ConvertToDbType(column);
         string notNull = column.NotNull ? "NOT NULL" : "NULL";
@@ -62,19 +55,8 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
     }
 
-    //internal override bool CheckTableExists(IDbConnection connection, DbTable dbTable)
-    //{
-    //    var sql = $"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = '{dbTable.Name}'";
-    //    var count = connection.ExecuteScale(sql);
-    //    return count != null && ((int)Convert.ChangeType(count, typeof(int))) > 0;
-    //}
-
-    /// <summary>
     /// https://learn.microsoft.com/zh-cn/dotnet/standard/data/sqlite/types
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    internal override string ConvertToDbType(DbColumn type)
+    protected override string ConvertToDbType(DbColumn type)
     {
         if (type.DataType == typeof(byte) || type.DataType == typeof(byte?)
             || type.DataType == typeof(sbyte) || type.DataType == typeof(sbyte?)
@@ -104,5 +86,5 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         }
     }
 
-    internal override string DbEmphasis(string name) => $"`{name}`";
+    protected override string DbEmphasis(string name) => $"`{name}`";
 }

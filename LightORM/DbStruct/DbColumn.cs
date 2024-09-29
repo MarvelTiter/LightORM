@@ -21,7 +21,7 @@ public enum IndexType : int
     GiST = 4096,
     SP_GiST = 8192
 }
-internal struct DbColumn
+public struct DbColumn
 {
     public string Name { get; set; }
     public string PropName { get; set; }
@@ -34,7 +34,7 @@ internal struct DbColumn
     public Type DataType { get; set; }
 }
 
-internal struct DbIndex
+public struct DbIndex
 {
     public IEnumerable<string> Columns { get; set; }
     public IndexType DbIndexType { get; set; }

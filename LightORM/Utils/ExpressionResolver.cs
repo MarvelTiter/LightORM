@@ -1,21 +1,13 @@
-﻿using LightORM.Cache;
-using LightORM.Extension;
-using System.Linq;
+﻿using LightORM.Extension;
 using System.Reflection;
 using System.Text;
 using System.Collections;
-using LightORM.SqlMethodResolver;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
 namespace LightORM;
-//internal struct ResolvedItem(Type type, )
-//{
-
-//}
 
 internal static class ExpressionExtensions
 {
-    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext? context = null)
+    public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
         var resolve = new ExpressionResolver(options, context);
         resolve.Visit(expression);
@@ -61,15 +53,16 @@ internal static class ExpressionExtensions
 public interface IExpressionResolver
 {
     bool IsNot { get; }
+    int NavigateDeep { get; set; }
     StringBuilder Sql { get; }
     SqlResolveOptions Options { get; }
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options, ResolveContext? context = null) : IExpressionResolver
+public class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
-    public ResolveContext Context { get; } = context ?? new();
+    public ResolveContext Context { get; } = context;
     public Dictionary<string, object> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -79,7 +72,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     internal List<string> NavigateMembers { get; set; } = [];
-    public SqlMethod MethodResolver { get; } = options.DbType.GetSqlMethodResolver();
+    ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
+    ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
     {
         System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
@@ -169,7 +163,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             {
                 UseAs = true;
             }
-            MethodResolver.Invoke(this, exp);
+            MethodResolver.Resolve(this, exp);
         }
         return null;
     }
@@ -222,12 +216,12 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
                 {
                     Visit(arg);
                     if (UseAs)
-                        Sql.Append($" AS {Options.DbType.AttachEmphasis(member.Name)}");
+                        Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
                     var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
-                    Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)} = ");
+                    Sql.Append($"{Database.AttachEmphasis(col.ColumnName)} = ");
                     Visit(arg);
                 }
                 else
@@ -266,7 +260,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = Context.GetTable(exp.Type).Alias;
-            Sql.Append($"{Options.DbType.AttachEmphasis(alias!)}.*");
+            Sql.Append($"{Database.AttachEmphasis(alias!)}.*");
             UseAs = false;
             //foreach (var item in alias.Columns)
             //{
@@ -287,11 +281,11 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
                 var col = Context.GetTable(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
                 if (Options.RequiredTableAlias)
                 {
-                    Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append($"{Database.AttachEmphasis(col.Table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
                 }
                 else
                 {
-                    Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
                 }
             }
         }
@@ -316,7 +310,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
                 Visit(memberAssign.Expression);
                 if (UseAs)
                 {
-                    Sql.Append($" AS {Options.DbType.AttachEmphasis(memberAssign.Member.Name)}");
+                    Sql.Append($" AS {Database.AttachEmphasis(memberAssign.Member.Name)}");
                 }
                 if (i + 1 < exp.Bindings.Count)
                 {
@@ -379,11 +373,11 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
             UseAs = col.ColumnName != col.PropertyName;
             if (Options.RequiredTableAlias)
             {
-                Sql.Append($"{Options.DbType.AttachEmphasis(col.Table.Alias!)}.{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                Sql.Append($"{Database.AttachEmphasis(col.Table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
             }
             else
             {
-                Sql.Append($"{Options.DbType.AttachEmphasis(col.ColumnName)}");
+                Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
             }
             Members.Clear();
             return null;
@@ -458,7 +452,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext? conte
         var parameterName = $"{Context.ParameterPrefix}{name}_{Options.ParameterIndex}";
         DbParameters.Add(parameterName, v);
         Options.ParameterIndex++;
-        return Options.DbType.AttachPrefix(parameterName);
+        return Database.AttachPrefix(parameterName);
     }
 
     /// <summary>

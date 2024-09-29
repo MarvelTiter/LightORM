@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LightORM.Interfaces
 {
-    internal interface ISqlBuilder
+    public interface ISqlBuilder
     {
         /// <summary>
         /// 数据库类型
@@ -15,7 +15,7 @@ namespace LightORM.Interfaces
         /// <summary>
         /// 表达式
         /// </summary>
-        IExpressionInfo Expressions { get; }
+        internal IExpressionInfo Expressions { get; }
         List<ITableEntityInfo> SelectedTables { get; set; }
         /// <summary>
         /// 实体信息
@@ -27,11 +27,20 @@ namespace LightORM.Interfaces
         /// 参数信息
         /// </summary>
         Dictionary<string, object> DbParameters { get; }
-
+        
         /// <summary>
         /// 到Sql字符串
         /// </summary>
         /// <returns></returns>
         string ToSqlString();
+    }
+
+    public interface ISelectSqlBuilder : ISqlBuilder
+    {
+        int PageIndex { get; set; }
+        int PageSize { get; set; }
+        object? AdditionalValue { get; set; }
+        List<string> GroupBy { get; set; }
+        List<string> OrderBy { get; set; }
     }
 }

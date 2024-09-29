@@ -7,17 +7,17 @@ namespace LightORM;
 public record DbConnectInfo
 {
 
-    public DbConnectInfo(DbBaseType db, string connectString, DbProviderFactory factory) 
+    public DbConnectInfo(DbBaseType db, IDatabaseProvider provider) 
     {
         DbBaseType = db;
-        ConnectString = connectString;
-        DbProviderFactory = factory;
+        Database = provider;
         //CreateConnection = func;
     }
 
     public DbBaseType DbBaseType { get; set; }
-    public string ConnectString { get; set; }
-    public DbProviderFactory DbProviderFactory { get; set; }
+    public IDatabaseProvider Database { get; }
+    public string ConnectString => Database.MasterConnectionString;
+    public DbProviderFactory DbProviderFactory => Database.DbProviderFactory;
 
     //public Func<DbConnection>? CreateConnection { get; set; }
 }

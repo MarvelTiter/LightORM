@@ -18,6 +18,11 @@ public abstract class DbInitialContext
         bool hasTable = true;
         bool update = false;
         using var executor = SqlExecutorProvider.GetExecutor(DatabaseKey());
+        var handler = StaticCache<IDatabaseTableHandler>.Get(DatabaseKey());
+        if (handler == null)
+        {
+            return;
+        }
         executor.DbLog = option.Aop.DbLog;
         try
         {
@@ -32,7 +37,7 @@ public abstract class DbInitialContext
         {
             hasTable = false;
         }
-        var context = new DbInitial(executor);
+        var context = new DbInitial(executor, handler);
         Info ??= new DbInfo();
         if (!hasTable)
         {

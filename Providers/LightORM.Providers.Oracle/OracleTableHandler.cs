@@ -1,33 +1,16 @@
-﻿using LightORM.Extension;
+﻿using LightORM.DbStruct;
+using LightORM.Implements;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace LightORM.DbStruct;
+namespace LightORM.Providers.Oracle;
 
-internal class OracleDbTable : DbTableBase
+public sealed class OracleTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-    public OracleDbTable(TableGenerateOption option) : base(option)
-    {
-
-    }
-
-    internal override string BuildColumn(DbColumn column)
-    {
-        string dataType = ConvertToDbType(column);
-        if (dataType.Contains("CHAR"))
-        {
-            dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
-        }
-        string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement && Option.OracleOverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
-        string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
-        return $"{DbEmphasis(column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
-    }
-
-    internal override string BuildSql(DbTable table)
+    protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -125,12 +108,21 @@ ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
         return sql.ToString();
     }
 
-    /// <summary>
+    protected override string BuildColumn(DbColumn column)
+    {
+        string dataType = ConvertToDbType(column);
+        if (dataType.Contains("CHAR"))
+        {
+            dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
+        }
+        string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
+        string identity = column.AutoIncrement && Option.OracleOverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
+        string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
+        return $"{DbEmphasis(column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
+    }
+
     /// https://www.cnblogs.com/liufuhuang/articles/3020009.html
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    internal override string ConvertToDbType(DbColumn type)
+    protected override string ConvertToDbType(DbColumn type)
     {
         string? typeFullName = "";
         if (type.DataType.IsEnum)
@@ -160,7 +152,7 @@ ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
         };
     }
 
-    internal override string DbEmphasis(string name) => $"\"{name.ToUpper()}\"";
+    protected override string DbEmphasis(string name) => $"\"{name.ToUpper()}\"";
     private string AttachUserId(string name)
     {
         if (Option.OracleUserId != null)

@@ -136,8 +136,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
     {
         var option = SqlResolveOptions.Select;
-        option.DbType = SqlBuilder.DbType;
-        var result = exp.Resolve(option);
+        var result = exp.Resolve(option, ResolveContext.Create(Executor.ConnectInfo.DbBaseType));
         var navName = result.NavigateMembers!.First();
         var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
         var navInfo = navCol.NavigateInfo!;

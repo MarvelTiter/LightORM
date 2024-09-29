@@ -10,7 +10,7 @@ internal struct UpdateValue
     public object? Value { get; set; }
 }
 
-internal record UpdateBuilder<T> : SqlBuilder
+internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
@@ -117,8 +117,8 @@ internal record UpdateBuilder<T> : SqlBuilder
         if (Where.Count == 0)
         {
             var primaryCol = MainTable.Columns.Where(c => c.IsPrimaryKey).ToArray();
-            if (primaryCol.Length == 0) throw new LightOrmException("Where Condition is null and no primarykey");
-            if (TargetObject == null) throw new LightOrmException("Where Condition is null and no entity");
+            if (primaryCol.Length == 0) LightOrmException.Throw("Where Condition is null and no primarykey");
+            if (TargetObject == null) LightOrmException.Throw("Where Condition is null and no entity");
             foreach (var item in primaryCol)
             {
                 var val = item.GetValue(TargetObject);

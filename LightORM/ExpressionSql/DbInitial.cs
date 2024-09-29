@@ -11,18 +11,17 @@ namespace LightORM.ExpressionSql;
 public class DbInitial : IDbInitial
 {
     private readonly ISqlExecutor executor;
-    private IDbTable? dbTable;
-    private IDbTable DbTable => dbTable ??= executor.ConnectInfo.DbBaseType.GetDbTable(tableOption);
-    public DbInitial(ISqlExecutor executor)
+    private readonly IDatabaseTableHandler handler;
+    public DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler)
     {
         this.executor = executor;
+        this.handler = handler;
     }
 
     TableGenerateOption tableOption = new TableGenerateOption();
     public IDbInitial Configuration(Action<TableGenerateOption> option)
     {
         option?.Invoke(tableOption);
-        dbTable = executor.ConnectInfo.DbBaseType.GetDbTable(tableOption);
         return this;
     }
 
@@ -30,7 +29,7 @@ public class DbInitial : IDbInitial
     {
         try
         {
-            var sql = DbTable.GenerateDbTable<T>();
+            var sql = handler.GenerateDbTable<T>();
             executor.ExecuteNonQuery(sql);
             if (datas?.Length > 0)
             {

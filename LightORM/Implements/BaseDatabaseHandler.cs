@@ -1,25 +1,24 @@
-﻿using LightORM.Extension;
-using LightORM.SqlExecutor;
+﻿using LightORM.DbStruct;
+using LightORM.Extension;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace LightORM.DbStruct;
+namespace LightORM.Implements;
 
-internal abstract class DbTableBase : IDbTable
+public abstract class BaseDatabaseHandler : IDatabaseTableHandler
 {
+    protected abstract string ConvertToDbType(DbColumn type);
+    protected abstract string BuildColumn(DbColumn column);
+    protected abstract string DbEmphasis(string name);
+    protected abstract string BuildSql(DbTable table);
     protected TableGenerateOption Option { get; }
-    public DbTableBase(TableGenerateOption option)
+    public BaseDatabaseHandler(TableGenerateOption option)
     {
         Option = option;
     }
-    internal abstract string ConvertToDbType(DbColumn type);
-    internal abstract string BuildColumn(DbColumn column);
-    internal abstract string DbEmphasis(string name);
-    internal abstract string BuildSql(DbTable table);
     public string GenerateDbTable<T>()
     {
         try
@@ -34,7 +33,7 @@ internal abstract class DbTableBase : IDbTable
     }
     public virtual void SaveDbTableStruct()
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     protected static string GetIndexName(DbTable info, DbIndex index, int i)
@@ -47,3 +46,5 @@ internal abstract class DbTableBase : IDbTable
         return $"PK_{string.Join("_", pks.Select(c => c.Name))}";
     }
 }
+
+

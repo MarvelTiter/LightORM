@@ -18,7 +18,7 @@ public static partial class SelectExtension
         var dbKeys = keys.Distinct().ToArray();
         if (dbKeys.Length > 1)
         {
-            throw new LightOrmException($"不能设置不同的目标数据库: {string.Join(", ", dbKeys)}");
+            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", dbKeys)}");
         }
         return dbKeys.FirstOrDefault();
     }

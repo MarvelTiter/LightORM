@@ -16,16 +16,27 @@ public class SqlAopProvider
 
 public class ExpressionSqlOptions
 {
-    public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, string connStr, DbProviderFactory factory)
+    public ExpressionSqlOptions SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
-        return SetDatabase(ConstString.Main, dbBaseType, connStr, factory);
-    }
-    public ExpressionSqlOptions SetDatabase(string key, DbBaseType dbBaseType, string connStr, DbProviderFactory factory)
-    {
-        var info = new DbConnectInfo(dbBaseType, connStr, factory);
-        _ = StaticCache<DbConnectInfo>.GetOrAdd(key, () => info);
+        var info = new DbConnectInfo(dbBaseType, provider);
+        _ = StaticCache<DbConnectInfo>.GetOrAdd(key ?? ConstString.Main, () => info);
+        //_ = StaticCache<IDatabaseProvider>.GetOrAdd()
         return this;
     }
+    public ExpressionSqlOptions AddDatabaseHandler(DbBaseType dbBaseType, Func<TableGenerateOption, IDatabaseTableHandler> factory)
+    {
+        return this;
+    }
+    public ExpressionSqlOptions AddDatabaseCustomer(DbBaseType dbBaseType, ICustomDatabase customDatabase)
+    {
+        if (!StaticCache<ICustomDatabase>.HasKey(dbBaseType.Name))
+        {
+            StaticCache<ICustomDatabase>.GetOrAdd(dbBaseType.Name, () => customDatabase);
+        }
+        return this;
+    }
+
+    public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, IDatabaseProvider provider) => SetDatabase(null, dbBaseType, provider);
 
     public ExpressionSqlOptions SetTableContext(ITableContext context)
     {

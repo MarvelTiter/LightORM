@@ -1,20 +1,26 @@
-﻿using System;
-using System.Data;
+﻿using LightORM;
+using LightORM.DbStruct;
+using LightORM.Implements;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace LightORM.DbStruct;
+namespace LighrORM.Providers.SqlServer;
 
-internal class SqlServerDbTable : DbTableBase
+public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-
-    public SqlServerDbTable(TableGenerateOption option) : base(option)
+    protected override string BuildColumn(DbColumn column)
     {
-
+        var dbType = ConvertToDbType(column);
+        string dataType = $"{DbEmphasis(column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? Option.DefaultStringLength})" : "")}";
+        string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
+        string notNull = column.NotNull ? " NOT NULL" : "";
+        return $"{dataType}{identity}{notNull}";
     }
 
-    internal override string BuildSql(DbTable table)
+    protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -96,7 +102,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
         return defaultValueStr!;
     }
 
-    internal override string ConvertToDbType(DbColumn type)
+    protected override string ConvertToDbType(DbColumn type)
     {
         string? typeFullName = "";
         if (type.DataType.IsEnum)
@@ -126,14 +132,5 @@ CREATE TABLE {DbEmphasis(table.Name)}(
         };
     }
 
-    internal override string BuildColumn(DbColumn column)
-    {
-        var dbType = ConvertToDbType(column);
-        string dataType = $"{DbEmphasis(column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? Option.DefaultStringLength})" : "")}";
-        string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
-        string notNull = column.NotNull ? " NOT NULL" : "";
-        return $"{dataType}{identity}{notNull}";
-    }
-
-    internal override string DbEmphasis(string name) => $"[{name}]";
+    protected override string DbEmphasis(string name) => $"[{name}]";
 }

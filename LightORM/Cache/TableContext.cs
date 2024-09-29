@@ -48,7 +48,8 @@ internal static class TableContext
         {
             realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
             {
-                var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type ?? throw new LightOrmException("无法解析的表");
+                var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
+                if (rt is null) LightOrmException.Throw("无法解析的表");
                 return new AbstractTableType(rt);
             }).Type;
             return GetTableInfo(realType);

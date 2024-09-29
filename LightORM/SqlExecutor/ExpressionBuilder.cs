@@ -106,7 +106,7 @@ internal class ExpressionBuilder
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
             if (Constructors.Count() != 1)
-                throw new LightOrmException("Tuple must have one Constructor");
+                LightOrmException.Throw("Tuple must have one Constructor");
             var Constructor = Constructors[0];
 
             var Parameters = Constructor.GetParameters();

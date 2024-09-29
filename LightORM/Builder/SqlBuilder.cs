@@ -1,17 +1,17 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using LightORM.Cache;
-using LightORM.ExpressionSql.DbHandle;
 using LightORM.Extension;
 using LightORM.Implements;
-using LightORM.Utils;
 
 namespace LightORM.Builder;
 
 internal abstract record SqlBuilder : ISqlBuilder
 {
+    protected SqlBuilder(DbBaseType type)
+    {
+        DbType = type;
+    }
     public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
+
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
     public ITableEntityInfo MainTable => SelectedTables[0];
     public List<ITableEntityInfo> SelectedTables { get; set; } = [];
@@ -22,10 +22,11 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
-    public IDbHelper DbHelper => DbType.GetDbHelper();
-    public string AttachPrefix(string content) => DbType.AttachPrefix(content);
-    public string AttachEmphasis(string content) => DbType.AttachEmphasis(content);
+    public ICustomDatabase DbHelper => DbType.GetDbCustom();
+    public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
+    public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
     public int DbParameterStartIndex { get; set; }
+
     public void TryAddParameters(string sql, object? value)
     {
         if (value is null) return;
@@ -46,7 +47,7 @@ internal abstract record SqlBuilder : ISqlBuilder
         {
             return;
         }
-        var context = new ResolveContext(AllTables);
+        var context = new ResolveContext(DbHelper, AllTables);
         BeforeResolveExpressions(context);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {

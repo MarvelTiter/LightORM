@@ -17,7 +17,17 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Generators.Shared", "GenSha
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightOrmExtensionGenerator", "LightOrmExtensionGenerator\LightOrmExtensionGenerator.csproj", "{4E73E004-FD0A-40ED-94FC-915926C013E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceTest", "PerformanceTest\PerformanceTest.csproj", "{C4721389-51B0-4A9B-A431-064B2687AEE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceTest", "PerformanceTest\PerformanceTest.csproj", "{C4721389-51B0-4A9B-A431-064B2687AEE2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Providers", "Providers", "{568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.Sqlite", "Providers\LightORM.Providers.Sqlite\LightORM.Providers.Sqlite.csproj", "{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.Oracle", "Providers\LightORM.Providers.Oracle\LightORM.Providers.Oracle.csproj", "{3DF4274F-C819-4925-B106-CD196CCE77ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.MySql", "Providers\LightORM.Providers.MySql\LightORM.Providers.MySql.csproj", "{AEB0A551-E335-45A5-B181-21DCF712ACEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LighrORM.Providers.SqlServer", "Providers\LighrORM.Providers.SqlServer\LighrORM.Providers.SqlServer.csproj", "{0BEDA77B-263B-4F0D-82C9-646C82DA78A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,12 +59,32 @@ Global
 		{C4721389-51B0-4A9B-A431-064B2687AEE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4721389-51B0-4A9B-A431-064B2687AEE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4721389-51B0-4A9B-A431-064B2687AEE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DF4274F-C819-4925-B106-CD196CCE77ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DF4274F-C819-4925-B106-CD196CCE77ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DF4274F-C819-4925-B106-CD196CCE77ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DF4274F-C819-4925-B106-CD196CCE77ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEB0A551-E335-45A5-B181-21DCF712ACEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEB0A551-E335-45A5-B181-21DCF712ACEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEB0A551-E335-45A5-B181-21DCF712ACEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEB0A551-E335-45A5-B181-21DCF712ACEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BEDA77B-263B-4F0D-82C9-646C82DA78A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BEDA77B-263B-4F0D-82C9-646C82DA78A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BEDA77B-263B-4F0D-82C9-646C82DA78A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BEDA77B-263B-4F0D-82C9-646C82DA78A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0C3325BB-C186-4E45-A567-69DAF5411E8B} = {C1941487-4737-4B37-A73F-D6679F44A4C7}
+		{BF438751-ECF2-4306-AFC1-CA9A6EDB4EDC} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
+		{3DF4274F-C819-4925-B106-CD196CCE77ED} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
+		{AEB0A551-E335-45A5-B181-21DCF712ACEF} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
+		{0BEDA77B-263B-4F0D-82C9-646C82DA78A8} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E100B2EB-6CFD-4F8B-9966-2F4050785536}

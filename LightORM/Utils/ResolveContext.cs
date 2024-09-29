@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using LightORM.Extension;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Reflection;
 
@@ -11,15 +12,20 @@ public class ResolveContext
     private readonly List<ITableEntityInfo> selectedTables = [];
     private string? parameterPrefix;
     public string? ParameterPrefix => parameterPrefix;
-    public ResolveContext(params ITableEntityInfo[] selectedTables)
+    public ICustomDatabase Database { get; }
+    public ResolveContext(ICustomDatabase database, params ITableEntityInfo[] selectedTables)
     {
         //foreach (var item in selectedTables)
         //{
         //    this.selectedTables.Add(item.Type!, item);
         //}
+        Database = database;
         this.selectedTables.AddRange(selectedTables);
     }
-
+    public static ResolveContext Create(DbBaseType type)
+    {
+        return new ResolveContext(type.GetDbCustom());
+    }
     public void SetParamPrefix(string? parameterPrefix)
     {
         this.parameterPrefix = $"{parameterPrefix}_";

@@ -2,7 +2,7 @@
 
 namespace LightORM.DbStruct;
 
-internal struct DbTable
+public struct DbTable
 {
     public string Name { get; set; }
     public IEnumerable<DbIndex> Indexs { get; set; }

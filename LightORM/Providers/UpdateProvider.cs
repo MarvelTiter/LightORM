@@ -9,12 +9,12 @@ namespace LightORM.Providers
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
         private readonly ISqlExecutor executor;
-        UpdateBuilder<T> SqlBuilder = new UpdateBuilder<T>();
+        UpdateBuilder<T> SqlBuilder;
 
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder = new UpdateBuilder<T>(this.executor.ConnectInfo.DbBaseType);
             SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
@@ -22,7 +22,7 @@ namespace LightORM.Providers
         public UpdateProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
             this.executor = executor;
-            SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+            SqlBuilder = new UpdateBuilder<T>(this.executor.ConnectInfo.DbBaseType);
             SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.IsBatchUpdate = true;
             SqlBuilder.TargetObjects = entities;

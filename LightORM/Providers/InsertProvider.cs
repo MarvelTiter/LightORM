@@ -8,11 +8,11 @@ namespace LightORM.Providers;
 internal sealed class InsertProvider<T> : IExpInsert<T>
 {
     private readonly ISqlExecutor executor;
-    InsertBuilder<T> SqlBuilder = new InsertBuilder<T>();
+    InsertBuilder<T> SqlBuilder;
     public InsertProvider(ISqlExecutor executor, T? entity)
     {
         this.executor = executor;
-        SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+        SqlBuilder = new InsertBuilder<T>(this.executor.ConnectInfo.DbBaseType);
         SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObject = entity;
     }
@@ -20,7 +20,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     public InsertProvider(ISqlExecutor executor, IEnumerable<T> entities)
     {
         this.executor = executor;
-        SqlBuilder.DbType = this.executor.ConnectInfo.DbBaseType;
+        SqlBuilder = new InsertBuilder<T>(this.executor.ConnectInfo.DbBaseType);
         SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObjects = entities;
         SqlBuilder.IsBatchInsert = true;

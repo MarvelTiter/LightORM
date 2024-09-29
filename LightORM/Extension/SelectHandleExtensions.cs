@@ -24,6 +24,10 @@ internal static class SelectHandleExtensions
     }
     internal static IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(this IExpSelect select, Expression exp)
     {
+        if (exp is LambdaExpression lambda && lambda.Body is not NewExpression)
+        {
+            LightOrmException.Throw("GroupBy请返回匿名类型，否则无法再后续操作中解析属性来源");
+        }
         select.SqlBuilder.Expressions.Add(new ExpressionInfo()
         {
             ResolveOptions = SqlResolveOptions.Group,

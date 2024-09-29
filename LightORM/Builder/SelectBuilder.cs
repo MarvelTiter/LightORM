@@ -19,15 +19,17 @@ namespace LightORM.Builder
         public SelectBuilder SqlBuilder { get; set; }
         public bool IsAll { get; set; }
     }
-    internal record SelectBuilder : SqlBuilder
+    internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
-        public SelectBuilder(DbBaseType dbType)
+        public SelectBuilder(DbBaseType dbType):base(dbType)
         {
             DbType = dbType;
             IncludeContext = new IncludeContext(dbType);
             Indent = new Lazy<string>(() => new string(' ', 4 * Level));
         }
         //const string Indent = "    ";
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
         private Lazy<string> Indent { get; }
         public List<SelectBuilder> TempViews { get; } = [];
         public SelectBuilder? SubQuery { get; set; }
@@ -38,19 +40,17 @@ namespace LightORM.Builder
         public int UnionIndex { get; set; }
         //public bool UseTemp { get; set; }
         public string? TempName { get; set; }
-        public int PageIndex { get; set; }
-        public int PageSize { get; set; }
         public bool IsDistinct { get; set; }
         public bool IsRollup { get; set; }
         public string SelectValue { get; set; } = "*";
         public int Level { get; set; }
         public List<JoinInfo> Joins { get; set; } = [];
-        public List<string> GroupBy { get; set; } = [];
-        public List<string> OrderBy { get; set; } = [];
         public List<string> Having { get; set; } = [];
         public List<IncludeInfo> Includes { get; set; } = [];
         public IncludeContext IncludeContext { get; set; } = default!;
 
+        public List<string> GroupBy { get; set; } = [];
+        public List<string> OrderBy { get; set; } = [];
         public object? AdditionalValue { get; set; }
 
         protected override Lazy<ITableEntityInfo[]> GetAllTables()
@@ -92,7 +92,7 @@ namespace LightORM.Builder
                     {
                         if (i > SelectedTables.Count - 1)
                         {
-                            throw new LightOrmException($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
+                            LightOrmException.Throw($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
                         }
                         joinInfo.EntityInfo = SelectedTables[i];
                     }

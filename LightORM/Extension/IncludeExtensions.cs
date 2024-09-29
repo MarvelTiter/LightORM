@@ -9,7 +9,7 @@ public static class IncludeExtensions
     {
         var option = SqlResolveOptions.Select;
         option.DbType = include.SqlBuilder.DbType;
-        var result = exp.Resolve(option);
+        var result = exp.Resolve(option, ResolveContext.Create(include.Executor.ConnectInfo.DbBaseType));
         var parentTable = TableContext.GetTableInfo(typeof(TElement));
         var navCol = parentTable.GetColumnInfo(result.NavigateMembers!.First());
         var navInfo = navCol.NavigateInfo!;

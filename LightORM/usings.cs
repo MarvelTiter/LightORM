@@ -18,3 +18,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
 
 //TODO SqlExecutor对象管理优化
+//TODO 开窗函数
