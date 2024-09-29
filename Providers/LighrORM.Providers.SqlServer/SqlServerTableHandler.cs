@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LighrORM.Providers.SqlServer;
+namespace LightORM.Providers.SqlServer;
 
 public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {

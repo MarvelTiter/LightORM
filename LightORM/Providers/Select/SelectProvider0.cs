@@ -4,7 +4,7 @@ namespace LightORM.Providers.Select;
 
 internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
-    [NotNull] public SelectBuilder? SqlBuilder { get; set; }
+    public SelectBuilder SqlBuilder { get; set; } = default!;
     public ISqlExecutor Executor { get; }
     public DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
 

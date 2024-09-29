@@ -18,8 +18,8 @@ public abstract class DbInitialContext
         bool hasTable = true;
         bool update = false;
         using var executor = SqlExecutorProvider.GetExecutor(DatabaseKey());
-        var handler = StaticCache<IDatabaseTableHandler>.Get(DatabaseKey());
-        if (handler == null)
+        var handler = StaticCache<DbHandlerRecord>.Get(DatabaseKey());
+        if (handler?.Factory == null)
         {
             return;
         }
@@ -37,7 +37,7 @@ public abstract class DbInitialContext
         {
             hasTable = false;
         }
-        var context = new DbInitial(executor, handler);
+        var context = new DbInitial(executor, handler.Factory);
         Info ??= new DbInfo();
         if (!hasTable)
         {

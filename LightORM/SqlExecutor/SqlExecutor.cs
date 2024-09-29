@@ -45,7 +45,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         DbConnection.Close();
     }
 
-#if !NET45
+#if NET6_0_OR_GREATER
     public async Task BeginTranAsync()
     {
         if (DbConnection.State != ConnectionState.Open)
@@ -98,16 +98,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public Task TryCloseAsync(bool needToClose)
     {
-#if NET45
-        if (needToClose)
-            DbConnection?.Close();
-        if (DisposeImmediately)
-        {
-            Dispose(true);
-        }
-        return Task.FromResult(true);
-
-#else
+#if NET6_0_OR_GREATER
         if (DbConnection != null && needToClose)
         {
             return DbConnection.CloseAsync();
@@ -117,6 +108,14 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             Dispose(true);
         }
         return Task.CompletedTask;
+#else
+        if (needToClose)
+            DbConnection?.Close();
+        if (DisposeImmediately)
+        {
+            Dispose(true);
+        }
+        return Task.FromResult(true);
 #endif
     }
 

@@ -1,8 +1,8 @@
-﻿using LightORM.Implements;
+﻿using LightORM;
 using LightORM.Interfaces;
-using System.Text;
+using System.Data.Common;
 
-namespace LighrORM.Providers.SqlServer;
+namespace LightORM.Providers.SqlServer;
 
 public enum SqlServerVersion
 {
@@ -11,48 +11,28 @@ public enum SqlServerVersion
     Over2017,
 }
 
-public sealed class SqlServerProvider : DatabaseProvider
+public sealed class SqlServerProvider : IDatabaseProvider
 {
-    public SqlServerProvider(SqlServerVersion version = SqlServerVersion.V1) : base(new SqlServerMethodResolver(version))
-    {
-        Version = version;
-    }
-    public SqlServerVersion Version { get; }
-    public override string Prefix => "@";
-    public override string Emphasis => "[]";
+    public string MasterConnectionString { get; }
 
-    public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
-    {
-        if (Version == SqlServerVersion.Over2012)
-        {
-            sql.AppendLine($"OFFSET {(builder.PageIndex - 1) * builder.PageSize} ROWS");
-            sql.AppendLine($"FETCH NEXT {builder.PageSize} ROWS ONLY");
-        }
-        else
-        {
-            var orderByString = "";
-            var orderByType = "";
-            if (builder.OrderBy.Count == 0)
-            {
-                var col = builder.MainTable.Columns.First(c => c.IsPrimaryKey);
-                orderByString = $"Sub.{col.ColumnName}";
-                orderByType = " ASC";
-            }
-            else
-            {
-                orderByString = string.Join(",", builder.OrderBy.Select(s => s.Split('.')[1]));
-                orderByType = (builder.AdditionalValue == null ? "" : $" {builder.AdditionalValue}");
-            }
-            sql.Insert(6, " TOP (100) PERCENT");
-            sql.Insert(0, $" SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM ({Environment.NewLine} ");
-            sql.AppendLine("  ) Sub");
-            // 子查询筛选 ROWNO
-            sql.Insert(0, $" SELECT * FROM ({Environment.NewLine} ");
-            sql.AppendLine("  ) Paging");
-            sql.AppendLine($" WHERE Paging.ROWNO > {(builder.PageIndex - 1) * builder.PageSize}");
-            sql.Append($" AND Paging.ROWNO <= {builder.PageIndex * builder.PageSize}");
-        }
-    }
+    public ICustomDatabase CustomDatabase { get; }
 
-    public override string ReturnIdentitySql() => "SELECT SCOPE_IDENTITY()";
+    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
+
+    public string[] SlaveConnectionStrings { get; }
+
+    public DbProviderFactory DbProviderFactory { get; }
+    public SqlServerProvider(ICustomDatabase customDatabase
+        , Func<TableGenerateOption, IDatabaseTableHandler>? tableHandler
+        , DbProviderFactory factory
+        , string master
+        , params string[] slaves)
+    {
+        CustomDatabase = customDatabase;
+        TableHandler = tableHandler;
+        DbProviderFactory = factory;
+        MasterConnectionString = master;
+        SlaveConnectionStrings = slaves;
+    }
+    
 }

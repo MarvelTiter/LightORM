@@ -1,8 +1,4 @@
-﻿using System.Data.Common;
-using LightORM.Cache;
-using LightORM.ExpressionSql;
-
-namespace LightORM;
+﻿namespace LightORM;
 
 internal class ConstString
 {
@@ -14,28 +10,31 @@ public class SqlAopProvider
     public Action<string, object?>? DbLog { get; set; }
 }
 
+internal record DbHandlerRecord(Func<TableGenerateOption, IDatabaseTableHandler>? Factory);
+
 public class ExpressionSqlOptions
 {
     public ExpressionSqlOptions SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
+        var k = key ?? ConstString.Main;
+        if (StaticCache<DbConnectInfo>.HasKey(k))
+        {
+            LightOrmException.Throw($"SetDatabase 设置了重复的Key => {key}");
+        }
         var info = new DbConnectInfo(dbBaseType, provider);
-        _ = StaticCache<DbConnectInfo>.GetOrAdd(key ?? ConstString.Main, () => info);
+        _ = StaticCache<DbConnectInfo>.GetOrAdd(k, () => info);
         //_ = StaticCache<IDatabaseProvider>.GetOrAdd()
-        return this;
-    }
-    public ExpressionSqlOptions AddDatabaseHandler(DbBaseType dbBaseType, Func<TableGenerateOption, IDatabaseTableHandler> factory)
-    {
-        return this;
-    }
-    public ExpressionSqlOptions AddDatabaseCustomer(DbBaseType dbBaseType, ICustomDatabase customDatabase)
-    {
         if (!StaticCache<ICustomDatabase>.HasKey(dbBaseType.Name))
         {
-            StaticCache<ICustomDatabase>.GetOrAdd(dbBaseType.Name, () => customDatabase);
+            StaticCache<ICustomDatabase>.GetOrAdd(dbBaseType.Name, () => provider.CustomDatabase);
+        }
+        if (!StaticCache<DbHandlerRecord>.HasKey(dbBaseType.Name))
+        {
+            StaticCache<DbHandlerRecord>.GetOrAdd(dbBaseType.Name, () => new DbHandlerRecord(provider.TableHandler));
         }
         return this;
     }
-
+    
     public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, IDatabaseProvider provider) => SetDatabase(null, dbBaseType, provider);
 
     public ExpressionSqlOptions SetTableContext(ITableContext context)

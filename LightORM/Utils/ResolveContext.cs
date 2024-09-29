@@ -64,7 +64,10 @@ public class ResolveContext
     {
         var key = $"{anonymousType.FullName}_{anonymousName}";
         anonymousMap.TryGetValue(key, out var member);
-        ArgumentNullException.ThrowIfNull(member, $"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
-        return member;
+        if (member == null)
+        {
+            LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
+        }
+        return member!;
     }
 }

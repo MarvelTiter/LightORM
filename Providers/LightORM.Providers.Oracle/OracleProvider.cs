@@ -1,24 +1,29 @@
-﻿using LightORM.Implements;
-using LightORM.Interfaces;
-using System.Text;
+﻿using LightORM.Interfaces;
+using System.Data.Common;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleProvider : DatabaseProvider
+public sealed class OracleProvider : IDatabaseProvider
 {
-    public OracleProvider() : base(new OracleMethodResolver())
-    {
+    public string MasterConnectionString { get; }
 
-    }
-    public override string Prefix => ":";
-    public override string Emphasis => "\"\"";
-    public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
+    public ICustomDatabase CustomDatabase { get; }
+
+    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
+
+    public string[] SlaveConnectionStrings { get; }
+
+    public DbProviderFactory DbProviderFactory { get; }
+    public OracleProvider(ICustomDatabase customDatabase
+        , Func<TableGenerateOption, IDatabaseTableHandler>? tableHandler
+        , DbProviderFactory factory
+        , string master
+        , params string[] slaves)
     {
-        sql.Insert(0, $" SELECT ROWNUM as ROWNO, SubMax.* FROM ({Environment.NewLine} ");
-        sql.AppendLine(" ) SubMax WHERE ROWNUM <= ");
-        sql.Append(builder.PageIndex * builder.PageSize);
-        sql.Insert(0, $" SELECT * FROM ({Environment.NewLine} ");
-        sql.AppendLine(" ) SubMin WHERE SubMin.ROWNO > ");
-        sql.Append((builder.PageIndex - 1) * builder.PageSize);
+        CustomDatabase = customDatabase;
+        TableHandler = tableHandler;
+        DbProviderFactory = factory;
+        MasterConnectionString = master;
+        SlaveConnectionStrings = slaves;
     }
 }

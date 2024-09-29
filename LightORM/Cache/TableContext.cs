@@ -50,7 +50,7 @@ internal static class TableContext
             {
                 var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
                 if (rt is null) LightOrmException.Throw("无法解析的表");
-                return new AbstractTableType(rt);
+                return new AbstractTableType(rt!);
             }).Type;
             return GetTableInfo(realType);
         }
@@ -59,10 +59,12 @@ internal static class TableContext
         {
             var entityInfo = new TableEntity(type);
             var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
-
+#if NET6_0_OR_GREATER
             var tableAttribute = type.GetAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
             entityInfo.CustomName = lightTableAttribute?.Name ?? tableAttribute?.Name ?? type.Name;
-
+#else
+            entityInfo.CustomName = lightTableAttribute?.Name ?? type.Name;
+#endif
             if (!entityInfo.IsAnonymousType)
             {
                 entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;

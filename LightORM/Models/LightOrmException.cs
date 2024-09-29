@@ -13,7 +13,6 @@ public class LightOrmException : Exception
     {
 
     }
-    [DoesNotReturn]
     public static void Throw(string message) => throw new LightOrmException(message);
     /// <summary>
     /// Throws an <see cref="LightOrmException"/> if <paramref name="argument"/> is null.

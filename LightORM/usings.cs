@@ -17,5 +17,11 @@ global using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
 
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit { }
+}
+
 //TODO SqlExecutor对象管理优化
 //TODO 开窗函数

@@ -1,20 +1,21 @@
 ﻿using LightORM.Interfaces;
 using System.Data.Common;
 
-namespace LightORM.Providers.MySql;
+namespace LightORM.Providers.Sqlite;
 
-public sealed class MySqlProvider : IDatabaseProvider
+public sealed class SqliteProvider : IDatabaseProvider
 {
+    public DbProviderFactory DbProviderFactory { get; }
+
     public string MasterConnectionString { get; }
+
+    public string[] SlaveConnectionStrings { get; }
 
     public ICustomDatabase CustomDatabase { get; }
 
     public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
 
-    public string[] SlaveConnectionStrings { get; }
-
-    public DbProviderFactory DbProviderFactory { get; }
-    public MySqlProvider(ICustomDatabase customDatabase
+    public SqliteProvider(ICustomDatabase customDatabase
         , Func<TableGenerateOption, IDatabaseTableHandler>? tableHandler
         , DbProviderFactory factory
         , string master
@@ -26,5 +27,4 @@ public sealed class MySqlProvider : IDatabaseProvider
         MasterConnectionString = master;
         SlaveConnectionStrings = slaves;
     }
-
 }

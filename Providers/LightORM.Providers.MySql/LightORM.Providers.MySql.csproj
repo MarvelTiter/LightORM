@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MySqlConnector" Version="2.3.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\LightORM\LightORM.csproj" />
   </ItemGroup>
 

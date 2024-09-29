@@ -2,7 +2,7 @@
 using LightORM.Implements;
 using System.Linq.Expressions;
 
-namespace LighrORM.Providers.SqlServer;
+namespace LightORM.Providers.SqlServer;
 
 public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
 {
