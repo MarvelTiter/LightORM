@@ -27,19 +27,28 @@
 - [待办](#待办)
 
 # 简介
-无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。除去使用生成器生成的多个泛型的扩展类型，代码行数约为5000。使用`Expression`动态构建类型映射。
 
+无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。使用`Expression`动态构建类型映射。
+
+主体
+```
+dotnet add package MT.LightORM --version 2.1.9-pre
+```
+Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` )
+```
+dotnet add package LightORM.Providers.Sqlite --version 0.0.1
+```
 # 注册和配置
 ```csharp
 // IServiceCollection
 services.AddLightOrm(option => {
-    option.SetDatabase(DbBaseType, ConnectionString, DbProviderFactory);
+    option.UseSqlite("DataSource=" + path);
 })
 // 直接使用
 var path = Path.GetFullPath("../../../test.db");
 ExpSqlFactory.Configuration(option =>
 {
-    option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+    option.UseSqlite("DataSource=" + path);
     option.SetTableContext(new TestTableContext());
     option.SetWatcher(aop =>
     {
