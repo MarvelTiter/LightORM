@@ -17,18 +17,16 @@
 
 	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
 		<PackageReference Include="MT.LightORM" Version="2.1.9-pre" />
-		<ProjectReference Include="LighrORM.Providers.SqlServer" Version="*"/>
-		<ProjectReference Include="LightORM.Providers.MySql" Version="*"/>
-		<ProjectReference Include="LightORM.Providers.Oracle" Version="*"/>
+		<PackageReference Include="LightORM.Providers.SqlServer" Version="*"/>
+		<PackageReference Include="LightORM.Providers.MySql" Version="*"/>
+		<PackageReference Include="LightORM.Providers.Oracle" Version="*"/>
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
 		<ProjectReference Include="..\src\LightORM\LightORM.csproj" />
-		<ProjectReference Include="..\src\Providers\LighrORM.Providers.SqlServer\LighrORM.Providers.SqlServer.csproj" />
+		<ProjectReference Include="..\src\Providers\LightORM.Providers.SqlServer\LightORM.Providers.SqlServer.csproj" />
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.MySql\LightORM.Providers.MySql.csproj" />
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.Oracle\LightORM.Providers.Oracle.csproj" />
-	</ItemGroup>
-	<ItemGroup >
-	  <ProjectReference Include="..\src\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
+		<ProjectReference Include="..\src\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
 	</ItemGroup>
 
 </Project>
