@@ -27,6 +27,11 @@ namespace LightORM.Implements
             methods.Add(nameof(TrimEnd), TrimEnd);
             methods.Add(nameof(Where), Where);
             methods.Add(nameof(When), When);
+            methods.Add(nameof(RowNumber), RowNumber);
+            methods.Add(nameof(Lag), Lag);
+            methods.Add(nameof(PartitionBy), PartitionBy);
+            methods.Add(nameof(OrderBy), OrderBy);
+            methods.Add(nameof(Value), Value);
         }
         public void Resolve(IExpressionResolver resolver, MethodCallExpression expression)
         {
@@ -37,6 +42,7 @@ namespace LightORM.Implements
             }
             action.Invoke(resolver, expression);
         }
+
         public virtual void Count(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (methodCall.Arguments.Count > 0)
@@ -61,6 +67,7 @@ namespace LightORM.Implements
                 resolver.Sql.Append("COUNT(*)");
             }
         }
+
         public virtual void Sum(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (methodCall.Arguments.Count > 1)
@@ -137,14 +144,17 @@ namespace LightORM.Implements
         {
             throw new NotSupportedException();
         }
+
         public virtual void Contains(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
         }
+
         public virtual void EndsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
         }
+
         public virtual void Substring(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
@@ -188,6 +198,46 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Visit(methodCall.Arguments[1]);
         }
+        #endregion
+
+        #region 窗口函数
+
+        public virtual void RowNumber(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("ROW_NUMBER() OVER(");
+        }
+
+        public virtual void Lag(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("LAG(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(") OVER(");
+        }
+
+
+
+
+        public virtual void PartitionBy(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" PARTITION BY ");
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+
+        public virtual void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" ORDER BY ");
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+
+        public virtual void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" )");
+        }
+
+
         #endregion
     }
 }

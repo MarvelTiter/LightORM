@@ -45,6 +45,10 @@ internal static class ExpressionExtensions
             ExpressionType.OrElse => " OR ",
             ExpressionType.LessThan => " < ",
             ExpressionType.LessThanOrEqual => " <= ",
+            ExpressionType.Add => " + ",
+            ExpressionType.Subtract => " - ",
+            ExpressionType.Multiply => " * ",
+            ExpressionType.Divide => " / ",
             _ => throw new NotImplementedException("未实现的节点类型" + expressionNodeType)
         };
     }
@@ -129,7 +133,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             Sql.Append(parameterName);
             return null;
         }
-        if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join)
+        if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
             Sql.Append("( ");
         }
@@ -142,7 +146,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         var op = exp.NodeType.OperatorParser(useIs);
         Sql.Insert(insertIndex, op);
 
-        if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join)
+        if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
             Sql.Append(" )");
         }

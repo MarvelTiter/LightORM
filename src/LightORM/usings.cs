@@ -30,3 +30,4 @@ namespace System.Runtime.CompilerServices
 //TODO IDatabaseProvider代替DbConnectInfo?
 //TODO CaseWhen语句和三元表达式解析
 //TODO FromQuery子查询
+//TODO 添加CancellationToken参数

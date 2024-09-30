@@ -5,7 +5,15 @@
 /// </summary>
 public class WinFn
 {
-    public static IWindowFunction<T> Lag<T>(T? column, int offset = 1, T? defaultValue = default)
+    public static IWindowFunction<T> Lag<T>(T? column)
+    {
+        return default!;
+    }
+    public static IWindowFunction<T> Lag<T>(T? column, int offset)
+    {
+        return default!;
+    }
+    public static IWindowFunction<T> Lag<T>(T? column, int offset, T? defaultValue)
     {
         return default!;
     }
@@ -19,6 +27,6 @@ public class WinFn
 public interface IWindowFunction<T>
 {
     IWindowFunction<T> PartitionBy(object? column);
-    IWindowFunction<T> OrderBy(object? column);
+    IWindowFunction<T> OrderBy<TColumn>(TColumn? column);
     T Value();
 }
