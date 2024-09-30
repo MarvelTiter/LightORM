@@ -2,7 +2,11 @@
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="small">
-            <EnumSelect Style="width:150px;" AllowClear Placeholder="选择数据库" TEnum="DbBaseType?" @bind-Value="@selectedDb" DropdownMatchSelectWidth="@false"></EnumSelect>
+            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@selectedDb" DropdownMatchSelectWidth="@false">
+                <SimpleSelectOption Value="Mysql" Label="MySql"></SimpleSelectOption>
+                <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
+                <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
+            </SimpleSelect>
             <Input @bind-Value="@connectstring"></Input>
             <Button Type="primary" OnClick="@Connect">连接</Button>
             <Button Type="primary" OnClick="@Build">生成</Button>

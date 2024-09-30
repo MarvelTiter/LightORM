@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net462;net6.0;net8.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>MarvelTiter</Authors>
+		<Version>0.0.1</Version>
+		<Description>LightORM Sqlite扩展</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\Nuget.md">
+	    <PackagePath>\</PackagePath>
+	    <Pack>True</Pack>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="2.1.9-pre" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
+	</ItemGroup>
+	
+</Project>

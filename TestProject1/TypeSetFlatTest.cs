@@ -19,8 +19,7 @@ public class TypeSetFlatTest : TestBase
         Expression<Func<User, Power, object>> result = (u, p) => new { u };
 
         var n = FlatTypeSet.Default.Flat(exp);
-        ExpressionResolver resolver = new ExpressionResolver(SqlResolveOptions.Select);
-        var nn = n.Resolve(SqlResolveOptions.Select);
+        var nn = n.Resolve(SqlResolveOptions.Select, ResolveCtx);
     }
 
     [TestMethod]

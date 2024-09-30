@@ -29,5 +29,15 @@ namespace TestProject1.SqlTest
                 });
             Console.WriteLine(sql);
         }
+
+        [TestMethod]
+        public void GroupByReturn()
+        {
+            var sql = Db.Select<User>()
+                .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
+                .GroupBy(w => new { w.Tb1.UserId })
+                .ToSql();
+            Console.WriteLine(sql);
+        }
     }
 }

@@ -1,16 +1,19 @@
+using LightORM.Providers.Sqlite.Extensions;
 using System.Data.SQLite;
 namespace TestProject1;
 
 public class TestBase
 {
     protected IExpressionContext Db { get; }
+    protected ResolveContext ResolveCtx { get; }
     public TestBase()
     {
         var path = Path.GetFullPath("../../../test.db");
 
         ExpSqlFactory.Configuration(option =>
         {
-            option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+            //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+            option.UseSqlite("DataSource=" + path);
             option.SetTableContext(new TestTableContext());
             option.SetWatcher(aop =>
             {
@@ -21,5 +24,6 @@ public class TestBase
             });//.InitializedContext<TestInitContext>();
         });
         Db = ExpSqlFactory.GetContext();
+        ResolveCtx = ResolveContext.Create(DbBaseType.Sqlite);
     }
 }

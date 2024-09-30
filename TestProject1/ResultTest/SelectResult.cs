@@ -16,7 +16,12 @@ namespace TestProject1.ResultTest
         [TestMethod]
         public void SelectList()
         {
-            var list = Db.Select<User>().ToList(u => new UU { UserName = u.UserName }).ToList();
+            var list = Db.Select<User>().ToList(u => new { u.UserName }).ToList();
+            foreach (var item in list)
+            {
+                Console.WriteLine(item.UserName);
+            }
+
         }
     }
 }
