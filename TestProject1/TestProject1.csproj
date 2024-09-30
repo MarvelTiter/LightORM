@@ -20,9 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="..\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
-	  <ProjectReference Include="..\LightORM\LightORM.csproj" />
-	  <ProjectReference Include="..\Providers\LightORM.Providers.Sqlite\LightORM.Providers.Sqlite.csproj" />
+	  <ProjectReference Include="..\src\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
+	  <ProjectReference Include="..\src\LightORM\LightORM.csproj" />
+	  <ProjectReference Include="..\src\Providers\LightORM.Providers.Sqlite\LightORM.Providers.Sqlite.csproj" />
   </ItemGroup>
 
 </Project>

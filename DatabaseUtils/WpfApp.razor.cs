@@ -19,7 +19,7 @@ namespace DatabaseUtils
 {
     public partial class WpfApp
     {
-        DbBaseType? selectedDb;
+        string? selectedDb;
         string? connectstring;
 
         IEnumerable<DatabaseTable> Tables = [];
@@ -31,12 +31,12 @@ namespace DatabaseUtils
         
         async Task Connect()
         {
-            if (!selectedDb.HasValue || string.IsNullOrWhiteSpace(connectstring))
+            if (selectedDb == null || string.IsNullOrWhiteSpace(connectstring))
             {
                 MessageBox.Show("数据库类型和连接字符串不能为空");
                 return;
             }
-            dbOperator = DbFactory.GetDbOperator(Context, selectedDb!.Value, connectstring!);
+            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(selectedDb), connectstring!);
             Tables = await dbOperator.GetTablesAsync();
         }
 
@@ -77,7 +77,6 @@ namespace DatabaseUtils
                 {
                     MessageBox.Show(ex.Message);
                 }
-
             }
         }
 

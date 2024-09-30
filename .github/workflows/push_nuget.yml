@@ -25,9 +25,24 @@ jobs:
         dotnet-version: 8.0.x
     - name: Build
       run: |
-        dotnet build ./LightOrmTableContextGenerator -c Release
-        dotnet build ./LightORM -c Release
-        dotnet pack ./LightORM/LightORM.csproj -c Release -o publish
-    - name: Push
+        dotnet build ./src -c Release
+    - name: Push Main
       run: |
+        dotnet pack ./src/LightORM/LightORM.csproj -c Release -o publish
         dotnet nuget push 'publish/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+    - name: Push SqlServer Provider
+      run: |
+        dotnet pack ./src/Providers/LighrORM.Providers.SqlServer/LighrORM.Providers.SqlServer.csproj -c Release -o publish/SqlServer
+        dotnet nuget push 'publish/SqlServer/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.PROVIDERS_KEY}} --skip-duplicate
+    - name: Push MySql Provider
+      run: |
+        dotnet pack ./src/Providers/LighrORM.Providers.MySql/LighrORM.Providers.MySql.csproj -c Release -o publish/MySql
+        dotnet nuget push 'publish/MySql/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.PROVIDERS_KEY}} --skip-duplicate
+    - name: Push Oracle Provider
+      run: |
+        dotnet pack ./src/Providers/LighrORM.Providers.Oracle/LighrORM.Providers.Oracle.csproj -c Release -o publish/Oracle
+        dotnet nuget push 'publish/Oracle/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.PROVIDERS_KEY}} --skip-duplicate
+    - name: Push Sqlite Provider
+      run: |
+        dotnet pack ./src/Providers/LighrORM.Providers.Sqlite/LighrORM.Providers.Sqlite.csproj -c Release -o publish/Sqlite
+        dotnet nuget push 'publish/Sqlite/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.PROVIDERS_KEY}} --skip-duplicate                

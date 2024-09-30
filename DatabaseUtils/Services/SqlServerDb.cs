@@ -1,6 +1,7 @@
 ﻿
 using DatabaseUtils.Models;
 using LightORM;
+using LightORM.Providers.SqlServer;
 using LightORM.Utils;
 
 namespace DatabaseUtils.Services
@@ -52,7 +53,7 @@ order by a.id,a.colorder
 
         protected override DbConnectInfo GetConnectInfo()
         {
-            return new DbConnectInfo(DbBaseType.SqlServer, ConnectionString, Microsoft.Data.SqlClient.SqlClientFactory.Instance);
+            return new DbConnectInfo(DbBaseType.SqlServer, SqlServerProvider.Create(SqlServerVersion.V1, ConnectionString));
         }
     }
 }
