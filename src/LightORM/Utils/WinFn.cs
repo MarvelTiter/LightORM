@@ -21,6 +21,10 @@ public class WinFn
     {
         return default!;
     }
+    public static IWindowFunction<int> Rank()
+    {
+        return default!;
+    }
 }
 
 
@@ -28,5 +32,6 @@ public interface IWindowFunction<T>
 {
     IWindowFunction<T> PartitionBy(object? column);
     IWindowFunction<T> OrderBy<TColumn>(TColumn? column);
+    IWindowFunction<T> OrderByDesc<TColumn>(TColumn? column);
     T Value();
 }

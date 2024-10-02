@@ -40,4 +40,18 @@ public class SqlFunTest : TestBase
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
+
+    [TestMethod]
+    public void CaseWhen()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Total = SqlFn.Count(SqlFn.Case<int?>().When(u.Age > 10).Then(u.Age).Else(0).End())
+        };
+        var table = TestTableContext.TestProject1_Models_User;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
 }

@@ -9,16 +9,18 @@ using System.Text;
 
 namespace LightORM.Builder
 {
-    internal struct UnionItem
+    internal struct UnionItem(SelectBuilder select, bool all)
     {
-        public UnionItem(SelectBuilder select, bool all)
-        {
-            SqlBuilder = select;
-            IsAll = all;
-        }
-        public SelectBuilder SqlBuilder { get; set; }
-        public bool IsAll { get; set; }
+        public SelectBuilder SqlBuilder { get; set; } = select;
+        public bool IsAll { get; set; } = all;
     }
+
+    internal struct SelectInsert(string tableName, string columns)
+    {
+        public string TableName { get; set; } = tableName;
+        public string InsertColumns { get; set; } = columns;
+    }
+
     internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
         public SelectBuilder(DbBaseType dbType):base(dbType)
@@ -37,6 +39,7 @@ namespace LightORM.Builder
         public bool IsSubQuery { get; set; }
         public bool IsTemp { get; set; }
         public bool IsUnion { get; set; }
+        public SelectInsert? InsertInfo { get; set; }
         public int UnionIndex { get; set; }
         //public bool UseTemp { get; set; }
         public string? TempName { get; set; }
@@ -102,7 +105,7 @@ namespace LightORM.Builder
             {
                 if (!string.IsNullOrWhiteSpace(result.SqlString) && !MainTable.IsAnonymousType)
                 {
-                    SelectValue = result.SqlString;
+                    SelectValue = result.SqlString!;
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.GroupBy)
@@ -196,6 +199,11 @@ namespace LightORM.Builder
         {
             ResolveExpressions();
             StringBuilder sb = new StringBuilder();
+            if (InsertInfo.HasValue)
+            {
+                sb.AppendLine($"INSERT INTO {AttachEmphasis(InsertInfo.Value.TableName)}");
+                sb.AppendLine($"({InsertInfo.Value.InsertColumns})");
+            }
 
             if (TempViews.Count > 0)
             {

@@ -35,7 +35,7 @@ public static class IncludeExtensions
         return new IncludeProvider<T1, TMember>(p.Executor, p.SqlBuilder);
     }
 
-    public static bool When<T>(this IEnumerable<T> values, Func<T, bool> predicate)
+    public static bool WhereIf<T>(this IEnumerable<T> values, Func<T, bool> predicate)
     {
         return true;
     }

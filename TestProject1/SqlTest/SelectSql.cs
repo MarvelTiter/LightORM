@@ -44,7 +44,7 @@ namespace TestProject1.SqlTest
         public void SelectInclude()
         {
             var sql = Db.Select<User>()
-                .Where(u => u.UserRoles.When(r => r.RoleId.StartsWith("ad")))
+                .Where(u => u.UserRoles.WhereIf(r => r.RoleId.StartsWith("ad")))
                 .ToSql();
             Console.WriteLine(sql);
         }
@@ -53,7 +53,7 @@ namespace TestProject1.SqlTest
         public void SelectIncludeWhere()
         {
             var select = Db.Select<User>()
-                .Where(u => u.UserRoles.When(r => r.RoleId.Contains("admin")))
+                .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
                 .ToSql();
 
             Console.WriteLine(select);

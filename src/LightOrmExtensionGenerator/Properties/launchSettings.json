@@ -1,8 +1,5 @@
 {
   "profiles": {
-    "LightOrmExtensionGenerator": {
-      "commandName": "Project"
-    },
     "extension": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\LightORM\\LightORM.csproj"

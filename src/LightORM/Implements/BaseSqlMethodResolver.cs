@@ -1,38 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Implements
+﻿namespace LightORM.Implements
 {
-    public abstract class BaseSqlMethodResolver : ISqlMethodResolver
+    public abstract partial class BaseSqlMethodResolver : ISqlMethodResolver
     {
+        /// <summary>
+        /// 在生成器中初始化集合内容
+        /// </summary>
         private readonly Dictionary<string, Action<IExpressionResolver, MethodCallExpression>> methods = [];
-        protected BaseSqlMethodResolver()
-        {
-            methods.Add(nameof(Count), Count);
-            methods.Add(nameof(Sum), Sum);
-            methods.Add(nameof(Avg), Avg);
-            methods.Add(nameof(Max), Max);
-            methods.Add(nameof(Min), Min);
-            methods.Add(nameof(StartsWith), StartsWith);
-            methods.Add(nameof(Contains), Contains);
-            methods.Add(nameof(EndsWith), EndsWith);
-            methods.Add(nameof(Substring), Substring);
-            methods.Add(nameof(Trim), Trim);
-            methods.Add(nameof(TrimStart), TrimStart);
-            methods.Add(nameof(TrimEnd), TrimEnd);
-            methods.Add(nameof(Where), Where);
-            methods.Add(nameof(When), When);
-            methods.Add(nameof(RowNumber), RowNumber);
-            methods.Add(nameof(Lag), Lag);
-            methods.Add(nameof(PartitionBy), PartitionBy);
-            methods.Add(nameof(OrderBy), OrderBy);
-            methods.Add(nameof(Value), Value);
-        }
+        
         public void Resolve(IExpressionResolver resolver, MethodCallExpression expression)
         {
             var methodName = expression.Method.Name;
@@ -159,8 +133,12 @@ namespace LightORM.Implements
         {
             throw new NotSupportedException();
         }
-
+        
         public virtual void Trim(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            throw new NotSupportedException();
+        }
+        public virtual void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
         }
@@ -170,10 +148,7 @@ namespace LightORM.Implements
             throw new NotSupportedException();
         }
 
-        public virtual void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
-        {
-            throw new NotSupportedException();
-        }
+        
 
         #region include用到的方法
         public void Where(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -188,7 +163,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[1]);
         }
 
-        public void When(IExpressionResolver resolver, MethodCallExpression methodCall)
+        public void WhereIf(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (resolver.NavigateDeep > 0)
             {
@@ -213,7 +188,10 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Sql.Append(") OVER(");
         }
-
+        public virtual void Rank(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("RANK() OVER(");
+        }
 
 
 
@@ -231,12 +209,61 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
         }
 
+        public virtual void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" ORDER BY ");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(" DESC");
+        }
+
         public virtual void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" )");
         }
 
+
+        #endregion
+
+        #region Case When
+
+        public virtual void Case(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("CASE");
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Sql.Append(' ');
+                resolver.Visit(methodCall.Arguments[0]);
+            }
+        }
+        
+        public virtual void When(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" WHEN ");
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+
+        public virtual void Then(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" THEN ");
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+
+        public virtual void Else(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" ELSE ");
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+
+        public virtual void End(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" END");
+        }
 
         #endregion
     }

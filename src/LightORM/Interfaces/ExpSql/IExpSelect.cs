@@ -81,6 +81,14 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
     IExpSelect<T1> Union(IExpSelect<T1> select);
     IExpSelect<T1> UnionAll(IExpSelect<T1> select);
+    string ToSql(Expression<Func<T1, object>> exp);
+    int Insert<TInsertTable>();
+    Task<int> InsertAsync<TInsertTable>();
+    int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
+    Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
+    int Insert(string tableName, params string[] columns);
+    Task<int> InsertAsync(string tableName, params string[] columns);
+
     #region WithTemp
     IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp);
     IExpSelect<T1, TTemp1, TTemp2> WithTempQuery<TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2);
@@ -88,7 +96,6 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4);
     IExpSelect<T1, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> WithTempQuery<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp3> temp3, IExpTemp<TTemp4> temp4, IExpTemp<TTemp5> temp5);
     #endregion
-    string ToSql(Expression<Func<T1, object>> exp);
 
     #region TypeSet
     IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp);

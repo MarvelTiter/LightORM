@@ -276,6 +276,17 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             //    }
             //}
         }
+        else if (Options.SqlAction == SqlAction.Insert)
+        {
+            var table = Context.GetTable(exp.Type);
+            foreach (var item in table.Columns)
+            {
+                var prop = Expression.Property(exp, item.PropertyName);
+                Visit(prop);
+                Sql.Append(", ");
+            }
+            Sql.Remove(Sql.Length - 2, 2);
+        }
         else
         {
             if (isVisitConvert && Members.Count > 0)

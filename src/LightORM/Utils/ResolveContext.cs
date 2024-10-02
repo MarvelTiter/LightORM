@@ -22,9 +22,9 @@ public class ResolveContext
         Database = database;
         this.selectedTables.AddRange(selectedTables);
     }
-    public static ResolveContext Create(DbBaseType type)
+    public static ResolveContext Create(DbBaseType type, params ITableEntityInfo[] selectedTables)
     {
-        return new ResolveContext(type.GetDbCustom());
+        return new ResolveContext(type.GetDbCustom(), selectedTables);
     }
     public void SetParamPrefix(string? parameterPrefix)
     {
