@@ -9,7 +9,7 @@ public static class IncludeExtensions
     {
         var option = SqlResolveOptions.Select;
         option.DbType = include.SqlBuilder.DbType;
-        var result = exp.Resolve(option, ResolveContext.Create(include.Executor.ConnectInfo.DbBaseType));
+        var result = exp.Resolve(option, ResolveContext.Create(include.Executor.Database.DbBaseType));
         var parentTable = TableContext.GetTableInfo(typeof(TElement));
         var navCol = parentTable.GetColumnInfo(result.NavigateMembers!.First());
         var navInfo = navCol.NavigateInfo!;
@@ -23,7 +23,7 @@ public static class IncludeExtensions
             ParentWhereColumn = parentWhereColumn,
             ExpressionResolvedResult = result
         };
-        include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext(include.Executor.ConnectInfo.DbBaseType);
+        include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext(include.Executor.Database.DbBaseType);
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder);
     }

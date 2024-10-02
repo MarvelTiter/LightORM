@@ -6,6 +6,7 @@ namespace LightORM.Providers.Sqlite;
 
 public sealed class SqliteProvider : IDatabaseProvider
 {
+    public DbBaseType DbBaseType => DbBaseType.Sqlite;
     public DbProviderFactory DbProviderFactory { get; } = SQLiteFactory.Instance;
 
     public string MasterConnectionString { get; }

@@ -1,6 +1,7 @@
 ﻿
 using DatabaseUtils.Models;
 using LightORM;
+using LightORM.Interfaces;
 using LightORM.Providers.SqlServer;
 using LightORM.Utils;
 
@@ -51,9 +52,9 @@ order by a.id,a.colorder
 
         }
 
-        protected override DbConnectInfo GetConnectInfo()
+        protected override IDatabaseProvider GetConnectInfo()
         {
-            return new DbConnectInfo(DbBaseType.SqlServer, SqlServerProvider.Create(SqlServerVersion.V1, ConnectionString));
+            return SqlServerProvider.Create(SqlServerVersion.V1, ConnectionString);
         }
     }
 }

@@ -137,7 +137,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
     {
         var option = SqlResolveOptions.Select;
-        var result = exp.Resolve(option, ResolveContext.Create(Executor.ConnectInfo.DbBaseType));
+        var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
         var navName = result.NavigateMembers!.First();
         var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
         var navInfo = navCol.NavigateInfo!;
@@ -263,7 +263,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
     {
         var table = TableContext.GetTableInfo<TInsertTable>();
-        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.ConnectInfo.DbBaseType, table));
+        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
         HandleSelectInsert(table.TableName, result.SqlString!);
         var sql = SqlBuilder.ToSqlString();
         return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
@@ -272,7 +272,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
     {
         var table = TableContext.GetTableInfo<TInsertTable>();
-        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.ConnectInfo.DbBaseType, table));
+        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
         HandleSelectInsert(table.TableName, result.SqlString!);
         var sql = SqlBuilder.ToSqlString();
         return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters);

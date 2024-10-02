@@ -14,6 +14,7 @@ public enum SqlServerVersion
 
 public sealed class SqlServerProvider : IDatabaseProvider
 {
+    public DbBaseType DbBaseType => DbBaseType.SqlServer;
     public string MasterConnectionString { get; }
 
     public ICustomDatabase CustomDatabase { get; }

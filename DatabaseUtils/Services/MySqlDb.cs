@@ -1,5 +1,6 @@
 ﻿using DatabaseUtils.Models;
 using LightORM;
+using LightORM.Interfaces;
 using LightORM.Providers.MySql;
 using LightORM.Utils;
 using System.Text.RegularExpressions;
@@ -45,9 +46,9 @@ ORDER BY A.TABLE_SCHEMA,A.TABLE_NAME,A.ORDINAL_POSITION
             return context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql, null);
         }
 
-        protected override DbConnectInfo GetConnectInfo()
+        protected override IDatabaseProvider GetConnectInfo()
         {
-            return new DbConnectInfo(DbBaseType.MySql, MySqlProvider.Create(ConnectionString));
+            return MySqlProvider.Create(ConnectionString);
         }
     }
 }

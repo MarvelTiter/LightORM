@@ -11,7 +11,7 @@ public interface ISqlExecutor : IDisposable
     /// </summary>
     public Action<string, object?>? DbLog { get; set; }
 
-    internal DbConnectInfo ConnectInfo { get; }
+    internal IDatabaseProvider Database { get; }
     internal bool DisposeImmediately { get; set; }
     /// <summary>
     /// 数据库事务

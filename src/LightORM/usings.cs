@@ -26,8 +26,6 @@ namespace System.Runtime.CompilerServices
 //TODO SqlExecutor对象管理优化
 //TODO 开窗函数 row number, lag, join(mysql GROUP_CONCAT, oracle listagg, ..)
 //TODO SelectToUpdate
-//TODO SelectToInsert
-//TODO IDatabaseProvider代替DbConnectInfo?
 //TODO CaseWhen语句和三元表达式解析
 //TODO FromQuery子查询
 //TODO 添加CancellationToken参数

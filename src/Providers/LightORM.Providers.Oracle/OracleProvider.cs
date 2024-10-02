@@ -6,6 +6,7 @@ namespace LightORM.Providers.Oracle;
 
 public sealed class OracleProvider : IDatabaseProvider
 {
+    public DbBaseType DbBaseType => DbBaseType.Oracle;
     public string MasterConnectionString { get; }
 
     public ICustomDatabase CustomDatabase { get; } = CustomOracle.Instance;

@@ -12,17 +12,17 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 {
     public Action<string, object?>? DbLog { get; set; }
     public bool DisposeImmediately { get; set; }
-    public DbConnectInfo ConnectInfo { get; private set; }
+    public IDatabaseProvider Database { get; private set; }
     /// <summary>
     /// 数据库事务
     /// </summary>
     public DbTransaction? DbTransaction { get; set; }
     public DbConnection DbConnection { get; private set; }
-    public SqlExecutor(DbConnectInfo connectInfo)
+    public SqlExecutor(IDatabaseProvider database)
     {
-        ConnectInfo = connectInfo;
-        DbConnection = connectInfo.DbProviderFactory.CreateConnection()!;
-        DbConnection.ConnectionString = connectInfo.ConnectString;
+        Database = database;
+        DbConnection = database.DbProviderFactory.CreateConnection()!;
+        DbConnection.ConnectionString = database.MasterConnectionString;
     }
     public void BeginTran()
     {
@@ -239,7 +239,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public DataSet ExecuteDataSet(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
-        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
         var cmd = DbConnection.CreateCommand();
         var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
@@ -259,7 +259,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public DataTable ExecuteDataTable(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
         var ds = new DataTable();
-        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
         var cmd = DbConnection.CreateCommand();
         var needToClose = PrepareCommand(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
@@ -337,7 +337,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public async Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
-        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
         var cmd = DbConnection.CreateCommand();
         var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try
@@ -357,7 +357,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     public async Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
         var ds = new DataTable();
-        using var adapter = ConnectInfo.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
         var cmd = DbConnection.CreateCommand();
         var needToClose = await PrepareCommandAsync(cmd, DbConnection, DbTransaction, commandType, commandText, dbParameters);
         try

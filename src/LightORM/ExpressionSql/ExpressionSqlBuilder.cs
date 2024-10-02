@@ -17,12 +17,12 @@ public class ExpressionSqlOptions
     public ExpressionSqlOptions SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
         var k = key ?? ConstString.Main;
-        if (StaticCache<DbConnectInfo>.HasKey(k))
+        if (StaticCache<IDatabaseProvider>.HasKey(k))
         {
             LightOrmException.Throw($"SetDatabase 设置了重复的Key => {key}");
         }
-        var info = new DbConnectInfo(dbBaseType, provider);
-        _ = StaticCache<DbConnectInfo>.GetOrAdd(k, () => info);
+        //var info = new DbConnectInfo(dbBaseType, provider);
+        _ = StaticCache<IDatabaseProvider>.GetOrAdd(k, () => provider);
         //_ = StaticCache<IDatabaseProvider>.GetOrAdd()
         if (!StaticCache<ICustomDatabase>.HasKey(dbBaseType.Name))
         {

@@ -13,13 +13,13 @@ namespace LightORM.Utils
     {
         public static ISqlExecutor GetExecutor(string key = ConstString.Main)
         {
-            var dbInfo = StaticCache<DbConnectInfo>.Get(key) ?? throw new LightOrmException($"{key} not register");
+            var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
             return new SqlExecutor.SqlExecutor(dbInfo);
         }
 
-        public static DbConnectInfo GetDbInfo(string key)
+        public static IDatabaseProvider GetDbInfo(string key)
         {
-            return StaticCache<DbConnectInfo>.Get(key) ?? throw new ArgumentException($"{key} not register");
+            return StaticCache<IDatabaseProvider>.Get(key) ?? throw new ArgumentException($"{key} not register");
         }
 
         private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];

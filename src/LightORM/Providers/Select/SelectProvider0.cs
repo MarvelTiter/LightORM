@@ -6,7 +6,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 {
     public SelectBuilder SqlBuilder { get; set; } = default!;
     public ISqlExecutor Executor { get; }
-    public DbBaseType DbType => Executor.ConnectInfo.DbBaseType;
+    public DbBaseType DbType => Executor.Database.DbBaseType;
 
     protected ExpressionInfo? SelectExpression;
     public SelectProvider0(ISqlExecutor executor, SelectBuilder? builder = null)

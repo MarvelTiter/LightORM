@@ -5,6 +5,7 @@ namespace LightORM.Providers.MySql;
 
 public sealed class MySqlProvider : IDatabaseProvider
 {
+    public DbBaseType DbBaseType => DbBaseType.MySql;
     public string MasterConnectionString { get; }
 
     public ICustomDatabase CustomDatabase { get; } = CustomMySql.Instance;
@@ -14,7 +15,8 @@ public sealed class MySqlProvider : IDatabaseProvider
     public string[] SlaveConnectionStrings { get; }
 
     public DbProviderFactory DbProviderFactory { get; } = MySqlConnector.MySqlConnectorFactory.Instance;
-    public MySqlProvider(string master, params string[] slaves)
+
+    private MySqlProvider(string master, params string[] slaves)
     {
         MasterConnectionString = master;
         SlaveConnectionStrings = slaves;

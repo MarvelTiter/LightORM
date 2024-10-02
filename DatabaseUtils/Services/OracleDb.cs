@@ -1,6 +1,7 @@
 ﻿
 using DatabaseUtils.Models;
 using LightORM;
+using LightORM.Interfaces;
 using LightORM.Providers.Oracle;
 using LightORM.Utils;
 using System.Text;
@@ -36,9 +37,9 @@ and a.column_name = b.column_name
         }
 
 
-        protected override DbConnectInfo GetConnectInfo()
+        protected override IDatabaseProvider GetConnectInfo()
         {
-            return new DbConnectInfo(DbBaseType.Oracle, OracleProvider.Create(ConnectionString));
+            return OracleProvider.Create(ConnectionString);
         }
     }
 }

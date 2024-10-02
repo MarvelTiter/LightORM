@@ -5,9 +5,10 @@ namespace LightORM;
 
 public interface IExpressionContext : IDbAction
 {
+    IExpSelect<T> Union<T>(params IExpSelect<T>[] selects);
+    IExpSelect<T> UnionAll<T>(params IExpSelect<T>[] selects);
+    IExpSelect<T> FromQuery<T>(IExpSelect<T> select);
     IExpSelect<T> Select<T>();
-    IExpSelect<TResult> Union<TResult>(params IExpSelect<TResult>[] selects);
-    IExpSelect<TResult> UnionAll<TResult>(params IExpSelect<TResult>[] selects);
     //IExpSelect Select();
     //IExpSelect Select(string tableName);
     //IExpInsert<T> Insert<T>();
@@ -25,7 +26,7 @@ public interface IExpressionContext : IDbAction
 
 public interface IDbAction
 {
-    IExpressionContext Use(DbConnectInfo db);
+    IExpressionContext Use(IDatabaseProvider db);
     IExpressionContext SwitchDatabase(string key);
     void BeginTranAll();
     Task BeginTranAllAsync();

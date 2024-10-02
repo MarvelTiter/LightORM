@@ -1,4 +1,5 @@
 ﻿using LightORM;
+using LightORM.Interfaces;
 
 namespace DatabaseUtils.Services
 {
@@ -13,7 +14,7 @@ namespace DatabaseUtils.Services
             this.context = context;
         }
 
-        protected abstract DbConnectInfo GetConnectInfo();
+        protected abstract IDatabaseProvider GetConnectInfo();
 
     }
 }
