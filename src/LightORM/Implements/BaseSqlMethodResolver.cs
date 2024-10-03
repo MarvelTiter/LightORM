@@ -136,16 +136,28 @@
 
         public virtual void Trim(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            throw new NotSupportedException();
+            // TRIM(columnName);
+            resolver.Sql.Append("TRIM");
+            resolver.Sql.Append('(');
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(')');
         }
         public virtual void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            throw new NotSupportedException();
+            // LTRIM(columnName);
+            resolver.Sql.Append("LTRIM");
+            resolver.Sql.Append('(');
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(')');
         }
 
         public virtual void TrimEnd(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            throw new NotSupportedException();
+            // RTRIM(columnName);
+            resolver.Sql.Append("RTRIM");
+            resolver.Sql.Append('(');
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(')');
         }
 
 

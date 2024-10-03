@@ -88,22 +88,4 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
             base.Trim(resolver, methodCall);
         }
     }
-
-    public override void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        // LTRIM(columnName);
-        resolver.Sql.Append("LTRIM");
-        resolver.Sql.Append('(');
-        resolver.Visit(methodCall.Object);
-        resolver.Sql.Append(')');
-    }
-
-    public override void TrimEnd(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        // RTRIM(columnName);
-        resolver.Sql.Append("RTRIM");
-        resolver.Sql.Append('(');
-        resolver.Visit(methodCall.Object);
-        resolver.Sql.Append(')');
-    }
 }

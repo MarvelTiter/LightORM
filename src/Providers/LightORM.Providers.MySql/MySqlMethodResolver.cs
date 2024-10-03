@@ -60,7 +60,7 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
     public override void Substring(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         // SUBSTRING(columnName, startIndex, endIndex?);
-        resolver.Sql.Append("SUBSTRING");
+        resolver.Sql.Append("SUBSTR");
         resolver.Sql.Append('(');
         resolver.Visit(methodCall.Object);
         resolver.Sql.Append(',');
@@ -70,33 +70,6 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append(',');
             resolver.Visit(methodCall.Arguments[1]);
         }
-        resolver.Sql.Append(')');
-    }
-
-    public override void Trim(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        // TRIM(columnName);
-        resolver.Sql.Append("TRIM");
-        resolver.Sql.Append('(');
-        resolver.Visit(methodCall.Object);
-        resolver.Sql.Append(')');
-    }
-
-    public override void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        // LTRIM(columnName);
-        resolver.Sql.Append("LTRIM");
-        resolver.Sql.Append('(');
-        resolver.Visit(methodCall.Object);
-        resolver.Sql.Append(')');
-    }
-
-    public override void TrimEnd(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        // RTRIM(columnName);
-        resolver.Sql.Append("RTRIM");
-        resolver.Sql.Append('(');
-        resolver.Visit(methodCall.Object);
         resolver.Sql.Append(')');
     }
 }
