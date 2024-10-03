@@ -12,46 +12,46 @@ namespace LightORM.Providers
     internal sealed class DeleteProvider<T> : IExpDelete<T>
     {
         private readonly ISqlExecutor executor;
-        private readonly DeleteBuilder SqlBuilder;
+        private readonly DeleteBuilder sqlBuilder;
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            SqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
-            SqlBuilder.TargetObject = entity;
+            sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
+            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            sqlBuilder.TargetObject = entity;
         }
 
         public DeleteProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
             this.executor = executor;
-            SqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
-            SqlBuilder.TargetObject = entities;
-            SqlBuilder.IsDeleteList = true;
+            sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
+            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            sqlBuilder.TargetObject = entities;
+            sqlBuilder.IsDeleteList = true;
         }
 
         public int Execute()
         {
-            var sql = SqlBuilder.ToSqlString();
-            var dbParameters = SqlBuilder.DbParameters;
+            var sql = sqlBuilder.ToSqlString();
+            var dbParameters = sqlBuilder.DbParameters;
             return executor.ExecuteNonQuery(sql, dbParameters);
         }
 
         public Task<int> ExecuteAsync()
         {
-            var sql = SqlBuilder.ToSqlString();
-            var dbParameters = SqlBuilder.DbParameters;
+            var sql = sqlBuilder.ToSqlString();
+            var dbParameters = sqlBuilder.DbParameters;
             return executor.ExecuteNonQueryAsync(sql, dbParameters);
         }
 
         public string ToSql()
         {
-            return SqlBuilder.ToSqlString();
+            return sqlBuilder.ToSqlString();
         }
 
         public IExpDelete<T> Where(Expression<Func<T, bool>> exp)
         {
-            SqlBuilder.Expressions.Add(new ExpressionInfo
+            sqlBuilder.Expressions.Add(new ExpressionInfo
             {
                 ResolveOptions = SqlResolveOptions.DeleteWhere,
                 Expression = exp,

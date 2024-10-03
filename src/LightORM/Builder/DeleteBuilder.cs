@@ -25,7 +25,7 @@ internal record DeleteBuilder(DbBaseType type) : SqlBuilder(type)
             if (primary.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
             var wheres = primary.Select(c =>
              {
-                 DbParameters.Add(c.ColumnName, c.GetValue(TargetObject)!);
+                 DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
                  return $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.ColumnName)}";
              });
             Where.AddRange(wheres);

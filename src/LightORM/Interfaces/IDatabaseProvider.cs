@@ -11,5 +11,6 @@ namespace LightORM.Interfaces
         Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
         string[] SlaveConnectionStrings { get; }
         DbProviderFactory DbProviderFactory { get; }
+        int BulkCopy(DataTable dataTable);
     }
 }

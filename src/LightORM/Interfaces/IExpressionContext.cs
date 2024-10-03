@@ -21,8 +21,8 @@ public interface IExpressionContext : IDbAction
     IExpDelete<T> Delete<T>(T entity);
     //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
+    
 }
-
 
 public interface IDbAction
 {

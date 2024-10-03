@@ -1,6 +1,7 @@
 ﻿using LightORM;
 using LightORM.Interfaces;
 using Microsoft.Data.SqlClient;
+using System.Data;
 using System.Data.Common;
 
 namespace LightORM.Providers.SqlServer;
@@ -14,6 +15,16 @@ public enum SqlServerVersion
 
 public sealed class SqlServerProvider : IDatabaseProvider
 {
+    public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
+        => new SqlServerProvider(version, master, slaves);
+    public SqlServerProvider(SqlServerVersion version
+        , string master
+        , params string[] slaves)
+    {
+        CustomDatabase = new CustomSqlServer(version);
+        MasterConnectionString = master;
+        SlaveConnectionStrings = slaves;
+    }
     public DbBaseType DbBaseType => DbBaseType.SqlServer;
     public string MasterConnectionString { get; }
 
@@ -24,16 +35,47 @@ public sealed class SqlServerProvider : IDatabaseProvider
     public string[] SlaveConnectionStrings { get; }
 
     public DbProviderFactory DbProviderFactory { get; } = SqlClientFactory.Instance;
-    public SqlServerProvider(SqlServerVersion version
-        , string master
-        , params string[] slaves)
+    
+    public int BulkCopy(DataTable dataTable)
     {
-        CustomDatabase = new CustomSqlServer(version);
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
-    }
+        if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
+        {
+            throw new ArgumentException($"{nameof(dataTable)}为Null或零列零行.");
+        }
+        var conn = (SqlConnection)DbProviderFactory.CreateConnection()!;
+        conn.ConnectionString = MasterConnectionString;
+        conn.Open();
 
-    public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
-        => new SqlServerProvider(version, master, slaves);
+        using var trans = conn.BeginTransaction();
+        var sqlBulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity, trans)
+        {
+            DestinationTableName = dataTable.TableName,
+            BulkCopyTimeout = 120
+        };
+
+        foreach (DataColumn item in dataTable.Columns)
+        {
+            sqlBulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(item.ColumnName, item.ColumnName));
+        }
+        try
+        {
+            sqlBulkCopy.WriteToServer(dataTable);
+            trans.Commit();
+        }
+        catch
+        {
+            trans?.Rollback();
+            throw;
+        }
+        finally
+        {
+            sqlBulkCopy?.Close();
+            trans?.Dispose();
+            conn?.Close();
+        }
+
+        return dataTable.Rows.Count;
+    }
+    
     
 }
