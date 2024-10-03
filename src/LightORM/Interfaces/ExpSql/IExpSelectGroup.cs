@@ -19,6 +19,7 @@ public interface IExpSelectGrouping<TGroup, TTables>
     TGroup Group { get; set; }
     TTables Tables { get; set; }
     int Count();
+    int Count(bool exp);
     int Count<TColumn>(TColumn column);
     decimal Sum<TColumn>(TColumn column);
     decimal Sum<TColumn>(bool exp, TColumn column);

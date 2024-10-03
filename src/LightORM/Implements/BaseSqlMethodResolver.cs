@@ -6,7 +6,7 @@
         /// 在生成器中初始化集合内容
         /// </summary>
         private readonly Dictionary<string, Action<IExpressionResolver, MethodCallExpression>> methods = [];
-        
+
         public void Resolve(IExpressionResolver resolver, MethodCallExpression expression)
         {
             var methodName = expression.Method.Name;
@@ -27,7 +27,7 @@
                 {
                     resolver.Sql.Append("COUNT(CASE WHEN ");
                     resolver.Visit(methodCall.Arguments[0]);
-                    resolver.Sql.Append(" THEN 1 ElSE null END)");
+                    resolver.Sql.Append(" THEN 1 ElSE NULL END)");
                 }
                 else
                 {
@@ -133,7 +133,7 @@
         {
             throw new NotSupportedException();
         }
-        
+
         public virtual void Trim(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
@@ -148,7 +148,7 @@
             throw new NotSupportedException();
         }
 
-        
+
 
         #region include用到的方法
         public void Where(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -237,7 +237,7 @@
                 resolver.Visit(methodCall.Arguments[0]);
             }
         }
-        
+
         public virtual void When(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Object);

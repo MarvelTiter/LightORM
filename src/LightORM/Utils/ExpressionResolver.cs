@@ -85,6 +85,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),
             BinaryExpression => Visit(VisitBinary((BinaryExpression)expression)),
+            ConditionalExpression => Visit(VisitConditional((ConditionalExpression)expression)),
             MethodCallExpression => Visit(VisitMethodCall((MethodCallExpression)expression)),
             NewArrayExpression => Visit(VisitNewArray((NewArrayExpression)expression)),
             NewExpression => Visit(VisitNew((NewExpression)expression)),
@@ -151,6 +152,19 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             Sql.Append(" )");
         }
 
+        return null;
+    }
+
+    Expression? VisitConditional(ConditionalExpression exp)
+    {
+        //exp.
+        Sql.Append("CASE WHEN ");
+        Visit(exp.Test);
+        Sql.Append(" THEN ");
+        Visit(exp.IfTrue);
+        Sql.Append(" ELSE ");
+        Visit(exp.IfFalse);
+        Sql.Append(" END");
         return null;
     }
 

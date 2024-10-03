@@ -24,7 +24,7 @@ namespace TestProject1.SqlTest
                     w.Group.UserId,
                     w.Group.UserName,
                     Total = w.Count(),
-                    Pass = w.Count(w.Tables.Tb1.Age),
+                    Pass = w.Count<int?>(w.Tables.Tb1.Age > 10 ? 1 : null),
                     NoPass = w.Max(w.Tables.Tb1.Age > 10, w.Tables.Tb1.UserName)
                 });
             Console.WriteLine(sql);
