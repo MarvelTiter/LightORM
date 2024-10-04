@@ -114,6 +114,7 @@
             }
         }
 
+        #region 字符串相关
         public virtual void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
@@ -159,7 +160,27 @@
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(')');
         }
+        #region Group Join
+        public virtual void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.ExpStores ??= [];
+            resolver.ExpStores.Add("Join", methodCall.Arguments[0]);
+        }
 
+        public virtual void Distinct(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("Distinct", null);
+        }
+        public virtual void Separator(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("Separator", methodCall.Arguments[0]);
+        }
+
+        #endregion
+
+        #endregion
 
 
         #region include用到的方法
@@ -205,8 +226,6 @@
             resolver.Sql.Append("RANK() OVER(");
         }
 
-
-
         public virtual void PartitionBy(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Object);
@@ -219,6 +238,7 @@
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" ORDER BY ");
             resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(" ASC");
         }
 
         public virtual void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)

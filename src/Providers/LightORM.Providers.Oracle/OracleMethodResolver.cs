@@ -1,4 +1,5 @@
-﻿using LightORM.Implements;
+﻿using LightORM.Extension;
+using LightORM.Implements;
 using System.Linq.Expressions;
 
 namespace LightORM.Providers.Oracle;
@@ -42,7 +43,7 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("|| '%'");
         }
     }
-    
+
 
     public override void EndsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -67,5 +68,72 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
             resolver.Visit(methodCall.Arguments[1]);
         }
         resolver.Sql.Append(')');
-    }   
+    }
+
+    public override void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.OrderBy(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderBy", methodCall.Arguments[0]);
+        }
+    }
+
+    public override void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.OrderByDesc(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderByDesc", methodCall.Arguments[0]);
+        }
+    }
+
+    public override void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.Value(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            var exps = resolver.ExpStores!;
+            var joinExp = exps["Join"]!;
+            resolver.Sql.Append("LISTAGG( ");
+            resolver.Visit(joinExp);
+            if (exps.TryGetValue("Separator", out var exp))
+            {
+                resolver.Sql.Append(", ");
+                resolver.Options.Parameterized = false;
+                resolver.Visit(exp);
+                resolver.Options.Parameterized = true;
+            }
+            else
+            {
+                resolver.Sql.Append(", ','");
+            }
+            resolver.Sql.Append(')');
+
+            if (exps.TryGetValue("OrderBy", out exp))
+            {
+                resolver.Sql.Append(" WITHIN GROUP (ORDER BY ");
+                resolver.Visit(exp);
+                resolver.Sql.Append(" ASC)");
+            }
+            else if (exps.TryGetValue("OrderByDesc", out exp))
+            {
+                resolver.Sql.Append(" WITHIN GROUP (ORDER BY ");
+                resolver.Visit(exp);
+                resolver.Sql.Append(" DESC)");
+            }
+        }
+    }
 }

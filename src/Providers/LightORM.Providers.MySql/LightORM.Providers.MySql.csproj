@@ -7,7 +7,7 @@
 		<LangVersion>latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>MarvelTiter</Authors>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Description>LightORM MySql扩展</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -22,7 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
-		<PackageReference Include="MT.LightORM" Version="2.1.9-pre" />
+		<PackageReference Include="MT.LightORM" Version="*" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
 		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />

@@ -1,4 +1,5 @@
-﻿using LightORM.Implements;
+﻿using LightORM.Extension;
+using LightORM.Implements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,5 +72,71 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.Visit(methodCall.Arguments[1]);
         }
         resolver.Sql.Append(')');
+    }
+
+    public override void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.OrderBy(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderBy", methodCall.Arguments[0]);
+        }
+    }
+
+    public override void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.OrderByDesc(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderByDesc", methodCall.Arguments[0]);
+        }
+    }
+
+    public override void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.Value(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            var exps = resolver.ExpStores!;
+            var joinExp = exps["Join"]!;
+            resolver.Sql.Append("GROUP_CONCAT( ");
+            if (exps.ContainsKey("Distinct"))
+            {
+                resolver.Sql.Append("DISTINCT ");
+            }
+            resolver.Visit(joinExp);
+            if (exps.TryGetValue("OrderBy", out var exp))
+            {
+                resolver.Sql.Append(" ORDER BY ");
+                resolver.Visit(exp);
+                resolver.Sql.Append(" ASC ");
+            }
+            else if (exps.TryGetValue("OrderByDesc", out exp))
+            {
+                resolver.Sql.Append(" ORDER BY ");
+                resolver.Visit(exp);
+                resolver.Sql.Append(" DESC ");
+            }
+            if (exps.TryGetValue("Separator", out exp))
+            {
+                resolver.Sql.Append(" SEPARATOR ");
+                resolver.Options.Parameterized = false;
+                resolver.Visit(exp);
+                resolver.Options.Parameterized = true;
+            }
+            resolver.Sql.Append(')');
+        }
     }
 }

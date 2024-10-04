@@ -58,6 +58,7 @@ public interface IExpressionResolver
 {
     bool IsNot { get; }
     int NavigateDeep { get; set; }
+    Dictionary<string, Expression?>? ExpStores { get; set; }
     StringBuilder Sql { get; }
     SqlResolveOptions Options { get; }
     Expression? Visit(Expression? expression);
@@ -76,6 +77,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     internal List<string> NavigateMembers { get; set; } = [];
+    public Dictionary<string, Expression?>? ExpStores { get; set; }
+
     ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
@@ -112,6 +115,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         }
         set => useAs = value;
     }
+
+
     bool isVisitConvert;
     Expression? VisitLambda(LambdaExpression exp)
     {
@@ -266,7 +271,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         Visit(exp.Operand);
         return null;
     }
-    
+
     Expression? VisitParameter(ParameterExpression exp)
     {
         //ps.Add(new
@@ -477,6 +482,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     private string AddDbParameter(string name, object v)
     {
+        if (v is string s && !Options.Parameterized)
+        {
+            return $"'{s}'";
+        }
         // TODO 非参数化模式
         var parameterName = $"{Context.ParameterPrefix}{name}_{Options.ParameterIndex}";
         DbParameters.Add(parameterName, v);

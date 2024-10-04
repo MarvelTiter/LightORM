@@ -8,7 +8,7 @@ public static class IncludeExtensions
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
         var option = SqlResolveOptions.Select;
-        option.DbType = include.SqlBuilder.DbType;
+        //option.DbType = include.SqlBuilder.DbType;
         var result = exp.Resolve(option, ResolveContext.Create(include.Executor.Database.DbBaseType));
         var parentTable = TableContext.GetTableInfo(typeof(TElement));
         var navCol = parentTable.GetColumnInfo(result.NavigateMembers!.First());

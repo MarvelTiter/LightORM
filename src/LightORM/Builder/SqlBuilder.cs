@@ -51,7 +51,7 @@ internal abstract record SqlBuilder : ISqlBuilder
         BeforeResolveExpressions(context);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
-            item.ResolveOptions!.DbType = DbType;
+            //item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
             var result = item.Expression.Resolve(item.ResolveOptions!, context);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;

@@ -38,10 +38,11 @@ public class SqlResolveOptions
         || SqlType == SqlPartial.Where
         || SqlType == SqlPartial.Join
         || SqlType == SqlPartial.Having);
+    public bool Parameterized { get; set; } = true;
     public int ParameterIndex { get; set; }
     public SqlAction SqlAction { get; set; }
     public SqlPartial SqlType { get; private set; }
-    public DbBaseType DbType { get; set; }
+    //public DbBaseType DbType { get; set; }
 
 
     public static SqlResolveOptions Select { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Select };

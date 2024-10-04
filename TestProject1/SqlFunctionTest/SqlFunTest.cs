@@ -1,4 +1,6 @@
-﻿using LightORM.Providers.Sqlite;
+﻿using LightORM.Providers.MySql;
+using LightORM.Providers.Oracle;
+using LightORM.Providers.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +53,20 @@ public class SqlFunTest : TestBase
         var table = TestTableContext.TestProject1_Models_User;
         table.Alias = "u";
         var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
+
+    [TestMethod]
+    public void Join()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Result = SqlFn.Join(u.UserName).Separator("|").Distinct().OrderBy(u.UserId).Value()
+        };
+        var table = TestTableContext.TestProject1_Models_User;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomOracle.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }

@@ -71,4 +71,17 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
         }
         resolver.Sql.Append(')');
     }
+
+    public override void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("GROUP_CONCAT( ");
+        resolver.Visit(methodCall.Arguments[0]);
+        if (methodCall.Arguments.Count > 1)
+        {
+            resolver.Sql.Append(", ");
+            resolver.Options.Parameterized = false;
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Options.Parameterized = true;
+        }
+    }
 }
