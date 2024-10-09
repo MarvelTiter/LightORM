@@ -71,6 +71,18 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
+
     public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp)
     {
         this.HandleResult(exp, null);
@@ -176,6 +188,16 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
+        return ToListAsync<TReturn>();
+    }
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    {
+        this.HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
     public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp)

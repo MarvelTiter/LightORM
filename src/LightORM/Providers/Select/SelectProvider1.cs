@@ -111,6 +111,18 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         this.HandleResult(exp, null);
         return ToListAsync<TReturn>();
     }
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
+
     public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, null);

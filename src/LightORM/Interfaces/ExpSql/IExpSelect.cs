@@ -75,6 +75,8 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     //IExpSelect<T1> Named(string tableName);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
     IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp);
@@ -130,6 +132,8 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp);
     IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp);
@@ -155,6 +159,8 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp);
     Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp);

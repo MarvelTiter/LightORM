@@ -159,6 +159,18 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return ToListAsync<TReturn>();
     }
 
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToList<TReturn>();
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return ToListAsync<TReturn>();
+    }
+
     public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp)
     {
         this.HandleResult(exp, null);
@@ -225,6 +237,7 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         var list = await ToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
+
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
@@ -233,6 +246,20 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
+        return ToListAsync<TReturn>();
+    }
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
+        return ToList<TReturn>();
+    }
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
