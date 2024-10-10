@@ -117,6 +117,32 @@ namespace LightORM.Providers
             return executor.QueryAsync<TReturn>(sql, dbParams);
         }
 
+        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
+            builder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = flatExp,
+                ResolveOptions = SqlResolveOptions.Select
+            });
+            var sql = builder.ToSqlString();
+            var dbParams = builder.DbParameters;
+            return executor.Query<TReturn>(sql, dbParams);
+        }
+
+        public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        {
+            var flatExp = FlatTypeSet.Default.Flat(exp);
+            builder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = flatExp,
+                ResolveOptions = SqlResolveOptions.Select
+            });
+            var sql = builder.ToSqlString();
+            var dbParams = builder.DbParameters;
+            return executor.QueryAsync<TReturn>(sql, dbParams);
+        }
+
         public string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
