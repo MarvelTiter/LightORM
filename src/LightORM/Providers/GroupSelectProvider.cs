@@ -10,18 +10,18 @@ namespace LightORM.Providers
 {
     internal class GroupSelectProvider<TGroup, TTables> : IExpSelectGroup<TGroup, TTables>
     {
-        private readonly ISqlExecutor executor;
-        private readonly SelectBuilder builder;
+        public SelectBuilder SqlBuilder { get; }
+        public ISqlExecutor Executor { get; }
 
         public GroupSelectProvider(ISqlExecutor executor, SelectBuilder builder)
         {
-            this.executor = executor;
-            this.builder = builder;
+            this.Executor = executor;
+            this.SqlBuilder = builder;
         }
         public IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new()
+            SqlBuilder.Expressions.Add(new()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Having
@@ -32,7 +32,7 @@ namespace LightORM.Providers
         public IExpSelectGroup<TGroup, TTables> OrderBy(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new()
+            SqlBuilder.Expressions.Add(new()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Order,
@@ -44,38 +44,38 @@ namespace LightORM.Providers
         public IExpSelect<TTemp> ToSelect<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new()
+            SqlBuilder.Expressions.Add(new()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select,
                 AdditionalParameter = "asc"
             });
-            return new SelectProvider1<TTemp>(executor, builder);
+            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
         }
 
         public IExpSelect<TTemp> AsTempQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new()
+            SqlBuilder.Expressions.Add(new()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select,
                 AdditionalParameter = "asc"
             });
-            builder.Level += 1;
-            builder.IsSubQuery = true;
-            var newBuilder = new SelectBuilder(builder.DbType)
+            SqlBuilder.Level += 1;
+            SqlBuilder.IsSubQuery = true;
+            var newBuilder = new SelectBuilder(SqlBuilder.DbType)
             {
-                SubQuery = builder,
+                SubQuery = SqlBuilder,
             };
             newBuilder.SelectedTables.Add(TableContext.GetTableInfo(typeof(TTemp)));
-            return new SelectProvider1<TTemp>(executor, newBuilder);
+            return new SelectProvider1<TTemp>(Executor, newBuilder);
         }
 
         public IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new()
+            SqlBuilder.Expressions.Add(new()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Order,
@@ -86,76 +86,76 @@ namespace LightORM.Providers
 
         public IExpSelectGroup<TGroup, TTables> Paging(int pageIndex, int pageSize)
         {
-            builder.PageIndex = pageIndex;
-            builder.PageSize = pageSize;
+            SqlBuilder.PageIndex = pageIndex;
+            SqlBuilder.PageSize = pageSize;
             return this;
         }
 
         public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new ExpressionInfo()
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
-            var sql = builder.ToSqlString();
-            var dbParams = builder.DbParameters;
-            return executor.Query<TReturn>(sql, dbParams);
+            var sql = SqlBuilder.ToSqlString();
+            var dbParams = SqlBuilder.DbParameters;
+            return Executor.Query<TReturn>(sql, dbParams);
         }
 
         public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new ExpressionInfo()
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
-            var sql = builder.ToSqlString();
-            var dbParams = builder.DbParameters;
-            return executor.QueryAsync<TReturn>(sql, dbParams);
+            var sql = SqlBuilder.ToSqlString();
+            var dbParams = SqlBuilder.DbParameters;
+            return Executor.QueryAsync<TReturn>(sql, dbParams);
         }
 
         public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new ExpressionInfo()
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
-            var sql = builder.ToSqlString();
-            var dbParams = builder.DbParameters;
-            return executor.Query<TReturn>(sql, dbParams);
+            var sql = SqlBuilder.ToSqlString();
+            var dbParams = SqlBuilder.DbParameters;
+            return Executor.Query<TReturn>(sql, dbParams);
         }
 
         public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new ExpressionInfo()
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
-            var sql = builder.ToSqlString();
-            var dbParams = builder.DbParameters;
-            return executor.QueryAsync<TReturn>(sql, dbParams);
+            var sql = SqlBuilder.ToSqlString();
+            var dbParams = SqlBuilder.DbParameters;
+            return Executor.QueryAsync<TReturn>(sql, dbParams);
         }
 
         public string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            builder.Expressions.Add(new ExpressionInfo()
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = flatExp,
                 ResolveOptions = SqlResolveOptions.Select
             });
-            return builder.ToSqlString();
+            return SqlBuilder.ToSqlString();
         }
 
-        public string ToSql() => builder.ToSqlString();
+        public string ToSql() => SqlBuilder.ToSqlString();
 
-        
+
     }
 }

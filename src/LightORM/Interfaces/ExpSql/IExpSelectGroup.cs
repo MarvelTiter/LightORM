@@ -2,6 +2,8 @@
 
 public interface IExpSelectGroup<TGroup, TTables>
 {
+    internal SelectBuilder SqlBuilder { get; }
+    internal ISqlExecutor Executor { get; }
     IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
     IExpSelectGroup<TGroup, TTables> OrderBy(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);

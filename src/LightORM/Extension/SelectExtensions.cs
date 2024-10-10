@@ -1,7 +1,6 @@
-﻿
-namespace LightORM;
+﻿namespace LightORM;
 
-public static partial class SelectExtension
+public static partial class SelectExtensions
 {
 
     static string? GetDbKey(params Type[] types)
