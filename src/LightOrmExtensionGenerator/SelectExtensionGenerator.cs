@@ -81,23 +81,92 @@ public static partial class SelectExtension
         return select;
     }
 
+    public static IEnumerable<dynamic> ToDynamicList<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        return select.ToList<MapperRow>();
+    }
+    
+    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        var list = await select.ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+    
+    public static DataTable ToDataTable<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        var sql = select.SqlBuilder.ToSqlString();
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteDataTable(sql, parameters);
+    }
+    
+    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        var sql = select.SqlBuilder.ToSqlString();
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteDataTableAsync(sql, parameters);
+    }
+
+    #region TypeSet
+
     public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
-        select.JoinHandle(on, TableLinkType.InnerJoin);
+        var flatExp = FlatTypeSet.Default.Flat(on)!;
+        select.JoinHandle(flatExp, TableLinkType.InnerJoin);
         return select;
     }
     
     public static IExpSelect<{{argsStr}}> InnerLeft<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
-        select.JoinHandle(on, TableLinkType.LeftJoin);
+        var flatExp = FlatTypeSet.Default.Flat(on)!;
+        select.JoinHandle(flatExp, TableLinkType.LeftJoin);
         return select;
     }
     
     public static IExpSelect<{{argsStr}}> InnerRight<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
-        select.JoinHandle(on, TableLinkType.RightJoin);
+        var flatExp = FlatTypeSet.Default.Flat(on)!;
+        select.JoinHandle(flatExp, TableLinkType.RightJoin);
         return select;
     }
+
+    public static IEnumerable<dynamic> ToDynamicList<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        select.HandleResult(flatExp, null);
+        return select.ToList<MapperRow>();
+    }
+    
+    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        select.HandleResult(flatExp, null);
+        var list = await select.ToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
+    }
+    
+    public static DataTable ToDataTable<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        select.HandleResult(flatExp, null);
+        var sql = select.SqlBuilder.ToSqlString();
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteDataTable(sql, parameters);
+    }
+    
+    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        select.HandleResult(flatExp, null);
+        var sql = select.SqlBuilder.ToSqlString();
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteDataTableAsync(sql, parameters);
+    }
+
+    #endregion
 }
 
 """;

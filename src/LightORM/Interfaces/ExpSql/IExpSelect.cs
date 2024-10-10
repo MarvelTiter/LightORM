@@ -73,12 +73,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
     IExpSelect<T1> As(string alias);
     //IExpSelect<T1> Named(string tableName);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
-    IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp);
-    Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp);
+
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
     IExpSelect<T1> Union(IExpSelect<T1> select);
@@ -90,6 +85,18 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
     int Insert(string tableName, params string[] columns);
     Task<int> InsertAsync(string tableName, params string[] columns);
+
+    #region Result
+
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
+    //IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp);
+    //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp);
+    //DataTable ToDataTable(Expression<Func<T1, object>> exp);
+    //Task<DataTable> ToDataTableAsync(Expression<Func<T1, object>> exp);
+    #endregion
 
     #region WithTemp
     IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp);
@@ -130,16 +137,22 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp);
-    IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp);
-    Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp);
+
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, T2, TTemp>> exp);
 
     string ToSql(Expression<Func<T1, T2, object>> exp);
+
+    #region Result
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
+    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp);
+    //IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp);
+    //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp);
+    //DataTable ToDataTable(Expression<Func<T1, T2, object>> exp);
+    //Task<DataTable> ToDataTableAsync(Expression<Func<T1, T2, object>> exp);
+    #endregion
 
     #region WithTemp
     IExpSelect<T1, T2, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp);
@@ -161,8 +174,10 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
-    IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp);
-    Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    //IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    //DataTable ToDataTable(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    //Task<DataTable> ToDataTableAsync(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<T1, T2>, TTemp>> exp);
     string ToSql(Expression<Func<TypeSet<T1, T2>, object>> exp);

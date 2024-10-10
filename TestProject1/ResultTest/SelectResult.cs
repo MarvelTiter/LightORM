@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,12 +17,13 @@ namespace TestProject1.ResultTest
         [TestMethod]
         public void SelectList()
         {
-            var list = Db.Select<User>().ToList<UU>(u => new { u.UserName }).ToList();
+            var list = Db.Select<User>()
+                .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
+                .ToDynamicList(w => new { w.Tb1.UserName });
             foreach (var item in list)
             {
                 Console.WriteLine(item.UserName);
             }
-
         }
     }
 }

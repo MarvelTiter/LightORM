@@ -101,40 +101,6 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     #endregion
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToList<TReturn>();
-    }
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToListAsync<TReturn>();
-    }
-
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToList<TReturn>();
-    }
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToListAsync<TReturn>();
-    }
-
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToList<MapperRow>();
-    }
-
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
     {
         return CreateIncludeProvider<TMember>(exp);
@@ -178,6 +144,32 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         this.HandleResult(exp, null);
         return new TempProvider<TTemp>(name, SqlBuilder);
     }
+
+    #region Result
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.ToListAsync<TReturn>();
+    }
+
+    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.ToList<TReturn>();
+    }
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.ToListAsync<TReturn>();
+    }
+
+    #endregion
 
 
     #region with temp

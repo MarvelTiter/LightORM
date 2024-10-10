@@ -50,37 +50,37 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
         return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
     }
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        return ToList<MapperRow>();
-    }
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp)
-    {
-        this.HandleResult(exp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
+    //public IEnumerable<dynamic> ToDynamicList(Expression<Func<T1, T2, object>> exp)
+    //{
+    //    this.HandleResult(exp, null);
+    //    return ToList<MapperRow>();
+    //}
+    //public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<T1, T2, object>> exp)
+    //{
+    //    this.HandleResult(exp, null);
+    //    var list = await ToListAsync<MapperRow>();
+    //    return list.Cast<dynamic>().ToList();
+    //}
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return ToList<TReturn>();
+        return this.ToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return ToListAsync<TReturn>();
+        return this.ToListAsync<TReturn>();
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp)
     {
         this.HandleResult(exp, null);
-        return ToList<TReturn>();
+        return this.ToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp)
     {
         this.HandleResult(exp, null);
-        return ToListAsync<TReturn>();
+        return this.ToListAsync<TReturn>();
     }
 
     public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp)
@@ -182,37 +182,37 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return ToList<TReturn>();
+        return this.ToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return ToListAsync<TReturn>();
+        return this.ToListAsync<TReturn>();
     }
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         this.HandleResult(exp, null);
-        return ToList<TReturn>();
+        return this.ToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         this.HandleResult(exp, null);
-        return ToListAsync<TReturn>();
+        return this.ToListAsync<TReturn>();
     }
-    public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        return ToList<MapperRow>();
-    }
-    public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        var list = await ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
-    }
+    //public IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    this.HandleResult(flatExp, null);
+    //    return ToList<MapperRow>();
+    //}
+    //public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<T1, T2>, object>> exp)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    this.HandleResult(flatExp, null);
+    //    var list = await ToListAsync<MapperRow>();
+    //    return list.Cast<dynamic>().ToList();
+    //}
     public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;

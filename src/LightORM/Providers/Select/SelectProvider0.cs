@@ -99,7 +99,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Template = "COUNT(*)"
         };
         SqlBuilder.Expressions.Add(count);
-        total = ToList<int>().First();
+        total = this.ToList<int>().First();
         SqlBuilder.Expressions.Remove(count);
         //SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
         return (this as TSelect)!;
@@ -128,37 +128,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public TMember? Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return Single<TMember>();
+        return this.Single<TMember>();
     }
 
     public TMember? Min<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return Single<TMember>();
+        return this.Single<TMember>();
     }
 
     public double Sum(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return Single<double>();
+        return this.Single<double>();
     }
 
     public int Count(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return Single<int>();
+        return this.Single<int>();
     }
 
     public int Count()
     {
         this.HandleResult(null, "COUNT(*)");
-        return Single<int>();
+        return this.Single<int>();
     }
 
     public double Avg(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return Single<double>();
+        return this.Single<double>();
     }
 
     public virtual T1? First()
@@ -204,33 +204,6 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return await Executor.QueryAsync<T1>(sql, parameters);
     }
 
-    protected IEnumerable<TReturn> ToList<TReturn>()
-    {
-        var sql = SqlBuilder.ToSqlString();
-        var parameters = SqlBuilder.DbParameters;
-        return Executor.Query<TReturn>(sql, parameters);
-    }
-
-    protected TReturn? Single<TReturn>()
-    {
-        var sql = SqlBuilder.ToSqlString();
-        var parameters = SqlBuilder.DbParameters;
-        return Executor.QuerySingle<TReturn>(sql, parameters);
-    }
-
-    protected Task<IList<TReturn>> ToListAsync<TReturn>()
-    {
-        var sql = SqlBuilder.ToSqlString();
-        var parameters = SqlBuilder.DbParameters;
-        return Executor.QueryAsync<TReturn>(sql, parameters);
-    }
-    protected Task<TReturn?> SingleAsync<TReturn>()
-    {
-        var sql = SqlBuilder.ToSqlString();
-        var parameters = SqlBuilder.DbParameters;
-        return Executor.QuerySingleAsync<TReturn>(sql, parameters);
-    }
-
     public Task<DataTable> ToDataTableAsync()
     {
         var sql = SqlBuilder.ToSqlString();
@@ -241,37 +214,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return SingleAsync<TMember>();
+        return this.SingleAsync<TMember>();
     }
 
     public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return SingleAsync<TMember>();
+        return this.SingleAsync<TMember>();
     }
 
     public Task<double> SumAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return SingleAsync<double>();
+        return this.SingleAsync<double>();
     }
 
     public Task<int> CountAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return SingleAsync<int>();
+        return this.SingleAsync<int>();
     }
 
     public Task<int> CountAsync()
     {
         this.HandleResult(null, "COUNT(*)");
-        return SingleAsync<int>();
+        return this.SingleAsync<int>();
     }
 
     public Task<double> AvgAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return SingleAsync<double>();
+        return this.SingleAsync<double>();
     }
 
     public async Task<bool> AnyAsync()

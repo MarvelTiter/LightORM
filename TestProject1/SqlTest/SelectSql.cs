@@ -34,6 +34,7 @@ namespace TestProject1.SqlTest
         public void SelectExtension()
         {
             var sql = Db.Select<Power, RolePower, Role>()
+                .InnerJoin( w=> w.Tb1.PowerName == w.Tb3.RoleName)
                 .Distinct()
                 .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3.RoleId)
                 .ToSql(w => new { w.Tb1 });
