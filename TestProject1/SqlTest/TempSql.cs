@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TestProject1.SqlTest
 {
@@ -32,6 +35,24 @@ namespace TestProject1.SqlTest
                 .ToSql();
 
             Console.WriteLine(sql);
+        }
+
+        public void GroupByThenAsTemp()
+        {
+            // TODO
+            //WITH temp AS(
+            //    SELECT sub.jylsh, AVG(sub.datediff) avgdiff FROM(
+            //    SELECT iim.jylsh, (iim.KSSJ - LAG(IIM.KSSJ) OVER(PARTITION BY iim.JYLSH ORDER BY iim.KSSJ)) * 24  DateDiff  FROM
+            //    INSPECT_ITEMDATA_M1 iim
+            //    WHERE iim.KSSJ > :{ nameof(DetectReq.StartTime)}
+            //AND iim.KSSJ < :{ nameof(DetectReq.EndTime)}
+            //    ) sub
+            //    WHERE sub.datediff IS NOT NULL
+            //    GROUP BY sub.jylsh
+            //    HAVING COUNT(*) > 2 AND AVG(sub.datediff) < 1
+            //    )
+
+            //var t = TimeSpan.Zero * 24;
         }
     }
 }
