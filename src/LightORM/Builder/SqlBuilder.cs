@@ -41,19 +41,20 @@ internal abstract record SqlBuilder : ISqlBuilder
     {
 
     }
+    protected ResolveContext? ResolveCtx { get; set; }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
             return;
         }
-        var context = new ResolveContext(DbHelper, AllTables);
-        BeforeResolveExpressions(context);
+        ResolveCtx ??= new ResolveContext(DbHelper, AllTables);
+        BeforeResolveExpressions(ResolveCtx);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!, context);
+            var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
             DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
@@ -65,7 +66,6 @@ internal abstract record SqlBuilder : ISqlBuilder
 
             DbParameters.TryAddDictionary(result.DbParameters);
         }
-
     }
 
     public string GetTableName(ITableEntityInfo table, bool useAlias = true)

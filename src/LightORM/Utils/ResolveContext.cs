@@ -46,6 +46,14 @@ public class ResolveContext
         }
     }
 
+    public void AddSelectedTable(ITableEntityInfo table)
+    {
+        if (!selectedTables.Any(t => t.Type == table.Type || table.Type!.IsAssignableFrom(t.Type)))
+        {
+            selectedTables.Add(table);
+        }
+    }
+
     public ITableEntityInfo GetTable(Type type)
     {
         var table = selectedTables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
@@ -60,14 +68,15 @@ public class ResolveContext
         var originMember = originType.GetMember(originName).First(m => m.MemberType == MemberTypes.Property);
         anonymousMap.TryAdd(key, originMember);
     }
-    public MemberInfo GetAnonymousInfo(Type anonymousType, string anonymousName)
+    public bool GetAnonymousInfo(Type anonymousType, string anonymousName, out MemberInfo? member)
     {
         var key = $"{anonymousType.FullName}_{anonymousName}";
-        anonymousMap.TryGetValue(key, out var member);
+        anonymousMap.TryGetValue(key, out member);
         if (member == null)
         {
-            LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
+            //LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
+            return false;
         }
-        return member!;
+        return true;
     }
 }

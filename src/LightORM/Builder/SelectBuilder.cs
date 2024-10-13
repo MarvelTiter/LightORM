@@ -23,13 +23,13 @@ namespace LightORM.Builder
 
     internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
-        public SelectBuilder(DbBaseType dbType):base(dbType)
+        public SelectBuilder(DbBaseType dbType) : base(dbType)
         {
             DbType = dbType;
             IncludeContext = new IncludeContext(dbType);
             Indent = new Lazy<string>(() => new string(' ', 4 * Level));
         }
-        //const string Indent = "    ";
+        public string Id { get; } = $"{Guid.NewGuid():N}";
         public int PageIndex { get; set; }
         public int PageSize { get; set; }
         private Lazy<string> Indent { get; }
@@ -103,7 +103,7 @@ namespace LightORM.Builder
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
             {
-                if (!string.IsNullOrWhiteSpace(result.SqlString) && !MainTable.IsAnonymousType)
+                if (!string.IsNullOrWhiteSpace(result.SqlString))
                 {
                     SelectValue = result.SqlString!;
                 }
@@ -197,6 +197,15 @@ namespace LightORM.Builder
 
         public override string ToSqlString()
         {
+            //if (SubQuery != null)
+            //{
+            //    SubQuery.ResolveExpressions();
+            //    ResolveCtx = SubQuery.ResolveCtx!;
+            //    foreach (var t in SelectedTables)
+            //    {
+            //        ResolveCtx.AddSelectedTable(t);
+            //    }
+            //}
             ResolveExpressions();
             StringBuilder sb = new StringBuilder();
             if (InsertInfo.HasValue)
@@ -229,10 +238,6 @@ namespace LightORM.Builder
                 {
                     SelectValue = groupby;
                 }
-                //else
-                //{
-                //    SelectValue = $"{groupby}, {SelectValue}";
-                //}
             }
             var dist = IsDistinct ? "DISTINCT " : "";
             sb.AppendLine($"{Indent.Value}SELECT {dist}{SelectValue}");
@@ -243,9 +248,10 @@ namespace LightORM.Builder
             }
             else
             {
+                SubQuery.Level = Level + 1;
                 sb.AppendLine($"{Indent.Value}FROM (");
                 sb.Append(SubQuery.ToSqlString());
-                sb.AppendLine($") {AttachEmphasis(MainTable.Alias!)}");
+                sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias!)}");
                 DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
@@ -253,10 +259,11 @@ namespace LightORM.Builder
             {
                 if (item.IsSubQuery)
                 {
-
+                    item.SubQuery!.Level = Level + 1;
                     sb.AppendLine($"{item.JoinType.ToLabel()} (");
-                    sb.Append(item.QuerySql);
+                    sb.Append(item.SubQuery.ToSqlString());
                     sb.AppendLine($") {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                    DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
                 }
                 else
                 {
@@ -277,7 +284,7 @@ namespace LightORM.Builder
             }
             if (OrderBy.Count > 0)
             {
-                sb.AppendLine($"{Indent.Value}ORDER BY {string.Join($"{N}, ", OrderBy)} {AdditionalValue}");
+                sb.AppendLine($"{Indent.Value}ORDER BY {string.Join(", ", OrderBy)} {AdditionalValue}");
             }
             if (PageIndex * PageSize > 0)
             {

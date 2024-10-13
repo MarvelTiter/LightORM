@@ -8,6 +8,15 @@ partial class ExpressionCoreSql
     {
         return select.HandleSubQuery<T>();
     }
+
+    public IExpSelect<T> FromTemp<T>(IExpTemp<T> temp)
+    {
+        var builder = new SelectBuilder(temp.SqlBuilder.DbType);
+        builder.TempViews.Add(temp.SqlBuilder);
+        builder.SelectedTables.Add(temp.ResultTable);
+        return new SelectProvider1<T>(Ado, builder);
+    }
+
     public IExpSelect<T> Union<T>(params IExpSelect<T>[] selects)
     {
         if (selects.Length == 0) LightOrmException.Throw("Union的数量为0");

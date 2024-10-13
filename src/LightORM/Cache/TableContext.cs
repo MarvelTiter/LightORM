@@ -81,7 +81,7 @@ internal static class TableContext
             entityInfo.Columns = propertyColumnInfos.ToArray();
             if (entityInfo.IsAnonymousType)
             {
-                entityInfo.Alias = $"temp{StaticCache<TableEntity>.Count}";
+                entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
             }
             else
             {

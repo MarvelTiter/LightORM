@@ -13,7 +13,7 @@ namespace TestProject1.SqlTest
         public void JoinSelect()
         {
             var sql = Db.Select<User>()
-                .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).ToSelect(g => new
+                .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).AsSelect(g => new
                 {
                     g.Group.ProductId,
                     Total = g.Count()
@@ -29,13 +29,32 @@ namespace TestProject1.SqlTest
             var sql = Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
             {
                 u.UserId
-            }).AsTempQuery(u => new
+            }).AsSubQuery(u => new
             {
                 u.Group.UserId,
                 Total = u.Count()
             })
             .Where(t => t.UserId.Contains("admin"))
             .ToSql();
+            Console.WriteLine(sql);
+        }
+
+        [TestMethod]
+        public void JoinMultiJoin()
+        {
+            var temp = Db.Select<User>()
+                .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
+                .InnerJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+                .AsTable(w => new
+                {
+                    w.Tb1.UserId,
+                    w.Tb1.UserName,
+                    w.Tb3.RoleName,
+                });
+            var sql = Db.Select<User>()
+                .LeftJoin<Power>(w => w.Tb1.UserId == w.Tb2.PowerId)
+                .LeftJoin(temp, (u, _, t) => u.UserId == t.UserId)
+                .ToSql();
             Console.WriteLine(sql);
         }
     }

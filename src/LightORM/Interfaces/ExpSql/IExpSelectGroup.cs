@@ -1,9 +1,7 @@
 ﻿namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpSelectGroup<TGroup, TTables>
+public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 {
-    internal SelectBuilder SqlBuilder { get; }
-    internal ISqlExecutor Executor { get; }
     IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
     IExpSelectGroup<TGroup, TTables> OrderBy(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
@@ -12,10 +10,16 @@ public interface IExpSelectGroup<TGroup, TTables>
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
-    IExpSelect<TTemp> ToSelect<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
-    IExpSelect<TTemp> AsTempQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
+    /// <summary>
+    /// 转换为<see cref="IExpSelect{T1}"/>
+    /// </summary>
+    /// <typeparam name="TTable"></typeparam>
+    /// <param name="exp"></param>
+    /// <returns></returns>
+    IExpSelect<TTable> AsSelect<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp);
+    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null);
+    IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
     string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
-    string ToSql();
 }
 
 public interface IExpSelectGrouping<TGroup, TTables>

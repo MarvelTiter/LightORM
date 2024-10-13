@@ -141,7 +141,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         }
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
-            Sql.Append("( ");
+            Sql.Append('(');
         }
 
         Visit(exp.Left);
@@ -154,7 +154,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
-            Sql.Append(" )");
+            Sql.Append(')');
         }
 
         return null;
@@ -216,19 +216,19 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             }
             else
             {
-                if (member.DeclaringType.IsAnonymous())
+                if (Options.SqlType == SqlPartial.GroupBy)
                 {
                     if (arg.NodeType == ExpressionType.MemberAccess && arg is MemberExpression e)
                     {
                         var parent = e.Expression;
                         if (parent is ParameterExpression p)
                         {
-                            if (!p.Type.IsAnonymous())
-                            {
-                                //创建匿名类型的来源映射
-                                // member 是从 p.Type中来的
-                                Context.CreateAnonymousMap(exp.Type, p.Type, member.Name, e.Member.Name);
-                            }
+                            //创建匿名类型的来源映射
+                            Context.CreateAnonymousMap(exp.Type, p.Type, member.Name, e.Member.Name);
+                            //if (!p.Type.IsAnonymous())
+                            //{
+                            // member 是从 p.Type中来的
+                            //}
                             //else { }
                         }
                         //else if (parent is MemberExpression m) { }
@@ -396,18 +396,21 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                 var member = Members.Pop();
                 memberType = member.DeclaringType!;
                 name = member.Name;
-                if (memberType.IsAnonymous())
+                if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
                 {
-                    member = Context.GetAnonymousInfo(memberType, name);
-                    memberType = member.DeclaringType!;
-                    name = member.Name;
+                    memberType = m!.DeclaringType!;
+                    name = m.Name;
                 }
-                col = Context.GetTable(memberType).Columns.First(c => c.PropertyName == name);
+                table = Context.GetTable(memberType);
+                col = table.Columns.First(c => c.PropertyName == name);
             }
-            UseAs = col.ColumnName != col.PropertyName;
+            if (!table.IsAnonymousType)
+            {
+                UseAs = col.ColumnName != col.PropertyName;
+            }
             if (Options.RequiredTableAlias)
             {
-                Sql.Append($"{Database.AttachEmphasis(col.Table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
+                Sql.Append($"{Database.AttachEmphasis(table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
             }
             else
             {

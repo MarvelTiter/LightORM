@@ -65,6 +65,22 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
+                    public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
+                    {
+                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+
+                    public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
+                    {
+                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
+                    {
+                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.RightJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
                 """ : "";
 
             string typeSetJoin = count < 16 ? $$"""
@@ -88,7 +104,25 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
-
+                    public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(where);
+                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                
+                    public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(where);
+                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(where);
+                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
                 """ : "";
 
             var selecteds = Enumerable.Range(1, count).Select(i => $"""
@@ -171,12 +205,16 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.ToListAsync<TReturn>();
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp)
+    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null)
     {
         this.HandleResult(exp, null);
-        return this.HandleSubQuery<TTemp>();
+        return this.HandleSubQuery<TTemp>(alias);
     }
-
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
+    {
+        this.HandleResult(exp, null);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+    }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<{{argsStr}}, TTemp>> exp)
     {
         this.HandleResult(exp, null);
@@ -266,13 +304,18 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.ToListAsync<TReturn>();
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
+    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return this.HandleSubQuery<TTemp>();
+        return this.HandleSubQuery<TTemp>(alias);
     }
-
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp);
+        this.HandleResult(flatExp, null);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+    }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
