@@ -2,7 +2,6 @@
 
 public static partial class SelectExtensions
 {
-
     static string? GetDbKey(params Type[] types)
     {
         List<string> keys = new List<string>();
@@ -64,19 +63,28 @@ public static partial class SelectExtensions
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
 
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
     public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.InnerJoin);
         return select;
     }
 
-    public static IExpSelect<T1, T2> InnerLeft<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
+    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.LeftJoin);
         return select;
     }
 
-    public static IExpSelect<T1, T2> InnerRight<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
+    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.RightJoin);
         return select;
@@ -113,21 +121,28 @@ public static partial class SelectExtensions
 
     #region TypeSet
 
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
     public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
         select.JoinHandle(flatExp, TableLinkType.InnerJoin);
         return select;
     }
-
-    public static IExpSelect<T1, T2> InnerLeft<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
+    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
         select.JoinHandle(flatExp, TableLinkType.LeftJoin);
         return select;
     }
-
-    public static IExpSelect<T1, T2> InnerRight<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
+    /// <summary>
+    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
+    /// </summary>
+    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
         select.JoinHandle(flatExp, TableLinkType.RightJoin);

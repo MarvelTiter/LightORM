@@ -1,10 +1,12 @@
-﻿using LightORM.Providers;
+﻿using LightORM.Extension;
+using LightORM.Providers;
+using System.Reflection;
 
 namespace LightORM;
 
 internal static class SelectHandleExtensions
 {
-    internal static void WhereHandle(this IExpSelect select, Expression exp)
+    internal static void WhereHandle(this IExpSelect select, Expression? exp)
     {
         select.SqlBuilder.Expressions.Add(new ExpressionInfo
         {
@@ -13,7 +15,7 @@ internal static class SelectHandleExtensions
         });
     }
 
-    internal static void OrderByHandle(this IExpSelect select, Expression exp, bool asc)
+    internal static void OrderByHandle(this IExpSelect select, Expression? exp, bool asc)
     {
         select.SqlBuilder.Expressions.Add(new ExpressionInfo()
         {
@@ -22,7 +24,7 @@ internal static class SelectHandleExtensions
             AdditionalParameter = asc ? "ASC" : "DESC"
         });
     }
-    internal static IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(this IExpSelect select, Expression exp)
+    internal static IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(this IExpSelect select, Expression? exp)
     {
         if (exp is LambdaExpression lambda && lambda.Body is not NewExpression)
         {
@@ -39,12 +41,13 @@ internal static class SelectHandleExtensions
     {
         foreach (var item in temps)
         {
-            select.SqlBuilder.TempViews.Add(item.SqlBuilder);
+            //select.SqlBuilder.TempViews.Add(item.SqlBuilder);
+            select.SqlBuilder.HandleTempsRecursion(item.SqlBuilder);
             select.SqlBuilder.SelectedTables.Add(item.ResultTable);
         }
     }
 
-    internal static void JoinHandle<TJoin>(this IExpSelect select, Expression exp, TableLinkType joinType, IExpSelect<TJoin>? subQuery = null)
+    internal static void JoinHandle<TJoin>(this IExpSelect select, Expression? exp, TableLinkType joinType, IExpSelect<TJoin>? subQuery = null)
     {
         var expression = new ExpressionInfo
         {
@@ -61,20 +64,17 @@ internal static class SelectHandleExtensions
         };
         if (subQuery != null)
         {
-            subQuery.SqlBuilder.Level += 1;
+            //subQuery.SqlBuilder.Level += select.SqlBuilder.Level + 1;
             joinInfo.IsSubQuery = true;
-            joinInfo.QuerySql = subQuery.ToSql();
+            joinInfo.SubQuery = subQuery.SqlBuilder;
         }
         select.SqlBuilder.Joins.Add(joinInfo);
         //SqlBuilder.OtherTables.Add()
         //return (this as TSelect)!;
     }
 
-    internal static void JoinHandle(this IExpSelect select, Expression exp, TableLinkType joinType)
+    internal static void JoinHandle(this IExpSelect select, Expression? exp, TableLinkType joinType)
     {
-        /// <summary>
-        /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-        /// </summary>
         var expression = new ExpressionInfo
         {
             ResolveOptions = SqlResolveOptions.Join,
@@ -103,15 +103,16 @@ internal static class SelectHandleExtensions
         });
     }
 
-    internal static SelectProvider1<TTemp> HandleSubQuery<TTemp>(this IExpSelect select)
+    internal static SelectProvider1<TTemp> HandleSubQuery<TTemp>(this IExpSelect select, string? alias = null)
     {
-        select.SqlBuilder.Level += 1;
         select.SqlBuilder.IsSubQuery = true;
         var builder = new SelectBuilder(select.SqlBuilder.DbType)
         {
             SubQuery = select.SqlBuilder,
         };
-        builder.SelectedTables.Add(TableContext.GetTableInfo<TTemp>());
+        var table = TableContext.GetTableInfo<TTemp>();
+        if (alias != null) table.Alias = alias;
+        builder.SelectedTables.Add(table);
         return new SelectProvider1<TTemp>(select.Executor, builder);
     }
 }

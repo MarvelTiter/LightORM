@@ -22,6 +22,20 @@ namespace LightORM.Extension
             select.Level = builder.Level;
             builder.Unions.Add(new(select, all));
         }
+
+        public static void HandleTempsRecursion(this SelectBuilder main, SelectBuilder temp)
+        {
+            foreach (var item in temp.TempViews)
+            {
+                HandleTempsRecursion(main, item);
+            }
+            temp.TempViews.Clear();
+            if (main.TempViews.Any(s => s.Id == temp.Id))
+            {
+                return;
+            }
+            main.TempViews.Add(temp);
+        }
     }
     internal static class SelectBuilderExtensions
     {

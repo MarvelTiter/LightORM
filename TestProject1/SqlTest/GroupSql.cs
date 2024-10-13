@@ -16,13 +16,13 @@ namespace TestProject1.SqlTest
         {
             var sql = Db.Select<User>()
                 .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
-                .GroupBy(w => new { w.Tb1.UserId, w.Tb1.UserName })
+                .GroupBy(w => new { w.Tb1.UserId, w.Tb2.RoleId })
                 .Having(w => w.Count() > 10 && w.Max(w.Tables.Tb1.Age) > 18)
                 .OrderBy(w => w.Group.UserId)
                 .ToSql(w => new
                 {
                     w.Group.UserId,
-                    w.Group.UserName,
+                    w.Group.RoleId,
                     Total = w.Count(),
                     Pass = w.Count<int?>(w.Tables.Tb1.Age > 10 ? 1 : null),
                     NoPass = w.Max(w.Tables.Tb1.Age > 10, w.Tables.Tb1.UserName)

@@ -133,10 +133,10 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp)
+    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp, string? alias = null)
     {
         this.HandleResult(exp, null);
-        return this.HandleSubQuery<TTemp>();
+        return this.HandleSubQuery<TTemp>(alias);
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp)
@@ -170,7 +170,6 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     }
 
     #endregion
-
 
     #region with temp
     public IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp)

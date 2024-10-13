@@ -8,6 +8,7 @@ public interface IExpressionContext : IDbAction
     IExpSelect<T> Union<T>(params IExpSelect<T>[] selects);
     IExpSelect<T> UnionAll<T>(params IExpSelect<T>[] selects);
     IExpSelect<T> FromQuery<T>(IExpSelect<T> select);
+    IExpSelect<T> FromTemp<T>(IExpTemp<T> temp);
     IExpSelect<T> Select<T>();
     //IExpSelect Select();
     //IExpSelect Select(string tableName);

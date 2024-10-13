@@ -9,14 +9,13 @@ namespace LightORM.Providers.Select
 {
     internal class TempProvider<TTemp> : IExpTemp<TTemp>
     {
-
+        public string Id { get; } = $"{Guid.NewGuid():N}";
         public ITableEntityInfo ResultTable { get; }
 
         public SelectBuilder SqlBuilder { get; }
 
         public TempProvider(string name, SelectBuilder builder)
         {
-            builder.TempViews.Clear();
             SqlBuilder = builder;
             SqlBuilder.IsTemp = true;
             SqlBuilder.TempName = name;

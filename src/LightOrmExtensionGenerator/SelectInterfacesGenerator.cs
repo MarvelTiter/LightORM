@@ -44,6 +44,10 @@ namespace LightOrmExtensionGenerator
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
 
+                    IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
+                    IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
+                    IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
+
                 """ : "";
 
             string typeSetJoin = count < 16 ? $$"""
@@ -51,6 +55,10 @@ namespace LightOrmExtensionGenerator
                     IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+
+                    IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
+                    IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
+                    IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
                 """ : "";
             var code = $$"""
 
@@ -74,8 +82,28 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
 
     //IEnumerable<dynamic> ToDynamicList(Expression<Func<{{argsStr}}, object>> exp);
     //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<{{argsStr}}, object>> exp);
-
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp);
+    /// <summary>
+    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
+    /// </summary>
+    /// <typeparam name="TTemp"></typeparam>
+    /// <param name="exp"></param>
+    /// <param name="alias"></param>
+    /// <returns></returns>
+    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null);
+    /// <summary>
+    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// </summary>
+    /// <typeparam name="TTable"></typeparam>
+    /// <param name="exp"></param>
+    /// <returns></returns>
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp);
+    /// <summary>
+    /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
+    /// </summary>
+    /// <typeparam name="TTemp"></typeparam>
+    /// <param name="name"></param>
+    /// <param name="exp"></param>
+    /// <returns></returns>
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<{{argsStr}}, TTemp>> exp);
 
     string ToSql(Expression<Func<{{argsStr}}, object>> exp);
@@ -96,7 +124,28 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     //IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp);
+    /// <summary>
+    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
+    /// </summary>
+    /// <typeparam name="TTemp"></typeparam>
+    /// <param name="exp"></param>
+    /// <param name="alias"></param>
+    /// <returns></returns>
+    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null);
+    /// <summary>
+    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// </summary>
+    /// <typeparam name="TTable"></typeparam>
+    /// <param name="exp"></param>
+    /// <returns></returns>
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp);
+    /// <summary>
+    /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
+    /// </summary>
+    /// <typeparam name="TTemp"></typeparam>
+    /// <param name="name"></param>
+    /// <param name="exp"></param>
+    /// <returns></returns>
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp);
     string ToSql(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     
