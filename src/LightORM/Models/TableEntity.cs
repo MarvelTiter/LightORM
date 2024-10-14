@@ -20,6 +20,7 @@ internal record TableEntity : ITableEntityInfo
     public string TableName => CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常");
     public string? Alias { get; set; }
     public bool IsAnonymousType { get; set; }
+    public bool IsTempTable { get; set; }
     public string? CustomName { get; set; }
     public string? TargetDatabase { get; set; }
     public string? Description { get; set; }

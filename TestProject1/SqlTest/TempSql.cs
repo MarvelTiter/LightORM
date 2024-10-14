@@ -73,7 +73,9 @@ namespace TestProject1.SqlTest
                     g.Group.Id,
                     AvgDiff = g.Avg(g.Tables.DateDiff)
                 });
-            var sql = temp.SqlBuilder.ToSqlString();
+            //var sql = temp.SqlBuilder.ToSqlString();
+            //Console.WriteLine(sql);
+            var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
             Console.WriteLine(sql);
         }
     }

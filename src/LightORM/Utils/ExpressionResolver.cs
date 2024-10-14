@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Collections;
 using System.Diagnostics;
+using System.Xml.Linq;
 namespace LightORM;
 
 internal static class ExpressionExtensions
@@ -239,7 +240,9 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                 {
                     Visit(arg);
                     if (UseAs)
+                    {
                         Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
+                    }
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
@@ -429,19 +432,29 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         if (Members.Count > 0 && value != null)
         {
             value = GetValue(Members, value, out var name);
-            if (value == null)
+            VariableValue(value, name);
+        }
+        else
+        {
+            ConstraintValue(value);
+        }
+        return null;
+
+        void VariableValue(object? v, string bn)
+        {
+            if (v == null)
             {
                 Sql.Append("NULL");
-                return null;
+                return;
             }
 
-            if (value is IEnumerable enumerable && value is not string)
+            if (v is IEnumerable enumerable && v is not string)
             {
                 var names = new List<string>();
                 int i = 0;
                 foreach (var item in enumerable)
                 {
-                    var n = $"{name}_{i}";
+                    var n = $"{bn}_{i}";
                     var parameterName = AddDbParameter(n, item);
                     names.Add(parameterName);
                     i++;
@@ -450,20 +463,21 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             }
             else
             {
-                var parameterName = AddDbParameter(name, value);
+                var parameterName = AddDbParameter(bn, value);
                 Sql.Append(parameterName);
             }
         }
-        else
+
+        void ConstraintValue(object? v)
         {
-            if (value == null)
+            if (v == null)
             {
                 Sql.Append("NULL");
-                return null;
+                return;
             }
             if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
             {
-                var b = (bool)value;
+                var b = (bool)v;
                 Sql.Append("1 = ");
                 Sql.Append(b ? "1" : "0");
             }
@@ -471,16 +485,15 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             {
                 if (exp.Type.IsNumber())
                 {
-                    Sql.Append($"{value}");
+                    Sql.Append($"{v}");
                 }
                 else
                 {
-                    var parameterName = AddDbParameter("Const", value);
-                    Sql.Append(parameterName);
+                    //var parameterName = AddDbParameter("Const", value);
+                    Sql.Append($"'{v}'");
                 }
             }
         }
-        return null;
     }
 
     private string AddDbParameter(string name, object v)

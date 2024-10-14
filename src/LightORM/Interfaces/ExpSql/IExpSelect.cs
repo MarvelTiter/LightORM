@@ -70,6 +70,9 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
+    IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
+    IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
+    IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
     IExpSelect<T1> As(string alias);
     //IExpSelect<T1> Named(string tableName);
@@ -122,7 +125,7 @@ public interface IExpTemp
 
 public interface IExpTemp<TTemp> : IExpTemp
 {
-
+    //IExpSelect<TTemp> AsSelect(string? alias = null);
 }
 
 public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>

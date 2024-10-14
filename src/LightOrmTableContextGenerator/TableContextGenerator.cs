@@ -104,7 +104,8 @@ public class TableContextGenerator : IIncrementalGenerator
             // public string? Alias { get; set; } = "a1";
             PropertyBuilder.Default.MemberType("string?").PropertyName("Alias").InitializeWith($"\"a{index}\""),
             // public bool IsAnonymousType => false;
-            PropertyBuilder.Default.MemberType("bool").PropertyName("IsAnonymousType").InitializeWith("false")
+            PropertyBuilder.Default.MemberType("bool").PropertyName("IsAnonymousType").InitializeWith("false"),
+            PropertyBuilder.Default.MemberType("bool").PropertyName("IsTempTable").InitializeWith("false")
         ];
 
         // public string? CustomName { get; set; }

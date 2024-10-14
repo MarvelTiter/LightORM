@@ -21,6 +21,7 @@ namespace LightORM.Providers.Select
             SqlBuilder.TempName = name;
             ResultTable = TableContext.GetTableInfo<TTemp>();
             ResultTable.CustomName = name;
+            ResultTable.IsTempTable = true;
         }
     }
 }

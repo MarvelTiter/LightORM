@@ -70,4 +70,18 @@ public class SqlFunTest : TestBase
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
+
+    [TestMethod]
+    public void Abs()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Result = SqlFn.Abs(u.Age)
+        };
+        var table = TestTableContext.TestProject1_Models_User;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomOracle.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
 }

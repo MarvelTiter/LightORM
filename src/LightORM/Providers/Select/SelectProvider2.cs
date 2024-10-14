@@ -67,6 +67,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.RightJoin, subQuery);
         return new SelectProvider3<T1, T2, TJoin>(Executor, SqlBuilder);
     }
+
     #endregion
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
