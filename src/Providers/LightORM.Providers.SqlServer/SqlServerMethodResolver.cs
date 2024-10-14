@@ -89,22 +89,48 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
         }
     }
 
-    public override void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
+    //public override void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
+    //{
+    //    if (Version == SqlServerVersion.Over2017)
+    //    {
+    //        resolver.Sql.Append("STRING_AGG(");
+    //        resolver.Visit(methodCall.Arguments[0]);
+    //        if (methodCall.Arguments.Count > 1)
+    //        {
+    //            resolver.Sql.Append(", ");
+    //            resolver.Options.Parameterized = false;
+    //            resolver.Visit(methodCall.Arguments[1]);
+    //            resolver.Options.Parameterized = true;
+    //        }
+    //        resolver.Sql.Append(')');
+    //    }
+    //    base.Join(resolver, methodCall);
+    //}
+
+    public override void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
-        if (Version == SqlServerVersion.Over2017)
+        if (methodCall.IsWindowFn())
         {
-            resolver.Sql.Append("STRING_AGG(");
-            resolver.Visit(methodCall.Arguments[0]);
-            if (methodCall.Arguments.Count > 1)
-            {
-                resolver.Sql.Append(", ");
-                resolver.Options.Parameterized = false;
-                resolver.Visit(methodCall.Arguments[1]);
-                resolver.Options.Parameterized = true;
-            }
-            resolver.Sql.Append(')');
+            base.OrderBy(resolver, methodCall);
         }
-        base.Join(resolver, methodCall);
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderBy", methodCall.Arguments[0]);
+        }
+    }
+
+    public override void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        if (methodCall.IsWindowFn())
+        {
+            base.OrderByDesc(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            resolver.ExpStores!.Add("OrderByDesc", methodCall.Arguments[0]);
+        }
     }
 
     public override void Value(IExpressionResolver resolver, MethodCallExpression methodCall)

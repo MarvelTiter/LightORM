@@ -230,7 +230,17 @@
         public virtual void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.ExpStores ??= [];
-            resolver.ExpStores.Add("Join", methodCall.Arguments[0]);
+            if (methodCall.Arguments.Count == 1)
+            {
+                resolver.ExpStores.Add("Join", methodCall.Arguments[0]);
+            }
+            else if (methodCall.Arguments.Count == 3)
+            {
+                resolver.ExpStores.Add("JoinWhere", methodCall.Arguments[0]);
+                resolver.ExpStores.Add("JoinThen", methodCall.Arguments[1]);
+                resolver.ExpStores.Add("JoinElse", methodCall.Arguments[2]);
+
+            }
         }
 
         public virtual void Distinct(IExpressionResolver resolver, MethodCallExpression methodCall)

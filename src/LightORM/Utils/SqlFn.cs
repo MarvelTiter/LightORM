@@ -90,6 +90,19 @@ public static partial class SqlFn
     /// <param name="column"></param>
     /// <returns></returns>
     public static IGroupJoinFn Join<T>(T? column) => default!;
+    /// <summary>
+    /// 分组数据中拼接字符串
+    /// <para>MySql -> GROUP_CONCAT</para>
+    /// <para>Sqlite -> GROUP_CONCAT</para>
+    /// <para>Oracle -> LISTAGG</para>
+    /// <para>SqlServer 2017 -> STRING_AGG</para> 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="condition"></param>
+    /// <param name="isTrue"></param>
+    /// <param name="isFalse"></param>
+    /// <returns></returns>
+    public static IGroupJoinFn Join<T>(bool condition, T? isTrue, T? isFalse) => default!;
 }
 
 partial class SqlFn
