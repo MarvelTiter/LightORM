@@ -13,7 +13,11 @@ public class TestBase
         ExpSqlFactory.Configuration(option =>
         {
             //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
-            option.UseSqlite("DataSource=" + path);
+            option.UseSqlite(option =>
+            {
+                option.MasterConnectionString = "DataSource=" + path;
+                //option.MethodResolver.AddOrUpdateMethod()
+            });
             option.SetTableContext(new TestTableContext());
             option.SetWatcher(aop =>
             {

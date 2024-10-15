@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using LightORM.Models;
+using Microsoft.Data.SqlClient;
 
 namespace LightORM.Providers.SqlServer.Extensions;
 
@@ -10,5 +11,17 @@ public static class IoCExtension
     {
         var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
         options.SetDatabase(key, DbBaseType.SqlServer, provider);
+    }
+    public static void UseSqlServer(this ExpressionSqlOptions options, SqlServerVersion version, Action<DataBaseOption> setting)
+    {
+        var custom = new CustomSqlServer(version);
+        var dbOption = new DataBaseOption(custom.MethodResolver);
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException("连接字符串不能为空");
+        }
+        var provider = SqlServerProvider.Create(custom,dbOption.MasterConnectionString!, dbOption.SalveConnectionStrings ?? []);
+        options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.SqlServer, provider);
     }
 }

@@ -17,7 +17,7 @@ public class User
     [LightColumn(Name = "SIGN")]
     public string Sign { get; set; }
     [LightColumn(Name = "LAST_LOGIN")]
-    public DateTime? LastLogin { get; set; }
+    public DateTime LastLogin { get; set; }
 
     [LightNavigateAttribute(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }

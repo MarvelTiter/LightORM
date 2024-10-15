@@ -1,11 +1,44 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
+using System;
 using System.Linq.Expressions;
 
 namespace LightORM.Providers.Oracle;
 
 public sealed class OracleMethodResolver : BaseSqlMethodResolver
 {
+    public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        var type = methodCall.Object?.Type;
+        if (type != null)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+        }
+        var isDatetime = type == typeof(DateTime);
+        if (isDatetime)
+        {
+            resolver.Sql.Append("TO_CHAR(");
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(',');
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+            }
+            else
+            {
+                resolver.Sql.Append("'yyyy-mm-dd hh24:mm:ss'");
+            }
+            resolver.Sql.Append(')');
+        }
+        else
+        {
+            resolver.Sql.Append("CAST(");
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" AS ");
+            resolver.Sql.Append("VARCHAR(255)");
+            resolver.Sql.Append(')');
+        }
+    }
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         resolver.Visit(methodCall.Object);

@@ -2,8 +2,8 @@
 {
     public interface ISqlMethodResolver
     {
-        void Resolve(IExpressionResolver resolver, MethodCallExpression expression);
-
+        internal void Resolve(IExpressionResolver resolver, MethodCallExpression expression);
+        void AddOrUpdateMethod(string methodName, Action<IExpressionResolver, MethodCallExpression> methodResolver);
         //void Count(IExpressionResolver resolver, MethodCallExpression methodCall);
         //void Sum(IExpressionResolver resolver, MethodCallExpression methodCall);
         //void Avg(IExpressionResolver resolver, MethodCallExpression methodCall);

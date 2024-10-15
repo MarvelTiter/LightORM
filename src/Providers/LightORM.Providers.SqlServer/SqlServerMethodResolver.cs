@@ -12,6 +12,38 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
     {
         Version = version;
     }
+
+    public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        var type = methodCall.Object?.Type;
+        if (type != null)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+        }
+        var isDatetime = type == typeof(DateTime);
+        resolver.Sql.Append("CONVERT(VARCHAR(255),");
+        resolver.Visit(methodCall.Object);
+        if (isDatetime)
+        {
+            resolver.Sql.Append(',');
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Replace("yyyy-MM-dd HH:mm:ss", "120");
+                resolver.Sql.Replace("yyyy-MM-dd", "23");
+            }
+            else
+            {
+                resolver.Sql.Append(120);
+            }
+        }
+        else if (methodCall.Arguments.Count > 0)
+        {
+            resolver.Visit(methodCall.Arguments[0]);
+        }
+        resolver.Sql.Append(')');
+    }
+
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         resolver.Visit(methodCall.Object);

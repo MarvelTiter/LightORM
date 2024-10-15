@@ -11,8 +11,8 @@ namespace LightOrmExtensionGenerator
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var target = context.SyntaxProvider.CreateSyntaxProvider(
-                static(node, _) => node is ClassDeclarationSyntax @class && @class.Identifier.Text == "BaseSqlMethodResolver",
-                static(ctx, _) => ctx
+                static (node, _) => node is ClassDeclarationSyntax @class && @class.Identifier.Text == "BaseSqlMethodResolver",
+                static (ctx, _) => ctx
                 );
             context.RegisterSourceOutput(target, static (source, context) =>
             {
@@ -27,7 +27,7 @@ namespace LightOrmExtensionGenerator
                 var ctorMethod = ConstructorBuilder.Default.MethodName("BaseSqlMethodResolver");
                 foreach (var item in methods)
                 {
-                    if (item.Name == "Resolve" || item.MethodKind == MethodKind.Constructor) continue;
+                    if (item.Name == "Resolve" || item.Name == "AddOrUpdateMethod" || item.MethodKind == MethodKind.Constructor) continue;
                     ctorMethod.AddBody($"methods.Add(nameof({item.Name}), {item.Name});");
                 }
                 classBuilder.AddMembers(ctorMethod);

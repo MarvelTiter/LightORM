@@ -17,11 +17,21 @@ public sealed class SqlServerProvider : IDatabaseProvider
 {
     public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
         => new SqlServerProvider(version, master, slaves);
+    public static SqlServerProvider Create(ICustomDatabase customDatabase, string master, params string[] slaves)
+        => new SqlServerProvider(customDatabase, master, slaves);
     public SqlServerProvider(SqlServerVersion version
         , string master
         , params string[] slaves)
     {
         CustomDatabase = new CustomSqlServer(version);
+        MasterConnectionString = master;
+        SlaveConnectionStrings = slaves;
+    }
+    public SqlServerProvider(ICustomDatabase customDatabase
+        , string master
+        , params string[] slaves)
+    {
+        CustomDatabase = customDatabase;
         MasterConnectionString = master;
         SlaveConnectionStrings = slaves;
     }

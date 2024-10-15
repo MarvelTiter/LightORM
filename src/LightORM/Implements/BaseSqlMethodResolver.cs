@@ -6,6 +6,10 @@
         /// 在生成器中初始化集合内容
         /// </summary>
         private readonly Dictionary<string, Action<IExpressionResolver, MethodCallExpression>> methods = [];
+        public void AddOrUpdateMethod(string name, Action<IExpressionResolver, MethodCallExpression> methodResolver)
+        {
+            methods[name] = methodResolver;
+        }
 
         public void Resolve(IExpressionResolver resolver, MethodCallExpression expression)
         {
@@ -175,6 +179,15 @@
             resolver.Sql.Append(')');
         }
 
+        #region 类型转换
+
+        public virtual void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+
         #region 字符串相关
         public virtual void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
@@ -192,11 +205,6 @@
         }
 
         public virtual void Substring(IExpressionResolver resolver, MethodCallExpression methodCall)
-        {
-            throw new NotSupportedException();
-        }
-
-        public virtual void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
         }
