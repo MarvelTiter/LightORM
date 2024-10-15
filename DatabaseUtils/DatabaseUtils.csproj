@@ -16,7 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
-		<PackageReference Include="MT.LightORM" Version="2.1.9-pre" />
+		<PackageReference Include="MT.LightORM" Version="*" />
 		<PackageReference Include="LightORM.Providers.SqlServer" Version="*"/>
 		<PackageReference Include="LightORM.Providers.MySql" Version="*"/>
 		<PackageReference Include="LightORM.Providers.Oracle" Version="*"/>

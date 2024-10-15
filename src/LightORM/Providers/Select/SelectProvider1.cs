@@ -99,6 +99,23 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
+    {
+        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
+    {
+        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
+    {
+        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.RightJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
     #endregion
 
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)

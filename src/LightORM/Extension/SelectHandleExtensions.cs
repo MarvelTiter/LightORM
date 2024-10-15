@@ -64,13 +64,29 @@ internal static class SelectHandleExtensions
         };
         if (subQuery != null)
         {
-            //subQuery.SqlBuilder.Level += select.SqlBuilder.Level + 1;
             joinInfo.IsSubQuery = true;
             joinInfo.SubQuery = subQuery.SqlBuilder;
         }
         select.SqlBuilder.Joins.Add(joinInfo);
-        //SqlBuilder.OtherTables.Add()
-        //return (this as TSelect)!;
+    }
+
+    internal static void JoinHandle<TJoin>(this IExpSelect select, Expression? exp, TableLinkType joinType, IExpTemp tempQuery)
+    {
+        var expression = new ExpressionInfo
+        {
+            ResolveOptions = SqlResolveOptions.Join,
+            Expression = exp,
+        };
+
+        select.SqlBuilder.Expressions.Add(expression);
+        var joinInfo = new JoinInfo()
+        {
+            ExpressionId = expression.Id,
+            JoinType = joinType,
+            EntityInfo = tempQuery.ResultTable
+        };
+        select.SqlBuilder.HandleTempsRecursion(tempQuery.SqlBuilder);
+        select.SqlBuilder.Joins.Add(joinInfo);
     }
 
     internal static void JoinHandle(this IExpSelect select, Expression? exp, TableLinkType joinType)

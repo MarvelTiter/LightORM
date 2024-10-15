@@ -6,6 +6,7 @@ public interface ITableEntityInfo
     string TableName { get; }
     string? Alias { get; set; }
     bool IsAnonymousType { get; }
+    bool IsTempTable { get; set; }
     string? CustomName { get; set; }
     string? TargetDatabase { get; }
     string? Description { get; }

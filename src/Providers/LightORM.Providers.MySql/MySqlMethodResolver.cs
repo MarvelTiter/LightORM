@@ -11,6 +11,45 @@ namespace LightORM.Providers.MySql;
 
 public sealed class MySqlMethodResolver : BaseSqlMethodResolver
 {
+    public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        var type = methodCall.Object?.Type;
+        if (type != null)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+        }
+        var isDatetime = type == typeof(DateTime);
+        if (isDatetime)
+        {
+            resolver.Sql.Append("DATE_FORMAT(");
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(',');
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+                // yyyy-MM-dd HH:mm:ss
+                // %Y-%m-%d %H:%i:%s
+                resolver.Sql.Replace("yyyy", "%Y");
+                resolver.Sql.Replace("MM", "%m");
+                resolver.Sql.Replace("dd", "%d");
+                resolver.Sql.Replace("HH", "%H");
+                resolver.Sql.Replace("mm", "%i");
+                resolver.Sql.Replace("ss", "%s");
+            }
+            else
+            {
+                resolver.Sql.Append("'%Y-%m-%d %H:%i:%s'");
+            }
+            resolver.Sql.Append(')');
+        }
+        else
+        {
+            resolver.Sql.Append("CAST(");
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" AS CHAR)");
+        }
+    }
+
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         resolver.Visit(methodCall.Object);

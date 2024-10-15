@@ -6,6 +6,10 @@
         /// 在生成器中初始化集合内容
         /// </summary>
         private readonly Dictionary<string, Action<IExpressionResolver, MethodCallExpression>> methods = [];
+        public void AddOrUpdateMethod(string name, Action<IExpressionResolver, MethodCallExpression> methodResolver)
+        {
+            methods[name] = methodResolver;
+        }
 
         public void Resolve(IExpressionResolver resolver, MethodCallExpression expression)
         {
@@ -15,6 +19,15 @@
                 throw new NotSupportedException($"{this.GetType().Name}: {expression.Method.Name}, {expression.Method.GetParameters().Select(p => $"[{p.ParameterType}:{p.Name}]")}");
             }
             action.Invoke(resolver, expression);
+        }
+
+        public virtual void In(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(resolver.IsNot ? " NOT IN " : " IN ");
+            resolver.Sql.Append('(');
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Sql.Append(')');
         }
 
         public virtual void Count(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -114,6 +127,67 @@
             }
         }
 
+        public virtual void Abs(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            var exp = methodCall.Arguments[0];
+            resolver.Sql.Append("ABS");
+            if (exp is BinaryExpression)
+            {
+                resolver.Visit(exp);
+            }
+            else
+            {
+                resolver.Sql.Append('(');
+                resolver.Visit(exp);
+                resolver.Sql.Append(')');
+            }
+        }
+
+        public virtual void Round(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("ROUND(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(',');
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Sql.Append(')');
+        }
+
+        public virtual void Nvl(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("NVL(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(',');
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Sql.Append(')');
+        }
+
+        public virtual void IsNull(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("ISNULL(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(',');
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Sql.Append(')');
+        }
+
+        public virtual void IfNull(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("IFNULL(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(',');
+            resolver.Visit(methodCall.Arguments[1]);
+            resolver.Sql.Append(')');
+        }
+
+        #region 类型转换
+
+        public virtual void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+
         #region 字符串相关
         public virtual void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
@@ -181,7 +255,6 @@
         #endregion
 
         #endregion
-
 
         #region include用到的方法
         public void Where(IExpressionResolver resolver, MethodCallExpression methodCall)

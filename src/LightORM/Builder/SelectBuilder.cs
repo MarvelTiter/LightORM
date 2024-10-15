@@ -260,9 +260,9 @@ namespace LightORM.Builder
                 if (item.IsSubQuery)
                 {
                     item.SubQuery!.Level = Level + 1;
-                    sb.AppendLine($"{item.JoinType.ToLabel()} (");
+                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} (");
                     sb.Append(item.SubQuery.ToSqlString());
-                    sb.AppendLine($") {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                    sb.AppendLine($"{Indent.Value}) {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
                     DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
                 }
                 else

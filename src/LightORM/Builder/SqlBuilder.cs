@@ -68,14 +68,19 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
     }
 
-    public string GetTableName(ITableEntityInfo table, bool useAlias = true)
+    public string GetTableName(ITableEntityInfo table, bool useAlias = true, bool useEmphasis = true)
     {
-        return $"{NpTableName(table.TableName!)}{((useAlias && !string.IsNullOrEmpty(table.Alias)) ? $" {AttachEmphasis(table.Alias!)}" : "")}";
+        return $"{NpTableName(table)}{((useAlias && !string.IsNullOrEmpty(table.Alias)) ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }
 
     //TODO Oracle?
-    private string NpTableName(string tablename)
+    private string NpTableName(ITableEntityInfo table)
     {
+        if (table.IsTempTable)
+        {
+            return table.TableName;
+        }
+        var tablename = table.TableName;
         if (!tablename.Contains('.'))
         {
             return AttachEmphasis(tablename);

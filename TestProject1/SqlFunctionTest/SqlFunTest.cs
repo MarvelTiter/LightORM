@@ -62,11 +62,39 @@ public class SqlFunTest : TestBase
     {
         Expression<Func<User, object>> exp = u => new
         {
-            Result = SqlFn.Join(u.UserName).Separator("|").Distinct().OrderBy(u.UserId).Value()
+            Result = SqlFn.Join(u.Age > 10 ? u.UserName : "").Separator("|").Distinct().OrderBy(u.UserId).Value()
         };
         var table = TestTableContext.TestProject1_Models_User;
         table.Alias = "u";
         var ctx = new ResolveContext(CustomOracle.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
+
+    [TestMethod]
+    public void Abs()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Result = SqlFn.Abs(u.Age)
+        };
+        var table = TestTableContext.TestProject1_Models_User;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomOracle.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
+
+    [TestMethod]
+    public void ConvertString()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Result = u.LastLogin.ToString("yyyy-MM-dd")
+        };
+        var table = TestTableContext.TestProject1_Models_User;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomMySql.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }

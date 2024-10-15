@@ -35,7 +35,7 @@ namespace LightORM.Providers
             this.OrderByHandle(flatExp, true);
             return this;
         }
-        public IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp)
+        public IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.OrderByHandle(flatExp, false);

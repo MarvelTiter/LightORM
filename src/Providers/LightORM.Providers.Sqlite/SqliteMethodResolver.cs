@@ -11,6 +11,48 @@ namespace LightORM.Providers.Sqlite;
 
 public sealed class SqliteMethodResolver : BaseSqlMethodResolver
 {
+    public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        var type = methodCall.Object?.Type;
+        if (type != null)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+        }
+        var isDatetime = type == typeof(DateTime);
+        if (isDatetime)
+        {
+            resolver.Sql.Append("STRFTIME(");
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+                // yyyy-MM-dd HH:mm:ss
+                // %Y-%m-%d %H:%M:%S
+                resolver.Sql.Replace("yyyy", "%Y");
+                resolver.Sql.Replace("MM", "%m");
+                resolver.Sql.Replace("dd", "%d");
+                resolver.Sql.Replace("HH", "%H");
+                resolver.Sql.Replace("mm", "%M");
+                resolver.Sql.Replace("ss", "%S");
+            }
+            else
+            {
+                resolver.Sql.Append("'%Y-%m-%d %H:%M:%S'");
+            }
+            resolver.Sql.Append(',');
+            resolver.Visit(methodCall.Object);
+            resolver.Sql.Append(" )");
+        }
+        else
+        {
+            resolver.Sql.Append("CAST(");
+            resolver.Visit(methodCall.Object);
+            if (methodCall.Arguments.Count > 0)
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+            }
+            resolver.Sql.Append(" AS TEXT)");
+        }
+    }
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         resolver.Visit(methodCall.Object);
