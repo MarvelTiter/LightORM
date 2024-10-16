@@ -176,6 +176,7 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
                 resolver.Options.Parameterized = true;
             }
             resolver.Sql.Append(')');
+            resolver.ExpStores?.Clear();
         }
     }
 }

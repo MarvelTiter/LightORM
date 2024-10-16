@@ -1,4 +1,5 @@
-﻿using LightORM.Implements;
+﻿using LightORM.Extension;
+using LightORM.Implements;
 using LightORM.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -113,17 +114,29 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
         }
         resolver.Sql.Append(')');
     }
-
-    public override void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
+        
+    public override void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
-        resolver.Sql.Append("GROUP_CONCAT( ");
-        resolver.Visit(methodCall.Arguments[0]);
-        if (methodCall.Arguments.Count > 1)
+        if (methodCall.IsWindowFn())
         {
-            resolver.Sql.Append(", ");
-            resolver.Options.Parameterized = false;
-            resolver.Visit(methodCall.Arguments[1]);
-            resolver.Options.Parameterized = true;
+            base.Value(resolver, methodCall);
+        }
+        else
+        {
+            resolver.Visit(methodCall.Object);
+            var exps = resolver.ExpStores!;
+            var joinExp = exps["Join"]!;
+            resolver.Sql.Append("GROUP_CONCAT( ");
+            resolver.Visit(joinExp);
+            if (exps.TryGetValue("Separator", out var exp))
+            {
+                resolver.Sql.Append(',');
+                resolver.Options.Parameterized = false;
+                resolver.Visit(exp);
+                resolver.Options.Parameterized = true;
+            }
+            resolver.Sql.Append(')');
+            resolver.ExpStores?.Clear();
         }
     }
 }

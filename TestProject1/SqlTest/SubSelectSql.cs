@@ -13,7 +13,7 @@ namespace TestProject1.SqlTest
         public void JoinSelect()
         {
             var sql = Db.Select<User>()
-                .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).AsSelect(g => new
+                .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).AsTable(g => new
                 {
                     g.Group.ProductId,
                     Total = g.Count()
@@ -29,11 +29,11 @@ namespace TestProject1.SqlTest
             var sql = Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
             {
                 u.UserId
-            }).AsSubQuery(u => new
+            }).AsTable(u => new
             {
                 u.Group.UserId,
                 Total = u.Count()
-            })
+            }).AsSubQuery()
             .Where(t => t.UserId.Contains("admin"))
             .ToSql();
             Console.WriteLine(sql);

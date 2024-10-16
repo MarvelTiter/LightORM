@@ -167,6 +167,7 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
                 resolver.Visit(exp);
                 resolver.Sql.Append(" DESC)");
             }
+            resolver.ExpStores?.Clear();
         }
     }
 }

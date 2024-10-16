@@ -493,6 +493,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                     Sql.Append($"'{v}'");
                 }
             }
+            if (Options.SqlAction == SqlAction.Select)
+            {
+                UseAs = true;
+            }
         }
     }
 

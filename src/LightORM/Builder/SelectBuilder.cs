@@ -197,15 +197,6 @@ namespace LightORM.Builder
 
         public override string ToSqlString()
         {
-            //if (SubQuery != null)
-            //{
-            //    SubQuery.ResolveExpressions();
-            //    ResolveCtx = SubQuery.ResolveCtx!;
-            //    foreach (var t in SelectedTables)
-            //    {
-            //        ResolveCtx.AddSelectedTable(t);
-            //    }
-            //}
             ResolveExpressions();
             StringBuilder sb = new StringBuilder();
             if (InsertInfo.HasValue)
@@ -270,13 +261,21 @@ namespace LightORM.Builder
                     sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(item.EntityInfo!)} ON {item.Where}");
                 }
             }
+
             if (Where.Count > 0)
             {
                 sb.AppendLine($"{Indent.Value}WHERE {string.Join($" AND ", Where)}");
             }
             if (GroupBy.Count > 0)
             {
-                sb.AppendLine($"{Indent.Value}GROUP BY {string.Join(", ", GroupBy)}");
+                if (IsRollup)
+                {
+                    sb.AppendLine($"{Indent.Value}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})");
+                }
+                else
+                {
+                    sb.AppendLine($"{Indent.Value}GROUP BY {string.Join(", ", GroupBy)}");
+                }
             }
             if (Having.Count > 0)
             {
@@ -301,7 +300,8 @@ namespace LightORM.Builder
             {
                 foreach (var item in Unions)
                 {
-                    var union = item.IsAll ? "UNIONALL" : "UNION";
+                    item.SqlBuilder.Level = Level;
+                    var union = item.IsAll ? "UNION ALL" : "UNION";
                     sb.AppendLine($"{Indent.Value}{union}");
                     sb.Append(item.SqlBuilder.ToSqlString());
                     DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);

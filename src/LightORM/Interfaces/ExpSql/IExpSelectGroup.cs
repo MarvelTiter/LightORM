@@ -16,8 +16,9 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsSelect<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp);
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp);
+    IExpSelectGroup<TGroup, TTables> Rollup();
+    IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
     string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
 }
@@ -89,6 +90,6 @@ public interface IExpSelectGrouping<TGroup, TTables>
     /// <typeparam name="TColumn"></typeparam>
     /// <param name="column"></param>
     /// <returns></returns>
-    IGroupJoinFn? Join<TColumn>(TColumn? column);
+    IGroupJoinFn Join<TColumn>(TColumn? column);
 
 }

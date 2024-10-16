@@ -34,6 +34,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.WhereHandle(exp);
         return this;
     }
+    
     #region join
     public IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp)
     {
@@ -91,11 +92,11 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         return this.ToListAsync<TReturn>();
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null)
-    {
-        this.HandleResult(exp, null);
-        return this.HandleSubQuery<TTemp>(alias);
-    }
+    //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null)
+    //{
+    //    this.HandleResult(exp, null);
+    //    return this.HandleSubQuery<TTemp>(alias);
+    //}
 
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp)
     {
@@ -108,7 +109,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.HandleResult(exp, null);
         return new TempProvider<TTemp>(name, SqlBuilder);
     }
-    
+
     public string ToSql(Expression<Func<T1, T2, object>> exp)
     {
         this.HandleResult(exp, null);
@@ -233,13 +234,13 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.HandleResult(exp, null);
         return this.ToListAsync<TReturn>();
     }
-    
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        return this.HandleSubQuery<TTemp>(alias);
-    }
+
+    //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    this.HandleResult(flatExp, null);
+    //    return this.HandleSubQuery<TTemp>(alias);
+    //}
 
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp)
     {

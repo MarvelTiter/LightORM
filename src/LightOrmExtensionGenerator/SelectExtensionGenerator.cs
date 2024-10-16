@@ -28,7 +28,17 @@ public static partial class SelectExtensions
             instance.SwitchDatabase(key);
         return new SelectProvider{{count}}<{{argsStr}}>(instance.Ado);
     }
-
+    /// <summary>
+    /// 条件Where
+    /// </summary>
+    public static IExpSelect<{{argsStr}}> WhereIf<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, bool condition, Expression<Func<{{argsStr}}, bool>> exp)
+    {
+        if (condition)
+        {
+            select.Where(exp);
+        }
+        return select;
+    }
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
@@ -86,6 +96,18 @@ public static partial class SelectExtensions
     }
 
     #region TypeSet
+
+    /// <summary>
+    /// 条件Where
+    /// </summary>
+    public static IExpSelect<{{argsStr}}> WhereIf<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, bool condition, Expression<Func<TypeSet<{{argsStr}}>, bool>> exp)
+    {
+        if (condition)
+        {
+            select.Where(exp);
+        }
+        return select;
+    }
 
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join

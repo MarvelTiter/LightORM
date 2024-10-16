@@ -22,6 +22,7 @@ namespace LightORM.Providers.Select
             ResultTable = TableContext.GetTableInfo<TTemp>();
             ResultTable.CustomName = name;
             ResultTable.IsTempTable = true;
+            //ResultTable.Alias = name;
         }
     }
 }

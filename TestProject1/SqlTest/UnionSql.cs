@@ -12,8 +12,9 @@ namespace TestProject1.SqlTest
         [TestMethod]
         public void Union()
         {
-            var sql = Db.Select<User>().Union(Db.Select<User>())
+            var sql = Db.Select<User>()
                 .Where(u => u.Age > 10)
+                .Union(Db.Select<User>().Where(u => u.Age > 15))
                 .ToSql();
             Console.WriteLine(sql);
         }

@@ -13,6 +13,6 @@ internal static class DbTypeExtensions
         {
             LightOrmException.Throw($"{type.Name} 数据库未注册 ICustomDatabase");
         }
-        return custom;
+        return custom!;
     }
 }

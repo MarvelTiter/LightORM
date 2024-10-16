@@ -60,11 +60,11 @@ namespace TestProject1.SqlTest
             //    HAVING COUNT(*) > 2 AND AVG(sub.datediff) < 1
             //    )
             var dt = DateTime.Now;
-            var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsSubQuery(u => new
+            var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
             {
                 Id = u.UserId,
                 DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-            }, "sub")
+            }).AsSubQuery( "sub")
                 .Where(a => a.DateDiff != null)
                 .GroupBy(a => new { a.Id })
                 .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTemp("temp", g =>

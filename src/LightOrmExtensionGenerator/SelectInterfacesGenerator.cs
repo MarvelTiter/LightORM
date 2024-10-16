@@ -83,15 +83,7 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     //IEnumerable<dynamic> ToDynamicList(Expression<Func<{{argsStr}}, object>> exp);
     //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<{{argsStr}}, object>> exp);
     /// <summary>
-    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
-    /// </summary>
-    /// <typeparam name="TTemp"></typeparam>
-    /// <param name="exp"></param>
-    /// <param name="alias"></param>
-    /// <returns></returns>
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null);
-    /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
@@ -125,15 +117,7 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     //IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     /// <summary>
-    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
-    /// </summary>
-    /// <typeparam name="TTemp"></typeparam>
-    /// <param name="exp"></param>
-    /// <param name="alias"></param>
-    /// <returns></returns>
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null);
-    /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>

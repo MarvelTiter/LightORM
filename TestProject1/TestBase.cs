@@ -1,3 +1,4 @@
+using LightORM.Providers.Oracle.Extensions;
 using LightORM.Providers.Sqlite.Extensions;
 using System.Data.SQLite;
 namespace TestProject1;
@@ -13,9 +14,9 @@ public class TestBase
         ExpSqlFactory.Configuration(option =>
         {
             //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
-            option.UseSqlite(option =>
+            option.UseOracle(option =>
             {
-                option.MasterConnectionString = "DataSource=" + path;
+                option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
                 //option.MethodResolver.AddOrUpdateMethod()
             });
             option.SetTableContext(new TestTableContext());
@@ -28,6 +29,6 @@ public class TestBase
             });//.InitializedContext<TestInitContext>();
         });
         Db = ExpSqlFactory.GetContext();
-        ResolveCtx = ResolveContext.Create(DbBaseType.Sqlite);
+        ResolveCtx = ResolveContext.Create(DbBaseType.Oracle);
     }
 }
