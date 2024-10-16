@@ -19,7 +19,6 @@ public class TestBase
             {
                 option.DbKey = "Oracle";
                 option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
-                //option.MethodResolver.AddOrUpdateMethod()
             });
             option.SetTableContext(new TestTableContext());
             option.SetWatcher(aop =>
