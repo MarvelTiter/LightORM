@@ -122,13 +122,12 @@ internal static class SelectHandleExtensions
     internal static SelectProvider1<TTemp> HandleSubQuery<TTemp>(this IExpSelect select, string? alias = null)
     {
         select.SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder(select.SqlBuilder.DbType)
-        {
-            SubQuery = select.SqlBuilder,
-        };
+        var builder = new SelectBuilder(select.SqlBuilder.DbType);
         var table = TableContext.GetTableInfo<TTemp>();
         if (alias != null) table.Alias = alias;
         builder.SelectedTables.Add(table);
+        builder.HandleTempsRecursion(select.SqlBuilder);
+        builder.SubQuery = select.SqlBuilder;
         return new SelectProvider1<TTemp>(select.Executor, builder);
     }
 }

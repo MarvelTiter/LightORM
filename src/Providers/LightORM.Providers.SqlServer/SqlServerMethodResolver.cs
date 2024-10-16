@@ -207,6 +207,7 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
                 resolver.Visit(exp);
                 resolver.Sql.Append(" DESC)");
             }
+            resolver.ExpStores?.Clear();
         }
     }
 }

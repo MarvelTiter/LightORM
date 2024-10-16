@@ -28,6 +28,10 @@ namespace LightORM.Utils
                 var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
                 parameters = [.. tp, .. p];
             }
+            else
+            {
+                return exp;
+            }
             var body = Visit(exp.Body);
             return Expression.Lambda(body, parameters);
             //return null;

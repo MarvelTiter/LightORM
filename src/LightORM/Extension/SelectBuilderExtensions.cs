@@ -19,8 +19,8 @@ namespace LightORM.Extension
         {
             select.IsUnion = true;
             select.UnionIndex = builder.Unions.Count;
-            select.Level = builder.Level;
             builder.Unions.Add(new(select, all));
+            builder.HandleTempsRecursion(select);
         }
 
         public static void HandleTempsRecursion(this SelectBuilder main, SelectBuilder temp)
@@ -34,7 +34,8 @@ namespace LightORM.Extension
             {
                 return;
             }
-            main.TempViews.Add(temp);
+            if (temp.IsTemp)
+                main.TempViews.Add(temp);
         }
     }
     internal static class SelectBuilderExtensions

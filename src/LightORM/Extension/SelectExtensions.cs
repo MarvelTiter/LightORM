@@ -64,6 +64,17 @@ public static partial class SelectExtensions
     }
 
     /// <summary>
+    /// 条件Where
+    /// </summary>
+    public static IExpSelect<T1, T2> WhereIf<T1, T2>(this IExpSelect<T1, T2> select, bool condition, Expression<Func<T1, T2, bool>> exp)
+    {
+        if (condition)
+        {
+            select.Where(exp);
+        }
+        return select;
+    }
+    /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
     public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
@@ -121,6 +132,17 @@ public static partial class SelectExtensions
 
     #region TypeSet
 
+    /// <summary>
+    /// 条件Where
+    /// </summary>
+    public static IExpSelect<T1, T2> WhereIf<T1, T2>(this IExpSelect<T1, T2> select, bool condition, Expression<Func<TypeSet<T1, T2>, bool>> exp)
+    {
+        if (condition)
+        {
+            select.Where(exp);
+        }
+        return select;
+    }
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>

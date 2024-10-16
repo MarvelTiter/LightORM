@@ -35,15 +35,15 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public IExpSelect<T1> Union(IExpSelect<T1> select)
     {
-        var provider = this.HandleSubQuery<T1>();
+        //var provider = this.HandleSubQuery<T1>();
         SqlBuilder.AddUnion(select.SqlBuilder, false);
-        return provider;
+        return this;
     }
     public IExpSelect<T1> UnionAll(IExpSelect<T1> select)
     {
-        var provider = this.HandleSubQuery<T1>();
+        //var provider = this.HandleSubQuery<T1>();
         SqlBuilder.AddUnion(select.SqlBuilder, true);
-        return provider;
+        return this;
     }
 
     public IExpSelectGroup<TGroup, T1> GroupBy<TGroup>(Expression<Func<T1, TGroup>> exp)
@@ -150,16 +150,23 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp, string? alias = null)
+    public IExpSelect<T1> AsSubQuery(string? alias = null)
     {
-        this.HandleResult(exp, null);
-        return this.HandleSubQuery<TTemp>(alias);
+        //this.HandleResult(exp, null);
+        var sub = this.HandleSubQuery<T1>(alias);
+        return sub;
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp)
     {
         this.HandleResult(exp, null);
         return new TempProvider<TTemp>(name, SqlBuilder);
+    }
+
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp)
+    {
+        this.HandleResult(exp, null);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
 
     #region Result

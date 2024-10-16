@@ -40,7 +40,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     int Count();
     double Avg(Expression<Func<T1, object>> exp);
     bool Any();
-    TSelect RollUp();
+    //TSelect RollUp();
     TSelect Distinct();
     IExpTemp<T1> AsTemp(string name);
 
@@ -75,9 +75,19 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp);
     IExpSelect<T1> As(string alias);
-    //IExpSelect<T1> Named(string tableName);
-
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, TTemp>> exp, string? alias = null);
+    /// <summary>
+    /// 在外面套一层SELECT * FROM ( current ), 将当前查询转换为子查询
+    /// </summary>
+    /// <param name="alias"></param>
+    /// <returns></returns>
+    IExpSelect<T1> AsSubQuery(string? alias = null);
+    /// <summary>
+    /// 转换成<see cref="IExpSelect{T1}"/>
+    /// </summary>
+    /// <typeparam name="TTable"></typeparam>
+    /// <param name="exp"></param>
+    /// <returns></returns>
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
     IExpSelect<T1> Union(IExpSelect<T1> select);
     IExpSelect<T1> UnionAll(IExpSelect<T1> select);
@@ -133,6 +143,7 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp);
     IExpSelect<T1, T2> OrderByDesc(Expression<Func<T1, T2, object>> exp);
     IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp);
+    //IExpSelect<T1, T2> WhereIf(bool condition, Expression<Func<T1, T2, bool>> exp);
     IExpSelectGroup<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<T1, T2, TGroup>> exp);
     IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<T1, T2, TJoin, bool>> exp);
@@ -140,16 +151,10 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, T2, TJoin, bool>> where);
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, T2, TJoin, bool>> where);
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, T2, TJoin, bool>> where);
+
+    //IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null);
     /// <summary>
-    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
-    /// </summary>
-    /// <typeparam name="TTemp"></typeparam>
-    /// <param name="exp"></param>
-    /// <param name="alias"></param>
-    /// <returns></returns>
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null);
-    /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
@@ -185,6 +190,7 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<T1, T2> OrderByDesc(Expression<Func<TypeSet<T1, T2>, object>> exp);
     IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
+    //IExpSelect<T1, T2> WhereIf(bool condition, Expression<Func<TypeSet<T1, T2>, bool>> exp);
     IExpSelectGroup<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<TypeSet<T1, T2>, TGroup>> exp);
     IExpSelect<T1, T2, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp);
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, T2, TJoin>, bool>> exp);
@@ -196,16 +202,16 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    ///// <summary>
+    ///// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
+    ///// </summary>
+    ///// <typeparam name="TTemp"></typeparam>
+    ///// <param name="exp"></param>
+    ///// <param name="alias"></param>
+    ///// <returns></returns>
+    //IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null);
     /// <summary>
-    /// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
-    /// </summary>
-    /// <typeparam name="TTemp"></typeparam>
-    /// <param name="exp"></param>
-    /// <param name="alias"></param>
-    /// <returns></returns>
-    IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null);
-    /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>，相对于<see cref="AsSubQuery"/>，外部不会套一层Select
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>

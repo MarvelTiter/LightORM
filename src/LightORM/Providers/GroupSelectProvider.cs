@@ -47,19 +47,29 @@ namespace LightORM.Providers
             SqlBuilder.PageSize = pageSize;
             return this;
         }
-        public IExpSelect<TTemp> AsSelect<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
+        public IExpSelectGroup<TGroup, TTables> Rollup()
+        {
+            SqlBuilder.IsRollup = true;
+            return this;
+        }
+        public IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        {
+            // TODO 没想好怎么写
+            return this;
+        }
+        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
             return new SelectProvider1<TTemp>(Executor, SqlBuilder);
         }
 
-        public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
-        {
-            var flatExp = FlatTypeSet.Default.Flat(exp);
-            this.HandleResult(flatExp, null);
-            return this.HandleSubQuery<TTemp>(alias);
-        }
+        //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
+        //{
+        //    var flatExp = FlatTypeSet.Default.Flat(exp);
+        //    this.HandleResult(flatExp, null);
+        //    return this.HandleSubQuery<TTemp>(alias);
+        //}
 
         public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {

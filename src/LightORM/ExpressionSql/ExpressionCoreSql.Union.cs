@@ -12,7 +12,7 @@ partial class ExpressionCoreSql
     public IExpSelect<T> FromTemp<T>(IExpTemp<T> temp)
     {
         var builder = new SelectBuilder(temp.SqlBuilder.DbType);
-        builder.TempViews.Add(temp.SqlBuilder);
+        builder.HandleTempsRecursion(temp.SqlBuilder);
         builder.SelectedTables.Add(temp.ResultTable);
         return new SelectProvider1<T>(Ado, builder);
     }
@@ -44,6 +44,4 @@ partial class ExpressionCoreSql
         }
         return sub;
     }
-
-
 }

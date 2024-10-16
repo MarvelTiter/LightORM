@@ -205,11 +205,11 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.ToListAsync<TReturn>();
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null)
-    {
-        this.HandleResult(exp, null);
-        return this.HandleSubQuery<TTemp>(alias);
-    }
+    //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null)
+    //{
+    //    this.HandleResult(exp, null);
+    //    return this.HandleSubQuery<TTemp>(alias);
+    //}
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
     {
         this.HandleResult(exp, null);
@@ -304,12 +304,12 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.ToListAsync<TReturn>();
     }
 
-    public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        return this.HandleSubQuery<TTemp>(alias);
-    }
+    //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null)
+    //{
+    //    var flatExp = FlatTypeSet.Default.Flat(exp)!;
+    //    this.HandleResult(flatExp, null);
+    //    return this.HandleSubQuery<TTemp>(alias);
+    //}
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
