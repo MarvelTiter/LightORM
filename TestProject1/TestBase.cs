@@ -14,8 +14,10 @@ public class TestBase
         ExpSqlFactory.Configuration(option =>
         {
             //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
+            option.UseSqlite("DataSource=" + path);
             option.UseOracle(option =>
             {
+                option.DbKey = "Oracle";
                 option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
                 //option.MethodResolver.AddOrUpdateMethod()
             });
