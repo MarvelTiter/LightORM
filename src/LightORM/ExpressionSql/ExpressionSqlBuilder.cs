@@ -14,6 +14,13 @@ internal record DbHandlerRecord(Func<TableGenerateOption, IDatabaseTableHandler>
 
 public class ExpressionSqlOptions
 {
+    private int poolSize = Environment.ProcessorCount * 2;
+    internal int PoolSize => poolSize;
+    public ExpressionSqlOptions SetConnectionPoolSize(int poolSize)
+    {
+        this.poolSize = poolSize;
+        return this;
+    }
     public ExpressionSqlOptions SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
         var k = key ?? ConstString.Main;

@@ -80,7 +80,7 @@ namespace LightORM.Providers
                     var effectRows = 0;
                     if (!isTran)
                     {
-                        await executor.BeginTranAsync();
+                        executor.BeginTran();
                         isTran = true;
                     }
                     foreach (var item in SqlBuilder.BatchInfos!)

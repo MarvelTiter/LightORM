@@ -10,6 +10,12 @@ namespace LightORM;
 
 public static class SqlExecutorExtensions
 {
+    //public static DbConnection GetConnection(this ISqlExecutor executor)
+    //{
+    //    var conn = executor.Database.DbProviderFactory.CreateConnection()!;
+    //    conn.ConnectionString = executor.Database.MasterConnectionString;
+    //    return conn;
+    //}
     public static IEnumerable<T> Query<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
@@ -29,10 +35,6 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
-            if (self.DisposeImmediately)
-            {
-                self.Dispose();
-            }
         }
     }
     public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -60,10 +62,6 @@ public static class SqlExecutorExtensions
         finally
         {
             reader?.Close();
-            if (self.DisposeImmediately)
-            {
-                self.Dispose();
-            }
         }
     }
     public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -86,11 +84,14 @@ public static class SqlExecutorExtensions
         }
         finally
         {
-            reader?.Close();
-            if (self.DisposeImmediately)
+#if NET6_0_OR_GREATER
+            if (reader is not null)
             {
-                self.Dispose();
+                await reader.CloseAsync();
             }
+#else
+            reader?.Close();
+#endif
         }
     }
     public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
@@ -118,11 +119,14 @@ public static class SqlExecutorExtensions
         }
         finally
         {
-            reader?.Close();
-            if (self.DisposeImmediately)
+#if NET6_0_OR_GREATER
+            if (reader is not null)
             {
-                self.Dispose();
+                await reader.CloseAsync();
             }
+#else
+            reader?.Close();
+#endif
         }
     }
     private static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)

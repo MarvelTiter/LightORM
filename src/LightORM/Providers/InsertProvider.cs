@@ -78,7 +78,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                 var effectRows = 0;
                 if (!isTran)
                 {
-                    await executor.BeginTranAsync();
+                    executor.BeginTran();
                     isTran = true;
                 }
                 foreach (var item in SqlBuilder.BatchInfos!)
