@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightORM.Providers.Sqlite",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightORM.Providers.SqlServer", "src\Providers\LightORM.Providers.SqlServer\LightORM.Providers.SqlServer.csproj", "{F88DFFD4-1C74-461C-852C-27C79C8E2D22}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWeb", "TestWeb\TestWeb.csproj", "{5FEE9875-2304-4CA9-A7F2-F07F646B9371}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{F88DFFD4-1C74-461C-852C-27C79C8E2D22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F88DFFD4-1C74-461C-852C-27C79C8E2D22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F88DFFD4-1C74-461C-852C-27C79C8E2D22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FEE9875-2304-4CA9-A7F2-F07F646B9371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FEE9875-2304-4CA9-A7F2-F07F646B9371}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FEE9875-2304-4CA9-A7F2-F07F646B9371}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FEE9875-2304-4CA9-A7F2-F07F646B9371}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

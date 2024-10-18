@@ -9,7 +9,7 @@ public class TestBase
     protected ResolveContext ResolveCtx { get; }
     public TestBase()
     {
-        var path = Path.GetFullPath("../../../test.db");
+        var path = Path.GetFullPath("../../../../test.db");
 
         ExpSqlFactory.Configuration(option =>
         {

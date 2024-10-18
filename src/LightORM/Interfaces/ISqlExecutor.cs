@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace LightORM;
 
-public interface ISqlExecutor : IDisposable
+public interface ISqlExecutor : IDisposable, ICloneable
 {
     /// <summary>
     /// 数据库日志
@@ -12,13 +12,12 @@ public interface ISqlExecutor : IDisposable
     public Action<string, object?>? DbLog { get; set; }
 
     internal IDatabaseProvider Database { get; }
-    internal bool DisposeImmediately { get; set; }
-    /// <summary>
-    /// 数据库事务
-    /// </summary>
+    ///// <summary>
+    ///// 数据库事务
+    ///// </summary>
     public DbTransaction? DbTransaction { get; set; }
 
-    public DbConnection DbConnection { get; }
+    //public DbConnection GetConnection();
 
     /// <summary>
     /// 开启事务
@@ -36,10 +35,10 @@ public interface ISqlExecutor : IDisposable
     /// <returns></returns>
     void RollbackTran();
 
-    /// <summary>
-    /// 开启事务异步
-    /// </summary>
-    Task BeginTranAsync();
+    ///// <summary>
+    ///// 开启事务异步
+    ///// </summary>
+    //Task BeginTranAsync();
 
     /// <summary>
     /// 提交事务异步

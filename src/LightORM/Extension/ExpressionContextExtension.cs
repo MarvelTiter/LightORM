@@ -10,6 +10,60 @@ public static class ExpressionContextExtension
         return ado.Database.BulkCopy(dataTable);
     }
 
+    private static void SwitchDb<T>(this IExpressionContext context)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            context.SwitchDatabase(table.TargetDatabase);
+        }
+    }
+
+    public static IExpSelect<T> SelectWithAttr<T>(this IExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Select<T>();
+    }
+    public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Insert<T>(entity);
+    }
+    public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
+    {
+        context.SwitchDb<T>();
+        return context.Insert<T>(entities);
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>();
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>(entity);
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>(entities);
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Delete<T>();
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Delete<T>(entity);
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
+    {
+        throw new NotImplementedException();
+    }
+
     private static void HandleFromTemp(SelectBuilder sqlbuilder, params IExpTemp[] temps)
     {
         foreach (var temp in temps)

@@ -18,7 +18,7 @@ namespace LightORM.ExpressionSql
             switchSign.Wait();
             executorProvider.UseCustomExecutor((k, t) =>
             {
-                var executor = new SqlExecutor.SqlExecutor(db);
+                var executor = new SqlExecutor.SqlExecutor(db, option.PoolSize);
                 if (t)
                 {
                     executor.BeginTran();
@@ -32,18 +32,18 @@ namespace LightORM.ExpressionSql
             UseTrans = true;
             executorProvider.Executors.ForEach(ado =>
             {
-                try { ado.BeginTran(); } catch { }
+                ado.BeginTran();
             });
         }
 
-        public async Task BeginTranAllAsync()
-        {
-            UseTrans = true;
-            await executorProvider.Executors.ForEachAsync(async ado =>
-            {
-                try { await ado.BeginTranAsync(); } catch { }
-            });
-        }
+        //public async Task BeginTranAllAsync()
+        //{
+        //    UseTrans = true;
+        //    await executorProvider.Executors.ForEachAsync(async ado =>
+        //    {
+        //        try { await ado.BeginTranAsync(); } catch { }
+        //    });
+        //}
 
         public void CommitTranAll()
         {
@@ -88,32 +88,46 @@ namespace LightORM.ExpressionSql
 
         public void BeginTran(string key = ConstString.Main)
         {
-            try { executorProvider.GetSqlExecutor(CurrentKey, false).BeginTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(key, false).BeginTran(); } catch { }
         }
 
-        public async Task BeginTranAsync(string key = ConstString.Main)
+        //public async Task BeginTranAsync(string key = ConstString.Main)
+        //{
+        //    try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
+        //}
+
+        public IScopedExpressionContext BeginScopedTran(string key = ConstString.Main)
         {
-            try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
+            var ado = executorProvider.GetSqlExecutor(key, false);
+            ado.BeginTran();
+            return new ScopedExpressionCoreSql(ado);
         }
+
+        //public async Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main)
+        //{
+        //    var ado = executorProvider.GetSqlExecutor(CurrentKey, false);
+        //    await ado.BeginTranAsync();
+        //    return new ScopedExpressionCoreSql(ado);
+        //}
 
         public void CommitTran(string key = ConstString.Main)
         {
-            try { executorProvider.GetSqlExecutor(CurrentKey, false).CommitTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(key, false).CommitTran(); } catch { }
         }
 
         public async Task CommitTranAsync(string key = ConstString.Main)
         {
-            try { await executorProvider.GetSqlExecutor(CurrentKey, false).CommitTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(key, false).CommitTranAsync(); } catch { }
         }
 
         public void RollbackTran(string key = ConstString.Main)
         {
-            try { executorProvider.GetSqlExecutor(CurrentKey, false).RollbackTran(); } catch { }
+            try { executorProvider.GetSqlExecutor(key, false).RollbackTran(); } catch { }
         }
 
         public async Task RollbackTranAsync(string key = ConstString.Main)
         {
-            try { await executorProvider.GetSqlExecutor(CurrentKey, false).RollbackTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(key, false).RollbackTranAsync(); } catch { }
         }
 
 

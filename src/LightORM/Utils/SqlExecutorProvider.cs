@@ -14,7 +14,7 @@ namespace LightORM.Utils
         public static ISqlExecutor GetExecutor(string key = ConstString.Main)
         {
             var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
-            return new SqlExecutor.SqlExecutor(dbInfo);
+            return new SqlExecutor.SqlExecutor(dbInfo, 5);
         }
 
         public static IDatabaseProvider GetDbInfo(string key)
@@ -22,14 +22,13 @@ namespace LightORM.Utils
             return StaticCache<IDatabaseProvider>.Get(key) ?? throw new ArgumentException($"{key} not register");
         }
 
-        private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
-        //private readonly List<ISqlExecutor> queryExecutors = [];
-        private readonly SqlAopProvider sqlAop;
         Func<string, bool, ISqlExecutor>? customHandler;
-        private static ConcurrentQueue<WeakReference<SqlExecutor.SqlExecutor>> selectWeaks = [];
-        public SqlExecutorProvider(SqlAopProvider sqlAop)
+        private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
+        private readonly ExpressionSqlOptions option;
+        private ConcurrentQueue<WeakReference<SqlExecutor.SqlExecutor>> selectWeaks = [];
+        public SqlExecutorProvider(ExpressionSqlOptions option)
         {
-            this.sqlAop = sqlAop;
+            this.option = option;
         }
 
 
@@ -50,46 +49,46 @@ namespace LightORM.Utils
 
         public ISqlExecutor GetSqlExecutor(string key, bool useTrans) => CreateCustomExecutor(key, useTrans) ?? InternalCreator(key, useTrans);
 
-        public ISqlExecutor GetSelectExecutor(string key)
-        {
-            var custom = CreateCustomExecutor(key, false);
-            if (custom != null) return custom;
-            while (selectWeaks.TryDequeue(out var weak))
-            {
-                if (weak.TryGetTarget(out var executor))
-                {
-                    if (executor.DbConnection.State != System.Data.ConnectionState.Closed)
-                    {
-                        return CreateExecutor();
-                    }
-                    else
-                    {
-                        return executor;
-                    }
-                }
-            }
+        //public ISqlExecutor GetSelectExecutor(string key)
+        //{
+        //    var custom = CreateCustomExecutor(key, false);
+        //    if (custom != null) return custom;
+        //    while (selectWeaks.TryDequeue(out var weak))
+        //    {
+        //        if (weak.TryGetTarget(out var executor))
+        //        {
+        //            if (executor.DbConnection.State != System.Data.ConnectionState.Closed)
+        //            {
+        //                return CreateExecutor();
+        //            }
+        //            else
+        //            {
+        //                return executor;
+        //            }
+        //        }
+        //    }
 
-            return CreateExecutor();
+        //    return CreateExecutor();
 
-            ISqlExecutor CreateExecutor()
-            {
-                var n = new SqlExecutor.SqlExecutor(GetDbInfo(key))
-                {
-                    DbLog = sqlAop.DbLog,
-                };
-                var w = new WeakReference<SqlExecutor.SqlExecutor>(n);
-                selectWeaks.Enqueue(w);
-                return n;
-            }
-        }
+        //    ISqlExecutor CreateExecutor()
+        //    {
+        //        var n = new SqlExecutor.SqlExecutor(GetDbInfo(key), option.PoolSize)
+        //        {
+        //            DbLog = option.Aop.DbLog,
+        //        };
+        //        var w = new WeakReference<SqlExecutor.SqlExecutor>(n);
+        //        selectWeaks.Enqueue(w);
+        //        return n;
+        //    }
+        //}
 
         private ISqlExecutor InternalCreator(string key, bool useTrans)
         {
             return executors.GetOrAdd(key, k =>
             {
-                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k))
+                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k),option.PoolSize)
                 {
-                    DbLog = sqlAop.DbLog
+                    DbLog = option.Aop.DbLog
                 };
                 if (useTrans)
                 {

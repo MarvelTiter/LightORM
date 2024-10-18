@@ -1,0 +1,35 @@
+﻿@page "/counter"
+@inject Services1 S1
+@inject Services2 S2
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<button class="btn btn-primary" @onclick="Multi">Click me</button>
+<p>Id1: @id1</p>
+<p>Id2: @id2</p>
+@code {
+    private string? id1;
+    private string? id2;
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+        id1 = S1.Test();
+        id2 = S2.Test();
+    }
+
+    private Task Multi()
+    {
+        var t1 = S1.Query();
+        var t2 = S1.Query();
+        var t3 = S1.Query();
+        var t4 = S1.Query();
+
+        return Task.WhenAll(t1, t2, t3, t4);
+    }
+}
