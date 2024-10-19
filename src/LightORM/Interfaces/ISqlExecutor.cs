@@ -35,10 +35,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <returns></returns>
     void RollbackTran();
 
-    ///// <summary>
-    ///// 开启事务异步
-    ///// </summary>
-    //Task BeginTranAsync();
+    /// <summary>
+    /// 开启事务异步
+    /// </summary>
+    Task BeginTranAsync();
 
     /// <summary>
     /// 提交事务异步

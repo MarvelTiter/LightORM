@@ -41,16 +41,16 @@ public interface IDbAction
     IExpressionContext Use(IDatabaseProvider db);
     IExpressionContext SwitchDatabase(string key);
     void BeginTranAll();
-    //Task BeginTranAllAsync();
+    Task BeginTranAllAsync();
     void CommitTranAll();
     Task CommitTranAllAsync();
     void RollbackTranAll();
     Task RollbackTranAllAsync();
 
     void BeginTran(string key = ConstString.Main);
-    //Task BeginTranAsync(string key = ConstString.Main);
+    Task BeginTranAsync(string key = ConstString.Main);
     IScopedExpressionContext BeginScopedTran(string key = ConstString.Main);
-    //Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main);
+    Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main);
     void CommitTran(string key = ConstString.Main);
     Task CommitTranAsync(string key = ConstString.Main);
     void RollbackTran(string key = ConstString.Main);

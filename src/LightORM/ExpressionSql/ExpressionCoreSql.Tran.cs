@@ -36,14 +36,14 @@ namespace LightORM.ExpressionSql
             });
         }
 
-        //public async Task BeginTranAllAsync()
-        //{
-        //    UseTrans = true;
-        //    await executorProvider.Executors.ForEachAsync(async ado =>
-        //    {
-        //        try { await ado.BeginTranAsync(); } catch { }
-        //    });
-        //}
+        public async Task BeginTranAllAsync()
+        {
+            UseTrans = true;
+            await executorProvider.Executors.ForEachAsync(async ado =>
+            {
+                try { await ado.BeginTranAsync(); } catch { }
+            });
+        }
 
         public void CommitTranAll()
         {
@@ -91,10 +91,10 @@ namespace LightORM.ExpressionSql
             try { executorProvider.GetSqlExecutor(key, false).BeginTran(); } catch { }
         }
 
-        //public async Task BeginTranAsync(string key = ConstString.Main)
-        //{
-        //    try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
-        //}
+        public async Task BeginTranAsync(string key = ConstString.Main)
+        {
+            try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
+        }
 
         public IScopedExpressionContext BeginScopedTran(string key = ConstString.Main)
         {
@@ -103,12 +103,12 @@ namespace LightORM.ExpressionSql
             return new ScopedExpressionCoreSql(ado);
         }
 
-        //public async Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main)
-        //{
-        //    var ado = executorProvider.GetSqlExecutor(CurrentKey, false);
-        //    await ado.BeginTranAsync();
-        //    return new ScopedExpressionCoreSql(ado);
-        //}
+        public async Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main)
+        {
+            var ado = executorProvider.GetSqlExecutor(key, false);
+            await ado.BeginTranAsync();
+            return new ScopedExpressionCoreSql(ado);
+        }
 
         public void CommitTran(string key = ConstString.Main)
         {

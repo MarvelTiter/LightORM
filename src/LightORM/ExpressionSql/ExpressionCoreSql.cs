@@ -56,11 +56,6 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     SelectProvider1<T> CreateSelectProvider<T>()
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(Ado);
     }
 
@@ -70,20 +65,10 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     InsertProvider<T> CreateInsertProvider<T>(T? entity = default)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 
@@ -93,20 +78,10 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 
@@ -116,20 +91,10 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
     }
     DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities)
     {
-        var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
-        {
-            _dbKey = table.TargetDatabase;
-        }
         return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
     }
 

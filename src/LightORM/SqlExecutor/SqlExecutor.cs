@@ -100,8 +100,8 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     /// <summary>
     /// 数据库事务
     /// </summary>
-    public DbTransaction? DbTransaction { get => dbTransaction; set => dbTransaction = value; }
-    private DbTransaction? dbTransaction;
+    public DbTransaction? DbTransaction { get; set; }
+    private DbConnection connection;
     private bool useTran;
     //public DbConnection DbConnection { get; private set; }
     private readonly ConnectionPool pool;
@@ -112,6 +112,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         Database = database;
         this.poolSize = poolSize;
         pool = new ConnectionPool(GetConnection, poolSize);
+        connection = pool.Get();
     }
 
     private DbConnection GetConnection()
@@ -123,55 +124,53 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public void BeginTran()
     {
-        useTran = true;
+        DbTransaction = connection.BeginTransaction();
     }
     public void CommitTran()
     {
-        dbTransaction?.Commit();
-        dbTransaction = null;
+        DbTransaction?.Commit();
+        DbTransaction = null;
     }
     public void RollbackTran()
     {
-        dbTransaction?.Rollback();
-        dbTransaction = null;
+        DbTransaction?.Rollback();
+        DbTransaction = null;
     }
 
 #if NET6_0_OR_GREATER
-    //public Task BeginTranAsync()
-    //{
-    //    //if (DbConnection.State != ConnectionState.Open)
-    //    //{
-    //    //    await DbConnection.OpenAsync();
-    //    //}
-    //    //DbTransaction ??= await DbConnection.BeginTransactionAsync();
-    //    useTran = true;
-    //    return Task.CompletedTask;
-    //}
+    public async Task BeginTranAsync()
+    {
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync();
+        }
+        DbTransaction ??= await connection.BeginTransactionAsync();
+    }
 
     public async Task CommitTranAsync()
     {
-        if (dbTransaction != null)
+        if (DbTransaction != null)
         {
-            await dbTransaction.CommitAsync();
-            dbTransaction = null;
+            await DbTransaction.CommitAsync();
+            DbTransaction = null;
         }
     }
 
     public async Task RollbackTranAsync()
     {
-        if (dbTransaction != null)
+        if (DbTransaction != null)
         {
-            await dbTransaction.RollbackAsync();
-            dbTransaction = null;
+            await DbTransaction.RollbackAsync();
+            DbTransaction = null;
         }
     }
 
 #else
-    //public Task BeginTranAsync()
-    //{
-    //    BeginTran();
-    //    return Task.FromResult(true);
-    //}
+    public Task BeginTranAsync()
+    {
+        BeginTran();
+        return Task.FromResult(true);
+    }
 
     public Task CommitTranAsync()
     {
@@ -187,47 +186,76 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
 #endif
 
-    public async Task TryCloseAsync(DbConnection connection, bool needToClose)
+    private async Task TryCloseAsync(CommandResult result)
     {
+        result.Command.Parameters.Clear();
+        result.Command.Dispose();
 #if NET6_0_OR_GREATER
-        if (needToClose)
+        if (result.NeedToClose)
         {
-            await connection.CloseAsync();
+            await result.Connection.CloseAsync();
         }
-        pool.Return(connection);
+        if (result.NeedToReturn)
+        {
+            pool.Return(result.Connection);
+        }
 #else
-        if (needToClose)
-            connection.Close();
-        pool.Return(connection);
-        await Task.Yield();
+        if (result.NeedToClose)
+        {
+            result.Connection.Close();
+        }
+        if (result.NeedToReturn)
+        {
+            pool.Return(result.Connection);
+        }
+        await Task.CompletedTask;
 #endif
     }
 
-    public void TryClose(DbConnection connection, bool needToClose)
+    private void TryClose(CommandResult result)
     {
-        if (needToClose)
-            connection.Close();
-        pool.Return(connection);
+        result.Command.Parameters.Clear();
+        result.Command.Dispose();
+        if (result.NeedToClose)
+        {
+            result.Connection.Close();
+        }
+        if (result.NeedToReturn)
+        {
+            pool.Return(result.Connection);
+        }
     }
 
+    private struct CommandResult(DbCommand command, DbConnection connection, bool needToClose, bool needToReturn)
+    {
+        public DbCommand Command { get; } = command;
+        public DbConnection Connection { get; } = connection;
+        public bool NeedToClose { get; } = needToClose;
+        public bool NeedToReturn { get; } = needToReturn;
+    }
 
-    private bool PrepareCommand(DbCommand command, DbConnection connection, CommandType commandType, string commandText, object? dbParameters)
+    private CommandResult PrepareCommand(CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
+        bool isSelect = commandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) || commandText.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase);
+        var conn = connection;
         var needToClose = false;
-        GetInit(command.GetType())?.Invoke(command);
-        if (connection.State != ConnectionState.Open)
+        var needToReturn = false;
+        if (isSelect)
         {
-            connection.Open();
+            conn = pool.Get();
+            needToReturn = true;
+        }
+        var command = conn.CreateCommand();
+        GetInit(command.GetType())?.Invoke(command);
+        if (conn.State != ConnectionState.Open)
+        {
+            conn.Open();
             needToClose = true;
         }
-        if (useTran && dbTransaction == null)
+        if (!isSelect && DbTransaction != null)
         {
-            dbTransaction = connection.BeginTransaction();
-        }
-        if (dbTransaction != null)
-        {
-            command.Transaction = dbTransaction;
+            command.Transaction = DbTransaction;
             needToClose = false;
         }
         command.CommandText = commandText;
@@ -238,30 +266,31 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             action?.Invoke(command, dbParameters);
         }
 
-        return needToClose;
+        return new(command, conn, needToClose, needToReturn);
     }
 
-    public async Task<bool> PrepareCommandAsync(DbCommand command, DbConnection connection, CommandType commandType, string commandText, object? dbParameters)
+    private async Task<CommandResult> PrepareCommandAsync(CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
-        GetInit(command.GetType())?.Invoke(command);
+        bool isSelect = commandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) || commandText.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase);
+        var conn = connection;
         var needToClose = false;
-        if (connection.State != ConnectionState.Open)
+        var needToReturn = false;
+        if (isSelect)
         {
-            await connection.OpenAsync();
+            conn = pool.Get();
+            needToReturn = true;
+        }
+        var command = conn.CreateCommand();
+        GetInit(command.GetType())?.Invoke(command);
+        if (conn.State != ConnectionState.Open)
+        {
+            await conn.OpenAsync();
             needToClose = true;
         }
-        if (useTran && dbTransaction == null)
+        if (!isSelect && DbTransaction != null)
         {
-#if NET6_0_OR_GREATER
-            dbTransaction = await connection.BeginTransactionAsync();
-#else
-            dbTransaction = connection.BeginTransaction();
-#endif
-        }
-        if (dbTransaction != null)
-        {
-            command.Transaction = dbTransaction;
+            command.Transaction = DbTransaction;
             needToClose = false;
         }
         command.CommandText = commandText;
@@ -271,35 +300,29 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             var action = DbParameterReader.GetDbParameterReader(connection.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
-        return needToClose;
+        return new(command, conn, needToClose, needToReturn);
     }
 
     public int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
 
-        var needToClose = PrepareCommand(cmd, connection, commandType, commandText, dbParameters);
+        var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            return cmd.ExecuteNonQuery();
+            return r.Command.ExecuteNonQuery();
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            TryClose(connection, needToClose);
+            TryClose(r);
         }
     }
 
     public T? ExecuteScalar<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = PrepareCommand(cmd, connection, commandType, commandText, dbParameters);
+        var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            var obj = cmd.ExecuteScalar();
+            var obj = r.Command.ExecuteScalar();
             if (obj is DBNull || obj is null)
             {
                 return default;
@@ -308,33 +331,30 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            TryClose(connection, needToClose);
+            TryClose(r);
         }
     }
 
     public DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = PrepareCommand(cmd, connection, commandType, commandText, dbParameters);
+        var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            if (needToClose)
+            if (r.NeedToClose)
             {
-                return cmd.ExecuteReader(CommandBehavior.CloseConnection);
+                return r.Command.ExecuteReader(CommandBehavior.CloseConnection);
             }
             else
             {
-                return cmd.ExecuteReader();
+                return r.Command.ExecuteReader();
             }
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            pool.Return(connection);
+            r.Command.Parameters.Clear();
+            r.Command.Dispose();
+            if (r.NeedToReturn)
+                pool.Return(r.Connection);
         }
     }
 
@@ -342,19 +362,15 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     {
         var ds = new DataSet();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = PrepareCommand(cmd, connection, commandType, commandText, dbParameters);
+        var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            adapter!.SelectCommand = cmd;
+            adapter!.SelectCommand = r.Command;
             adapter.Fill(ds);
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            TryClose(connection, needToClose);
+            TryClose(r);
         }
         return ds;
     }
@@ -363,48 +379,40 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     {
         var ds = new DataTable();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = PrepareCommand(cmd, connection, commandType, commandText, dbParameters);
+        var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            adapter!.SelectCommand = cmd;
+            adapter!.SelectCommand = r.Command;
             adapter.Fill(ds);
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            TryClose(connection, needToClose);
+            r.Command.Parameters.Clear();
+            r.Command.Dispose();
+            TryClose(r);
         }
         return ds;
     }
 
     public async Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = await PrepareCommandAsync(cmd, connection, commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
-            return await cmd.ExecuteNonQueryAsync();
+            return await r.Command.ExecuteNonQueryAsync();
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            await TryCloseAsync(connection, needToClose);
+            await TryCloseAsync(r);
         }
     }
 
     public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = await PrepareCommandAsync(cmd, connection, commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
-            var obj = await cmd.ExecuteScalarAsync();
+            var obj = await r.Command.ExecuteScalarAsync();
             if (obj is DBNull || obj is null)
             {
                 return default;
@@ -413,31 +421,31 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            await TryCloseAsync(connection, needToClose);
+            await TryCloseAsync(r);
         }
     }
     public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
     {
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = await PrepareCommandAsync(cmd, connection, commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
-            if (needToClose)
+            if (r.NeedToClose)
             {
-                return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+                return await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection);
             }
             else
             {
-                return await cmd.ExecuteReaderAsync();
+                return await r.Command.ExecuteReaderAsync();
             }
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
+            r.Command.Parameters.Clear();
+            r.Command.Dispose();
+            if (r.NeedToReturn)
+            {
+                pool.Return(r.Connection);
+            }
         }
     }
 
@@ -445,19 +453,15 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     {
         var ds = new DataSet();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = await PrepareCommandAsync(cmd, connection, commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
-            adapter!.SelectCommand = cmd;
+            adapter!.SelectCommand = r.Command;
             adapter.Fill(ds);
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            await TryCloseAsync(connection, needToClose);
+            await TryCloseAsync(r);
         }
         return ds;
     }
@@ -466,19 +470,15 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     {
         var ds = new DataTable();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var connection = pool.Get();
-        var cmd = connection.CreateCommand();
-        var needToClose = await PrepareCommandAsync(cmd, connection, commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
-            adapter!.SelectCommand = cmd;
+            adapter!.SelectCommand = r.Command;
             adapter.Fill(ds);
         }
         finally
         {
-            cmd.Parameters.Clear();
-            cmd.Dispose();
-            await TryCloseAsync(connection, needToClose);
+            await TryCloseAsync(r);
         }
         return ds;
     }
@@ -580,9 +580,10 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 #if DEBUG
                 Console.WriteLine("SqlExecutor disposing.........");
 #endif
-                dbTransaction?.Rollback();
-                dbTransaction = null;
+                DbTransaction?.Rollback();
+                DbTransaction = null;
                 pool.Dispose();
+                connection?.Dispose();
             }
             disposedValue = true;
         }
