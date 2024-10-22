@@ -124,7 +124,11 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public void BeginTran()
     {
-        DbTransaction = connection.BeginTransaction();
+        if (connection.State != ConnectionState.Open)
+        {
+            connection.Open();
+        }
+        DbTransaction ??= connection.BeginTransaction();
     }
     public void CommitTran()
     {

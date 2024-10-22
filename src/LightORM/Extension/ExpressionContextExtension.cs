@@ -105,3 +105,60 @@ public static class ExpressionContextExtension
     }
 }
 
+public static class ScopedExpressionContextExtensions
+{
+    private static void SwitchDb<T>(this IScopedExpressionContext context)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        if (table.TargetDatabase != null)
+        {
+            context.SwitchDatabase(table.TargetDatabase);
+        }
+    }
+
+    public static IExpSelect<T> SelectWithAttr<T>(this IScopedExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Select<T>();
+    }
+    public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Insert<T>(entity);
+    }
+    public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
+    {
+        context.SwitchDb<T>();
+        return context.Insert<T>(entities);
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>();
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>(entity);
+    }
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
+    {
+        context.SwitchDb<T>();
+        return context.Update<T>(entities);
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context)
+    {
+        context.SwitchDb<T>();
+        return context.Delete<T>();
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, T entity)
+    {
+        context.SwitchDb<T>();
+        return context.Delete<T>(entity);
+    }
+    public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
+    {
+        throw new NotImplementedException();
+    }
+}
+

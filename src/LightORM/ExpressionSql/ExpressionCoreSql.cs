@@ -2,20 +2,13 @@
 using LightORM.Providers;
 namespace LightORM.ExpressionSql;
 
-public partial class ExpressionCoreSql : IExpressionContext, IDisposable
+internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpressionContext, IDisposable
 {
     private readonly ExpressionSqlOptions option;
     internal SqlExecutorProvider executorProvider;
     public string Id { get; } = $"{Guid.NewGuid():N}";
     private readonly SemaphoreSlim switchSign = new(1, 1);
-    public ISqlExecutor Ado
-    {
-        get
-        {
-            var e = executorProvider.GetSqlExecutor(CurrentKey, false);
-            return e;
-        }
-    }
+    public override ISqlExecutor Ado => executorProvider.GetSqlExecutor(CurrentKey, UseTrans);
 
     public ExpressionCoreSql(ExpressionSqlOptions option)
     {
@@ -52,55 +45,50 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
 
     public IExpSelect Select(string tableName) => throw new NotImplementedException();//new SelectProvider0(tableName, Ado);
 
-    public IExpSelect<T> Select<T>() => CreateSelectProvider<T>();
+    //public IExpSelect<T> Select<T>() => new SelectProvider1<T>(Ado);
 
-    SelectProvider1<T> CreateSelectProvider<T>()
-    {
-        return new(Ado);
-    }
+    //public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();
+    //public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
+    //public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
 
-    public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();
-    public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
-    public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
+    //InsertProvider<T> CreateInsertProvider<T>(T? entity = default)
+    //{
+    //    return new(Ado, entity);
+    //}
+    //InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities)
+    //{
+    //    return new(Ado, entities);
+    //}
 
-    InsertProvider<T> CreateInsertProvider<T>(T? entity = default)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
-    }
-    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
-    }
+    //public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
+    //public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(entity);
+    //public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(entities);
 
-    public IExpUpdate<T> Update<T>() => CreateUpdateProvider<T>();
-    public IExpUpdate<T> Update<T>(T entity) => CreateUpdateProvider<T>(entity);
-    public IExpUpdate<T> Update<T>(IEnumerable<T> entities) => CreateUpdateProvider<T>(entities);
+    //UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default)
+    //{
+    //    return new(Ado, entity);
+    //}
+    //UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities)
+    //{
+    //    return new(Ado, entities);
+    //}
 
-    UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
-    }
-    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
-    }
+    //public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
+    //public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
+    //public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
 
-    public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
-    public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
-    public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
-
-    DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entity);
-    }
-    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities)
-    {
-        return new(executorProvider.GetSqlExecutor(CurrentKey, UseTrans), entities);
-    }
+    //DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default)
+    //{
+    //    return new(Ado, entity);
+    //}
+    //DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities)
+    //{
+    //    return new(Ado, entities);
+    //}
 
     private bool disposedValue;
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!disposedValue)
         {
@@ -122,14 +110,10 @@ public partial class ExpressionCoreSql : IExpressionContext, IDisposable
     }
 }
 
-internal class ScopedExpressionCoreSql(ISqlExecutor ado) : IScopedExpressionContext
+internal abstract class ExpressionCoreSqlBase
 {
-    public string Id { get; } = $"{Guid.NewGuid():N}";
-
-    public ISqlExecutor Ado { get; } = (ISqlExecutor)ado.Clone();
-
+    public abstract ISqlExecutor Ado { get; }
     public IExpSelect<T> Select<T>() => new SelectProvider1<T>(Ado);
-
     public IExpInsert<T> Insert<T>() => CreateInsertProvider<T>();
     public IExpInsert<T> Insert<T>(T entity) => CreateInsertProvider<T>(entity);
     public IExpInsert<T> Insert<T>(IEnumerable<T> entities) => CreateInsertProvider<T>(entities);
@@ -147,29 +131,97 @@ internal class ScopedExpressionCoreSql(ISqlExecutor ado) : IScopedExpressionCont
     public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
     DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(Ado, entity);
     DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+}
+
+internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedExpressionContext
+{
+    private readonly SqlExecutorProvider executorProvider;
+    public string Id { get; } = $"{Guid.NewGuid():N}";
+    private string? dbKey;
+    //class FinallyAction : IDisposable
+    //{
+    //    private readonly Action action;
+
+    //    public FinallyAction(Action action)
+    //    {
+    //        this.action = action;
+    //    }
+    //    public void Dispose()
+    //    {
+    //        action.Invoke();
+    //    }
+    //}
+    public override ISqlExecutor Ado
+    {
+        get
+        {
+            //using var _ = new FinallyAction(() => dbKey = null);
+            if (dbKey is null)
+            {
+                return executorProvider.GetSqlExecutor(ConstString.Main, true);
+            }
+            var ado = executorProvider.GetSqlExecutor(dbKey, true);
+            dbKey = null;
+            return ado;
+        }
+    }
+
+    public ScopedExpressionCoreSql(ExpressionSqlOptions options)
+    {
+        this.executorProvider = new SqlExecutorProvider(options);
+    }
+    IScopedExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
+    {
+        dbKey = key;
+        return this;
+    }
 
     public void CommitTran()
     {
-        Ado.CommitTran();
+        executorProvider.Executors.ForEach(e => e.CommitTran());
     }
 
     public async Task CommitTranAsync()
     {
-        await Ado.CommitTranAsync();
+        await executorProvider.Executors.ForEachAsync(e => e.CommitTranAsync());
     }
 
     public void RollbackTran()
     {
-        Ado.RollbackTran();
+        executorProvider.Executors.ForEach(e => e.RollbackTran());
     }
 
     public async Task RollbackTranAsync()
     {
-        await Ado.RollbackTranAsync();
+        await executorProvider.Executors.ForEachAsync(e => e.RollbackTranAsync());
     }
 
-    ~ScopedExpressionCoreSql()
+    public void Dispose()
     {
+        RollbackTran();
+        executorProvider.Dispose();
+    }
+}
+
+internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISingleScopedExpressionContext
+{
+    public string Id { get; } = $"{Guid.NewGuid():N}";
+    public override ISqlExecutor Ado { get; }
+    public SingleScopedExpressionCoreSql(ISqlExecutor sqlExecutor)
+    {
+        Ado = sqlExecutor;
+    }
+    public void CommitTran() => Ado.CommitTran();
+
+    public Task CommitTranAsync() => Ado.CommitTranAsync();
+
+    public void RollbackTran() => Ado.RollbackTran();
+
+    public Task RollbackTranAsync() => Ado.RollbackTranAsync();
+
+    public void Dispose()
+    {
+        Ado.RollbackTran();
         Ado.Dispose();
     }
 }

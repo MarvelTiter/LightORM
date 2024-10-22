@@ -1,6 +1,7 @@
 ﻿@page "/counter"
 @inject Services1 S1
 @inject Services2 S2
+@inject IExpressionContext Ctx
 <PageTitle>Counter</PageTitle>
 
 <h1>Counter</h1>
@@ -9,6 +10,7 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 <button class="btn btn-primary" @onclick="Multi">Click me</button>
+<button class="btn btn-primary" @onclick="Scoped">Click me</button>
 <p>Id1: @id1</p>
 <p>Id2: @id2</p>
 @code {
@@ -31,5 +33,11 @@
         var t4 = S1.Query();
 
         return Task.WhenAll(t1, t2, t3, t4);
+    }
+
+    private void Scoped()
+    {
+        using var scoped = Ctx.CreateScoped();
+        var ado = scoped.Ado;
     }
 }

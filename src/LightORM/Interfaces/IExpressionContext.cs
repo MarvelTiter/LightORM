@@ -33,7 +33,7 @@ public interface IExpressionContext : IDbAction
     IExpDelete<T> Delete<T>(T entity);
     //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
-    
+
 }
 
 public interface IDbAction
@@ -49,8 +49,17 @@ public interface IDbAction
 
     void BeginTran(string key = ConstString.Main);
     Task BeginTranAsync(string key = ConstString.Main);
-    IScopedExpressionContext BeginScopedTran(string key = ConstString.Main);
-    Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main);
+    /// <summary>
+    /// 创建指定数据库的单元操作对象，开启事务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    ISingleScopedExpressionContext CreateScoped(string key);
+    /// <summary>
+    /// 创建单元操作对象，开启事务
+    /// </summary>
+    /// <returns></returns>
+    IScopedExpressionContext CreateScoped();
     void CommitTran(string key = ConstString.Main);
     Task CommitTranAsync(string key = ConstString.Main);
     void RollbackTran(string key = ConstString.Main);
@@ -58,10 +67,32 @@ public interface IDbAction
 
 }
 
-public interface IScopedExpressionContext
+//public interface IExpressionSql //<TContext> where TContext : IExpressionSql<TContext>
+//{
+//    IExpSelect<T> Select<T>();
+//    IExpInsert<T> Insert<T>(T entity);
+//    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
+//    IExpUpdate<T> Update<T>();
+//    IExpUpdate<T> Update<T>(T entity);
+//    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+//    IExpDelete<T> Delete<T>();
+//    IExpDelete<T> Delete<T>(T entity);
+//}
+/// <summary>
+/// UnitOfWork, 该对象的所有操作，都会开启事务
+/// </summary>
+public interface IScopedExpressionContext : ISingleScopedExpressionContext// IExpressionSql<IScopedExpressionContext>
+{
+    IScopedExpressionContext SwitchDatabase(string key);
+}
+/// <summary>
+/// 只能对单个数据库操作
+/// </summary>
+public interface ISingleScopedExpressionContext : IDisposable
 {
     string Id { get; }
-
+    //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
+    ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
     IExpInsert<T> Insert<T>(T entity);
     IExpInsert<T> Insert<T>(IEnumerable<T> entities);
@@ -70,9 +101,6 @@ public interface IScopedExpressionContext
     IExpUpdate<T> Update<T>(IEnumerable<T> entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(T entity);
-    //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
-    ISqlExecutor Ado { get; }
-
     void CommitTran();
     Task CommitTranAsync();
     void RollbackTran();

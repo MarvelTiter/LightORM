@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.ExpressionSql
 {
-    public partial class ExpressionCoreSql : IExpressionContext
+    partial class ExpressionCoreSql : IExpressionContext
     {
         bool useTrans;
         public bool UseTrans { get => useTrans; set => useTrans = value; }
@@ -93,21 +93,26 @@ namespace LightORM.ExpressionSql
 
         public async Task BeginTranAsync(string key = ConstString.Main)
         {
-            try { await executorProvider.GetSqlExecutor(CurrentKey, false).BeginTranAsync(); } catch { }
+            try { await executorProvider.GetSqlExecutor(key, false).BeginTranAsync(); } catch { }
         }
 
-        public IScopedExpressionContext BeginScopedTran(string key = ConstString.Main)
+        public ISingleScopedExpressionContext CreateScoped(string key)
         {
-            var ado = executorProvider.GetSqlExecutor(key, false);
+            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key, true).Clone();
             ado.BeginTran();
-            return new ScopedExpressionCoreSql(ado);
+            return new SingleScopedExpressionCoreSql(ado);
         }
 
-        public async Task<IScopedExpressionContext> BeginScopedTranAsync(string key = ConstString.Main)
+        public IScopedExpressionContext CreateScoped()
         {
-            var ado = executorProvider.GetSqlExecutor(key, false);
+            return new ScopedExpressionCoreSql(option);
+        }
+
+        public async Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main)
+        {
+            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key, true).Clone();
             await ado.BeginTranAsync();
-            return new ScopedExpressionCoreSql(ado);
+            return new SingleScopedExpressionCoreSql(ado);
         }
 
         public void CommitTran(string key = ConstString.Main)
