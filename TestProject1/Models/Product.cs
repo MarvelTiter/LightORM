@@ -20,7 +20,7 @@ public class Product
 
     public bool DeleteMark { get; set; }
 
-    public DateTime CreateTime { get; set; }
+    public DateTime CreateTime { get; init; } = DateTime.Now;
 
     public DateTime? ModifyTime { get; set; }
     public DateTime? Last { get; set; } = DateTime.Now;

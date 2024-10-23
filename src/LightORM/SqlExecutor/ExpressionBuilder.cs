@@ -92,7 +92,6 @@ internal class ExpressionBuilder
     /// <typeparam name="Target"></typeparam>
     /// <param name="reader"></param>
     /// <param name="Culture"></param>
-    /// <param name="MustMapAllProperties"></param>
     /// <returns></returns>
     private static Func<IDataReader, object> BuildFunc<Target>(IDataReader reader, CultureInfo Culture)
     {
@@ -194,7 +193,7 @@ internal class ExpressionBuilder
                 SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
                 foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
                 {
-                    if (!col.CanWrite)
+                    if (!col.CanWrite && !col.CanInit)
                     {
                         continue;
                     }

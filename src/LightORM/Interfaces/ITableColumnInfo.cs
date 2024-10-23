@@ -15,6 +15,7 @@ public interface ITableColumnInfo
     string? Comment { get; }
     bool CanRead { get; }
     bool CanWrite { get; }
+    bool CanInit { get; }
     //PropertyInfo Property { get; }
     //Type PropertyType { get; }
     bool IsNullable { get; }

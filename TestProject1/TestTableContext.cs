@@ -1,4 +1,5 @@
-﻿using LightORM.Interfaces;
+﻿using LightORM.Cache;
+using LightORM.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,12 @@ namespace TestProject1
             t1.CustomName = "Test";
             var t2 = context.GetTableInfo(typeof(User))!;
             Assert.IsFalse(t1.CustomName == t2.CustomName);
+        }
+
+        [TestMethod]
+        public void TestReadWriteProperty()
+        {
+            var t = TableContext.GetTableInfo<User2>();
         }
     }
 }

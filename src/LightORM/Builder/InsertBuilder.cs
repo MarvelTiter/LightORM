@@ -87,12 +87,12 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
             Members.AddRange(MainTable.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
         var insertColumns = MainTable.Columns
-            .Where(c => c.GetValue(TargetObject) != null)
+            .Where(c => c.GetValue(TargetObject!) != null)
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
         foreach (var item in insertColumns)
         {
-            var val = item.GetValue(TargetObject);
+            var val = item.GetValue(TargetObject!);
             DbParameters.Add(item.PropertyName, val!);
         }
         sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"

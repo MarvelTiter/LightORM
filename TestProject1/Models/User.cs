@@ -22,3 +22,11 @@ public class User
     [LightNavigateAttribute(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 }
+
+public class User2
+{
+    [LightColumn(Name = "USER_ID", PrimaryKey = true)]
+    public string UserId { get; }
+    [LightColumn(Name = "USER_NAME")]
+    public string UserName { get; init; }
+}

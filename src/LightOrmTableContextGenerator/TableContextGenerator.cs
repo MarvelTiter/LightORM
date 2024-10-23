@@ -198,8 +198,9 @@ public class TableContextGenerator : IIncrementalGenerator
             var len = GetAttributeValueOrNull(lightCol, "Length");
             var def = GetAttributeValueOrNull(lightCol, "Default");
             var comment = GetAttributeValueOrNull(lightCol, "Comment", true);
-            var canRead = (!p.IsWriteOnly && p.SetMethod?.IsInitOnly == false) ? "true" : "false";
-            var canWrite = !p.IsReadOnly ? "true" : "false";
+            var canRead = (p.GetMethod is not null) ? "true" : "false";
+            var canWrite = (p.SetMethod is not null && p.SetMethod?.IsInitOnly == false) ? "true" : "false";
+            var canInit = (p.SetMethod is not null) ? "true" : "false";
             var navInfo = "null";
             if (nav != null)
             {
@@ -228,7 +229,7 @@ public class TableContextGenerator : IIncrementalGenerator
                     navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), {mpt}, {mn}, {sn}, {multi})";
                 }
             }
-            bodies.Add($"""columns[{i++}] = new global::LightORM.Models.ColumnInfo(this, "{p.Name}", {customName}, {primaryKey}, {isnotmap}, {autoincrement}, {notnull}, {len}, {def}, {comment}, {canRead}, {canWrite}, {navInfo})""");
+            bodies.Add($"""columns[{i++}] = new global::LightORM.Models.ColumnInfo(this, "{p.Name}", {customName}, {primaryKey}, {isnotmap}, {autoincrement}, {notnull}, {len}, {def}, {comment}, {canRead}, {canWrite}, {canInit}, {navInfo})""");
         }
         bodies.Add("return columns");
 
