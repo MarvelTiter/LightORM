@@ -36,18 +36,20 @@
 
 主体
 ```
-dotnet add package MT.LightORM --version 2.1.9-pre
+dotnet add package MT.LightORM --version *
 ```
 Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` )
 ```
-dotnet add package LightORM.Providers.Sqlite --version 0.0.1
+dotnet add package LightORM.Providers.Sqlite --version *
 ```
 # 注册和配置
 ```csharp
 // IServiceCollection
+// 注入IExpressionContext对象使用
 services.AddLightOrm(option => {
     option.UseSqlite("DataSource=" + path);
 })
+
 // 直接使用
 var path = Path.GetFullPath("../../../test.db");
 ExpSqlFactory.Configuration(option =>
@@ -123,11 +125,11 @@ WHERE ( ( `a0`.`POWER_ID` = `a3`.`POWER_ID` ) AND ( `a3`.`ROLE_ID` = `a2`.`ROLE_
 Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
     {
         u.UserId
-    }).AsTempQuery(u => new
+    }).AsTable(u => new
     {
         u.Group.UserId,
         Total = u.Count()
-    })
+    }).AsSubQuery("temp")
     .Where(t => t.UserId.Contains("admin"))
     .ToSql();
 ```
@@ -136,10 +138,10 @@ SELECT *
 FROM (
     SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
     FROM `USER` `a5`
-    WHERE ( `a5`.`AGE` > 10 )
+    WHERE (`a5`.`AGE` > 10)
     GROUP BY `a5`.`USER_ID`
-) `temp0`
-WHERE `temp0`.`UserId` LIKE '%'||@Const_0||'%'
+) `temp`
+WHERE `temp`.`UserId` LIKE '%'||'admin'||'%'
 ```
 ## Join 子查询
 ```csharp
