@@ -13,6 +13,7 @@ public class ResolveContext
     private string? parameterPrefix;
     public string? ParameterPrefix => parameterPrefix;
     public ICustomDatabase Database { get; }
+    public int Level { get; set; }
     public ResolveContext(ICustomDatabase database, params ITableEntityInfo[] selectedTables)
     {
         //foreach (var item in selectedTables)
@@ -30,6 +31,7 @@ public class ResolveContext
     {
         this.parameterPrefix = $"{parameterPrefix}_";
     }
+    internal void ModifyAlias(Action<ITableEntityInfo> action) => selectedTables.ForEach(action);
 
     public void AddSelectedTable(ParameterExpression parameter)
     {
@@ -42,7 +44,12 @@ public class ResolveContext
         var type = parameter.Type;
         if (!selectedTables.Any(t => t.Type == type || type.IsAssignableFrom(t.Type)))
         {
-            selectedTables.Add(TableContext.GetTableInfo(type));
+            var table = TableContext.GetTableInfo(type);
+            if (Level > 0)
+            {
+                table.Alias = table.Alias?.Replace("a", $"s{Level}_");
+            }
+            selectedTables.Add(table);
         }
     }
 

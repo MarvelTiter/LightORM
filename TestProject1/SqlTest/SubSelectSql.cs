@@ -57,5 +57,31 @@ namespace TestProject1.SqlTest
                 .ToSql();
             Console.WriteLine(sql);
         }
+
+        [TestMethod]
+        public void SubContextQuery()
+        {
+            var result = Db.Select<User>().Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).Result(ur => ur.RoleId).Result<int>()).ToSql();
+            Console.WriteLine(result);
+        }
+
+        [TestMethod]
+        public void SubQueryExits()
+        {
+            var result = Db.Select<User>().Where(u => Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).Exits()).ToSql();
+            result.AsSpan();
+            Console.WriteLine(result);
+        }
+
+        [TestMethod]
+        public void SubSelect()
+        {
+            var result = Db.Select<User>().ToSql(u => new
+            {
+                u.UserName,
+                Age = Db.Select<User>().Count(u => u.UserId)
+            });
+            Console.WriteLine(result);
+        }
     }
 }

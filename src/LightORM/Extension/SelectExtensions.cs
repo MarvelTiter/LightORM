@@ -52,6 +52,12 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
 
+    public static IExpSelect<T1> Result<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        return select;
+    }
+
 
     #region 2个类型参数
 
@@ -61,6 +67,12 @@ public static partial class SelectExtensions
         if (key != null)
             instance.SwitchDatabase(key);
         return new SelectProvider2<T1, T2>(instance.Ado);
+    }
+
+    public static IExpSelect<T1, T2> Result<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    {
+        select.HandleResult(exp, null);
+        return select;
     }
 
     /// <summary>

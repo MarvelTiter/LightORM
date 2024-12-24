@@ -43,4 +43,27 @@ public class ConstraintTest : TestBase
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }
+
+    [TestMethod]
+    public void BooleanValueTest()
+    {
+        Expression<Func<User, bool>> where = u => u.IsLock == true;
+        var t1 = TestTableContext.TestProject1_Models_User;
+        t1.Alias = "a";
+        ResolveCtx.AddSelectedTable(t1);
+        var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
+        Console.WriteLine(result.SqlString);
+    }
+
+    [TestMethod]
+    public void BooleanValueTest2()
+    {
+        var b = "12345".Length > 4;
+        Expression<Func<User, bool>> where = u => u.IsLock == b;
+        var t1 = TestTableContext.TestProject1_Models_User;
+        t1.Alias = "a";
+        ResolveCtx.AddSelectedTable(t1);
+        var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
+        Console.WriteLine(result.SqlString);
+    }
 }

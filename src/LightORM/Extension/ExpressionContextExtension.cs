@@ -5,6 +5,42 @@ namespace LightORM;
 
 public static class ExpressionContextExtension
 {
+    /// <summary>
+    /// 批量插入
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="ado"></param>
+    /// <param name="datas"></param>
+    /// <returns></returns>
+    public static int BulkCopy<T>(this ISqlExecutor ado, IEnumerable<T> datas)
+    {
+        var table = TableContext.GetTableInfo<T>();
+        var dt = new DataTable();
+        foreach (var col in table.Columns)
+        {
+            if (col.IsNotMapped) continue;
+            dt.Columns.Add(col.ColumnName);
+        }
+        foreach (var item in datas)
+        {
+            if (item is null) continue;
+            var row = dt.NewRow();
+            foreach (var col in table.Columns)
+            {
+                if (col.IsNotMapped) continue;
+                row[col.ColumnName] = col.GetValue(item);
+            }
+            dt.Rows.Add(row);
+        }
+        return ado.BulkCopy(dt);
+    }
+
+    /// <summary>
+    /// 批量插入
+    /// </summary>
+    /// <param name="ado"></param>
+    /// <param name="dataTable"></param>
+    /// <returns></returns>
     public static int BulkCopy(this ISqlExecutor ado, DataTable dataTable)
     {
         return ado.Database.BulkCopy(dataTable);

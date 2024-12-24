@@ -59,8 +59,10 @@ public interface IExpressionResolver
 {
     bool IsNot { get; }
     int NavigateDeep { get; set; }
+    int Level { get; }
     Dictionary<string, Expression?>? ExpStores { get; set; }
     StringBuilder Sql { get; }
+    Dictionary<string, object> DbParameters { get; }
     SqlResolveOptions Options { get; }
     Expression? Visit(Expression? expression);
 }
@@ -77,11 +79,12 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
+    public int Level => Context.Level;
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
 
-    ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
-    ICustomDatabase Database => Context.Database;
+    private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
+    private ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
     {
         System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
@@ -183,6 +186,14 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         }
         else
         {
+            //if (exp.Object is not null)
+            //{
+            //    var obj = Expression.Lambda(exp.Object).Compile().DynamicInvoke();
+            //    if (obj is IExpSelect sel)
+            //    {
+            //        var sql = sel.SqlBuilder.ToSqlString();
+            //    }
+            //}
             if (Options.SqlType == SqlPartial.Select)
             {
                 UseAs = true;
@@ -463,8 +474,23 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             }
             else
             {
-                var parameterName = AddDbParameter(bn, value);
-                Sql.Append(parameterName);
+                if (v is bool b)
+                {
+                    if (IsNot)
+                    {
+                        Sql.Append(Database.HandleBooleanValue(!b));
+                        IsNot = false;
+                    }
+                    else
+                    {
+                        Sql.Append(Database.HandleBooleanValue(b));
+                    }
+                }
+                else
+                {
+                    var parameterName = AddDbParameter(bn, value);
+                    Sql.Append(parameterName);
+                }
             }
         }
 
@@ -486,6 +512,18 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                 if (exp.Type.IsNumber())
                 {
                     Sql.Append($"{v}");
+                }
+                else if (exp.Type.IsBoolean() && v is bool b)
+                {
+                    if (IsNot)
+                    {
+                        Sql.Append(Database.HandleBooleanValue(!b));
+                        IsNot = false;
+                    }
+                    else
+                    {
+                        Sql.Append(Database.HandleBooleanValue(b));
+                    }
                 }
                 else
                 {

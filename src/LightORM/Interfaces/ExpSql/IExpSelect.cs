@@ -7,6 +7,7 @@ namespace LightORM.Interfaces.ExpSql;
 
 public interface IExpSelect : ISql
 {
+    internal bool IsSubQuery { get; set; }
     internal ISqlExecutor Executor { get; }
     internal SelectBuilder SqlBuilder { get; }
 }

@@ -1,5 +1,10 @@
-﻿namespace LightORM.Implements
+﻿using LightORM.Extension;
+
+namespace LightORM.Implements
 {
+    /// <summary>
+    /// Sql函数解析
+    /// </summary>
     public abstract partial class BaseSqlMethodResolver : ISqlMethodResolver
     {
         /// <summary>
@@ -20,7 +25,39 @@
             }
             action.Invoke(resolver, expression);
         }
+        #region 子查询专用方法解析
+        public virtual void Result(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            //var subQuery = methodCall.Arguments[0];
+            //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
+            var sel = methodCall.GetExpSelectObject();
+            if (sel is not null)
+            {
+                sel.SqlBuilder.Level = resolver.Level + 1;
+                sel.SqlBuilder.IsSubQuery = true;
+                resolver.Sql.AppendLine("(");
+                var sql = sel.SqlBuilder.ToSqlString();
+                resolver.Sql.Append(sql);
+                resolver.Sql.Append(')');
+            }
+        }
 
+        public virtual void Exits(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            //var subQuery = methodCall.Arguments[0];
+            //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
+            var sel = methodCall.GetExpSelectObject();
+            if (sel is not null)
+            {
+                sel.SqlBuilder.Level = resolver.Level + 1;
+                sel.SqlBuilder.IsSubQuery = true;
+                resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
+                var sql = sel.SqlBuilder.ToSqlString();
+                resolver.Sql.Append(sql);
+                resolver.Sql.Append(')');
+            }
+        }
+        #endregion
         public virtual void In(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Arguments[0]);
@@ -32,6 +69,25 @@
 
         public virtual void Count(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            {
+                var sel = methodCall.GetExpSelectObject()!;
+                if (methodCall.Arguments.Count == 0)
+                {
+                    sel.HandleResult(null,"COUNT(*)");
+                }
+                else
+                {
+                    sel.HandleResult(methodCall.Arguments[0], "COUNT({0})");
+                }
+                sel.SqlBuilder.Level = resolver.Level + 1;
+                sel.SqlBuilder.IsSubQuery = true;
+                resolver.Sql.AppendLine("(");
+                var sql = sel.SqlBuilder.ToSqlString();
+                resolver.Sql.Append(sql);
+                resolver.Sql.AppendLine(")");
+                return;
+            }
             if (methodCall.Arguments.Count > 0)
             {
                 var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
@@ -372,4 +428,5 @@
 
         #endregion
     }
+      
 }

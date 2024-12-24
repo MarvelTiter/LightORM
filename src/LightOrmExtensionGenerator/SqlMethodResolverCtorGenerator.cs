@@ -28,6 +28,7 @@ namespace LightOrmExtensionGenerator
                 foreach (var item in methods)
                 {
                     if (item.Name == "Resolve" || item.Name == "AddOrUpdateMethod" || item.MethodKind == MethodKind.Constructor) continue;
+                    if (!item.IsVirtual) continue;
                     ctorMethod.AddBody($"methods.Add(nameof({item.Name}), {item.Name});");
                 }
                 classBuilder.AddMembers(ctorMethod);

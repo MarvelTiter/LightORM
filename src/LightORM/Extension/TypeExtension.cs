@@ -45,6 +45,16 @@ internal static class TypeExtension
         };
     }
 
+    public static bool IsBoolean(this Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return Type.GetTypeCode(type) switch
+        {
+            TypeCode.Boolean => true,
+            _ => false,
+        };
+    }
+
     private static List<DbIndex> CollectIndexs(Type tableType, List<DbColumn> columns)
     {
         IEnumerable<LightTableIndexAttribute> attrs = tableType.GetCustomAttributes(false).Where(a => a is LightTableIndexAttribute).Cast<LightTableIndexAttribute>();

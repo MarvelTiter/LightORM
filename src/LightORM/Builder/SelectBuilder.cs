@@ -63,13 +63,15 @@ namespace LightORM.Builder
 
         protected override void BeforeResolveExpressions(ResolveContext context)
         {
+            context.Level = Level;
             if (IsTemp)
             {
                 context.SetParamPrefix(TempName);
             }
             else if (IsSubQuery)
             {
-                context.SetParamPrefix("sub");
+                context.ModifyAlias(t => t.Alias = t.Alias?.Replace("a", $"s{Level}_"));
+                context.SetParamPrefix("s");
             }
         }
 

@@ -12,6 +12,7 @@ namespace LightORM.Providers
     {
         public SelectBuilder SqlBuilder { get; }
         public ISqlExecutor Executor { get; }
+        public bool IsSubQuery { get; set; }
 
         public GroupSelectProvider(ISqlExecutor executor, SelectBuilder builder)
         {

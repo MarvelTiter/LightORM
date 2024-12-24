@@ -19,7 +19,10 @@ public class User
     [LightColumn(Name = "LAST_LOGIN")]
     public DateTime LastLogin { get; set; }
 
-    [LightNavigateAttribute(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
+    [LightColumn(Name = "IS_LOCK")]
+    public bool IsLock { get; set; }
+
+    [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 }
 

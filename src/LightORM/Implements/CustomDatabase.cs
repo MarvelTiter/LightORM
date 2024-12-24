@@ -21,8 +21,8 @@ public abstract class CustomDatabase : ICustomDatabase
         throw new NotSupportedException();
     }
 
-    //public virtual string Rollup()
-    //{
-
-    //}
+    public virtual string HandleBooleanValue(bool value)
+    {
+        return value ? " 1" : " 0";
+    }
 }
