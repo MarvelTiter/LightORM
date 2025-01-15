@@ -34,7 +34,7 @@ public class {{2}}
     /// <summary>
     /// {0}
     /// </summary>
-    [LightColumnName(""{1}"")]
+    [LightColumn(Name = ""{1}"")]
     public {2} {3} {{ get; set; }}
 ";
         /// <summary>

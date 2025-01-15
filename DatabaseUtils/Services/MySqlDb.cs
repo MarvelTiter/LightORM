@@ -12,7 +12,7 @@ namespace DatabaseUtils.Services
         private readonly string database;
         public MySqlDb(IExpressionContext context, string connStr) : base(context, connStr)
         {
-            var match = Regex.Match(connStr, @"(?<=Database\=)([A-Z|a-z]+)", RegexOptions.IgnoreCase);
+            var match = Regex.Match(connStr, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
                 throw new Exception("未能在连接字符串中发现目标数据库!");
@@ -25,7 +25,7 @@ namespace DatabaseUtils.Services
 SELECT
 A.TABLE_NAME TableName
 FROM INFORMATION_SCHEMA.TABLES A
-WHERE a.TABLE_SCHEMA = '{database}'
+WHERE A.TABLE_SCHEMA = '{database}'
 ";
             return context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql, null);
         }

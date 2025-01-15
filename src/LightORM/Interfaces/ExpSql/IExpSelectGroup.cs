@@ -43,6 +43,15 @@ public interface IExpSelectGrouping<TGroup, TTables>
     /// <returns></returns>
     int Count<TColumn>(TColumn column);
     /// <summary>
+    /// <para>当T为返回bool的表达式或者三元表达式时，会解析成CASE WHEN语句</para>
+    /// <para>否则COUNT(DISTINCT column)</para>
+    /// 等价于<see cref="SqlFn.CountDistinct{T}(T)"/>
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <returns></returns>
+    int CountDistinct<TColumn>(TColumn column);
+    /// <summary>
     /// <para>SUM(val)</para>
     /// 等价于<see cref="SqlFn.Sum{T}(T)"/>
     /// </summary>

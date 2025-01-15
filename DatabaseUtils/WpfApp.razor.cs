@@ -19,7 +19,7 @@ namespace DatabaseUtils
 {
     public partial class WpfApp
     {
-        string? selectedDb;
+        string? selectedDb = "MySql";
         string? connectstring;
 
         IEnumerable<DatabaseTable> Tables = [];
@@ -27,8 +27,8 @@ namespace DatabaseUtils
         Config Config = new Config();
         bool showSetting;
 
-        [Inject, NotNull] IExpressionContext? Context {  get; set; }
-        
+        [Inject, NotNull] IExpressionContext? Context { get; set; }
+
         async Task Connect()
         {
             if (selectedDb == null || string.IsNullOrWhiteSpace(connectstring))
@@ -102,13 +102,17 @@ namespace DatabaseUtils
             }
         }
 
-        void SelectPath()
+        Task SelectPath()
         {
-            OpenFolderDialog dialog = new OpenFolderDialog();
-            if (dialog.ShowDialog() == true)
+            return Task.Run(() =>
             {
-                Config.SavedPath = dialog.FolderName;
-            }
+
+                OpenFolderDialog dialog = new OpenFolderDialog();
+                if (dialog.ShowDialog() == true)
+                {
+                    Config.SavedPath = dialog.FolderName;
+                }
+            });
 
         }
 

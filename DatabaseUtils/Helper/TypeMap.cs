@@ -18,7 +18,11 @@ namespace DatabaseUtils.Helper
             {
                 type = "string";
             }
-            else if (d.Contains("int") || d.Contains("bit") || d.Contains("number"))
+            else if (d.Contains("int") 
+                || d.Contains("bit") 
+                || d.Contains("number")
+                ||d.Contains("decimal")
+                )
             {
                 type = nullable == "YES" ? "int?" : "int";
             }

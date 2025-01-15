@@ -13,6 +13,12 @@ namespace DatabaseUtils.Helper
             return Parse(self.TableName, prefix, separator);
         }
 
+        public static string ParseCommentSingleLine(this TableColumn self)
+        {
+            if (string.IsNullOrWhiteSpace(self.Comments)) return string.Empty;
+            return self.Comments.Replace(Environment.NewLine, " ").Replace("\n", " ");
+        }
+
         public static string BuildContent(this DatabaseTable self, string prefix, string separator)
         {
             var columns = self.Columns;
@@ -23,7 +29,7 @@ namespace DatabaseUtils.Helper
                 {
                     continue;
                 }
-                content.AppendLine(string.Format(ClassTemplate.Property, item.Comments, item.ColumnName, type, item.PascalName(prefix, separator)));
+                content.AppendLine(string.Format(ClassTemplate.Property, item.ParseCommentSingleLine(), item.ColumnName, type, item.PascalName(prefix, separator)));
             }
             return content.ToString();
         }

@@ -41,6 +41,14 @@ public static partial class SqlFn
     /// <returns></returns>
     public static int Count<T>(T column) => 0;
     /// <summary>
+    /// <para>当T为返回bool的表达式或者三元表达式时，会解析成CASE WHEN语句</para>
+    /// <para>否则COUNT(DISTINCT column)</para>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="column"></param>
+    /// <returns></returns>
+    public static int CountDistinct<T>(T column) => 0;
+    /// <summary>
     /// COUNT(*)
     /// </summary>
     /// <returns></returns>

@@ -3,9 +3,9 @@
     public class Config
     {
         public string? Prefix { get; set; }
-        public string? Separator { get; set; }
-        public string? Namespace { get; set; }
-        public string SavedPath { get; set; } = "E:\\CodeGenerated";
+        public string? Separator { get; set; } = "_";
+        public string? Namespace { get; set; } = "StatisticsApi.Models.Tables";
+        public string SavedPath { get; set; } = "E:\\CodeGenerated\\WIS";
 
     }
 }

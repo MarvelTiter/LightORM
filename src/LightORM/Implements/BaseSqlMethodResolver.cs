@@ -74,7 +74,7 @@ namespace LightORM.Implements
                 var sel = methodCall.GetExpSelectObject()!;
                 if (methodCall.Arguments.Count == 0)
                 {
-                    sel.HandleResult(null,"COUNT(*)");
+                    sel.HandleResult(null, "COUNT(*)");
                 }
                 else
                 {
@@ -101,6 +101,50 @@ namespace LightORM.Implements
                 else
                 {
                     resolver.Sql.Append("COUNT(");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(')');
+                }
+            }
+            else
+            {
+                resolver.Sql.Append("COUNT(*)");
+            }
+        }
+
+        public virtual void CountDistinct(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            {
+                var sel = methodCall.GetExpSelectObject()!;
+                if (methodCall.Arguments.Count == 0)
+                {
+                    sel.HandleResult(null, "COUNT(*)");
+                }
+                else
+                {
+                    sel.HandleResult(methodCall.Arguments[0], "COUNT(DISTINCT {0})");
+                }
+                sel.SqlBuilder.Level = resolver.Level + 1;
+                sel.SqlBuilder.IsSubQuery = true;
+                resolver.Sql.AppendLine("(");
+                var sql = sel.SqlBuilder.ToSqlString();
+                resolver.Sql.Append(sql);
+                resolver.Sql.AppendLine(")");
+                return;
+            }
+            if (methodCall.Arguments.Count > 0)
+            {
+                var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
+                    && methodCall.Arguments[0] is BinaryExpression;
+                if (useCaseWhen)
+                {
+                    resolver.Sql.Append("COUNT(DISTINCT CASE WHEN ");
+                    resolver.Visit(methodCall.Arguments[0]);
+                    resolver.Sql.Append(" THEN 1 ElSE NULL END)");
+                }
+                else
+                {
+                    resolver.Sql.Append("COUNT(DISTINCT ");
                     resolver.Visit(methodCall.Arguments[0]);
                     resolver.Sql.Append(')');
                 }
@@ -428,5 +472,5 @@ namespace LightORM.Implements
 
         #endregion
     }
-      
+
 }

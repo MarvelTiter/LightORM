@@ -11,15 +11,15 @@
 
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="*" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="*" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="*" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.10" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
 		<PackageReference Include="MT.LightORM" Version="*" />
-		<PackageReference Include="LightORM.Providers.SqlServer" Version="*"/>
-		<PackageReference Include="LightORM.Providers.MySql" Version="*"/>
-		<PackageReference Include="LightORM.Providers.Oracle" Version="*"/>
+		<PackageReference Include="LightORM.Providers.SqlServer" Version="*" />
+		<PackageReference Include="LightORM.Providers.MySql" Version="*" />
+		<PackageReference Include="LightORM.Providers.Oracle" Version="*" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
 		<ProjectReference Include="..\src\LightORM\LightORM.csproj" />
