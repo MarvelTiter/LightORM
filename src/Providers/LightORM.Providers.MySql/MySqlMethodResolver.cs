@@ -179,4 +179,13 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.ExpStores?.Clear();
         }
     }
+
+    public override void NullThen(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("IFNULL(");
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(')');
+    }
 }

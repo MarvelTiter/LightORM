@@ -100,5 +100,19 @@ public interface IExpSelectGrouping<TGroup, TTables>
     /// <param name="column"></param>
     /// <returns></returns>
     IGroupJoinFn Join<TColumn>(TColumn? column);
+    /// <summary>
+    /// 等价于 <see cref="SqlFn.NullThen{T}(T, T)"/>
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    TColumn NullThen<TColumn>(TColumn column, TColumn value);
+    /// <summary>
+    /// 等价于 <see cref="SqlFn.Case{TReturn}()"/>
+    /// </summary>
+    /// <typeparam name="TReturn"></typeparam>
+    /// <returns></returns>
+    ICaseFragment<TReturn> Case<TReturn>();
 
 }

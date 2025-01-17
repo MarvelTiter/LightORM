@@ -95,7 +95,7 @@ namespace TestProject1.SqlTest
             var allStation = Db.FromTemp(info).GroupBy("ROLLUP(\"StnId\")")
                 .AsTemp("all_station", g => new
                 {
-                    StnId = SqlFn.Nvl(g.StnId, "合计"),
+                    StnId = SqlFn.NullThen(g.StnId, "合计"),
                     Total = SqlFn.Count()
                 });
             var result = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
@@ -114,7 +114,7 @@ namespace TestProject1.SqlTest
                 .InnerJoin(allStation, (t, a) => t.StnId == a.StnId)
                 .ToSql((t, a) => new
                 {
-                    Jczmc = SqlFn.Nvl(t.StnId,"TT"),
+                    Jczmc = SqlFn.NullThen(t.StnId,"TT"),
                     a.Total,
                     t
                 });

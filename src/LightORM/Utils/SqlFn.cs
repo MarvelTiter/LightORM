@@ -102,8 +102,21 @@ public static partial class SqlFn
 
 partial class SqlFn
 {
+    [Obsolete("Use NullThen")]
     public static T Nvl<T>(T column, T value) => default!;
-    public static T IfNull<T>(T column, T value) => default!;
+    /// <summary>
+    /// 检查是否为null，如果是，返回value，在不同的数据库有不同的实现。
+    /// eg: 
+    /// <para>MySql -> IFNULL</para>
+    /// <para>SqlServer -> ISNULL</para>
+    /// <para>Oracle -> NVL</para>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="column"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static T NullThen<T>(T column, T value) => default!;
+    [Obsolete("Use NullThen")]
     public static T IsNull<T>(T column, T value) => default!;
 }
 

@@ -167,7 +167,20 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
                 resolver.Visit(exp);
                 resolver.Sql.Append(" DESC)");
             }
+            else
+            {
+                throw new LightOrmException("Oracle LISTAGG 缺少 WITHIN GROUP 子句, 是否已调用OrderBy?");
+            }
             resolver.ExpStores?.Clear();
         }
+    }
+
+    public override void NullThen(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("NVL(");
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(')');
     }
 }

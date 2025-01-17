@@ -270,13 +270,14 @@ namespace LightORM.Implements
             resolver.Sql.Append(')');
         }
 
-        public virtual void IfNull(IExpressionResolver resolver, MethodCallExpression methodCall)
+        public virtual void NullThen(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            resolver.Sql.Append("IFNULL(");
-            resolver.Visit(methodCall.Arguments[0]);
-            resolver.Sql.Append(',');
-            resolver.Visit(methodCall.Arguments[1]);
-            resolver.Sql.Append(')');
+            //resolver.Sql.Append("IFNULL(");
+            //resolver.Visit(methodCall.Arguments[0]);
+            //resolver.Sql.Append(',');
+            //resolver.Visit(methodCall.Arguments[1]);
+            //resolver.Sql.Append(')');
+            throw new NotSupportedException();
         }
 
         #region 类型转换
