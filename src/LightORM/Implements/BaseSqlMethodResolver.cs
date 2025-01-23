@@ -11,6 +11,7 @@ namespace LightORM.Implements
         /// 在生成器中初始化集合内容
         /// </summary>
         private readonly Dictionary<string, Action<IExpressionResolver, MethodCallExpression>> methods = [];
+
         public void AddOrUpdateMethod(string name, Action<IExpressionResolver, MethodCallExpression> methodResolver)
         {
             methods[name] = methodResolver;
@@ -23,9 +24,24 @@ namespace LightORM.Implements
             {
                 throw new NotSupportedException($"{this.GetType().Name}: {expression.Method.Name}, {expression.Method.GetParameters().Select(p => $"[{p.ParameterType}:{p.Name}]")}");
             }
+
             action.Invoke(resolver, expression);
         }
+
+        public virtual void Format(IExpressionResolver resolver, MethodCallExpression expression)
+        {
+            if (expression.Arguments.Count == 0)
+                return;
+            var formatString = expression.Arguments[0] as ConstantExpression;
+            var args = expression.Arguments.Skip(1).Select(a => Expression.Lambda(a).Compile().DynamicInvoke());
+            var formatedValue = string.Format(formatString.Value.ToString(), [..args]);
+            resolver.Sql.Append("'");
+            resolver.Sql.Append(formatedValue);            
+            resolver.Sql.Append("'");
+        }
+
         #region 子查询专用方法解析
+
         public virtual void Result(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             //var subQuery = methodCall.Arguments[0];
@@ -57,7 +73,9 @@ namespace LightORM.Implements
                 resolver.Sql.Append(')');
             }
         }
+
         #endregion
+
         public virtual void In(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Arguments[0]);
@@ -80,6 +98,7 @@ namespace LightORM.Implements
                 {
                     sel.HandleResult(methodCall.Arguments[0], "COUNT({0})");
                 }
+
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
@@ -88,10 +107,11 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine(")");
                 return;
             }
+
             if (methodCall.Arguments.Count > 0)
             {
                 var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
-                    && methodCall.Arguments[0] is BinaryExpression;
+                                  && methodCall.Arguments[0] is BinaryExpression;
                 if (useCaseWhen)
                 {
                     resolver.Sql.Append("COUNT(CASE WHEN ");
@@ -124,6 +144,7 @@ namespace LightORM.Implements
                 {
                     sel.HandleResult(methodCall.Arguments[0], "COUNT(DISTINCT {0})");
                 }
+
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
@@ -132,10 +153,11 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine(")");
                 return;
             }
+
             if (methodCall.Arguments.Count > 0)
             {
                 var useCaseWhen = methodCall.Method.GetParameters()[0].ParameterType == typeof(bool)
-                    && methodCall.Arguments[0] is BinaryExpression;
+                                  && methodCall.Arguments[0] is BinaryExpression;
                 if (useCaseWhen)
                 {
                     resolver.Sql.Append("COUNT(DISTINCT CASE WHEN ");
@@ -290,6 +312,7 @@ namespace LightORM.Implements
         #endregion
 
         #region 字符串相关
+
         public virtual void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
@@ -318,6 +341,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(')');
         }
+
         public virtual void TrimStart(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             // LTRIM(columnName);
@@ -335,7 +359,9 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(')');
         }
+
         #region Group Join
+
         public virtual void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.ExpStores ??= [];
@@ -347,6 +373,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.ExpStores!.Add("Distinct", null);
         }
+
         public virtual void Separator(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Visit(methodCall.Object);
@@ -358,12 +385,14 @@ namespace LightORM.Implements
         #endregion
 
         #region include用到的方法
+
         public void Where(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (resolver.NavigateDeep > 0)
             {
                 resolver.Sql.Clear();
             }
+
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Sql.Clear();
@@ -376,10 +405,12 @@ namespace LightORM.Implements
             {
                 resolver.Sql.Clear();
             }
+
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Visit(methodCall.Arguments[1]);
         }
+
         #endregion
 
         #region 窗口函数
@@ -395,6 +426,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Sql.Append(") OVER(");
         }
+
         public virtual void Rank(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             resolver.Sql.Append("RANK() OVER(");
@@ -428,7 +460,6 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" )");
         }
-
 
         #endregion
 
@@ -473,5 +504,4 @@ namespace LightORM.Implements
 
         #endregion
     }
-
 }
