@@ -10,6 +10,11 @@ internal static class TypeExtension
         return type?.FullName?.StartsWith("<>f__AnonymousType") == true;
     }
 
+    public static bool IsFlat(this Type? type)
+    {
+        return type?.HasAttribute<LightFlatAttribute>() == true;
+    }
+
     internal static DbTable CollectDbTableInfo(this Type tableType)
     {
         var tableName = tableType.GetAttribute<LightTableAttribute>()?.Name ?? tableType.Name;

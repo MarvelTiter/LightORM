@@ -5,7 +5,18 @@ using System.Reflection;
 using System.Text;
 
 namespace LightORM.Utils;
-
+internal static class ColumnInfoExtensions
+{
+    public static ITableColumnInfo? GetColumn(this ITableEntityInfo entityInfo, string columnName)
+    {
+        for (int i = 0; i < entityInfo.Columns.Length; i++)
+        {
+            if (entityInfo.Columns[i].PropertyName == columnName)
+                return entityInfo.Columns[i];
+        }
+        return null;
+    }
+}
 internal static class ObjectExtensions
 {
     public static Func<object, object> GetPropertyAccessor(this Type type, PropertyInfo property)

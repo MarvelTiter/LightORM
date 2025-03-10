@@ -24,6 +24,15 @@ public class User
 
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
+
+    [LightFlat]
+    public PrivateInfo PriInfo { get; set; }
+}
+
+public class PrivateInfo
+{
+    public int MobilePhoto { get; set; }
+    public string Address { get; set; }
 }
 
 public class User2

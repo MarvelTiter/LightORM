@@ -55,6 +55,11 @@ internal static class TableContext
             return GetTableInfo(realType);
         }
 
+        if (realType.HasAttribute<LightFlatAttribute>())
+        {
+
+        }
+
         var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
         {
             var entityInfo = new TableEntity(type);

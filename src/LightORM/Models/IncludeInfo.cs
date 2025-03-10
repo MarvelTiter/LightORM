@@ -26,5 +26,4 @@ internal class IncludeInfo
     public ITableColumnInfo? ParentWhereColumn { get; set; }
     public SelectBuilder? SqlBuilder { get; set; }
     public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
-
 }

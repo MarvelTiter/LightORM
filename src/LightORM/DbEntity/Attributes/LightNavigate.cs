@@ -9,7 +9,7 @@ public class LightNavigateAttribute : Attribute
 
     public LightNavigateAttribute()
     {
-        
+
     }
 
     public LightNavigateAttribute(string? mainName, string? subName)

@@ -14,6 +14,7 @@ public class TableContextGenerator : IIncrementalGenerator
     public const string ContextAttributeFullName = "LightORM.LightORMTableContextAttribute";
     public const string ContextInterfaceFullName = "LightORM.ITableContext";
     public const string LightTableAttributeFullName = "LightORM.LightTableAttribute";
+    public const string LightFlatAttributeFullName = "LightORM.LightFlatAttribute";
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -32,10 +33,11 @@ public class TableContextGenerator : IIncrementalGenerator
 
             var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
             int i = 0;
+            List<INamedTypeSymbol> flatTypes = [];
             foreach (var t in allTableType)
             {
                 // 生成  {Type}Context.g.cs
-                var c = GenerateTypeContextClass(t, i);
+                var c = GenerateTypeContextClass(t, i, flatTypes);
                 if (c != null)
                 {
                     var tt = c.ToString();
@@ -53,27 +55,51 @@ public class TableContextGenerator : IIncrementalGenerator
 
     private static CodeFile? CreateAggregationContextClass(INamedTypeSymbol target, INamedTypeSymbol[] items)
     {
-        List<Node> members = [];
+            List<Node> members = [
+    FieldBuilder.Default
+            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>")
+            .FieldName("tableInfos")
+    ];
+        List<Statement> dicInits = [
+            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>()"
+            ];
+        foreach (var item in items)
+        {
+            dicInits.Add($"tableInfos.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)})");
+        }
+        var ctor = ConstructorBuilder.Default.MethodName(target.MetadataName)
+            .AddBody(
+            [..dicInits]
+            );
+        members.Add(ctor);
 
         foreach (var item in items)
         {
-            members.Add(PropertyBuilder.Default
+            members.Add(MethodBuilder.Default
                 .Modifiers("public static")
-                .MemberType("global::LightORM.Interfaces.ITableEntityInfo")
-                .PropertyName(item.FormatClassName(true))
-                .Lambda($"new {item.FormatClassName(true)}Context()"));
+                .ReturnType("global::LightORM.Interfaces.ITableEntityInfo")
+                .MethodName(item.FormatClassName(true))
+                .Lambda($"new {item.FormatClassName(true)}TableInfo()"));
         }
-        List<Statement> statements = [];
-        foreach (var item in items)
-        {
-            var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
-            statements.Add(ifs);
-        }
-        statements.Add("return null");
+
+        List<Statement> getTableInfoMethodStatements = [];
+        //foreach (var item in items)
+        //{
+        //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
+        //    getTableInfoMethodStatements.Add(ifs);
+        //}
+        var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var factory)").AddStatement("return factory()");
+
+        var notFound = ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
+            IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()"));
+        getTableInfoMethodStatements.Add(dicCheck);
+        getTableInfoMethodStatements.Add(notFound);
+        getTableInfoMethodStatements.Add("return null");
+
         var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
             .MethodName("GetTableInfo")
             .AddParameter("Type type")
-            .AddBody([.. statements]);
+            .AddBody([.. getTableInfoMethodStatements]);
 
         members.Add(method);
 
@@ -88,7 +114,7 @@ public class TableContextGenerator : IIncrementalGenerator
         return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString()).AddMembers(ctxClass)).AddUsings("using LightORM.GeneratedTableContext;");
     }
 
-    private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index)
+    private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index, List<INamedTypeSymbol> flatTypes)
     {
 
         _ = target.GetAttribute(LightTableAttributeFullName, out var lightTable);
@@ -151,14 +177,14 @@ public class TableContextGenerator : IIncrementalGenerator
 
         members.Add(CreateInitColumnInfoMethod(columns));
 
-        var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}Context")
+        var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}TableInfo")
             .Interface("global::LightORM.Interfaces.ITableEntityInfo")
             .AddGeneratedCodeAttribute(typeof(TableContextGenerator))
             .AddMembers([.. members]);
 
         //var s = r.ToString();
 
-        return CodeFile.New($"{target.FormatFileName()}.Context.g.cs")
+        return CodeFile.New($"{target.FormatFileName()}.TableInfo.g.cs")
             .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
     }
 
@@ -282,9 +308,22 @@ public class TableContextGenerator : IIncrementalGenerator
 
         builder.AddSwitchStatement("col.PropertyName", ss =>
         {
-            foreach (var column in columns)
+            foreach (IPropertySymbol column in columns)
             {
-                ss.AddReturnCase($"\"{column.Name}\"", $"p.{column.Name}");
+                if (column.Type.TypeKind == TypeKind.Class
+                && column.Type.SpecialType == SpecialType.None
+                && column.HasAttribute(LightFlatAttributeFullName))
+                {
+                    var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+                    foreach (var flat in flatProps)
+                    {
+                        ss.AddReturnCase($"\"{flat.Name}\"", $"p.{column.Name}.{flat.Name}");
+                    }
+                }
+                else
+                {
+                    ss.AddReturnCase($"\"{column.Name}\"", $"p.{column.Name}");
+                }
             }
             ss.AddDefaultCase("throw new ArgumentException()");
         });
@@ -310,7 +349,25 @@ public class TableContextGenerator : IIncrementalGenerator
             {
                 if (column.IsReadOnly || column.SetMethod?.IsInitOnly == true)
                     continue;
-                ss.AddBreakCase($"\"{column.Name}\"", $"p.{column.Name} = ({column.Type.ToDisplayString()})value");
+                if (column.Type.TypeKind == TypeKind.Class
+                && column.Type.SpecialType == SpecialType.None
+                && column.HasAttribute(LightFlatAttributeFullName))
+                {
+                    var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+                    foreach (var flat in flatProps)
+                    {
+                        ss.AddBreakCase($"\"{flat.Name}\"",
+                            //$"p.{column.Name}.{flat.Name}",
+                            IfStatement.Default.If($"p.{column.Name} is null")
+                            .AddStatement($"p.{column.Name} = new {column.Type.ToDisplayString()}();"),
+                            $"p.{column.Name}.{flat.Name} = ({flat.Type.ToDisplayString()})value"
+                            );
+                    }
+                }
+                else
+                {
+                    ss.AddBreakCase($"\"{column.Name}\"", $"p.{column.Name} = ({column.Type.ToDisplayString()})value");
+                }
             }
             ss.AddDefaultCase("throw new ArgumentException()");
         });

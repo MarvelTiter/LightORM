@@ -38,8 +38,8 @@ public sealed record ColumnInfo : ITableColumnInfo
     public bool CanRead { get; set; }
     public bool CanWrite { get; set; }
     public bool CanInit { get; set; }
-    public object? GetValue(object target) => Table.GetValue(this, target);
-    public void SetValue(object target, object value) => Table.SetValue(this, target, value);
+    public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
+    public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
     public ColumnInfo(ITableEntityInfo table
         , string propname
         , string? customname

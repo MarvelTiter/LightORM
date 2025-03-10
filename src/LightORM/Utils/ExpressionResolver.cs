@@ -24,14 +24,6 @@ internal static class ExpressionExtensions
         };
     }
 
-    //public static ITableEntityInfo GetTable(this ExpressionResolver resolver, Type type)
-    //{
-    //    var table = resolver.Context?.SelectedTables.FirstOrDefault(t => t.Type == type || type.IsAssignableFrom(t.Type));
-    //    table ??= TableContext.GetTableInfo(type);
-    //    //throw new LightOrmException($"当前作用域中未找到类型`{type.Name}`的ITableEntityInfo");
-    //    return table;
-    //}
-
     public static string OperatorParser(this ExpressionType expressionNodeType, bool useIs)
     {
         return expressionNodeType switch
@@ -326,10 +318,11 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             {
                 isVisitConvert = false;
                 var member = Members.Pop();
-                var col = Context.GetTable(member.DeclaringType!).Columns.First(c => c.PropertyName == member.Name);
+                var table = Context.GetTable(member.DeclaringType!);
+                var col = table.GetColumn(member.Name)!;
                 if (Options.RequiredTableAlias)
                 {
-                    Sql.Append($"{Database.AttachEmphasis(col.Table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append($"{Database.AttachEmphasis(table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
                 }
                 else
                 {
@@ -410,6 +403,12 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                 var member = Members.Pop();
                 memberType = member.DeclaringType!;
                 name = member.Name;
+
+                if (memberType.IsFlat())
+                {
+
+                }
+
                 if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
                 {
                     memberType = m!.DeclaringType!;

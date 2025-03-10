@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LightORM.Providers.Sqlite;
 
 namespace TestProject1.SqlFunctionTest;
@@ -12,7 +12,7 @@ public class FormatStringTest: TestBase
         var name = "test";
         var seq = 0;
         Expression<Func<User, bool>> exp = u => u.UserName == $"{name}{seq}";
-        var table = TestTableContext.TestProject1_Models_User;
+        var table = TableContext.GetTableInfo(typeof(User))!;
         var ctx = new ResolveContext(CustomSqlite.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
@@ -22,7 +22,7 @@ public class FormatStringTest: TestBase
     public void InterpolationFormatOption()
     {
         Expression<Func<User, bool>> exp = u => u.UserName == $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-        var table = TestTableContext.TestProject1_Models_User;
+        var table = TableContext.GetTableInfo(typeof(User))!;
         var ctx = new ResolveContext(CustomSqlite.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
