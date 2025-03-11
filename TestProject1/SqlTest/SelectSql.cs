@@ -114,7 +114,7 @@ namespace TestProject1.SqlTest
                 .InnerJoin(allStation, (t, a) => t.StnId == a.StnId)
                 .ToSql((t, a) => new
                 {
-                    Jczmc = SqlFn.NullThen(t.StnId,"TT"),
+                    Jczmc = SqlFn.NullThen(t.StnId, "TT"),
                     a.Total,
                     t
                 });

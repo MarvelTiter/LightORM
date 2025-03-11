@@ -87,7 +87,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     private ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
     {
-        System.Diagnostics.Debug.WriteLine($"Current Expression: {expression}");
+        Debug.WriteLine($"Current Expression: {expression}");
         return expression switch
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),
@@ -220,8 +220,13 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         {
             var member = exp.Members![i];
             var arg = exp.Arguments[i];
-            if (member.Name.StartsWith("Tb") && member is PropertyInfo prop)
+            if (member.Name.StartsWith("Tb")
+                && member is PropertyInfo prop
+                && prop.DeclaringType?.FullName?.StartsWith("LightORM.TypeSet") == true)
             {
+                //Debug.WriteLine("Visit TypeSet Property");
+                //TODO 这段if分支，应该是不需要了
+                Debug.Assert(false);
                 ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
                 Visit(p);
                 UseAs = true;
@@ -266,6 +271,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                     Visit(arg);
                 }
             }
+
             if (i + 1 < exp.Arguments.Count)
             {
                 //if (Options.SqlType == SqlPartial.Select)
@@ -288,12 +294,6 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitParameter(ParameterExpression exp)
     {
-        //ps.Add(new
-        //{
-        //    Alias = exp.Name,
-        //    exp.Type,
-        //});
-        Debug.WriteLine($"{Options.SqlAction}:{Options.SqlType} VisitParameter: {exp}");
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = Context.GetTable(exp.Type).Alias;

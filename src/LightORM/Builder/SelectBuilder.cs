@@ -199,6 +199,7 @@ namespace LightORM.Builder
 
         public override string ToSqlString()
         {
+            //SubQuery?.ResolveExpressions();
             ResolveExpressions();
             StringBuilder sb = new StringBuilder();
             if (InsertInfo.HasValue)

@@ -386,7 +386,7 @@ namespace LightORM.Implements
 
         #region include用到的方法
 
-        public void Where(IExpressionResolver resolver, MethodCallExpression methodCall)
+        public virtual void Where(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (resolver.NavigateDeep > 0)
             {
@@ -399,7 +399,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[1]);
         }
 
-        public void WhereIf(IExpressionResolver resolver, MethodCallExpression methodCall)
+        public virtual void WhereIf(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (resolver.NavigateDeep > 0)
             {
