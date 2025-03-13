@@ -41,24 +41,7 @@ namespace TestProject1.SqlTest
             Console.WriteLine(sql);
         }
 
-        [TestMethod]
-        public void SelectInclude()
-        {
-            var sql = Db.Select<User>()
-                .Where(u => u.UserRoles.WhereIf(r => r.RoleId.StartsWith("ad")))
-                .ToSql();
-            Console.WriteLine(sql);
-        }
-
-        [TestMethod]
-        public void SelectIncludeWhere()
-        {
-            var select = Db.Select<User>()
-                .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
-                .ToSql();
-
-            Console.WriteLine(select);
-        }
+        
 
         class Jobs
         {

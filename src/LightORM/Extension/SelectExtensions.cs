@@ -58,7 +58,6 @@ public static partial class SelectExtensions
         return select;
     }
 
-
     #region 2个类型参数
 
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
@@ -116,13 +115,13 @@ public static partial class SelectExtensions
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
-        return select.ToList<MapperRow>();
+        return select.InternalToList<MapperRow>();
     }
 
     public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
-        var list = await select.ToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
 
@@ -187,14 +186,14 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        return select.ToList<MapperRow>();
+        return select.InternalToList<MapperRow>();
     }
 
     public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var list = await select.ToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
 

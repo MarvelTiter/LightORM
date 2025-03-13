@@ -69,13 +69,13 @@ public static partial class SelectExtensions
     public static IEnumerable<dynamic> ToDynamicList<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
-        return select.ToList<MapperRow>();
+        return select.InternalToList<MapperRow>();
     }
     
     public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
-        var list = await select.ToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
     
@@ -143,14 +143,14 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        return select.ToList<MapperRow>();
+        return select.InternalToList<MapperRow>();
     }
     
     public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var list = await select.ToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>();
         return list.Cast<dynamic>().ToList();
     }
     

@@ -401,13 +401,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             {
                 // g.Group.Property
                 var member = Members.Pop();
-                memberType = member.DeclaringType!;
+                // 如果是聚合的属性，该字段的所属表就是exp.Member.DeclaringType，否则走下面的逻辑
+                if (!col.IsAggregated)
+                    memberType = member.DeclaringType!;
                 name = member.Name;
-
-                if (memberType.IsFlat())
-                {
-
-                }
 
                 if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
                 {

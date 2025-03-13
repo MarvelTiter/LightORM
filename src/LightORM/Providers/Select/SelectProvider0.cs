@@ -99,7 +99,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Template = "COUNT(*)"
         };
         SqlBuilder.Expressions.Add(count);
-        total = this.ToList<int>().First();
+        total = this.InternalToList<int>().First();
         SqlBuilder.Expressions.Remove(count);
         //SqlBuilder.Expressions.Update(SelectExpression?.Id, SelectExpression);
         return (this as TSelect)!;
@@ -128,37 +128,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public TMember? Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.Single<TMember>();
+        return this.InternalSingle<TMember>();
     }
 
     public TMember? Min<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.Single<TMember>();
+        return this.InternalSingle<TMember>();
     }
 
     public double Sum(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.Single<double>();
+        return this.InternalSingle<double>();
     }
 
     public int Count(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.Single<int>();
+        return this.InternalSingle<int>();
     }
 
     public int Count()
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.Single<int>();
+        return this.InternalSingle<int>();
     }
 
     public double Avg(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.Single<double>();
+        return this.InternalSingle<double>();
     }
 
     public virtual T1? First()
@@ -214,37 +214,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.SingleAsync<TMember>();
+        return this.InternalSingleAsync<TMember>();
     }
 
     public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.SingleAsync<TMember>();
+        return this.InternalSingleAsync<TMember>();
     }
 
     public Task<double> SumAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.SingleAsync<double>();
+        return this.InternalSingleAsync<double>();
     }
 
     public Task<int> CountAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.SingleAsync<int>();
+        return this.InternalSingleAsync<int>();
     }
 
     public Task<int> CountAsync()
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.SingleAsync<int>();
+        return this.InternalSingleAsync<int>();
     }
 
     public Task<double> AvgAsync(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.SingleAsync<double>();
+        return this.InternalSingleAsync<double>();
     }
 
     public async Task<bool> AnyAsync()

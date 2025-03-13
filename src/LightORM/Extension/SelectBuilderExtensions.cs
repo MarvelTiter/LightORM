@@ -89,7 +89,7 @@ namespace LightORM.Extension
 
             var mainNav = selectSql.MainTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
             var mainCol = selectSql.MainTable.GetColumnInfo(mainNav.MainName!);
-            var parentTable = include.ParentWhereColumn!.Table;
+            var parentTable = include.ParentTable!;
             if (include.NavigateInfo!.MappingType != null)
             {
                 var mapTable = TableContext.GetTableInfo(include.NavigateInfo!.MappingType);
@@ -137,7 +137,7 @@ namespace LightORM.Extension
         }
         private static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col)
         {
-            var p = Expression.Parameter(col.Table.Type!);
+            var p = Expression.Parameter(col.TableType);
             var equal = Expression.Equal(Expression.Property(p, col.PropertyName), Expression.Constant(col.GetValue(item)));
             return Expression.Lambda(equal, p);
         }

@@ -83,28 +83,28 @@ namespace LightORM.Providers
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return this.ToList<TReturn>();
+            return this.InternalToList<TReturn>();
         }
 
         public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return this.ToListAsync<TReturn>();
+            return this.InternalToListAsync<TReturn>();
         }
 
         public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return this.ToList<TReturn>();
+            return this.InternalToList<TReturn>();
         }
 
         public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return this.ToListAsync<TReturn>();
+            return this.InternalToListAsync<TReturn>();
         }
 
         public string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)

@@ -177,32 +177,32 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     //public async Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<{{argsStr}}, object>> exp)
     //{
     //    this.HandleResult(exp, null);
-    //    var list = await this.ToListAsync<MapperRow>();
+    //    var list = await this.InternalToListAsync<MapperRow>();
     //    return list.Cast<dynamic>().ToList();
     //}
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
 
     //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<{{argsStr}}, TTemp>> exp, string? alias = null)
@@ -280,28 +280,28 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
 
     //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp, string? alias = null)

@@ -27,6 +27,7 @@ public class TestBase
                 aop.DbLog = (sql, p) =>
                 {
                     Console.WriteLine(sql);
+                    Console.WriteLine();
                 };
             });//.InitializedContext<TestInitContext>();
         });

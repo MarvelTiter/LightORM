@@ -55,21 +55,32 @@ public class TableContextGenerator : IIncrementalGenerator
 
     private static CodeFile? CreateAggregationContextClass(INamedTypeSymbol target, INamedTypeSymbol[] items)
     {
-            List<Node> members = [
-    FieldBuilder.Default
+        List<Node> members = [
+FieldBuilder.Default
             .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>")
-            .FieldName("tableInfos")
-    ];
+            .FieldName("tableInfos"),
+           FieldBuilder.Default
+            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>")
+            .FieldName("table_sets"),
+            FieldBuilder.Default
+            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>")
+            .FieldName("table_gets"),
+];
         List<Statement> dicInits = [
-            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>()"
+            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>()",
+            "table_sets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()",
+            "table_gets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()"
             ];
         foreach (var item in items)
         {
             dicInits.Add($"tableInfos.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)})");
+            dicInits.Add($"table_sets.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)}TableInfo.SetValue)");
+            dicInits.Add($"table_gets.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)}TableInfo.GetValue)");
         }
+
         var ctor = ConstructorBuilder.Default.MethodName(target.MetadataName)
             .AddBody(
-            [..dicInits]
+            [.. dicInits]
             );
         members.Add(ctor);
 
@@ -81,27 +92,85 @@ public class TableContextGenerator : IIncrementalGenerator
                 .MethodName(item.FormatClassName(true))
                 .Lambda($"new {item.FormatClassName(true)}TableInfo()"));
         }
+        #region GetTableInfoMethod
+        {
+            List<Statement> methodStatements = [];
+            //foreach (var item in items)
+            //{
+            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
+            //    getTableInfoMethodStatements.Add(ifs);
+            //}
+            var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var factory)").AddStatement("return factory()");
 
-        List<Statement> getTableInfoMethodStatements = [];
-        //foreach (var item in items)
-        //{
-        //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
-        //    getTableInfoMethodStatements.Add(ifs);
-        //}
-        var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var factory)").AddStatement("return factory()");
+            var notFound = ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
+                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()"));
+            methodStatements.Add(dicCheck);
+            methodStatements.Add(notFound);
+            methodStatements.Add("return null");
 
-        var notFound = ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
-            IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()"));
-        getTableInfoMethodStatements.Add(dicCheck);
-        getTableInfoMethodStatements.Add(notFound);
-        getTableInfoMethodStatements.Add("return null");
+            var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
+                .MethodName("GetTableInfo")
+                .AddParameter("Type type")
+                .AddBody([.. methodStatements]);
 
-        var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
-            .MethodName("GetTableInfo")
-            .AddParameter("Type type")
-            .AddBody([.. getTableInfoMethodStatements]);
+            members.Add(method);
+        }
 
-        members.Add(method);
+        #endregion
+
+        #region GetSetMethod
+
+        {
+            List<Statement> methodStatements = [];
+            //foreach (var item in items)
+            //{
+            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
+            //    getTableInfoMethodStatements.Add(ifs);
+            //}
+            var dicCheck = IfStatement.Default.If("table_sets.TryGetValue(type, out var factory)").AddStatement("return factory");
+
+            var notFound = ForeachStatement.Default.Foreach("var kvp in table_sets").AddStatements(
+                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value"));
+            methodStatements.Add(dicCheck);
+            methodStatements.Add(notFound);
+            methodStatements.Add("return null");
+
+            var method = MethodBuilder.Default.ReturnType("global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>?")
+                .MethodName("GetSetMethod")
+                .AddParameter("Type type")
+                .AddBody([.. methodStatements]);
+
+            members.Add(method);
+        }
+
+        #endregion
+
+        #region GetGetMethod
+
+        {
+            List<Statement> methodStatements = [];
+            //foreach (var item in items)
+            //{
+            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
+            //    getTableInfoMethodStatements.Add(ifs);
+            //}
+            var dicCheck = IfStatement.Default.If("table_gets.TryGetValue(type, out var factory)").AddStatement("return factory");
+
+            var notFound = ForeachStatement.Default.Foreach("var kvp in table_gets").AddStatements(
+                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value"));
+            methodStatements.Add(dicCheck);
+            methodStatements.Add(notFound);
+            methodStatements.Add("return null");
+
+            var method = MethodBuilder.Default.ReturnType("global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>?")
+                .MethodName("GetGetMethod")
+                .AddParameter("Type type")
+                .AddBody([.. methodStatements]);
+
+            members.Add(method);
+        }
+
+        #endregion
 
         var ctxClass = ClassBuilder.Default.ClassName(target.FormatClassName())
             .Modifiers("partial")
@@ -116,13 +185,13 @@ public class TableContextGenerator : IIncrementalGenerator
 
     private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index, List<INamedTypeSymbol> flatTypes)
     {
-
         _ = target.GetAttribute(LightTableAttributeFullName, out var lightTable);
         _ = target.GetAttribute("System.ComponentModel.DataAnnotations.Schema.TableAttribute", out var componentTable);
         _ = target.GetAttribute("System.ComponentModel.DescriptionAttribute", out var des);
         List<Node> members = [
             // private LightORM.Interfaces.ITableColumnInfo[] columns;
-            FieldBuilder.Default.Modifiers("private").MemberType("global::LightORM.Interfaces.ITableColumnInfo[]?").FieldName("columns"),
+            FieldBuilder.Default.Modifiers("private static").MemberType("global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>").FieldName("columns")
+            .InitializeWith("new global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>(CollectColumnInfo)"),
             // public Type Type { get; } = typeof(Product);
             PropertyBuilder.Default.MemberType("Type").PropertyName("Type").Readonly().InitializeWith($"typeof({target.ToDisplayString()})"),
             // public string TableName => CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常");
@@ -166,16 +235,16 @@ public class TableContextGenerator : IIncrementalGenerator
         }
         members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("Description").Lambda(desValue));
         // public List<ColumnInfo> Columns { get; } = [];
-        members.Add(PropertyBuilder.Default.MemberType("global::LightORM.Interfaces.ITableColumnInfo[]").PropertyName("Columns").Lambda("columns ??= CollectColumnInfo()"));
+        members.Add(PropertyBuilder.Default.MemberType("global::LightORM.Interfaces.ITableColumnInfo[]").PropertyName("Columns").Lambda("columns.Value"));
 
         var columns = target.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>().ToArray();
-
+        
         // GetValue   object? GetValue(ColumnInfo col, object target);
         members.Add(CreateGetValueMethod(target, columns));
         // SetValue   void SetValue(ColumnInfo col, object target, object? value)
         members.Add(CreateSetValueMethod(target, columns));
 
-        members.Add(CreateInitColumnInfoMethod(columns));
+        members.Add(CreateInitColumnInfoMethod(target, columns));
 
         var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}TableInfo")
             .Interface("global::LightORM.Interfaces.ITableEntityInfo")
@@ -188,15 +257,73 @@ public class TableContextGenerator : IIncrementalGenerator
             .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
     }
 
-    private static MethodBuilder CreateInitColumnInfoMethod(IPropertySymbol[] columns)
+    private static MethodBuilder CreateInitColumnInfoMethod(INamedTypeSymbol owner, IPropertySymbol[] columns)
     {
         //var columns = target.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>().ToArray();
 
-        List<Statement> bodies = [
-            $"columns = new global::LightORM.Interfaces.ITableColumnInfo[{columns.Length}]"
-            ];
+        List<Statement> bodies = [];
         var i = 0;
+        var tableType = $"typeof({owner.ToDisplayString()})";
         foreach (var p in columns)
+        {
+            if (p.Type.TypeKind == TypeKind.Class
+                && p.Type.SpecialType == SpecialType.None
+                && p.HasAttribute(LightFlatAttributeFullName))
+            {
+                var flattedProps = p.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+                foreach (var item in flattedProps)
+                {
+                    var fr = ScanProperty(p);
+                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({p.Type.ToDisplayString()}), false, true)""");
+                }
+                //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
+                //bodies.Add($"gen_{p.Name}.IsAggregated = true");
+                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({p.Type.ToDisplayString()}), true, false)""");
+                continue;
+            }
+            var r = ScanProperty(p);
+            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false)""");
+        }
+        bodies.Add("return cols");
+        bodies = [
+            $"var cols = new global::LightORM.Interfaces.ITableColumnInfo[{i}]",
+            ..bodies
+            ];
+        return MethodBuilder.Default.MethodName("CollectColumnInfo").Modifiers("private static").ReturnType("global::LightORM.Interfaces.ITableColumnInfo[]").AddBody([.. bodies]);
+
+        static string GetBoolValue(AttributeData? lightCol, string name, Func<string>? elseAction = null)
+        {
+            var b = "false";
+            if (lightCol.GetNamedValue(name, out var v))
+            {
+                b = $"{v}";
+            }
+            else
+            {
+                if (elseAction != null)
+                    b = elseAction.Invoke();
+            }
+            return b.ToLower();
+        }
+
+        static string GetAttributeValueOrNull(AttributeData? a, string name, bool isString = false)
+        {
+            var v = "null";
+            if (a.GetNamedValue(name, out var val))
+            {
+                if (isString)
+                {
+                    v = $"\"{val}\"";
+                }
+                else
+                {
+                    v = $"{v}";
+                }
+            }
+            return v;
+        }
+
+        static PropertyScanResult ScanProperty(IPropertySymbol p)
         {
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.ColumnAttribute", out var cmCol);
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
@@ -255,42 +382,21 @@ public class TableContextGenerator : IIncrementalGenerator
                     navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), {mpt}, {mn}, {sn}, {multi})";
                 }
             }
-            bodies.Add($"""columns[{i++}] = new global::LightORM.Models.ColumnInfo(this, "{p.Name}", {customName}, {primaryKey}, {isnotmap}, {autoincrement}, {notnull}, {len}, {def}, {comment}, {canRead}, {canWrite}, {canInit}, {navInfo})""");
-        }
-        bodies.Add("return columns");
-
-        return MethodBuilder.Default.MethodName("CollectColumnInfo").Modifiers("private").ReturnType("global::LightORM.Interfaces.ITableColumnInfo[]").AddBody([.. bodies]);
-
-        static string GetBoolValue(AttributeData? lightCol, string name, Func<string>? elseAction = null)
-        {
-            var b = "false";
-            if (lightCol.GetNamedValue(name, out var v))
+            return new()
             {
-                b = $"{v}";
-            }
-            else
-            {
-                if (elseAction != null)
-                    b = elseAction.Invoke();
-            }
-            return b.ToLower();
-        }
-
-        static string GetAttributeValueOrNull(AttributeData? a, string name, bool isString = false)
-        {
-            var v = "null";
-            if (a.GetNamedValue(name, out var val))
-            {
-                if (isString)
-                {
-                    v = $"\"{val}\"";
-                }
-                else
-                {
-                    v = $"{v}";
-                }
-            }
-            return v;
+                CustomName = customName,
+                PrimaryKey = primaryKey,
+                IsNotMap = isnotmap,
+                AutoIncrement = autoincrement,
+                NotNull = notnull,
+                Len = len,
+                DefaultValue = def,
+                Comment = comment,
+                CanRead = canRead,
+                CanWrite = canWrite,
+                CanInit = canInit,
+                NavInfo = navInfo
+            };
         }
     }
 
@@ -304,7 +410,12 @@ public class TableContextGenerator : IIncrementalGenerator
          ];
 
 
-        var builder = MethodBuilder.Default.MethodName("GetValue").ReturnType("object?").AddParameter("global::LightORM.Interfaces.ITableColumnInfo col", "object target").AddBody([.. bodies]);
+        var builder = MethodBuilder.Default
+            .Modifiers("public static")
+            .MethodName("GetValue")
+            .ReturnType("object?")
+            .AddParameter("global::LightORM.Interfaces.ITableColumnInfo col", "object target")
+            .AddBody([.. bodies]);
 
         builder.AddSwitchStatement("col.PropertyName", ss =>
         {
@@ -341,7 +452,11 @@ public class TableContextGenerator : IIncrementalGenerator
             "if (value == null)",
             "   return"
          ];
-        var method = MethodBuilder.Default.MethodName("SetValue").AddParameter("global::LightORM.Interfaces.ITableColumnInfo col", "object target", "object? value").AddBody([.. bodies]);
+        var method = MethodBuilder.Default
+            .Modifiers("public static")
+            .MethodName("SetValue")
+            .AddParameter("global::LightORM.Interfaces.ITableColumnInfo col", "object target", "object? value")
+            .AddBody([.. bodies]);
 
         method.AddSwitchStatement("col.PropertyName", ss =>
         {

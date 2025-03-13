@@ -106,6 +106,18 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
+    /// <summary>
+    /// 需要确保SELECT的列名与TReturn类型的属性名一致
+    /// </summary>
+    /// <typeparam name="TReturn"></typeparam>
+    /// <returns></returns>
+    IEnumerable<TReturn> ToList<TReturn>();
+    /// <summary>
+    /// 需要确保SELECT的列名与TReturn类型的属性名一致
+    /// </summary>
+    /// <typeparam name="TReturn"></typeparam>
+    /// <returns></returns>
+    Task<IList<TReturn>> ToListAsync<TReturn>();
     #endregion
 
     #region WithTemp

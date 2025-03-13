@@ -12,7 +12,7 @@ public class SelectTest : TestBase
     [TestMethod]
     public void SelectFlat()
     {
-        var sql = Db.Select<User>().Where(a => a.PriInfo.Address != null).ToSql();
+        var sql = Db.Select<UserFlat>().ToList().ToArray();
         Console.WriteLine(sql);
     }
 }

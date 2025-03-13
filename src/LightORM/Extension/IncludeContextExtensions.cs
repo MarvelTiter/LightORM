@@ -10,9 +10,9 @@ namespace LightORM.Extension
 {
     internal static class IncludeContextExtensions
     {
-        static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().Where(m => m.Name == "Query" && m.IsGenericMethod).FirstOrDefault()!;
-        static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
-        static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault))!;
+        private readonly static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
+        private readonly static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
+        private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault),Type.EmptyTypes)!;
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)
@@ -86,7 +86,7 @@ namespace LightORM.Extension
 
             var mainNav = selectSql.MainTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
             var mainCol = selectSql.MainTable.GetColumnInfo(mainNav.MainName!);
-            var parentTable = include.ParentWhereColumn!.Table;
+            var parentTable = include.ParentTable!;
             if (include.NavigateInfo!.MappingType != null)
             {
                 var mapTable = TableContext.GetTableInfo(include.NavigateInfo!.MappingType);
@@ -102,7 +102,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
             }
@@ -113,7 +113,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
             }
@@ -133,7 +133,7 @@ namespace LightORM.Extension
         }
         private static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col)
         {
-            var p = Expression.Parameter(col.Table.Type!);
+            var p = Expression.Parameter(col.TableType);
             var equal = Expression.Equal(Expression.Property(p, col.PropertyName), Expression.Constant(col.GetValue(item)));
             return Expression.Lambda(equal, p);
         }
