@@ -26,6 +26,44 @@ internal static class TableContext
 
         return GetTableInfo(typeof(T));
     }
+    public static void SetValue(ITableColumnInfo col, object target, object? value)
+    {
+        var type = col.TableType;
+        Action<ITableColumnInfo, object, object?>? action = StaticContext?.GetSetMethod(type);
+        if (action != null)
+        {
+            action.Invoke(col, target, value);
+        }
+        else
+        {
+            var key = $"{type.FullName}_{col.PropertyName}_Setter";
+            var reflectAction = StaticCache<Action<object, object?>>.GetOrAdd(key, () =>
+            {
+                var property = col.TableType.GetProperty(col.PropertyName)!;
+                return col.TableType.GetPropertySetter(property);
+            });
+            reflectAction.Invoke(target, value);
+        }
+    }
+    public static object? GetValue(ITableColumnInfo col, object target)
+    {
+        var type = col.TableType;
+        Func<ITableColumnInfo, object, object?>? action = StaticContext?.GetGetMethod(type);
+        if (action is not null)
+        {
+           return action.Invoke(col, target);
+        }
+        else
+        {
+            var key = $"{type.FullName}_{col.PropertyName}_Getter";
+            var reflectAction = StaticCache<Func<object, object?>>.GetOrAdd(key, () =>
+            {
+                var property = col.TableType.GetProperty(col.PropertyName)!;
+                return col.TableType.GetPropertyAccessor(property);
+            });
+            return reflectAction.Invoke(target);
+        }
+    }
     public static ITableEntityInfo GetTableInfo(Type type)
     {
         if (StaticContext != null)
@@ -55,6 +93,11 @@ internal static class TableContext
             return GetTableInfo(realType);
         }
 
+        if (realType.HasAttribute<LightFlatAttribute>())
+        {
+
+        }
+
         var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
         {
             var entityInfo = new TableEntity(type);
@@ -77,8 +120,8 @@ internal static class TableContext
 
             var propertyInfos = type.GetProperties();
 
-            var propertyColumnInfos = propertyInfos.Select(property => new ColumnInfo(entityInfo, property));
-            entityInfo.Columns = propertyColumnInfos.ToArray();
+            var propertyColumnInfos = propertyInfos.SelectMany(p => ScanProperty(type, p));
+            entityInfo.Columns = [.. propertyColumnInfos];
             if (entityInfo.IsAnonymousType)
             {
                 entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
@@ -93,4 +136,20 @@ internal static class TableContext
         return entityInfoCache with { };
     }
 
+    private static IEnumerable<ITableColumnInfo> ScanProperty(Type table, PropertyInfo prop)
+    {
+        if (prop.HasAttribute<LightFlatAttribute>())
+        {
+            var flatProps = prop.PropertyType.GetProperties();
+            foreach (var item in flatProps)
+            {
+                yield return new ColumnInfo(table, item, prop.PropertyType, false, true);
+            }
+            yield return new ColumnInfo(table, prop, prop.PropertyType, true, false);
+        }
+        else
+        {
+            yield return new ColumnInfo(table, prop, null, false, false);
+        }
+    }
 }

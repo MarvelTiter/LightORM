@@ -190,8 +190,9 @@ internal class ExpressionBuilder
             Expression CreateCustomEntiry()
             {
                 // 属性处理 Property
-                SortedDictionary<int, MemberBinding> Bindings = new SortedDictionary<int, MemberBinding>();
-                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate))
+                List<MemberBinding> Bindings = [];
+                // 处理普通属性
+                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.IsAggregatedProperty))
                 {
                     if (!col.CanWrite && !col.CanInit)
                     {
@@ -215,14 +216,55 @@ internal class ExpressionBuilder
 
                                 //Create a binding to the target member
                                 MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                                Bindings.Add(Ordinal, BindExpression);
+                                Bindings.Add(BindExpression);
                                 return;
                             }
                         }
                     }
                     work();
                 }
-                return Expression.MemberInit(Expression.New(TargetType), Bindings.Values);
+                // 处理聚合的属性
+                ITableColumnInfo[] agTypes = [.. columns.Where(c => c.AggregateType != null && c.IsAggregated)];
+                foreach (var ag in agTypes)
+                {
+                    var flatType = ag.AggregateType!;
+                    List<MemberBinding> bindings = [];
+                    PropertyInfo targetMember = TargetType.GetProperty(ag.PropertyName)!;
+                    foreach (var flatCol in columns.Where(c => c.AggregateType == flatType && c.IsAggregatedProperty))
+                    {
+                        if (!flatCol.CanWrite && !flatCol.CanInit)
+                        {
+                            continue;
+                        }
+                        var TargetMember = flatType.GetProperty(flatCol.PropertyName)!;
+                        void work()
+                        {
+                            for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                            {
+                                //Check if the RecordFieldName matches the TargetMember
+                                if (MemberMatchesName(flatCol, reader.GetName(Ordinal)))
+                                {
+                                    Expression TargetValueExpression = GetTargetValueExpression(
+                                                                            reader,
+                                                                            Culture,
+                                                                            recordInstanceExp,
+                                                                            SchemaTable,
+                                                                            Ordinal,
+                                                                            TargetMember.PropertyType);
+
+                                    //Create a binding to the target member
+                                    MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
+                                    bindings.Add(BindExpression);
+                                    return;
+                                }
+                            }
+                        }
+                        work();
+                    }
+                    var memberInit = Expression.MemberInit(Expression.New(flatType), bindings);
+                    Bindings.Add(Expression.Bind(targetMember, memberInit));
+                }
+                return Expression.MemberInit(Expression.New(TargetType), Bindings);
             }
 
         }

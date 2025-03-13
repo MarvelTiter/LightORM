@@ -11,6 +11,7 @@ public interface ITableEntityInfo
     string? TargetDatabase { get; }
     string? Description { get; }
     ITableColumnInfo[] Columns { get; }
-    object? GetValue(ITableColumnInfo col, object target);
-    void SetValue(ITableColumnInfo col, object target, object? value);
+    //object? GetValue(ITableColumnInfo col, object target);
+    //void SetValue(ITableColumnInfo col, object target, object? value);
+    //ITableColumnInfo? GetColumn(string name);
 }

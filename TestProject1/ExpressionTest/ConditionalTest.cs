@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 namespace TestProject1.ExpressionTest
 {
     [TestClass]
-    public class ConditionalTest
+    public class ConditionalTest : TestBase
     {
         [TestMethod]
         public void Test()
         {
             Expression<Func<User, int?>> exp = u => u.Age > 10 ? 1 : null;
-            var table = TestTableContext.TestProject1_Models_User;
+            var table = TableContext.GetTableInfo(typeof(User))!;
             var ctx = new ResolveContext(CustomSqlite.Instance, table);
             var result = exp.Resolve(SqlResolveOptions.Select, ctx);
             Console.WriteLine(result.SqlString);

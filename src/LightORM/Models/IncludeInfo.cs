@@ -24,7 +24,7 @@ internal class IncludeInfo
     public NavigateInfo? NavigateInfo { get; set; }
     public ITableColumnInfo? ParentNavigateColumn { get; set; }
     public ITableColumnInfo? ParentWhereColumn { get; set; }
+    public ITableEntityInfo? ParentTable { get; set; }
     public SelectBuilder? SqlBuilder { get; set; }
     public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
-
 }

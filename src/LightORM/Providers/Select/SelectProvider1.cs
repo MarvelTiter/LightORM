@@ -144,6 +144,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
             NavigateInfo = navInfo,
             ParentNavigateColumn = navCol,
             ParentWhereColumn = parentWhereColumn,
+            ParentTable = SqlBuilder.MainTable,
             ExpressionResolvedResult = result
         };
         SqlBuilder.IncludeContext.Includes.Add(includeInfo);
@@ -174,24 +175,30 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
+
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToList<TReturn>();
+        return this.InternalToList<TReturn>();
     }
+
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, null);
-        return this.ToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>();
     }
+
+    public IEnumerable<TReturn> ToList<TReturn>() => this.InternalToList<TReturn>();
+
+    public Task<IList<TReturn>> ToListAsync<TReturn>() => this.InternalToListAsync<TReturn>();
 
     #endregion
 

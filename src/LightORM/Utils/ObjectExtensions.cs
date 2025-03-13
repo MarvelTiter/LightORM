@@ -5,7 +5,18 @@ using System.Reflection;
 using System.Text;
 
 namespace LightORM.Utils;
-
+internal static class ColumnInfoExtensions
+{
+    public static ITableColumnInfo? GetColumn(this ITableEntityInfo entityInfo, string columnName)
+    {
+        for (int i = 0; i < entityInfo.Columns.Length; i++)
+        {
+            if (entityInfo.Columns[i].PropertyName == columnName)
+                return entityInfo.Columns[i];
+        }
+        return null;
+    }
+}
 internal static class ObjectExtensions
 {
     public static Func<object, object> GetPropertyAccessor(this Type type, PropertyInfo property)
@@ -21,7 +32,7 @@ internal static class ObjectExtensions
         return lambda.Compile();
     }
 
-    public static Action<object, object> GetPropertySetter(this Type type, PropertyInfo property)
+    public static Action<object, object?> GetPropertySetter(this Type type, PropertyInfo property)
     {
         if (!property.CanWrite)
         {
@@ -32,8 +43,10 @@ internal static class ObjectExtensions
         var v = Expression.Parameter(typeof(object), "value");
         var ins = Expression.Convert(p, type);
         var typedV = Expression.Convert(v, property.PropertyType);
-        var body = Expression.Call(ins, setMethod, typedV);
-        var lambda = Expression.Lambda<Action<object, object>>(body, p, v);
+        var condition = Expression.NotEqual(v, Expression.Constant(null));
+        var ifTrue = Expression.Call(ins, setMethod, typedV);
+        var body = Expression.IfThen(condition, ifTrue);
+        var lambda = Expression.Lambda<Action<object, object?>>(body, p, v);
         return lambda.Compile();
     }
 

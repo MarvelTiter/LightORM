@@ -10,10 +10,15 @@ using LightORM.Utils;
 using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Models;
-
+public static class ColumnInfoExtensions
+{
+    public static object? GetValue(this ITableColumnInfo col, object target) => TableContext.GetValue(col, target);
+    public static void SetValue(this ITableColumnInfo col, object target, object? value) => TableContext.SetValue(col, target, value);
+}
 public sealed record ColumnInfo : ITableColumnInfo
 {
-    public ITableEntityInfo Table { get; set; }
+    //public ITableEntityInfo Table { get; set; }
+    public Type TableType { get; }
     public string ColumnName => CustomName ?? PropertyName;
     public string PropertyName { get; set; }
     public string? CustomName { get; set; }
@@ -38,9 +43,12 @@ public sealed record ColumnInfo : ITableColumnInfo
     public bool CanRead { get; set; }
     public bool CanWrite { get; set; }
     public bool CanInit { get; set; }
-    public object? GetValue(object target) => Table.GetValue(this, target);
-    public void SetValue(object target, object value) => Table.SetValue(this, target, value);
-    public ColumnInfo(ITableEntityInfo table
+    public Type? AggregateType { get; }
+    public bool IsAggregated { get; }
+    public bool IsAggregatedProperty { get; }
+    //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
+    //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
+    public ColumnInfo(Type owner
         , string propname
         , string? customname
         , bool isprimary
@@ -54,9 +62,12 @@ public sealed record ColumnInfo : ITableColumnInfo
         , bool canWrite
         , bool canInit
         , NavigateInfo? navigationInfo
+        , Type? aggregateType
+        , bool isAggregated
+        , bool isAggregaredProp
         )
     {
-        Table = table;
+        TableType = owner;
         PropertyName = propname;
         CustomName = customname;
         IsPrimaryKey = isprimary;
@@ -75,11 +86,14 @@ public sealed record ColumnInfo : ITableColumnInfo
             IsNavigate = true;
             NavigateInfo = navigationInfo;
         }
+        AggregateType = aggregateType;
+        IsAggregated = isAggregated;
+        IsAggregatedProperty = isAggregaredProp;
     }
 
-    public ColumnInfo(ITableEntityInfo table, PropertyInfo property)
+    public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
     {
-        Table = table;
+        TableType = owner;
         PropertyName = property.Name;
         //Property = property;
         //PropertyType = property.PropertyType;
@@ -127,6 +141,9 @@ public sealed record ColumnInfo : ITableColumnInfo
                 IsMultiResult = multi,
             };
         }
+        AggregateType = aggregateType;
+        IsAggregated = isAggregated;
+        IsAggregatedProperty = isAggregaredProp;
     }
 }
 
