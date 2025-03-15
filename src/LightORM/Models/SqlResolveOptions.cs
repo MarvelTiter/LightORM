@@ -26,6 +26,7 @@ public enum SqlPartial
     GroupBy,
     OrderBy,
     Having,
+    AsTable,
 }
 public class SqlResolveOptions
 {
@@ -46,6 +47,7 @@ public class SqlResolveOptions
 
 
     public static SqlResolveOptions Select { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.Select };
+    public static SqlResolveOptions SelectAsTable { get; }= new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.AsTable };
     public static SqlResolveOptions SelectFunc { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.SelectFunc };
     public static SqlResolveOptions Group { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.GroupBy };
     public static SqlResolveOptions Order { get; } = new SqlResolveOptions() { SqlAction = SqlAction.Select, SqlType = SqlPartial.OrderBy };

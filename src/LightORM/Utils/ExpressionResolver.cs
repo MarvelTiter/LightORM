@@ -225,7 +225,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             }
             else
             {
-                if (Options.SqlType == SqlPartial.GroupBy)
+                if (Options.SqlType == SqlPartial.GroupBy || Options.SqlType == SqlPartial.AsTable)
                 {
                     if (arg.NodeType == ExpressionType.MemberAccess && arg is MemberExpression e)
                     {
@@ -234,24 +234,26 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                         {
                             //创建匿名类型的来源映射
                             Context.CreateAnonymousMap(exp.Type, p.Type, member.Name, e.Member.Name);
-                            //if (!p.Type.IsAnonymous())
-                            //{
-                            // member 是从 p.Type中来的
-                            //}
-                            //else { }
                         }
-                        //else if (parent is MemberExpression m) { }
+                        else if (parent is MemberExpression m)
+                        {
+                            Context.CreateAnonymousMap(exp.Type, m.Type, member.Name, e.Member.Name);
+                        }
                     }
                 }
                 ResolvedMembers.Add(exp.Members[i].Name);
-                if (Options.SqlType == SqlPartial.Select)
+                if (Options.SqlType == SqlPartial.Select || Options.SqlType == SqlPartial.AsTable)
                 {
                     Visit(arg);
-                    if (UseAs)
+                    if (UseAs || (arg.NodeType != ExpressionType.MemberAccess && arg.NodeType != ExpressionType.Parameter))
                     {
                         Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
                     }
                 }
+                //else if (Options.SqlType == SqlPartial.AsTable && arg.NodeType == ExpressionType.Call && arg is MethodCallExpression call)
+                //{
+
+                //}
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
                     var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
@@ -262,6 +264,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                 {
                     Visit(arg);
                 }
+
+
             }
 
             if (i + 1 < exp.Arguments.Count)
@@ -376,12 +380,16 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             {
                 type = type.GetGenericArguments()[0];
             }
-            //if (Options.SqlType == SqlPartial.Select && exp.Expression is ParameterExpression p)
-            //{
-            //    //UsedTables.Add(Context.GetTable(p.Type));
-            //}
-            var memberType = exp.Member!.DeclaringType!;
+
             var name = exp.Member.Name;
+            var memberType = exp.Member!.DeclaringType!;
+            {
+                if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, exp.Member.Name, out var m))
+                {
+                    memberType = m!.DeclaringType!;
+                    name = m.Name;
+                }
+            }
             var table = Context.GetTable(memberType);
             var col = table.Columns.First(c => c.PropertyName == name);
             if (col.IsNavigate)

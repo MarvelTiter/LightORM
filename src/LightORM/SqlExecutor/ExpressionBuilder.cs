@@ -152,12 +152,16 @@ internal class ExpressionBuilder
         else
         {
             var columns = TableContext.GetTableInfo(TargetType).Columns;
+
+            
+
             if (TargetType.IsAnonymous())
             {
                 Body = CreateAnonymous();
             }
             else
             {
+                columns = [.. columns.Concat(TargetType.GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance).Where(d => columns.All(c => c.PropertyName != d.Name)).Select(p => new ColumnInfo(TargetType, p, null, false, false)))];
                 Body = CreateCustomEntiry();
             }
 
@@ -192,36 +196,40 @@ internal class ExpressionBuilder
                 // 属性处理 Property
                 List<MemberBinding> Bindings = [];
                 // 处理普通属性
-                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.IsAggregatedProperty))
                 {
-                    if (!col.CanWrite && !col.CanInit)
+                    // TableColumnInfo
+                    foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.IsAggregatedProperty))
                     {
-                        continue;
-                    }
-                    var TargetMember = TargetType.GetProperty(col.PropertyName)!;
-                    void work()
-                    {
-                        for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                        if (!col.CanWrite && !col.CanInit)
                         {
-                            //Check if the RecordFieldName matches the TargetMember
-                            if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                            continue;
+                        }
+                        var TargetMember = TargetType.GetProperty(col.PropertyName)!;
+                        void work()
+                        {
+                            for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                             {
-                                Expression TargetValueExpression = GetTargetValueExpression(
-                                                                        reader,
-                                                                        Culture,
-                                                                        recordInstanceExp,
-                                                                        SchemaTable,
-                                                                        Ordinal,
-                                                                        TargetMember.PropertyType);
+                                //Check if the RecordFieldName matches the TargetMember
+                                if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                                {
+                                    Expression TargetValueExpression = GetTargetValueExpression(
+                                                                            reader,
+                                                                            Culture,
+                                                                            recordInstanceExp,
+                                                                            SchemaTable,
+                                                                            Ordinal,
+                                                                            TargetMember.PropertyType);
 
-                                //Create a binding to the target member
-                                MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                                Bindings.Add(BindExpression);
-                                return;
+                                    //Create a binding to the target member
+                                    MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
+                                    Bindings.Add(BindExpression);
+                                    return;
+                                }
                             }
                         }
+                        work();
                     }
-                    work();
+
                 }
                 // 处理聚合的属性
                 ITableColumnInfo[] agTypes = [.. columns.Where(c => c.AggregateType != null && c.IsAggregated)];

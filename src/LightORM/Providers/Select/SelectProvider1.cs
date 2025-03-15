@@ -166,7 +166,12 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp)
     {
-        this.HandleResult(exp, null);
+        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = exp,
+            ResolveOptions = SqlResolveOptions.SelectAsTable,
+            Template = null
+        });
         return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
 

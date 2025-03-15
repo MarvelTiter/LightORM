@@ -61,7 +61,12 @@ namespace LightORM.Providers
         public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
-            this.HandleResult(flatExp, null);
+            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                Expression = flatExp,
+                ResolveOptions = SqlResolveOptions.SelectAsTable,
+                Template = null
+            });
             return new SelectProvider1<TTemp>(Executor, SqlBuilder);
         }
 

@@ -5,9 +5,8 @@ using System.Reflection;
 
 namespace LightORM;
 
-public class ResolveContext
+public partial class ResolveContext
 {
-    private readonly ConcurrentDictionary<string, MemberInfo> anonymousMap = new();
 
     private readonly List<ITableEntityInfo> selectedTables = [];
     private string? parameterPrefix;
@@ -68,22 +67,61 @@ public class ResolveContext
         table ??= TableContext.GetTableInfo(type);
         return table;
     }
+}
 
+/// <summary>
+/// 匿名属性映射
+/// </summary>
+public partial class ResolveContext
+{
+    class AnonymousMapInfo(Type map, string name)
+    {
+        public AnonymousMapInfo? Parent { get; set; }
+        public Type MapType { get; } = map;
+        public string Name { get; } = name;
+    }
+    private readonly Dictionary<string, AnonymousMapInfo> anonymousMap = new();
     public void CreateAnonymousMap(Type anonymousType, Type originType, string anonymousName, string originName)
     {
-        var key = $"{anonymousType.FullName}_{anonymousName}";
-        var originMember = originType.GetMember(originName).First(m => m.MemberType == MemberTypes.Property);
-        anonymousMap.TryAdd(key, originMember);
+        //var key = $"{anonymousType.FullName}_{anonymousName}";
+        //var originMember = originType.GetMember(originName).First(m => m.MemberType == MemberTypes.Property);
+        //anonymousMap.TryAdd(key, originMember);
+        var oldKey = $"{originType.GUID}_{originName}";
+        var newKey = $"{anonymousType.GUID}_{anonymousName}";
+        var newInfo = new AnonymousMapInfo(originType, originName);
+        if (anonymousMap.TryGetValue(oldKey, out var info))
+        {
+            newInfo.Parent = info;
+            anonymousMap.Remove(oldKey);
+        }
+        anonymousMap.Add(newKey, newInfo);
     }
     public bool GetAnonymousInfo(Type anonymousType, string anonymousName, out MemberInfo? member)
     {
-        var key = $"{anonymousType.FullName}_{anonymousName}";
-        anonymousMap.TryGetValue(key, out member);
-        if (member == null)
+        //var key = $"{anonymousType.FullName}_{anonymousName}";
+        //anonymousMap.TryGetValue(key, out member);
+        //if (member == null)
+        //{
+        //    //LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
+        //    return false;
+        //}
+        //return true;
+
+        var key = $"{anonymousType.GUID}_{anonymousName}";
+        if (anonymousMap.TryGetValue(key, out var info))
         {
-            //LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
-            return false;
+            while (info is not null)
+            {
+                if (info.Parent is not null)
+                {
+                    info = info.Parent;
+                    continue;
+                }
+                member = info.MapType.GetMember(info.Name).First(m => m.MemberType == MemberTypes.Property);
+                return true;
+            }
         }
-        return true;
+        member = null;
+        return false;
     }
 }

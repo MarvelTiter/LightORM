@@ -110,6 +110,13 @@ namespace LightORM.Builder
                     SelectValue = result.SqlString!;
                 }
             }
+            else if (expInfo.ResolveOptions?.SqlType == SqlPartial.AsTable)
+            {
+                if (!string.IsNullOrWhiteSpace(result.SqlString))
+                {
+                    SelectValue = result.SqlString!;
+                }
+            }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.GroupBy)
             {
                 GroupBy.Add(result.SqlString!);

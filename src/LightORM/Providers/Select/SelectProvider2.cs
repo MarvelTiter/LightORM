@@ -226,12 +226,14 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     }
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
-        this.HandleResult(exp, null);
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
         return this.InternalToList<TReturn>();
     }
     public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
-        this.HandleResult(exp, null);
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>();
     }
 

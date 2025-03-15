@@ -5,7 +5,30 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace LightORM.Extension;
-
+public static class MemberExpressionExtensions
+{
+    public static ParameterExpression? GetParameterExpression(this MemberExpression exp)
+    {
+        var e = exp.Expression;
+        while(e is not null)
+        {
+            if (e is ParameterExpression p)
+            {
+                return p;
+            }
+            else if (e is MemberExpression m)
+            {
+                e = m.Expression;
+                continue;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return null;
+    }
+}
 public static class MethodCallExtensions
 {
     public static bool IsWindowFn(this MethodCallExpression? methodCall)

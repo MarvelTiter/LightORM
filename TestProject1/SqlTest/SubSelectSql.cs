@@ -33,9 +33,13 @@ namespace TestProject1.SqlTest
             {
                 u.Group.UserId,
                 Total = u.Count()
-            }).AsSubQuery()
+            })
             .Where(t => t.UserId.Contains("admin"))
-            .ToSql();
+            .ToSql(g => new
+            {
+                g.UserId,
+                Diff = g.Total - g.Total
+            });
             Console.WriteLine(sql);
         }
 

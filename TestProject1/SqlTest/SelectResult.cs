@@ -76,4 +76,23 @@ public class SelectResult : TestBase
             }
         }
     }
+    class UserDto : User
+    {
+        public string? RoleId { get; set; }
+    }
+    [TestMethod]
+    public void SelectDto()
+    {
+        var result = Db.Select<User>()
+              .InnerJoin<UserRole>((u, r) => u.UserId == r.UserId)
+              .ToList<UserDto>(w => new
+              {
+                  w.Tb1,
+                  RoleId = w.Tb2.RoleId
+              });
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.UserId}, {item.RoleId}");
+        }
+    }
 }

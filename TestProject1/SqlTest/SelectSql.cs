@@ -41,7 +41,7 @@ namespace TestProject1.SqlTest
             Console.WriteLine(sql);
         }
 
-        
+
 
         class Jobs
         {
@@ -103,5 +103,20 @@ namespace TestProject1.SqlTest
                 });
             Console.WriteLine(result);
         }
+
+        [TestMethod]
+        public void SelectAsTable()
+        {
+            var sql = Db.Select<User>()
+                .AsTable(a => new { a.UserId, a.UserName })
+                .InnerJoin<Power>((a, p) => a.UserId == p.PowerId)
+                .ToSql(g => new
+                {
+                    g.Tb1.UserId,
+                    g.Tb2.PowerId,
+                });
+            Console.WriteLine(sql);
+        }
+
     }
 }
