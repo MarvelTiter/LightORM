@@ -79,7 +79,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     private ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
     {
-        Debug.WriteLine($"Current Expression: {expression}");
+        Debug.WriteLine($"[{Options.SqlType}] => [{expression}]");
         return expression switch
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),
@@ -250,10 +250,6 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                         Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
                     }
                 }
-                //else if (Options.SqlType == SqlPartial.AsTable && arg.NodeType == ExpressionType.Call && arg is MethodCallExpression call)
-                //{
-
-                //}
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
                     var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);

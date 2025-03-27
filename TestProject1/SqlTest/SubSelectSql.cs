@@ -87,5 +87,25 @@ namespace TestProject1.SqlTest
             });
             Console.WriteLine(result);
         }
+
+        [TestMethod]
+        public void JoinSubAndGroup()
+        {
+            var sub = Db.Select<User>()
+                .Where(u => u.Age > 10);
+            var sql = Db.Select<User>()
+                .InnerJoin(sub, (u, s) => u.UserId == s.UserId)
+                .GroupBy(w => new { w.Tb1.UserId })
+                .AsTable(g => new
+                {
+                    g.Group.UserId,
+                    C = g.Max(g.Tables.Tb1.Age)
+                }).ToSql(g => new
+                {
+                    g.UserId,
+                    g.C
+                });
+            Console.WriteLine(sql);
+        }
     }
 }

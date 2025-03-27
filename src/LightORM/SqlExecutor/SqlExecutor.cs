@@ -117,7 +117,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     private DbConnection GetConnection()
     {
-        var conn = Database.DbProviderFactory.CreateConnection()!;
+        var conn = Database.CreateConnection();
         conn.ConnectionString = Database.MasterConnectionString;
         return conn;
     }

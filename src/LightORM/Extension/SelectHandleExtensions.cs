@@ -64,6 +64,7 @@ internal static class SelectHandleExtensions
         };
         if (subQuery != null)
         {
+            //subQuery.SqlBuilder.SelectedTables.ForEach(t => t.Alias = $"sj_{t.Alias}");
             joinInfo.IsSubQuery = true;
             joinInfo.SubQuery = subQuery.SqlBuilder;
         }

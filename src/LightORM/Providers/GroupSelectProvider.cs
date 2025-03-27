@@ -67,7 +67,7 @@ namespace LightORM.Providers
                 ResolveOptions = SqlResolveOptions.SelectAsTable,
                 Template = null
             });
-            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
+            return new SelectProvider1<TTemp>(Executor, SqlBuilder).AsSubQuery();
         }
 
         //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)

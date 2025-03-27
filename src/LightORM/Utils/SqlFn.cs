@@ -26,12 +26,11 @@ public static partial class SqlFn
     /// <summary>
     /// 返回一个数值，舍入到指定的长度或精度。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="Column"></param>
-    /// <param name="length "></param>
+    /// <param name="value"></param>
+    /// <param name="digs "></param>
     /// <returns></returns>
-    public static T Round<T>(T Column, int length) => default!;
-
+    public static double Round(object? value, int digs) => 0;
+    //public static T Round<T>(T column, int length) => default!;
     /// <summary>
     /// <para>当T为返回bool的表达式或者三元表达式时，会解析成CASE WHEN语句</para>
     /// <para>否则COUNT(column)</para>
@@ -40,7 +39,7 @@ public static partial class SqlFn
     /// <param name="column"></param>
     /// <returns></returns>
     public static int Count<T>(T column) => 0;
-    public static int? Count(bool condition) => 0;
+    public static int? Count(int? expression) => 0;
     /// <summary>
     /// <para>当T为返回bool的表达式或者三元表达式时，会解析成CASE WHEN语句</para>
     /// <para>否则COUNT(DISTINCT column)</para>

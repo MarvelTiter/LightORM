@@ -112,4 +112,18 @@ public class SqlFunTest : TestBase
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
+
+    [TestMethod]
+    public void TestRound()
+    {
+        Expression<Func<User, object>> exp = u => new
+        {
+            Result = SqlFn.Round(u.Age, 4)
+        };
+        var table = TableContext.GetTableInfo(typeof(User))!;
+        table.Alias = "u";
+        var ctx = new ResolveContext(CustomMySql.Instance, table);
+        var result = exp.Resolve(SqlResolveOptions.Select, ctx);
+        Console.WriteLine(result.SqlString);
+    }
 }

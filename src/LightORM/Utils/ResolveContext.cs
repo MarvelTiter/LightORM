@@ -89,10 +89,12 @@ public partial class ResolveContext
         var oldKey = $"{originType.GUID}_{originName}";
         var newKey = $"{anonymousType.GUID}_{anonymousName}";
         var newInfo = new AnonymousMapInfo(originType, originName);
+        System.Diagnostics.Debug.WriteLine($"Create Map {anonymousType.FullName}_{anonymousName}");
+        System.Diagnostics.Debug.WriteLine($"From {originType.FullName}_{originName}");
         if (anonymousMap.TryGetValue(oldKey, out var info))
         {
             newInfo.Parent = info;
-            anonymousMap.Remove(oldKey);
+            //anonymousMap.Remove(oldKey);
         }
         anonymousMap.Add(newKey, newInfo);
     }
@@ -108,6 +110,7 @@ public partial class ResolveContext
         //return true;
 
         var key = $"{anonymousType.GUID}_{anonymousName}";
+        System.Diagnostics.Debug.WriteLine($"Get Map {anonymousType.FullName}_{anonymousName}");
         if (anonymousMap.TryGetValue(key, out var info))
         {
             while (info is not null)
