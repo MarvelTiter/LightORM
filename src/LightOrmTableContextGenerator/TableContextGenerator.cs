@@ -102,8 +102,9 @@ FieldBuilder.Default
             //}
             var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var factory)").AddStatement("return factory()");
 
-            var notFound = ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
-                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()"));
+            var notFound = IfStatement.Default.If("type.IsAbstract || type.IsInterface")
+                .AddStatement(ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
+                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()")));
             methodStatements.Add(dicCheck);
             methodStatements.Add(notFound);
             methodStatements.Add("return null");

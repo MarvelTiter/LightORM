@@ -25,5 +25,27 @@ namespace TestProject1.ResultTest
                 Console.WriteLine(item.UserName);
             }
         }
+
+        class PP : Power
+        {
+            [LightORM.LightColumn(Name = "ROLE_ID")]
+            public string? RoleId { get; set; }
+        }
+        [TestMethod]
+        public void SelectExt()
+        {
+            var list = Db.Select<Power>()
+                  .InnerJoin<RolePower>((p, rp) => p.PowerId == rp.PowerId)
+                  .ToList<PP>((p, rp) => new()
+                  {
+                      RoleId = rp.RoleId,
+                      PowerId = p.PowerId,
+                      PowerName = p.PowerName
+                  });
+            foreach (var item in list)
+            {
+                Console.WriteLine($"{item.RoleId}-{item.PowerId}-{item.PowerName}");
+            }
+        }
     }
 }
