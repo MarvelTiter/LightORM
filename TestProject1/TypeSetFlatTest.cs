@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace TestProject1;
@@ -30,19 +31,40 @@ public class TypeSetFlatTest : TestBase
         Console.WriteLine(exp);
         Console.WriteLine(n);
     }
-
+    class IGr
+    {
+        public int? Age { get; set; }
+        public string? RoleId { get; set; }
+    }
     [TestMethod]
     public void FlatGroup()
     {
-        Expression<Func<IExpSelectGrouping<string, TypeSet<User, UserRole>>, object>> exp = w => new
+        Expression<Func<IExpSelectGrouping<IGr, TypeSet<User, UserRole>>, object>>? exp = w => new
         {
-            w.Group,
-            Total = w.Count(),
-            Pass = w.Count(w.Tables.Tb1.Age)
+            w.Group.Age,
+            w.Group.RoleId,
+            R = w.Tables.Tb1.UserName,
+            T = w.Tables.Tb2.RoleId
         };
         // (user, userrole, w) => new { w.Group, Total = w.Count(), Pass = w.Count(user.Age)  }
         var n = FlatTypeSet.Default.Flat(exp);
         Console.WriteLine(exp);
         Console.WriteLine(n);
     }
+
+    [TestMethod]
+    public void FlatGroup2()
+    {
+        Expression<Func<IExpSelectGrouping<IGr, User>, object>>? exp = w => new
+        {
+            w.Group.Age,
+            w.Group.RoleId,
+            R = w.Tables.UserName,
+        };
+        // (user, userrole, w) => new { w.Group, Total = w.Count(), Pass = w.Count(user.Age)  }
+        var n = FlatTypeSet.Default.Flat(exp);
+        Console.WriteLine(exp);
+        Console.WriteLine(n);
+    }
+
 }
