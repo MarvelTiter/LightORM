@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
 using System.Text;
+using System.Threading;
 namespace LightORM.Providers.Select;
 
 //TODO Select 匿名类
@@ -178,10 +179,10 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
-        return this.InternalToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
@@ -190,15 +191,15 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp)
+    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
-        return this.InternalToListAsync<TReturn>();
+        return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
     public IEnumerable<TReturn> ToList<TReturn>() => this.InternalToList<TReturn>();
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>() => this.InternalToListAsync<TReturn>();
+    public Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default) => this.InternalToListAsync<TReturn>(cancellationToken);
 
     #endregion
 
@@ -289,9 +290,9 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return Insert<TInsertTable>(t => t!);
     }
 
-    public Task<int> InsertAsync<TInsertTable>()
+    public Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default)
     {
-        return InsertAsync<TInsertTable>(t => t!);
+        return InsertAsync<TInsertTable>(t => t!, cancellationToken);
     }
 
     public int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
@@ -303,13 +304,13 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
     }
 
-    public Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
+    public Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default)
     {
         var table = TableContext.GetTableInfo<TInsertTable>();
         var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
         HandleSelectInsert(table.TableName, result.SqlString!);
         var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters);
+        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
     }
 
     public int Insert(string tableName, params string[] columns)
@@ -319,11 +320,11 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
     }
 
-    public Task<int> InsertAsync(string tableName, params string[] columns)
+    public Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default)
     {
         HandleSelectInsert(tableName, string.Join(", ", columns));
         var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters);
+        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
     }
 
     void HandleSelectInsert(string tableName, string columns)

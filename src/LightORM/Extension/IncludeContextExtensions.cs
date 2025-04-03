@@ -5,6 +5,7 @@ using System.Collections;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace LightORM.Extension
 {
@@ -12,7 +13,7 @@ namespace LightORM.Extension
     {
         private readonly static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
         private readonly static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
-        private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault),Type.EmptyTypes)!;
+        private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault), Type.EmptyTypes)!;
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)

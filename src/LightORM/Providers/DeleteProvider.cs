@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using LightORM.Builder;
 using LightORM.ExpressionSql;
@@ -37,11 +38,11 @@ namespace LightORM.Providers
             return executor.ExecuteNonQuery(sql, dbParameters);
         }
 
-        public Task<int> ExecuteAsync()
+        public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var sql = sqlBuilder.ToSqlString();
             var dbParameters = sqlBuilder.DbParameters;
-            return executor.ExecuteNonQueryAsync(sql, dbParameters);
+            return executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
         }
 
         public string ToSql()

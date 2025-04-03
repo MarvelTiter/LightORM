@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM;
@@ -38,18 +39,23 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <summary>
     /// 开启事务异步
     /// </summary>
-    Task BeginTranAsync();
+    /// <param name="cancellationToken">异步取消令牌</param>
+    /// <returns></returns>
+    Task BeginTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 提交事务异步
     /// </summary>
-    Task CommitTranAsync();
+    /// <param name="cancellationToken">异步取消令牌</param>
+    /// <returns></returns>
+    Task CommitTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 回滚事务异步
     /// </summary>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task RollbackTranAsync();
+    Task RollbackTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行非查询
@@ -105,9 +111,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
     Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行标量异步
@@ -116,9 +123,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
     Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行阅读器异步
@@ -126,9 +134,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
     Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行数据集异步
@@ -136,9 +145,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
     Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行数据表格异步
@@ -146,7 +156,8 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
     Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 }

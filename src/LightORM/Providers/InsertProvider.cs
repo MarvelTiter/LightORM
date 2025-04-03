@@ -1,6 +1,7 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM.Providers;
@@ -67,7 +68,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         }
     }
 
-    public async Task<int> ExecuteAsync()
+    public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         var sql = SqlBuilder.ToSqlString();
         if (SqlBuilder.IsBatchInsert)
@@ -78,16 +79,16 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                 var effectRows = 0;
                 if (!isTran)
                 {
-                    executor.BeginTran();
+                    await executor.BeginTranAsync(cancellationToken);
                     isTran = true;
                 }
                 foreach (var item in SqlBuilder.BatchInfos!)
                 {
-                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters());
+                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
                 }
                 if (isTran)
                 {
-                    await executor.CommitTranAsync();
+                    await executor.CommitTranAsync(cancellationToken);
                 }
                 return effectRows;
             }
@@ -95,7 +96,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             {
                 if (isTran)
                 {
-                    await executor.RollbackTranAsync();
+                    await executor.RollbackTranAsync(cancellationToken);
                 }
                 throw;
             }
@@ -103,7 +104,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         else
         {
             var parameters = SqlBuilder.DbParameters;
-            return await executor.ExecuteNonQueryAsync(sql, parameters);
+            return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken);
         }
     }
 
