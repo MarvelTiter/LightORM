@@ -84,12 +84,13 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     /// <returns></returns>
     IExpSelect<T1> AsSubQuery(string? alias = null);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>
+    /// 转换成<see cref="IExpSelect{T1}"/>, 并调用<see cref="AsSubQuery(string?)"/>转为子查询
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
+    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp, string? alias = null);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
     IExpSelect<T1> Union(IExpSelect<T1> select);
     IExpSelect<T1> UnionAll(IExpSelect<T1> select);
@@ -143,7 +144,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 public interface IExpTemp
 {
     string Id { get; }
-    ITableEntityInfo ResultTable { get; }
+    TableInfo ResultTable { get; }
     internal SelectBuilder SqlBuilder { get; }
 }
 
@@ -168,12 +169,13 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 
     //IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>
+    /// 转换成<see cref="IExpSelect{TTable}"/>, 并调用<see cref="IExpSelect{TTable}.AsSubQuery(string?)"/>转为子查询
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
+    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp, string? alias = null);
     /// <summary>
     /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
     /// </summary>
@@ -225,12 +227,13 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     ///// <returns></returns>
     //IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>
+    /// 转换成<see cref="IExpSelect{T1}"/>, 并调用<see cref="IExpSelect{TTable}.AsSubQuery(string?)"/>转为子查询
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
+    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp, string? alias = null);
     /// <summary>
     /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
     /// </summary>

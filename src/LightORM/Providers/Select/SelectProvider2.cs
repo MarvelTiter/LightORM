@@ -10,8 +10,8 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         if (builder == null)
         {
             SqlBuilder = new SelectBuilder(DbType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T2>());
+            SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(0));
+            SqlBuilder.SelectedTables.Add(TableInfo.Create<T2>(1));
         }
     }
 
@@ -101,10 +101,10 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     //    return this.HandleSubQuery<TTemp>(alias);
     //}
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp, string? alias = null)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, T2, TTemp>> exp)
@@ -247,11 +247,11 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     //    return this.HandleSubQuery<TTemp>(alias);
     //}
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp, string? alias = null)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<T1, T2>, TTemp>> exp)

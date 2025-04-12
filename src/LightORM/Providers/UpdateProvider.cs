@@ -16,7 +16,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             SqlBuilder.TargetObject = entity;
         }
 
@@ -24,7 +24,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             SqlBuilder.IsBatchUpdate = true;
             SqlBuilder.TargetObjects = entities;
         }

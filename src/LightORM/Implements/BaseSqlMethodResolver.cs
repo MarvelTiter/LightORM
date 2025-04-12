@@ -221,7 +221,7 @@ namespace LightORM.Implements
                 resolver.Visit(methodCall.Arguments[0]);
                 resolver.Sql.Append(" THEN ");
                 resolver.Visit(methodCall.Arguments[1]);
-                resolver.Sql.Append(" ElSE 0 END)");
+                resolver.Sql.Append(" ELSE 0 END)");
             }
             else
             {

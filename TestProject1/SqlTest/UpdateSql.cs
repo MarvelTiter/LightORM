@@ -15,6 +15,17 @@ namespace TestProject1.SqlTest
             var p = new Product();
             var sql = Db.Update(p).ToSql();
             Console.WriteLine(sql);
+            var result = """
+                UPDATE `Product` SET
+                `CategoryId` = @CategoryId
+                `ProductCode` = @ProductCode
+                `ProductName` = @ProductName
+                `DeleteMark` = @DeleteMark
+                `CreateTime` = @CreateTime
+                `Last` = @Last
+                WHERE (`ProductId` = @ProductId)
+                """;
+            Assert.IsTrue(sql == result);
         }
 
         [TestMethod]
@@ -26,6 +37,13 @@ namespace TestProject1.SqlTest
                 .Where(p => p.ProductId > 10)
                 .ToSql();
             Console.WriteLine(sql);
+            var result = """
+                UPDATE `Product` SET
+                `CategoryId` = @CategoryId
+                `ProductName` = @ProductName
+                WHERE (`ProductId` > 10)
+                """;
+            Assert.IsTrue(sql == result);
         }
 
         [TestMethod]
@@ -38,6 +56,13 @@ namespace TestProject1.SqlTest
                 .Where(p => p.ProductId > 10)
                 .ToSql();
             Console.WriteLine(sql);
+            var result = """
+                UPDATE `Product` SET
+                `ProductName` = @ProductName
+                `ProductCode` = NULL
+                WHERE (`ProductId` > 10)
+                """;
+            Assert.IsTrue(sql == result);
         }
 
         [TestMethod]
@@ -48,6 +73,15 @@ namespace TestProject1.SqlTest
                 .IgnoreColumns(p => new { p.ProductName, p.CategoryId })
                 .ToSql();
             Console.WriteLine(sql);
+            var result = """
+                UPDATE `Product` SET
+                `ProductCode` = @ProductCode
+                `DeleteMark` = @DeleteMark
+                `CreateTime` = @CreateTime
+                `Last` = @Last
+                WHERE (`ProductId` = @ProductId)
+                """;
+            Assert.IsTrue(sql == result);
         }
     }
 }

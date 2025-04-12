@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestProject1.SqlTest;
+namespace TestProject1.SqlTest.Select;
 
 [TestClass]
 public class SelectIncludeSql : TestBase

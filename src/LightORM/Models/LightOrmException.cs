@@ -7,12 +7,8 @@ using System.Threading.Tasks;
 
 namespace LightORM;
 
-public class LightOrmException : Exception
+public class LightOrmException(string message) : Exception(message)
 {
-    public LightOrmException(string message) : base(message)
-    {
-
-    }
     public static void Throw(string message) => throw new LightOrmException(message);
     /// <summary>
     /// Throws an <see cref="LightOrmException"/> if <paramref name="argument"/> is null.

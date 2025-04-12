@@ -58,11 +58,11 @@ namespace LightORM.Providers
             // TODO 没想好怎么写
             return this;
         }
-        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
+        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
+            return new SelectProvider1<TTemp>(Executor, SqlBuilder).AsSubQuery(alias);
         }
 
         //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)

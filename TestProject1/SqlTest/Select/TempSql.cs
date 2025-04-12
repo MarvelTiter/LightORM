@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace TestProject1.SqlTest
+namespace TestProject1.SqlTest.Select
 {
     [TestClass]
     public class TempSql : TestBase

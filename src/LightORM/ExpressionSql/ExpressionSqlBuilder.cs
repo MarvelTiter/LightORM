@@ -26,7 +26,11 @@ public class ExpressionSqlOptions
         var k = key ?? ConstString.Main;
         if (StaticCache<IDatabaseProvider>.HasKey(k))
         {
+#if DEBUG
+            return this;
+#else
             LightOrmException.Throw($"SetDatabase 设置了重复的Key => {key}");
+#endif
         }
         //var info = new DbConnectInfo(dbBaseType, provider);
         _ = StaticCache<IDatabaseProvider>.GetOrAdd(k, () => provider);

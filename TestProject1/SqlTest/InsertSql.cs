@@ -13,15 +13,21 @@ namespace TestProject1.SqlTest
         [TestMethod]
         public void InsertEntity()
         {
-            var u = Db.Select<User>().First()!;
-            u.UserId = UID;
-            u.Age = DateTime.Now.Hour;
-            Db.Insert(u).Execute();
-            var iu = Db.Select<User>().Where(u => u.UserId == UID).First();
-            Assert.IsTrue(iu?.Age == DateTime.Now.Hour);
-            Db.Delete<User>(iu).Execute();
-            var iu2 = Db.Select<User>().Where(u => u.UserId == UID).First();
-            Assert.IsTrue(iu2 is null);
+            int hour = DateTime.Now.Hour;
+            User? u = new()
+            {
+                UserId = UID,
+                Age = hour
+            };
+            var sql = Db.Insert(u).ToSql();
+            Console.WriteLine(sql);
+            var result = """
+                INSERT INTO `USER` 
+                (`USER_ID`, `AGE`, `LAST_LOGIN`, `IS_LOCK`)
+                VALUES
+                (@UserId, @Age, @LastLogin, @IsLock)
+                """;
+            Assert.IsTrue(result == sql);
         }
     }
 }

@@ -14,7 +14,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
         SqlBuilder.TargetObject = entity;
     }
 
@@ -22,7 +22,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
         SqlBuilder.TargetObjects = entities;
         SqlBuilder.IsBatchInsert = true;
     }

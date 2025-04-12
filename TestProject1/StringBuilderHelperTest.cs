@@ -17,5 +17,19 @@ namespace TestProject1
             Assert.IsTrue(sb.EndsWith("wdssa"));
             Assert.IsFalse(sb.EndsWith("wdss"));
         }
+
+        [TestMethod]
+        public void Trim()
+        {
+            var sb = new StringBuilder("  Hello123212Owdssa   ");
+            var r1 = sb.Trim();
+            Assert.IsTrue(r1 == "Hello123212Owdssa");
+            sb.AppendLine("");
+            Assert.IsTrue(sb.EndsWith("\r\n"));
+            r1 = sb.Trim();
+            Assert.IsTrue(r1 == "Hello123212Owdssa");
+            r1 = sb.Trim(' ', '\r', '\n');
+            Assert.IsTrue(r1 == "Hello123212Owdssa");
+        }
     }
 }

@@ -5,16 +5,8 @@ using System.Threading;
 namespace LightORM.Providers.Select;
 
 //TODO Select 匿名类
-internal sealed class SelectProvider0 : SelectProvider0<IExpSelect<object>, object>, IExpSelect
+internal sealed class SelectProvider0(ISqlExecutor executor) : SelectProvider0<IExpSelect<object>, object>(executor), IExpSelect
 {
-    public SelectProvider0(ISqlExecutor executor) : base(executor)
-    {
-        //SqlBuilder.TableInfo = new TableEntity
-        //{
-        //    CustomName = table,
-        //    IsAnonymousType = true,
-        //};
-    }
 }
 
 internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
@@ -25,12 +17,14 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         if (builder == null)
         {
             SqlBuilder = new SelectBuilder(DbType);
-            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
+            //SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
+            SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
         }
     }
     public IExpSelect<T1> As(string alias)
     {
-        SqlBuilder.MainTable.Alias = alias;
+        //TODO IExpSelect<T1> As(string alias)
+        //SqlBuilder.MainTable.Alias = alias;
         return this;
     }
 
@@ -134,21 +128,24 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         var option = SqlResolveOptions.Select;
         var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
-        var navName = result.NavigateMembers!.First();
-        var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
-        var navInfo = navCol.NavigateInfo!;
-        var table = TableContext.GetTableInfo(navCol.NavigateInfo!.NavigateType);
-        var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
-        var includeInfo = new IncludeInfo
+        foreach (string navName in result.NavigateMembers ?? [])
         {
-            SelectedTable = table,
-            NavigateInfo = navInfo,
-            ParentNavigateColumn = navCol,
-            ParentWhereColumn = parentWhereColumn,
-            ParentTable = SqlBuilder.MainTable,
-            ExpressionResolvedResult = result
-        };
-        SqlBuilder.IncludeContext.Includes.Add(includeInfo);
+            var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
+            var navInfo = navCol.NavigateInfo!;
+            var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
+            var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+            var includeInfo = new IncludeInfo
+            {
+                SelectedTable = table,
+                NavigateInfo = navInfo,
+                ParentNavigateColumn = navCol,
+                ParentWhereColumn = parentWhereColumn,
+                ParentTable = SqlBuilder.MainTable,
+                ExpressionResolvedResult = result
+            };
+            SqlBuilder.IncludeContext.Includes.Add(includeInfo);
+        }
+        
         return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
     }
 
@@ -165,10 +162,10 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new TempProvider<TTemp>(name, SqlBuilder);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp, string? alias = null)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
     }
 
     #region Result

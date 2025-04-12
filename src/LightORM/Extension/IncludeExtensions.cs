@@ -10,10 +10,10 @@ public static class IncludeExtensions
         var option = SqlResolveOptions.Select;
         //option.DbType = include.SqlBuilder.DbType;
         var result = exp.Resolve(option, ResolveContext.Create(include.Executor.Database.DbBaseType));
-        var parentTable = TableContext.GetTableInfo(typeof(TElement));
+        var parentTable = TableInfo.Create<TElement>();
         var navCol = parentTable.GetColumnInfo(result.NavigateMembers!.First());
         var navInfo = navCol.NavigateInfo!;
-        var table = TableContext.GetTableInfo(navInfo.NavigateType);
+        var table = TableInfo.Create(navInfo.NavigateType);
         var parentWhereColumn = parentTable.GetColumnInfo(navInfo.MainName!);
         var includeInfo = new IncludeInfo
         {

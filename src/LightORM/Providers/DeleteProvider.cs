@@ -18,7 +18,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
 
@@ -26,7 +26,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
+            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entities;
             sqlBuilder.IsDeleteList = true;
         }

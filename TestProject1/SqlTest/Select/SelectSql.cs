@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestProject1.SqlTest
+namespace TestProject1.SqlTest.Select
 {
     [TestClass]
     public class SelectSql : TestBase
@@ -17,6 +17,12 @@ namespace TestProject1.SqlTest
                 .Where(p => p.ModifyTime > DateTime.Now)
                 .ToSql(p => new { p.ProductId, p.ProductName });
             Console.WriteLine(sql);
+            var result = $"""
+                SELECT `a`.`ProductId`, `a`.`ProductName`
+                FROM `Product` `a`
+                WHERE (`a`.`ModifyTime` > @Now_0)
+                """;
+            Assert.IsTrue(result == sql);
         }
 
         [TestMethod]
@@ -28,20 +34,31 @@ namespace TestProject1.SqlTest
                 .Where(u => u.UserId == "admin")
                 .ToSql(w => w.Tb1);
             Console.WriteLine(sql);
+            var result = """
+                SELECT `a`.*
+                FROM `USER` `a`
+                INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
+                INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
+                WHERE (`a`.`USER_ID` = 'admin')
+                """;
+            Assert.IsTrue(result == sql);
         }
 
         [TestMethod]
         public void SelectExtension()
         {
             var sql = Db.Select<Power, RolePower, Role>()
-                .InnerJoin(w => w.Tb1.PowerName == w.Tb3.RoleName)
                 .Distinct()
                 .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3.RoleId)
                 .ToSql(w => new { w.Tb1 });
             Console.WriteLine(sql);
+            var result = """
+                SELECT DISTINCT `a`.*
+                FROM `POWERS` `a`, `ROLE_POWER` `b`, `ROLE` `c`
+                WHERE ((`a`.`POWER_ID` = `b`.`POWER_ID`) AND (`b`.`ROLE_ID` = `c`.`ROLE_ID`))
+                """;
+            Assert.IsTrue(result == sql);
         }
-
-        
 
         class Jobs
         {
@@ -57,7 +74,8 @@ namespace TestProject1.SqlTest
                 Fzjg = j.Plate!.Substring(1, 2),
                 j.StnId
             });
-            var stnFzjg = Db.FromTemp(info).GroupBy(a => new { a.StnId, a.Fzjg })
+            var stnFzjg = Db.FromTemp(info)
+                .GroupBy(a => new { a.StnId, a.Fzjg })
                 .OrderByDesc(a => new { a.Group.StnId, i = a.Count() })
                 .AsTemp("stn_fzjg", g => new
                 {

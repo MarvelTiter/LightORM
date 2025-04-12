@@ -42,6 +42,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.InnerJoin);
@@ -51,6 +52,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.LeftJoin);
@@ -60,6 +62,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.RightJoin);
@@ -112,6 +115,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -122,6 +126,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -132,6 +137,7 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
+    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;

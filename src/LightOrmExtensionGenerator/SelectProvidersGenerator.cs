@@ -126,7 +126,7 @@ namespace LightOrmExtensionGenerator
                 """ : "";
 
             var selecteds = Enumerable.Range(1, count).Select(i => $"""
-                        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T{i}>());
+                        SqlBuilder.SelectedTables.Add(TableInfo.Create<T{i}>({i - 1}));
             """);
 
             var code = $$"""
@@ -192,10 +192,10 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp, string? alias = null)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<{{argsStr}}, TTemp>> exp)
     {
@@ -271,11 +271,11 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp, string? alias = null)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
     {

@@ -64,8 +64,8 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         }
         ResolveExpressions();
 
-        var primaryCol = MainTable.Columns.Where(c => c.IsPrimaryKey).ToArray();
-        ITableColumnInfo[] columns = MainTable.Columns
+        var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
+        var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(CheckMembers)
                    .Where(c => !c.IsNotMapped)
@@ -76,7 +76,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
         {
-            StringBuilder sb = new StringBuilder(update);
+            StringBuilder sb = new(update);
             foreach (var col in columns)
             {
                 sb.Append($"\n{AttachEmphasis(col.ColumnName)} = CASE ");
@@ -89,7 +89,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 sb.Append("END,");
             }
 
-            sb.Remove(sb.Length - 1, 1);
+            sb.RemoveLast(1);
 
             var pValues = batch.Parameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey));
 
@@ -98,7 +98,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 Where.Add($"( {AttachEmphasis(item.Key)} IN ({string.Join(", ", item.Select(i => AttachPrefix(i.ParameterName)))}) )");
             }
 
-            sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
+            sb.AppendFormat($"{N}WHERE {0}", string.Join($"{N}AND ", Where));
 
             batch.Sql = sb.ToString();
         }
@@ -113,24 +113,23 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
             return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
         ResolveExpressions();
-        StringBuilder sb = new StringBuilder();
         if (Where.Count == 0)
         {
-            var primaryCol = MainTable.Columns.Where(c => c.IsPrimaryKey).ToArray();
+            var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
             if (primaryCol.Length == 0) LightOrmException.Throw("Where Condition is null and no primarykey");
             if (TargetObject == null) LightOrmException.Throw("Where Condition is null and no entity");
             foreach (var item in primaryCol)
             {
-                var val = item.GetValue(TargetObject);
+                var val = item.GetValue(TargetObject!);
                 if (val == null) continue;
                 DbParameters.Add(item.PropertyName, val);
-                Where.Add($"{AttachEmphasis(item.ColumnName)} = {AttachPrefix(item.PropertyName)}");
+                Where.Add($"({AttachEmphasis(item.ColumnName)} = {AttachPrefix(item.PropertyName)})");
             }
         }
 
         if (Members.Count == 0)
         {
-            var autoUpdateCols = MainTable.Columns
+            var autoUpdateCols = MainTable.TableEntityInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                .Where(c => !c.IsNotMapped)
                .Where(c => !c.IsNavigate)
@@ -148,20 +147,27 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
             }
         }
 
-        var customCols = MainTable.Columns.Where(c => Members.Contains(c.PropertyName));
+        var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
         var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropertyName)}");
 
-        var setNullCol = MainTable.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
+        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
         if (setNullCol.Length > 0)
         {
             finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));
         }
+        StringBuilder sb = new("UPDATE ");
+        sb.Append(GetTableName(MainTable, false));
+        sb.AppendLine(" SET");
+        foreach (var item in finalUpdateCol)
+        {
+            sb.AppendLine(item);
+        }
+        sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+        //sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
 
-        sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
+        //sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
 
-        sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
-
-        return sb.ToString();
+        return sb.Trim();
     }
 
 

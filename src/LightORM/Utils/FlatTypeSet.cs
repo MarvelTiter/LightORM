@@ -33,13 +33,13 @@ namespace LightORM.Utils
                     var type = p[0].Type.GenericTypeArguments[1];
                     var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
                     groupTypeIndex = tp.Length;
-                    parameters = [.. tp, Expression.Parameter(gType, "g")];
+                    parameters = [.. tp, Expression.Parameter(gType, "group")];
                 }
                 else
                 {
                     groupTypeIndex = 1;
                     var type = p[0].Type.GenericTypeArguments[1];
-                    parameters = [Expression.Parameter(type, "t"), Expression.Parameter(gType, "g")];
+                    parameters = [Expression.Parameter(type, "p0"), Expression.Parameter(gType, "group")];
                 }
             }
             else

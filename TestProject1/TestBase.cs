@@ -5,8 +5,8 @@ namespace TestProject1;
 
 public class TestBase
 {
-    protected IExpressionContext Db { get; }
-    protected ResolveContext ResolveCtx { get; }
+    public IExpressionContext Db { get; }
+    internal ResolveContext ResolveCtx { get; }
     protected ITableContext TableContext { get; } = new TestTableContext();
     public TestBase()
     {

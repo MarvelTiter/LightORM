@@ -1,11 +1,5 @@
-﻿using LightORM.Builder;
-using LightORM.Cache;
-using LightORM.Utils;
-using System.Collections;
-using System.Data;
-using System.Linq;
+﻿using System.Collections;
 using System.Reflection;
-using System.Threading;
 
 namespace LightORM.Extension
 {
@@ -90,31 +84,33 @@ namespace LightORM.Extension
             var parentTable = include.ParentTable!;
             if (include.NavigateInfo!.MappingType != null)
             {
-                var mapTable = TableContext.GetTableInfo(include.NavigateInfo!.MappingType);
+                var mapTable = TableInfo.Create(include.NavigateInfo!.MappingType,selectSql.NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(mainNav.SubName!);
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = mapTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
+                parentTable.Index = selectSql.NextTableIndex;
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
             }
             else
             {
                 var subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
+                parentTable.Index = selectSql.NextTableIndex;
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.LeftJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias!)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias!)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
             }
