@@ -61,6 +61,19 @@ namespace LightORM.Builder
         //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         //}
 
+        private IEnumerable<TableInfo> AllTables()
+        {
+            foreach (var item in SelectedTables)
+            {
+                yield return item;
+            }
+            foreach (var item in Joins)
+            {
+                yield return item.EntityInfo!;
+            }
+        }
+
+
         protected override void BeforeResolveExpressions(ResolveContext context)
         {
             context.Level = Level;
@@ -74,17 +87,33 @@ namespace LightORM.Builder
                 context.SetParamPrefix("s");
             }
         }
-
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
             {
-                Where.Add(result.SqlString!);
                 if (result.UseNavigate)
                 {
                     if (result.NavigateDeep == 0) result.NavigateDeep = 1;
                     ScanNavigate(result, MainTable);
                     IsDistinct = true;
+                    if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
+                        && l!.Parameters[0].Type == Joins.LastOrDefault()?.EntityInfo?.Type)
+                    {
+                        List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
+                        ps.RemoveAt(ps.Count - 1);
+                        var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
+                          var ee = new ExpressionInfo()
+                        {
+                            ResolveOptions = SqlResolveOptions.Where,
+                            Expression = newWhereExpression,
+                        };
+                        var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
+                        HandleResult(ee, eeResult);
+                    }
+                }
+                else
+                {
+                    Where.Add(result.SqlString!);
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Join)
@@ -147,7 +176,7 @@ namespace LightORM.Builder
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = mapTable,
-                        JoinType = TableLinkType.LeftJoin,
+                        JoinType = TableLinkType.InnerJoin,
                         Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
                     });
 
@@ -156,7 +185,7 @@ namespace LightORM.Builder
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = targetTable,
-                        JoinType = TableLinkType.LeftJoin,
+                        JoinType = TableLinkType.InnerJoin,
                         Where = $"( {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
                     });
                 }
@@ -167,7 +196,7 @@ namespace LightORM.Builder
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = targetTable,
-                        JoinType = TableLinkType.LeftJoin,
+                        JoinType = TableLinkType.InnerJoin,
                         Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} )"
                     });
                 }

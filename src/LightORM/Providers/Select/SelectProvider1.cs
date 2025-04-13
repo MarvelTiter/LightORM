@@ -23,9 +23,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     }
     public IExpSelect<T1> As(string alias)
     {
-        //TODO IExpSelect<T1> As(string alias)
-        //SqlBuilder.MainTable.Alias = alias;
-        return this;
+        throw new NotImplementedException("暂不支持自定义alias");
     }
 
     public IExpSelect<T1> Union(IExpSelect<T1> select)

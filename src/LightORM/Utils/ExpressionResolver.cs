@@ -18,10 +18,11 @@ internal static class ExpressionExtensions
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
-            UsedTables = resolve.UsedTables,
+            //UsedTables = resolve.UsedTables,
             UseNavigate = resolve.UseNavigate,
             NavigateDeep = resolve.NavigateDeep,
             NavigateMembers = resolve.NavigateMembers,
+            NavigateWhereExpression = resolve.NavigateWhereExpression
         };
     }
 
@@ -57,6 +58,7 @@ public interface IExpressionResolver
     StringBuilder Sql { get; }
     Dictionary<string, object> DbParameters { get; }
     SqlResolveOptions Options { get; }
+    Expression? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
 }
 
@@ -68,13 +70,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
-    public List<TableInfo> UsedTables { get; set; } = [];
+    //public List<TableInfo> UsedTables { get; set; } = [];
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     public int Level => Context.Level;
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
+    public Expression? NavigateWhereExpression { get; set; }
 
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
@@ -427,13 +430,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 //    memberType = member.DeclaringType!;
                 //name = member.Name;
 
-                    //if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
-                    //{
-                    //    memberType = m!.DeclaringType!;
-                    //    name = m.Name;
-                    //}
-                    //table = Context.GetTable(paramExp!);
-                    //col = table.GetColumn(name)!;
+                //if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
+                //{
+                //    memberType = m!.DeclaringType!;
+                //    name = m.Name;
+                //}
+                //table = Context.GetTable(paramExp!);
+                //col = table.GetColumn(name)!;
             }
             if (!table.TableEntityInfo.IsAnonymousType)
             {

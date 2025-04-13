@@ -84,12 +84,12 @@ namespace LightORM.Extension
             var parentTable = include.ParentTable!;
             if (include.NavigateInfo!.MappingType != null)
             {
-                var mapTable = TableInfo.Create(include.NavigateInfo!.MappingType,selectSql.NextTableIndex);
+                var mapTable = TableInfo.Create(include.NavigateInfo!.MappingType, selectSql.NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(mainNav.SubName!);
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = mapTable,
-                    JoinType = ExpressionSql.TableLinkType.LeftJoin,
+                    JoinType = ExpressionSql.TableLinkType.InnerJoin,
                     Where = $"( {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
@@ -97,7 +97,7 @@ namespace LightORM.Extension
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = parentTable,
-                    JoinType = ExpressionSql.TableLinkType.LeftJoin,
+                    JoinType = ExpressionSql.TableLinkType.InnerJoin,
                     Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });
@@ -109,7 +109,7 @@ namespace LightORM.Extension
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = parentTable,
-                    JoinType = ExpressionSql.TableLinkType.LeftJoin,
+                    JoinType = ExpressionSql.TableLinkType.InnerJoin,
                     Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
 
                 });

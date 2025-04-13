@@ -14,7 +14,7 @@ public class SelectIncludeSql : TestBase
     {
         var sql = Db.Select<User>()
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.StartsWith("ad")))
-            .Include(u => u.UserRoles.Where(r=>r.RoleId.StartsWith("ad")))
+            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("ad")))
             .ToList();
         Console.WriteLine(sql);
     }

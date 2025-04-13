@@ -408,7 +408,8 @@ namespace LightORM.Implements
 
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
-            resolver.Visit(methodCall.Arguments[1]);
+            //resolver.Visit(methodCall.Arguments[1]);
+            resolver.NavigateWhereExpression = methodCall.Arguments[1];
         }
 
         #endregion
