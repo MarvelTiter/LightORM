@@ -113,7 +113,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public IExpInclude<T1, TMember> Include<TMember>(Expression<Func<T1, TMember>> exp)
     {
-        return CreateIncludeProvider<TMember>(exp);
+        return CreateIncludeProvider<TMember>(exp.Body);
     }
 
     public string ToSql(Expression<Func<T1, object>> exp)
@@ -124,26 +124,40 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
     {
-        var option = SqlResolveOptions.Select;
-        var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
-        foreach (string navName in result.NavigateMembers ?? [])
+        //var option = SqlResolveOptions.Select;
+        //var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
+        string? includePropertyName = null;
+        Expression? includeWhereExpression = null;
+        if (exp is MemberExpression m)
         {
-            var navCol = SqlBuilder.MainTable.GetColumnInfo(navName);
-            var navInfo = navCol.NavigateInfo!;
-            var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
-            var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
-            var includeInfo = new IncludeInfo
-            {
-                SelectedTable = table,
-                NavigateInfo = navInfo,
-                ParentNavigateColumn = navCol,
-                ParentWhereColumn = parentWhereColumn,
-                ParentTable = SqlBuilder.MainTable,
-                ExpressionResolvedResult = result
-            };
-            SqlBuilder.IncludeContext.Includes.Add(includeInfo);
+            includePropertyName = m.Member.Name;
         }
-        
+        else if (exp is MethodCallExpression mc)
+        {
+            var member = mc.Arguments[0] as MemberExpression;
+            includePropertyName = member?.Member.Name;
+            if (mc.Arguments.Count > 1)
+            {
+                includeWhereExpression = mc.Arguments[1];
+            }
+        }
+        LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
+        // TODO 修复Include
+        var navCol = SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
+        var navInfo = navCol.NavigateInfo!;
+        var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
+        var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var includeInfo = new IncludeInfo
+        {
+            SelectedTable = table,
+            NavigateInfo = navInfo,
+            ParentNavigateColumn = navCol,
+            ParentWhereColumn = parentWhereColumn,
+            ParentTable = SqlBuilder.MainTable,
+            //ExpressionResolvedResult = result
+        };
+        SqlBuilder.IncludeContext.Includes.Add(includeInfo);
+
         return new IncludeProvider<T1, TMember>(Executor, SqlBuilder);
     }
 
