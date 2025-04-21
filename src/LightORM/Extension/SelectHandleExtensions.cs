@@ -43,6 +43,7 @@ internal static class SelectHandleExtensions
         {
             //select.SqlBuilder.TempViews.Add(item.SqlBuilder);
             select.SqlBuilder.HandleTempsRecursion(item.SqlBuilder);
+            item.ResultTable.Index = select.SqlBuilder.NextTableIndex;
             select.SqlBuilder.SelectedTables.Add(item.ResultTable);
         }
     }
@@ -60,7 +61,7 @@ internal static class SelectHandleExtensions
         {
             ExpressionId = expression.Id,
             JoinType = joinType,
-            EntityInfo = Cache.TableContext.GetTableInfo<TJoin>(),
+            EntityInfo = TableInfo.Create<TJoin>(select.SqlBuilder.NextTableIndex),
         };
         if (subQuery != null)
         {
@@ -79,6 +80,7 @@ internal static class SelectHandleExtensions
         };
 
         select.SqlBuilder.Expressions.Add(expression);
+        tempQuery.ResultTable.Index = select.SqlBuilder.NextTableIndex;
         var joinInfo = new JoinInfo()
         {
             ExpressionId = expression.Id,
@@ -89,6 +91,7 @@ internal static class SelectHandleExtensions
         select.SqlBuilder.Joins.Add(joinInfo);
     }
 
+    [Obsolete("多余的设计")]
     internal static void JoinHandle(this IExpSelect select, Expression? exp, TableLinkType joinType)
     {
         var expression = new ExpressionInfo
@@ -123,8 +126,12 @@ internal static class SelectHandleExtensions
     {
         select.SqlBuilder.IsSubQuery = true;
         var builder = new SelectBuilder(select.SqlBuilder.DbType);
-        var table = TableContext.GetTableInfo<TTemp>();
-        if (alias != null) table.Alias = alias;
+        var table = TableInfo.Create<TTemp>();
+        if (alias != null)
+        {
+            LightOrmException.Throw("暂不支持自定义表别名");
+            table.Alias = alias;
+        }
         builder.SelectedTables.Add(table);
         builder.HandleTempsRecursion(select.SqlBuilder);
         builder.SubQuery = select.SqlBuilder;

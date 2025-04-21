@@ -30,8 +30,4 @@ namespace LightORM.Models
         public object? AdditionalParameter { get; set; }
     }
 
-    internal record ExpressionParameter(Type Type, string Name)
-    {
-
-    }
 }

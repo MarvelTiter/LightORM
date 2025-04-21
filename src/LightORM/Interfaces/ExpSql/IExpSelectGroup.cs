@@ -15,8 +15,9 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
+    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp, string? alias = null);
     IExpSelectGroup<TGroup, TTables> Rollup();
     IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);

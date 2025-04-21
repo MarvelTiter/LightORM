@@ -57,7 +57,7 @@ public class TableContextGenerator : IIncrementalGenerator
     {
         List<Node> members = [
 FieldBuilder.Default
-            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>")
+            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::LightORM.Interfaces.ITableEntityInfo>")
             .FieldName("tableInfos"),
            FieldBuilder.Default
             .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>")
@@ -67,7 +67,7 @@ FieldBuilder.Default
             .FieldName("table_gets"),
 ];
         List<Statement> dicInits = [
-            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableEntityInfo>>()",
+            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::LightORM.Interfaces.ITableEntityInfo>()",
             "table_sets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()",
             "table_gets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()"
             ];
@@ -86,11 +86,18 @@ FieldBuilder.Default
 
         foreach (var item in items)
         {
-            members.Add(MethodBuilder.Default
-                .Modifiers("public static")
-                .ReturnType("global::LightORM.Interfaces.ITableEntityInfo")
-                .MethodName(item.FormatClassName(true))
-                .Lambda($"new {item.FormatClassName(true)}TableInfo()"));
+            members.Add(PropertyBuilder.Default
+                .Modifiers("public static") 
+                .PropertyName(item.FormatClassName(true))
+                .MemberType($"{item.FormatClassName(true)}TableInfo")
+                .Readonly()
+                .InitializeWith($"new {item.FormatClassName(true)}TableInfo()")
+                );
+            //members.Add(MethodBuilder.Default
+            //    .Modifiers("public static")
+            //    .ReturnType("global::LightORM.Interfaces.ITableEntityInfo")
+            //    .MethodName(item.FormatClassName(true))
+            //    .Lambda($"new {item.FormatClassName(true)}TableInfo()"));
         }
         #region GetTableInfoMethod
         {
@@ -100,11 +107,11 @@ FieldBuilder.Default
             //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
             //    getTableInfoMethodStatements.Add(ifs);
             //}
-            var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var factory)").AddStatement("return factory()");
+            var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var ti)").AddStatement("return ti");
 
             var notFound = IfStatement.Default.If("type.IsAbstract || type.IsInterface")
                 .AddStatement(ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
-                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value()")));
+                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value")));
             methodStatements.Add(dicCheck);
             methodStatements.Add(notFound);
             methodStatements.Add("return null");

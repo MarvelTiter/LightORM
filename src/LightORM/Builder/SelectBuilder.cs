@@ -55,11 +55,24 @@ namespace LightORM.Builder
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
         public object? AdditionalValue { get; set; }
+        public int NextTableIndex => SelectedTables.Count + Joins.Count;
+        //protected override Lazy<TableInfo[]> GetAllTables()
+        //{
+        //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
+        //}
 
-        protected override Lazy<ITableEntityInfo[]> GetAllTables()
+        public IEnumerable<TableInfo> AllTables()
         {
-            return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
+            foreach (var item in SelectedTables)
+            {
+                yield return item;
+            }
+            foreach (var item in Joins)
+            {
+                yield return item.EntityInfo!;
+            }
         }
+
 
         protected override void BeforeResolveExpressions(ResolveContext context)
         {
@@ -70,21 +83,37 @@ namespace LightORM.Builder
             }
             else if (IsSubQuery)
             {
-                context.ModifyAlias(t => t.Alias = t.Alias?.Replace("a", $"s{Level}_"));
+                //context.ModifyAlias(t => t.Alias = t.Alias?.Replace("a", $"s{Level}_"));
                 context.SetParamPrefix("s");
             }
         }
-
         protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
             {
-                Where.Add(result.SqlString!);
                 if (result.UseNavigate)
                 {
                     if (result.NavigateDeep == 0) result.NavigateDeep = 1;
                     ScanNavigate(result, MainTable);
                     IsDistinct = true;
+                    if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
+                        && l!.Parameters[0].Type == Joins.LastOrDefault()?.EntityInfo?.Type)
+                    {
+                        List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
+                        ps.RemoveAt(ps.Count - 1);
+                        var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
+                          var ee = new ExpressionInfo()
+                        {
+                            ResolveOptions = SqlResolveOptions.Where,
+                            Expression = newWhereExpression,
+                        };
+                        var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
+                        HandleResult(ee, eeResult);
+                    }
+                }
+                else
+                {
+                    Where.Add(result.SqlString!);
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Join)
@@ -93,14 +122,14 @@ namespace LightORM.Builder
                 if (joinInfo != null)
                 {
                     joinInfo.Where = result.SqlString!;
-                    if (expInfo.AdditionalParameter is int i && i > 0)
-                    {
-                        if (i > SelectedTables.Count - 1)
-                        {
-                            LightOrmException.Throw($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
-                        }
-                        joinInfo.EntityInfo = SelectedTables[i];
-                    }
+                    //if (expInfo.AdditionalParameter is int i && i > 0)
+                    //{
+                    //    if (i > SelectedTables.Count - 1)
+                    //    {
+                    //        LightOrmException.Throw($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
+                    //    }
+                    //    joinInfo.EntityInfo = SelectedTables[i];
+                    //}
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
@@ -125,7 +154,7 @@ namespace LightORM.Builder
             }
         }
 
-        private void ScanNavigate(ExpressionResolvedResult result, ITableEntityInfo mainTableInfo)
+        private void ScanNavigate(ExpressionResolvedResult result, TableInfo mainTableInfo)
         {
             foreach (var navColumn in mainTableInfo.GetNavigateColumns())
             {
@@ -136,39 +165,39 @@ namespace LightORM.Builder
                 var navInfo = navColumn.NavigateInfo!;
                 var mainCol = mainTableInfo.GetColumnInfo(navInfo.MainName!);
                 var targetType = navInfo.NavigateType;
-                var targetTable = TableContext.GetTableInfo(targetType);
+                var targetTable = TableInfo.Create(targetType, NextTableIndex);
                 if (navInfo.MappingType != null)
                 {
                     var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
                     var targetCol = targetTable.GetColumnInfo(targetNav.MainName!);
-                    var mapTable = TableContext.GetTableInfo(navInfo.MappingType);
+                    var mapTable = TableInfo.Create(navInfo.MappingType, NextTableIndex);
                     var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
-                    TryJoin(mapTable);
+                    //TryJoin(mapTable);
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = mapTable,
-                        JoinType = TableLinkType.LeftJoin,
-                        Where = $"( {AttachEmphasis(mainTableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                        JoinType = TableLinkType.InnerJoin,
+                        Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
                     });
 
                     subCol = mapTable.GetColumnInfo(targetNav.SubName!);
-                    TryJoin(targetTable);
+                    targetTable.Index += 1;
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = targetTable,
-                        JoinType = TableLinkType.LeftJoin,
-                        Where = $"( {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias!)}.{AttachEmphasis(subCol.ColumnName)} )"
+                        JoinType = TableLinkType.InnerJoin,
+                        Where = $"( {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
                     });
                 }
                 else
                 {
                     var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
-                    TryJoin(targetTable);
+                    //TryJoin(targetTable);
                     Joins.Add(new JoinInfo
                     {
                         EntityInfo = targetTable,
-                        JoinType = TableLinkType.LeftJoin,
-                        Where = $"( {AttachEmphasis(mainTableInfo.Alias!)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias!)}.{AttachEmphasis(targetCol.ColumnName)} )"
+                        JoinType = TableLinkType.InnerJoin,
+                        Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} )"
                     });
                 }
 
@@ -180,17 +209,17 @@ namespace LightORM.Builder
             }
         }
 
-        void TryJoin(ITableEntityInfo joined)
-        {
-            if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || MainTable.Type == joined.Type)
-            {
-                joined.Alias = (joined.Alias!.Replace('a', 'j'));
-            }
-        }
+        //void TryJoin(ITableEntityInfo joined)
+        //{
+        //    if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || MainTable.Type == joined.Type)
+        //    {
+        //        joined.Alias = (joined.Alias!.Replace('a', 'j'));
+        //    }
+        //}
 
         private string BuildFromString()
         {
-            if (SelectedTables.Count == 1 || Joins.Count > 0)
+            if (SelectedTables.Count == 1)
             {
                 return GetTableName(MainTable);
             }
@@ -201,7 +230,7 @@ namespace LightORM.Builder
         {
             //SubQuery?.ResolveExpressions();
             ResolveExpressions();
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             if (InsertInfo.HasValue)
             {
                 sb.AppendLine($"INSERT INTO {AttachEmphasis(InsertInfo.Value.TableName)}");
@@ -210,19 +239,19 @@ namespace LightORM.Builder
 
             if (TempViews.Count > 0)
             {
-                sb.Append("WITH ");
+                sb.Append("WITH");
                 foreach (var item in TempViews)
                 {
                     sb.Append(item.ToSqlString());
                     sb.Append(',');
                     DbParameters.TryAddDictionary(item.DbParameters);
                 }
-                sb.Remove(sb.Length - 1, 1);
+                sb.RemoveLast(1);
             }
             if (IsTemp)
             {
                 Level += 1;
-                sb.AppendLine($"{TempName} AS (");
+                sb.AppendLine($" {TempName} AS (");
             }
 
             if (GroupBy.Count > 0)
@@ -245,7 +274,7 @@ namespace LightORM.Builder
                 SubQuery.Level = Level + 1;
                 sb.AppendLine($"{Indent.Value}FROM (");
                 sb.Append(SubQuery.ToSqlString());
-                sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias!)}");
+                sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias)}");
                 DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
@@ -310,7 +339,10 @@ namespace LightORM.Builder
                     DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
                 }
             }
-
+            if (Level == 0)
+            {
+                return sb.Trim();
+            }
             return sb.ToString();
         }
     }

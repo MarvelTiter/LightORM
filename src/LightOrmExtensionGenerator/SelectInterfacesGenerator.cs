@@ -75,13 +75,11 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     IExpSelect<{{argsStr}}> Where(Expression<Func<TypeSet<{{argsStr}}>, bool>> exp);
 {{join}}
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default);
 
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default);
 
-    //IEnumerable<dynamic> ToDynamicList(Expression<Func<{{argsStr}}, object>> exp);
-    //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<{{argsStr}}, object>> exp);
     /// <summary>
     /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
@@ -89,6 +87,7 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     /// <param name="exp"></param>
     /// <returns></returns>
     IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp);
+
     /// <summary>
     /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
     /// </summary>
@@ -111,16 +110,14 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
-    //IEnumerable<dynamic> ToDynamicList(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
-    //Task<IList<dynamic>> ToDynamicListAsync(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>
+    /// 转换成<see cref="IExpSelect{TTable}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
-    /// <param name="exp"></param>
+    /// <param name="exp"></param>    
     /// <returns></returns>
     IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp);
     /// <summary>

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM.Providers
@@ -22,10 +23,11 @@ namespace LightORM.Providers
             return t;
         }
 
-        public override async Task<T1?> FirstAsync()
+        public override async Task<T1?> FirstAsync(CancellationToken cancellationToken = default)
         {
-            var t = await base.FirstAsync();
+            var t = await base.FirstAsync(cancellationToken);
             if (t != null)
+                // TODO async 版本
                 SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
             return t;
         }
@@ -37,9 +39,10 @@ namespace LightORM.Providers
             return result;
         }
 
-        public override async Task<IList<T1>> ToListAsync()
+        public override async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)
         {
-            var result = await base.ToListAsync();
+            var result = await base.ToListAsync(cancellationToken);
+            // TODO async 版本
             SqlBuilder.IncludeContext.BindIncludeDatas(Executor, result);
             return result;
         }

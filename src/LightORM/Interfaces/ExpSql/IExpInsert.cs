@@ -15,6 +15,6 @@ public interface IExpInsert<T>
     int Execute();
     //IExpInsert<T> NoParameter();
     IExpInsert<T> ReturnIdentity();
-    Task<int> ExecuteAsync();
+    Task<int> ExecuteAsync(CancellationToken cancellationToken = default);
     string ToSql();
 }

@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data.Common;
 
 namespace LightORM.Models;
 
-public class DataBaseOption
+public sealed class DataBaseOption(ISqlMethodResolver methodResolver): IDbOption
 {
-    public DataBaseOption(ISqlMethodResolver methodResolver)
-    {
-        MethodResolver = methodResolver;
-    }
     public string? DbKey { get; set; }
     public string? MasterConnectionString { get; set; }
     public string[]? SalveConnectionStrings { get; set; }
-    public ISqlMethodResolver MethodResolver { get; }
+    public ISqlMethodResolver MethodResolver { get; } = methodResolver;
+    public DbProviderFactory? NewFactory { get; set; }
+    public void OverrideDbProviderFactory(DbProviderFactory factory)
+    {
+        NewFactory = factory;
+    }
 }
