@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace LightORM;
+﻿namespace LightORM;
 
 internal static class SelectResultExtensions
 {
@@ -20,17 +18,17 @@ internal static class SelectResultExtensions
         return select.Executor.QuerySingle<TReturn>(sql, parameters);
     }
 
-    public static Task<IList<TReturn>> InternalToListAsync<TReturn>(this IExpSelect select, CancellationToken cancellationToken = default)
+    public static Task<IList<TReturn>> InternalToListAsync<TReturn>(this IExpSelect select)
     {
         var sql = select.SqlBuilder.ToSqlString();
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.QueryAsync<TReturn>(sql, parameters, cancellationToken: cancellationToken);
+        return select.Executor.QueryAsync<TReturn>(sql, parameters);
     }
-    public static Task<TReturn?> InternalSingleAsync<TReturn>(this IExpSelect select, CancellationToken cancellationToken = default)
+    public static Task<TReturn?> InternalSingleAsync<TReturn>(this IExpSelect select)
     {
         var sql = select.SqlBuilder.ToSqlString();
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.QuerySingleAsync<TReturn>(sql, parameters, cancellationToken: cancellationToken);
+        return select.Executor.QuerySingleAsync<TReturn>(sql, parameters);
     }
 }
 

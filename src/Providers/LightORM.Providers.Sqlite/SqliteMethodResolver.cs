@@ -114,33 +114,7 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
         }
         resolver.Sql.Append(')');
     }
-
-    public override void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        if (methodCall.IsWindowFn())
-        {
-            base.OrderBy(resolver, methodCall);
-        }
-        else
-        {
-            resolver.Visit(methodCall.Object);
-            resolver.ExpStores!.Add("OrderBy", methodCall.Arguments[0]);
-        }
-    }
-
-    public override void OrderByDesc(IExpressionResolver resolver, MethodCallExpression methodCall)
-    {
-        if (methodCall.IsWindowFn())
-        {
-            base.OrderByDesc(resolver, methodCall);
-        }
-        else
-        {
-            resolver.Visit(methodCall.Object);
-            resolver.ExpStores!.Add("OrderByDesc", methodCall.Arguments[0]);
-        }
-    }
-
+        
     public override void Value(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         if (methodCall.IsWindowFn())

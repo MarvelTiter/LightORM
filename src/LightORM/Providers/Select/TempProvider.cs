@@ -10,7 +10,7 @@ namespace LightORM.Providers.Select
     internal class TempProvider<TTemp> : IExpTemp<TTemp>
     {
         public string Id { get; } = $"{Guid.NewGuid():N}";
-        public TableInfo ResultTable { get; }
+        public ITableEntityInfo ResultTable { get; }
 
         public SelectBuilder SqlBuilder { get; }
 
@@ -19,9 +19,9 @@ namespace LightORM.Providers.Select
             SqlBuilder = builder;
             SqlBuilder.IsTemp = true;
             SqlBuilder.TempName = name;
-            ResultTable = TableInfo.Create<TTemp>();
-            ResultTable.TableEntityInfo.CustomName = name;
-            ResultTable.TableEntityInfo.IsTempTable = true;
+            ResultTable = TableContext.GetTableInfo<TTemp>();
+            ResultTable.CustomName = name;
+            ResultTable.IsTempTable = true;
         }
     }
 }

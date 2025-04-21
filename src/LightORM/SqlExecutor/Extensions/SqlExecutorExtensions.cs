@@ -4,7 +4,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM;
@@ -17,11 +16,7 @@ public static class SqlExecutorExtensions
     //    conn.ConnectionString = executor.Database.MasterConnectionString;
     //    return conn;
     //}
-    public static IEnumerable<T> Query<T>(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text)
+    public static IEnumerable<T> Query<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
         try
@@ -42,19 +37,11 @@ public static class SqlExecutorExtensions
             reader?.Close();
         }
     }
-    public static IEnumerable<dynamic> Query(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text)
+    public static IEnumerable<dynamic> Query(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         return Query<MapperRow>(self, sql, param, trans, commandType);
     }
-    public static T? QuerySingle<T>(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text)
+    public static T? QuerySingle<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
         try
@@ -77,13 +64,7 @@ public static class SqlExecutorExtensions
             reader?.Close();
         }
     }
-
-    public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text
-        , CancellationToken cancellationToken = default)
+    public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
         try
@@ -92,10 +73,10 @@ public static class SqlExecutorExtensions
             {
                 self.DbTransaction = trans;
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
-            List<T> list = [];
-            while (await reader.ReadAsync(cancellationToken))
+            List<T> list = new List<T>();
+            while (await reader.ReadAsync())
             {
                 list.Add((T)des.Invoke(reader));
             }
@@ -113,23 +94,12 @@ public static class SqlExecutorExtensions
 #endif
         }
     }
-
-    public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text
-        , CancellationToken cancellationToken = default)
+    public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
-        var list = await QueryAsync<MapperRow>(self, sql, param, trans, commandType,cancellationToken);
-        return [.. list.Cast<dynamic>()];
+        var list = await QueryAsync<MapperRow>(self, sql, param, trans, commandType);
+        return list.Cast<dynamic>().ToList();
     }
-    public static async Task<T?> QuerySingleAsync<T>(this ISqlExecutor self
-        , string sql
-        , object? param = null
-        , DbTransaction? trans = null
-        , CommandType commandType = CommandType.Text
-        , CancellationToken cancellationToken = default)
+    public static async Task<T?> QuerySingleAsync<T>(this ISqlExecutor self, string sql, object? param = null, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
     {
         DbDataReader? reader = null;
         try
@@ -138,10 +108,10 @@ public static class SqlExecutorExtensions
             {
                 self.DbTransaction = trans;
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
             T? result = default;
-            if (await reader.ReadAsync(cancellationToken))
+            if (await reader.ReadAsync())
             {
                 result = (T)des.Invoke(reader);
             }
@@ -208,4 +178,27 @@ public static class SqlExecutorExtensions
                 return new MapperRow(table, values);
             };
     }
+
+    //private static T? GetValue<T>(object? val)
+    //{
+    //    if (val is T t)
+    //    {
+    //        return t;
+    //    }
+    //    Type effectiveType = typeof(T);
+    //    if (val == null && (!effectiveType.IsValueType || Nullable.GetUnderlyingType(effectiveType) != null))
+    //    {
+    //        return default;
+    //    }
+
+    //    try
+    //    {
+    //        Type conversionType = Nullable.GetUnderlyingType(effectiveType) ?? effectiveType;
+    //        return (T)Convert.ChangeType(val, conversionType, CultureInfo.InvariantCulture);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return default;
+    //    }
+    //}
 }

@@ -330,6 +330,15 @@ internal class MapperRowMetaObject : DynamicMetaObject
     {
         if (HasValue && Value is IDictionary<string, object> lookup) return lookup.Keys;
         // return Array.Empty<string>();
-        return [];
+        return EmptyArray<string>.Value;
     }
+}
+
+/// <summary>
+/// 兼容 .Net40
+/// </summary>
+/// <typeparam name="T"></typeparam>
+internal static class EmptyArray<T>
+{
+    internal readonly static T[] Value = new T[0];
 }

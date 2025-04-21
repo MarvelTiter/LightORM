@@ -42,7 +42,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.InnerJoin);
@@ -52,7 +51,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.LeftJoin);
@@ -62,7 +60,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.RightJoin);
@@ -75,11 +72,11 @@ public static partial class SelectExtensions
         return select.InternalToList<MapperRow>();
     }
     
-    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
-        var list = await select.InternalToListAsync<MapperRow>(cancellationToken);
-        return [..list.Cast<dynamic>()];
+        var list = await select.InternalToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
     }
     
     public static DataTable ToDataTable<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
@@ -90,12 +87,12 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
     
-    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
         var sql = select.SqlBuilder.ToSqlString();
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
+        return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
 
     #region TypeSet
@@ -115,7 +112,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -126,7 +122,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -137,7 +132,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -152,12 +146,12 @@ public static partial class SelectExtensions
         return select.InternalToList<MapperRow>();
     }
     
-    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public static async Task<IList<dynamic>> ToDynamicListAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var list = await select.InternalToListAsync<MapperRow>(cancellationToken);
-        return [..list.Cast<dynamic>()];
+        var list = await select.InternalToListAsync<MapperRow>();
+        return list.Cast<dynamic>().ToList();
     }
     
     public static DataTable ToDataTable<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
@@ -169,13 +163,13 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
     
-    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
         var sql = select.SqlBuilder.ToSqlString();
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
+        return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
 
     #endregion

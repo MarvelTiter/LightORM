@@ -1,7 +1,6 @@
 ﻿using LightORM.Builder;
 using System.Data;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 #pragma warning disable CS0419
 namespace LightORM.Interfaces.ExpSql;
@@ -16,24 +15,24 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
 {
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
+    TSelect Where<TWhere>(Expression<Func<TWhere, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
-    //TSelect Where<TWhere>(Expression<Func<TWhere, bool>> exp);
-    //TSelect WhereIf<TWhere>(bool condition, Expression<Func<TWhere, bool>> exp);
+    TSelect WhereIf<TWhere>(bool condition, Expression<Func<TWhere, bool>> exp);
     //TSelect GroupBy<Another>(Expression<Func<Another, object>> exp);
     //TSelect GroupByIf<Another>(bool ifGroupby, Expression<Func<Another, bool>> exp);
     IEnumerable<T1> ToList();
     T1? First();
     DataTable ToDataTable();
-    Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default);
-    Task<T1?> FirstAsync(CancellationToken cancellationToken = default);
-    Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default);
-    Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
-    Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
-    Task<double> SumAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
-    Task<int> CountAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
-    Task<int> CountAsync(CancellationToken cancellationToken = default);
-    Task<double> AvgAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
-    Task<bool> AnyAsync(CancellationToken cancellationToken = default);
+    Task<IList<T1>> ToListAsync();
+    Task<T1?> FirstAsync();
+    Task<DataTable> ToDataTableAsync();
+    Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp);
+    Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp);
+    Task<double> SumAsync(Expression<Func<T1, object>> exp);
+    Task<int> CountAsync(Expression<Func<T1, object>> exp);
+    Task<int> CountAsync();
+    Task<double> AvgAsync(Expression<Func<T1, object>> exp);
+    Task<bool> AnyAsync();
     TSelect Paging(int pageIndex, int pageSize);
     TMember? Max<TMember>(Expression<Func<T1, TMember>> exp);
     TMember? Min<TMember>(Expression<Func<T1, TMember>> exp);
@@ -95,18 +94,18 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1> UnionAll(IExpSelect<T1> select);
     string ToSql(Expression<Func<T1, object>> exp);
     int Insert<TInsertTable>();
-    Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default);
+    Task<int> InsertAsync<TInsertTable>();
     int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
-    Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default);
-    int Insert(string tableName, string[] columns);
-    Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default);
+    Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
+    int Insert(string tableName, params string[] columns);
+    Task<int> InsertAsync(string tableName, params string[] columns);
 
     #region Result
 
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp);
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
     /// </summary>
@@ -118,7 +117,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     /// </summary>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
-    Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>();
     #endregion
 
     #region WithTemp
@@ -143,7 +142,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 public interface IExpTemp
 {
     string Id { get; }
-    TableInfo ResultTable { get; }
+    ITableEntityInfo ResultTable { get; }
     internal SelectBuilder SqlBuilder { get; }
 }
 
@@ -168,7 +167,7 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 
     //IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{TTable}"/>
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
@@ -186,9 +185,9 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 
     #region Result
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp);
 
     #endregion
 
@@ -213,9 +212,9 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, T2, TJoin>, bool>> where);
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, T2, TJoin>, bool>> where);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
     ///// <summary>
     ///// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
     ///// </summary>

@@ -51,7 +51,7 @@ internal static class TableContext
         Func<ITableColumnInfo, object, object?>? action = StaticContext?.GetGetMethod(type);
         if (action is not null)
         {
-            return action.Invoke(col, target);
+           return action.Invoke(col, target);
         }
         else
         {
@@ -120,7 +120,7 @@ internal static class TableContext
 
             var propertyInfos = type.GetProperties();
 
-            var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
+            var propertyColumnInfos = propertyInfos.SelectMany(p => ScanProperty(type, p));
             entityInfo.Columns = [.. propertyColumnInfos];
             if (entityInfo.IsAnonymousType)
             {
@@ -136,20 +136,20 @@ internal static class TableContext
         return entityInfoCache with { };
     }
 
-    private static IEnumerable<ITableColumnInfo> ScanProperty(PropertyInfo prop)
+    private static IEnumerable<ITableColumnInfo> ScanProperty(Type table, PropertyInfo prop)
     {
         if (prop.HasAttribute<LightFlatAttribute>())
         {
             var flatProps = prop.PropertyType.GetProperties();
             foreach (var item in flatProps)
             {
-                yield return new ColumnInfo(item, prop.PropertyType, false, true);
+                yield return new ColumnInfo(table, item, prop.PropertyType, false, true);
             }
-            yield return new ColumnInfo(prop, prop.PropertyType, true, false);
+            yield return new ColumnInfo(table, prop, prop.PropertyType, true, false);
         }
         else
         {
-            yield return new ColumnInfo(prop, null, false, false);
+            yield return new ColumnInfo(table, prop, null, false, false);
         }
     }
 }

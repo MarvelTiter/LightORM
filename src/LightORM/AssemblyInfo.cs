@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("InjectTest")]
 [assembly: InternalsVisibleTo("TestProject1")]
-[assembly: InternalsVisibleTo("LightORMTest")]
 [assembly: SelectExtension(ArgumentCount = 3)]
 [assembly: SelectExtension(ArgumentCount = 4)]
 [assembly: SelectExtension(ArgumentCount = 5)]

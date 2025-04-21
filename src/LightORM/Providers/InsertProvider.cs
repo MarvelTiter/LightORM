@@ -1,7 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM.Providers;
@@ -14,7 +13,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObject = entity;
     }
 
@@ -22,7 +21,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     {
         this.executor = executor;
         SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+        SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
         SqlBuilder.TargetObjects = entities;
         SqlBuilder.IsBatchInsert = true;
     }
@@ -68,7 +67,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         }
     }
 
-    public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteAsync()
     {
         var sql = SqlBuilder.ToSqlString();
         if (SqlBuilder.IsBatchInsert)
@@ -79,16 +78,16 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                 var effectRows = 0;
                 if (!isTran)
                 {
-                    await executor.BeginTranAsync(cancellationToken);
+                    executor.BeginTran();
                     isTran = true;
                 }
                 foreach (var item in SqlBuilder.BatchInfos!)
                 {
-                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
+                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters());
                 }
                 if (isTran)
                 {
-                    await executor.CommitTranAsync(cancellationToken);
+                    await executor.CommitTranAsync();
                 }
                 return effectRows;
             }
@@ -96,7 +95,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             {
                 if (isTran)
                 {
-                    await executor.RollbackTranAsync(cancellationToken);
+                    await executor.RollbackTranAsync();
                 }
                 throw;
             }
@@ -104,7 +103,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         else
         {
             var parameters = SqlBuilder.DbParameters;
-            return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken);
+            return await executor.ExecuteNonQueryAsync(sql, parameters);
         }
     }
 

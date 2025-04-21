@@ -52,7 +52,7 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
 
-    public static IExpSelect<T1> SelectField<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
+    public static IExpSelect<T1> Result<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;
@@ -68,7 +68,7 @@ public static partial class SelectExtensions
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
 
-    public static IExpSelect<T1, T2> SelectField<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static IExpSelect<T1, T2> Result<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;
@@ -88,7 +88,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.InnerJoin);
@@ -98,7 +97,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.LeftJoin);
@@ -108,7 +106,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
     {
         select.JoinHandle(on, TableLinkType.RightJoin);
@@ -125,7 +122,7 @@ public static partial class SelectExtensions
     {
         select.HandleResult(exp, null);
         var list = await select.InternalToListAsync<MapperRow>();
-        return [.. list.Cast<dynamic>()];
+        return list.Cast<dynamic>().ToList();
     }
 
     public static DataTable ToDataTable<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
@@ -160,7 +157,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -170,7 +166,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -180,7 +175,6 @@ public static partial class SelectExtensions
     /// <summary>
     /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
     /// </summary>
-    [Obsolete("多余的设计")]
     public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
     {
         var flatExp = FlatTypeSet.Default.Flat(on)!;
@@ -200,7 +194,7 @@ public static partial class SelectExtensions
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
         var list = await select.InternalToListAsync<MapperRow>();
-        return [.. list.Cast<dynamic>()];
+        return list.Cast<dynamic>().ToList();
     }
 
     public static DataTable ToDataTable<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)

@@ -1,4 +1,3 @@
-锘縰sing LightORM.Extension;
 using System.Linq;
 using System.Text;
 
@@ -15,12 +14,14 @@ internal record DeleteBuilder(DbBaseType type) : SqlBuilder(type)
     }
     public override string ToSqlString()
     {
-        //TODO 澶勭悊鎵归噺鍒犻櫎
+        //TODO 处理批量删除
         ResolveExpressions();
+        StringBuilder sql = new StringBuilder();
+        sql.AppendFormat("DELETE FROM {0}\n", GetTableName(MainTable, false));
         if (Where.Count == 0)
         {
             if (TargetObject is null) LightOrmException.Throw("Where Condition is null and not provider a entity value");
-            var primary = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
+            var primary = MainTable.Columns.Where(f => f.IsPrimaryKey).ToArray();
             if (primary.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
             var wheres = primary.Select(c =>
              {
@@ -29,10 +30,10 @@ internal record DeleteBuilder(DbBaseType type) : SqlBuilder(type)
              });
             Where.AddRange(wheres);
         }
-        StringBuilder sql = new("DELETE FROM ");
-        sql.AppendLine(GetTableName(MainTable, false));
-        sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
-        return sql.Trim();
+
+        sql.AppendFormat("WHERE {0}", string.Join("\nAND ", Where));
+
+        return sql.ToString();
     }
 
 

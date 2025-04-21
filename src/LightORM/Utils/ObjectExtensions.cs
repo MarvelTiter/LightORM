@@ -7,8 +7,6 @@ using System.Text;
 namespace LightORM.Utils;
 internal static class ColumnInfoExtensions
 {
-    public static ITableColumnInfo? GetColumn(this TableInfo ti, string columnName)
-        => GetColumn(ti.TableEntityInfo, columnName);
     public static ITableColumnInfo? GetColumn(this ITableEntityInfo entityInfo, string columnName)
     {
         for (int i = 0; i < entityInfo.Columns.Length; i++)

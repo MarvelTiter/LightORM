@@ -19,7 +19,7 @@ internal record JoinInfo
     /// </summary>
     public string? Where { get; set; }
     public string? ExpressionId { get; set; }
-    public TableInfo? EntityInfo { get; set; }
+    public ITableEntityInfo? EntityInfo { get; set; }
     public bool IsSubQuery { get; set; }
     public SelectBuilder? SubQuery { get; set; }
     

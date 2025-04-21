@@ -2,7 +2,6 @@
 using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM.Providers
@@ -10,13 +9,13 @@ namespace LightORM.Providers
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
         private readonly ISqlExecutor executor;
-        private readonly UpdateBuilder<T> SqlBuilder;
+        UpdateBuilder<T> SqlBuilder;
 
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
             SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.TargetObject = entity;
         }
 
@@ -24,7 +23,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             SqlBuilder.IsBatchUpdate = true;
             SqlBuilder.TargetObjects = entities;
         }
@@ -70,7 +69,7 @@ namespace LightORM.Providers
             }
         }
 
-        public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<int> ExecuteAsync()
         {
             var sql = SqlBuilder.ToSqlString();
             if (SqlBuilder.IsBatchUpdate)
@@ -81,16 +80,16 @@ namespace LightORM.Providers
                     var effectRows = 0;
                     if (!isTran)
                     {
-                        await executor.BeginTranAsync(cancellationToken);
+                        executor.BeginTran();
                         isTran = true;
                     }
                     foreach (var item in SqlBuilder.BatchInfos!)
                     {
-                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
+                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters());
                     }
                     if (isTran)
                     {
-                        await executor.CommitTranAsync(cancellationToken);
+                        await executor.CommitTranAsync();
                     }
                     return effectRows;
                 }
@@ -98,7 +97,7 @@ namespace LightORM.Providers
                 {
                     if (isTran)
                     {
-                        await executor.RollbackTranAsync(cancellationToken);
+                        await executor.RollbackTranAsync();
                     }
                     throw;
                 }
@@ -107,7 +106,7 @@ namespace LightORM.Providers
             else
             {
                 var dbParameters = SqlBuilder.DbParameters;
-                return await executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
+                return await executor.ExecuteNonQueryAsync(sql, dbParameters);
             }
         }
 

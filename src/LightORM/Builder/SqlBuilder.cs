@@ -1,4 +1,4 @@
-﻿using LightORM.Extension;
+using LightORM.Extension;
 using LightORM.Implements;
 
 namespace LightORM.Builder;
@@ -13,9 +13,11 @@ internal abstract record SqlBuilder : ISqlBuilder
     public DbBaseType DbType { get; set; }
 
     public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
-    public TableInfo MainTable => SelectedTables[0];
-    public List<TableInfo> SelectedTables { get; set; } = [];
-    public int SelectedTableCount => SelectedTables.Count;
+    public ITableEntityInfo MainTable => SelectedTables[0];
+    public List<ITableEntityInfo> SelectedTables { get; set; } = [];
+    public List<ITableEntityInfo> OtherTables { get; } = [];
+    protected Lazy<ITableEntityInfo[]>? tables;
+    public ITableEntityInfo[] AllTables => (tables ??= GetAllTables()).Value;
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -31,6 +33,10 @@ internal abstract record SqlBuilder : ISqlBuilder
         var dic = DbParameterReader.ReadToDictionary(sql, value);
         DbParameters.TryAddDictionary(dic);
     }
+    protected virtual Lazy<ITableEntityInfo[]> GetAllTables()
+    {
+        return new(() => [MainTable]);
+    }
     protected virtual void BeforeResolveExpressions(ResolveContext context)
     {
 
@@ -42,7 +48,7 @@ internal abstract record SqlBuilder : ISqlBuilder
         {
             return;
         }
-        ResolveCtx = new ResolveContext(DbHelper);
+        ResolveCtx ??= new ResolveContext(DbHelper, AllTables);
         BeforeResolveExpressions(ResolveCtx);
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
@@ -62,9 +68,9 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
     }
 
-    public string GetTableName(TableInfo ti, bool useAlias = true, bool useEmphasis = true)
+    public string GetTableName(ITableEntityInfo table, bool useAlias = true, bool useEmphasis = true)
     {
-        return $"{NpTableName(ti.TableEntityInfo)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {AttachEmphasis(ti.Alias)}" : "")}";
+        return $"{NpTableName(table)}{((useAlias && !string.IsNullOrEmpty(table.Alias)) ? $" {AttachEmphasis(table.Alias!)}" : "")}";
     }
 
     //TODO Oracle?

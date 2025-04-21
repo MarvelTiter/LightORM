@@ -14,7 +14,7 @@ public sealed class SqliteProvider : IDatabaseProvider
         SlaveConnectionStrings = slaves;
     }
     public DbBaseType DbBaseType => DbBaseType.Sqlite;
-    public DbProviderFactory DbProviderFactory { get; internal set; } = SQLiteFactory.Instance;
+    public DbProviderFactory DbProviderFactory { get; } = SQLiteFactory.Instance;
 
     public string MasterConnectionString { get; }
 
@@ -27,6 +27,6 @@ public sealed class SqliteProvider : IDatabaseProvider
     {
         throw new NotSupportedException();
     }
-
+    
 
 }

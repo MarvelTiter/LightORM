@@ -24,7 +24,7 @@ public sealed class MySqlProvider : IDatabaseProvider
 
     public string[] SlaveConnectionStrings { get; }
 
-    public DbProviderFactory DbProviderFactory { get; internal set; } = MySqlConnectorFactory.Instance;
+    public DbProviderFactory DbProviderFactory { get; } = MySqlConnectorFactory.Instance;
 
     public int BulkCopy(DataTable dataTable)
     {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using LightORM.Builder;
 using LightORM.ExpressionSql;
@@ -18,7 +17,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             sqlBuilder.TargetObject = entity;
         }
 
@@ -26,7 +25,7 @@ namespace LightORM.Providers
         {
             this.executor = executor;
             sqlBuilder = new DeleteBuilder(this.executor.Database.DbBaseType);
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T>());
             sqlBuilder.TargetObject = entities;
             sqlBuilder.IsDeleteList = true;
         }
@@ -38,11 +37,11 @@ namespace LightORM.Providers
             return executor.ExecuteNonQuery(sql, dbParameters);
         }
 
-        public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
+        public Task<int> ExecuteAsync()
         {
             var sql = sqlBuilder.ToSqlString();
             var dbParameters = sqlBuilder.DbParameters;
-            return executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
+            return executor.ExecuteNonQueryAsync(sql, dbParameters);
         }
 
         public string ToSql()

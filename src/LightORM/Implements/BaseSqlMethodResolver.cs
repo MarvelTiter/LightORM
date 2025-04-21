@@ -34,10 +34,10 @@ namespace LightORM.Implements
                 return;
             var formatString = expression.Arguments[0] as ConstantExpression;
             var args = expression.Arguments.Skip(1).Select(a => Expression.Lambda(a).Compile().DynamicInvoke());
-            var formatedValue = string.Format(formatString!.Value!.ToString()!, [..args]);
-            resolver.Sql.Append('\'');
+            var formatedValue = string.Format(formatString.Value.ToString(), [..args]);
+            resolver.Sql.Append("'");
             resolver.Sql.Append(formatedValue);            
-            resolver.Sql.Append('\'');
+            resolver.Sql.Append("'");
         }
 
         #region 子查询专用方法解析
@@ -104,7 +104,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine("(");
                 var sql = sel.SqlBuilder.ToSqlString();
                 resolver.Sql.Append(sql);
-                resolver.Sql.Append(')');
+                resolver.Sql.AppendLine(")");
                 return;
             }
 
@@ -221,7 +221,7 @@ namespace LightORM.Implements
                 resolver.Visit(methodCall.Arguments[0]);
                 resolver.Sql.Append(" THEN ");
                 resolver.Visit(methodCall.Arguments[1]);
-                resolver.Sql.Append(" ELSE 0 END)");
+                resolver.Sql.Append(" ElSE 0 END)");
             }
             else
             {
@@ -408,8 +408,7 @@ namespace LightORM.Implements
 
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
-            //resolver.Visit(methodCall.Arguments[1]);
-            resolver.NavigateWhereExpression = methodCall.Arguments[1];
+            resolver.Visit(methodCall.Arguments[1]);
         }
 
         #endregion
