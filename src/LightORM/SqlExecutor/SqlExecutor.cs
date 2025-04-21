@@ -142,47 +142,47 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
     }
 
 #if NET6_0_OR_GREATER
-    public async Task BeginTranAsync()
+    public async Task BeginTranAsync(CancellationToken cancellationToken = default)
     {
         if (connection.State != ConnectionState.Open)
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync(cancellationToken);
         }
-        DbTransaction ??= await connection.BeginTransactionAsync();
+        DbTransaction ??= await connection.BeginTransactionAsync(cancellationToken);
     }
 
-    public async Task CommitTranAsync()
+    public async Task CommitTranAsync(CancellationToken cancellationToken = default)
     {
         if (DbTransaction != null)
         {
-            await DbTransaction.CommitAsync();
+            await DbTransaction.CommitAsync(cancellationToken);
             DbTransaction = null;
         }
     }
 
-    public async Task RollbackTranAsync()
+    public async Task RollbackTranAsync(CancellationToken cancellationToken = default)
     {
         if (DbTransaction != null)
         {
-            await DbTransaction.RollbackAsync();
+            await DbTransaction.RollbackAsync(cancellationToken);
             DbTransaction = null;
         }
     }
 
 #else
-    public Task BeginTranAsync()
+    public Task BeginTranAsync(CancellationToken cancellationToken = default)
     {
         BeginTran();
         return Task.FromResult(true);
     }
 
-    public Task CommitTranAsync()
+    public Task CommitTranAsync(CancellationToken cancellationToken = default)
     {
         CommitTran();
         return Task.FromResult(true);
     }
 
-    public Task RollbackTranAsync()
+    public Task RollbackTranAsync(CancellationToken cancellationToken = default)
     {
         RollbackTran();
         return Task.FromResult(true);
@@ -273,7 +273,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         return new(command, conn, needToClose, needToReturn);
     }
 
-    private async Task<CommandResult> PrepareCommandAsync(CommandType commandType, string commandText, object? dbParameters)
+    private async Task<CommandResult> PrepareCommandAsync(CommandType commandType, string commandText, object? dbParameters, CancellationToken cancellationToken = default)
     {
         DbLog?.Invoke(commandText, dbParameters);
         bool isSelect = commandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) || commandText.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase);
@@ -289,7 +289,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         GetInit(command.GetType())?.Invoke(command);
         if (conn.State != ConnectionState.Open)
         {
-            await conn.OpenAsync();
+            await conn.OpenAsync(cancellationToken);
             needToClose = true;
         }
         if (!isSelect && DbTransaction != null)
@@ -398,12 +398,12 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         return ds;
     }
 
-    public async Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public async Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
-        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters, cancellationToken);
         try
         {
-            return await r.Command.ExecuteNonQueryAsync();
+            return await r.Command.ExecuteNonQueryAsync(cancellationToken);
         }
         finally
         {
@@ -411,12 +411,12 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
     }
 
-    public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
-        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters, cancellationToken);
         try
         {
-            var obj = await r.Command.ExecuteScalarAsync();
+            var obj = await r.Command.ExecuteScalarAsync(cancellationToken);
             if (obj is DBNull || obj is null)
             {
                 return default;
@@ -428,18 +428,18 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             await TryCloseAsync(r);
         }
     }
-    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
         try
         {
             if (r.NeedToClose)
             {
-                return await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+                return await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken);
             }
             else
             {
-                return await r.Command.ExecuteReaderAsync();
+                return await r.Command.ExecuteReaderAsync(cancellationToken);
             }
         }
         finally
@@ -453,11 +453,11 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
     }
 
-    public async Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public async Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataSet();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters, cancellationToken);
         try
         {
             adapter!.SelectCommand = r.Command;
@@ -470,11 +470,11 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         return ds;
     }
 
-    public async Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public async Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataTable();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters, cancellationToken);
         try
         {
             adapter!.SelectCommand = r.Command;
@@ -581,9 +581,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             if (disposing)
             {
-#if DEBUG
-                Console.WriteLine("SqlExecutor disposing.........");
-#endif
+                Debug.WriteLine("SqlExecutor disposing.........");
                 DbTransaction?.Rollback();
                 DbTransaction = null;
                 pool.Dispose();

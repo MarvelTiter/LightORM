@@ -7,7 +7,7 @@ namespace LightORM.Builder;
 internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
 {
     public new T? TargetObject { get; set; }
-    public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
+    public IEnumerable<T> TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     public List<string> IgnoreMembers { get; set; } = [];
     public bool IsReturnIdentity { get; set; }
@@ -34,18 +34,18 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
 
         if (Members.Count == 0)
         {
-            Members.AddRange(MainTable.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
-        var insertColumns = MainTable.Columns
+        var insertColumns = MainTable.TableEntityInfo.Columns
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var insert = $"INSERT INTO {GetTableName(MainTable, false)} \n({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) \nVALUES \n";
+        var insert = $"INSERT INTO {GetTableName(MainTable, false)} {N}({string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}) {N}VALUES {N}";
         foreach (var item in BatchInfos)
         {
-            StringBuilder sb = new StringBuilder(insert);
-            List<string> values = new List<string>();
+            StringBuilder sb = new(insert);
+            List<string> values = [];
             foreach (var dic in item.Parameters)
             {
                 var rowValues = dic.Select(c =>
@@ -63,7 +63,7 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
                  });
                 values.Add($"({string.Join(", ", rowValues)})");
             }
-            sb.AppendLine($"{string.Join(",\n", values)}");
+            sb.AppendLine($"{string.Join($", {N}", values)}");
             item.Sql = sb.ToString();
         }
         batchDone = true;
@@ -81,12 +81,11 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
 
         if (TargetObject == null) LightOrmException.Throw("insert null entity");
         ResolveExpressions();
-        StringBuilder sb = new StringBuilder();
         if (Members.Count == 0)
         {
-            Members.AddRange(MainTable.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
-        var insertColumns = MainTable.Columns
+        var insertColumns = MainTable.TableEntityInfo.Columns
             .Where(c => c.GetValue(TargetObject!) != null)
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
@@ -95,10 +94,20 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
             var val = item.GetValue(TargetObject!);
             DbParameters.Add(item.PropertyName, val!);
         }
-        sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"
-            , GetTableName(MainTable, false)
-            , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
-            , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName))));
+        StringBuilder sb = new("INSERT INTO");
+        sb.AppendLine($" {GetTableName(MainTable, false)} ");
+        sb.Append('(');
+        sb.Append($"{string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))}");
+        sb.AppendLine(")");
+        sb.AppendLine("VALUES");
+        sb.Append('(');
+        sb.Append($"{string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName)))}");
+        sb.AppendLine(")");
+
+        //sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"
+        //    , GetTableName(MainTable, false)
+        //    , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
+        //    , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName))));
 
         if (IsReturnIdentity)
         {
@@ -106,6 +115,6 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
             sb.Append(DbHelper.ReturnIdentitySql());
         }
 
-        return sb.ToString();
+        return sb.Trim();
     }
 }

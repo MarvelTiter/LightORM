@@ -58,7 +58,7 @@ namespace LightORM.Providers
             // TODO 没想好怎么写
             return this;
         }
-        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
+        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);

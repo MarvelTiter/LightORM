@@ -4,6 +4,7 @@ using System.Text;
 using System.Collections;
 using System.Diagnostics;
 using System.Xml.Linq;
+using System.Linq.Expressions;
 namespace LightORM;
 
 internal static class ExpressionExtensions
@@ -17,10 +18,11 @@ internal static class ExpressionExtensions
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
-            UsedTables = resolve.UsedTables,
+            //UsedTables = resolve.UsedTables,
             UseNavigate = resolve.UseNavigate,
             NavigateDeep = resolve.NavigateDeep,
             NavigateMembers = resolve.NavigateMembers,
+            NavigateWhereExpression = resolve.NavigateWhereExpression
         };
     }
 
@@ -56,10 +58,11 @@ public interface IExpressionResolver
     StringBuilder Sql { get; }
     Dictionary<string, object> DbParameters { get; }
     SqlResolveOptions Options { get; }
+    Expression? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
 }
 
-public class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
+internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
     public ResolveContext Context { get; } = context;
@@ -67,19 +70,20 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
-    public List<ITableEntityInfo> UsedTables { get; set; } = [];
+    //public List<TableInfo> UsedTables { get; set; } = [];
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     public int Level => Context.Level;
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
+    public Expression? NavigateWhereExpression { get; set; }
 
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Visit(Expression? expression)
     {
-        Debug.WriteLine($"Current Expression: {expression}");
+        //Debug.Write($"");
         return expression switch
         {
             LambdaExpression => Visit(VisitLambda((LambdaExpression)expression)),
@@ -116,16 +120,20 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
     bool isVisitConvert;
     Expression? VisitLambda(LambdaExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
         bodyExpression = exp.Body;
-        foreach (var item in exp.Parameters)
+        //Context.Tables.Clear();
+        for (int i = 0; i < exp.Parameters.Count; i++)
         {
-            Context?.AddSelectedTable(item);
+            ParameterExpression? item = exp.Parameters[i];
+            Context.HandleParameterExpression(item, i);
         }
         return bodyExpression;
     }
 
     Expression? VisitBinary(BinaryExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
@@ -158,7 +166,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitConditional(ConditionalExpression exp)
     {
-        //exp.
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ConditionalExpression: {exp}");
         Sql.Append("CASE WHEN ");
         Visit(exp.Test);
         Sql.Append(" THEN ");
@@ -171,6 +179,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
         Members.Clear();
         if (exp.Method.Name.Equals("get_Item") && (exp.Method.DeclaringType?.FullName?.StartsWith("System.Collections.Generic") ?? false))
         {
@@ -197,6 +206,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitNewArray(NewArrayExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: NewArrayExpression: {exp}");
         for (int i = 0; i < exp.Expressions.Count; i++)
         {
             Visit(exp.Expressions[i]);
@@ -208,6 +218,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitNew(NewExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: NewExpression: {exp}");
         for (int i = 0; i < exp.Arguments.Count; i++)
         {
             var member = exp.Members![i];
@@ -233,7 +244,8 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                         if (parent is ParameterExpression p)
                         {
                             //创建匿名类型的来源映射
-                            Context.CreateAnonymousMap(exp.Type, p.Type, member.Name, e.Member.Name);
+                            //Debug.WriteLine($"创建匿名类型的来源映射: {p.Name}");
+                            Context.CreateAnonymousMap(exp.Type, p, member.Name, e.Member.Name);
                             //if (!p.Type.IsAnonymous())
                             //{
                             // member 是从 p.Type中来的
@@ -278,6 +290,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitUnary(UnaryExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: UnaryExpression: {exp}");
         IsNot = exp.NodeType == ExpressionType.Not;
         isVisitConvert = exp.NodeType == ExpressionType.Convert;
         Visit(exp.Operand);
@@ -286,9 +299,10 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitParameter(ParameterExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ParameterExpression: {exp}");
         if (Options.SqlType == SqlPartial.Select)
         {
-            var alias = Context.GetTable(exp.Type).Alias;
+            var alias = Context.GetTable(exp).Alias;
             Sql.Append($"{Database.AttachEmphasis(alias!)}.*");
             UseAs = false;
             //foreach (var item in alias.Columns)
@@ -303,14 +317,14 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
         }
         else if (Options.SqlAction == SqlAction.Insert)
         {
-            var table = Context.GetTable(exp.Type);
-            foreach (var item in table.Columns)
+            var table = Context.GetTable(exp);
+            foreach (var item in table.TableEntityInfo.Columns)
             {
                 var prop = Expression.Property(exp, item.PropertyName);
                 Visit(prop);
                 Sql.Append(", ");
             }
-            Sql.Remove(Sql.Length - 2, 2);
+            Sql.RemoveLast(2);
         }
         else
         {
@@ -318,11 +332,11 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
             {
                 isVisitConvert = false;
                 var member = Members.Pop();
-                var table = Context.GetTable(member.DeclaringType!);
+                var table = Context.GetTable(exp);
                 var col = table.GetColumn(member.Name)!;
                 if (Options.RequiredTableAlias)
                 {
-                    Sql.Append($"{Database.AttachEmphasis(table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append($"{Database.AttachEmphasis(table.Alias)}.{Database.AttachEmphasis(col.ColumnName)}");
                 }
                 else
                 {
@@ -336,6 +350,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitMemberInit(MemberInitExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MemberInitExpression: {exp}");
         for (int i = 0; i < exp.Bindings.Count; i++)
         {
             if (exp.Bindings[i].BindingType != MemberBindingType.Assignment)
@@ -364,27 +379,33 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitMember(MemberExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MemberExpression: {exp}");
         if (bodyExpression?.NodeType == ExpressionType.MemberAccess)
         {
             ResolvedMembers.Add(exp.Member.Name);
         }
         if (exp.Expression?.NodeType == ExpressionType.Parameter)
         {
-            var type = exp.Type;
-            var parent = exp.Expression as ParameterExpression;
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                type = type.GetGenericArguments()[0];
-            }
-            //if (Options.SqlType == SqlPartial.Select && exp.Expression is ParameterExpression p)
+            //var eType = exp.Type;
+            //if (eType.IsGenericType && eType.GetGenericTypeDefinition() == typeof(Nullable<>))
             //{
-            //    //UsedTables.Add(Context.GetTable(p.Type));
+            //    eType = eType.GetGenericArguments()[0];
             //}
-            var memberType = exp.Member!.DeclaringType!;
+
+            var paramExp = exp.Expression as ParameterExpression;
+            var pType = paramExp?.Type;
+            if (pType.IsAnonymous() == true)
+            {
+                if (Context.TryGetAnonymousInfo(paramExp, exp.Member.Name, out var i))
+                {
+                    paramExp = i!.ParameterExp;
+                }
+            }
+            //var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
-            var table = Context.GetTable(memberType);
-            var col = table.Columns.First(c => c.PropertyName == name);
-            if (col.IsNavigate)
+            var table = Context.GetTable(paramExp!);
+            var col = table.GetColumn(name)!;
+            if (col.IsNavigate == true)
             {
                 UseNavigate = true;
                 NavigateMembers.Add(col.PropertyName);
@@ -397,24 +418,16 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
                     return null;
                 }
             }
+            // TODO 表达式扁平化处理后，只有聚合属性才有 p.XXX.XXX ?
             if (Members.Count > 0)
             {
-                // g.Group.Property
-                var member = Members.Pop();
-                // 如果是聚合的属性，该字段的所属表就是exp.Member.DeclaringType，否则走下面的逻辑
-                if (!col.IsAggregated)
-                    memberType = member.DeclaringType!;
-                name = member.Name;
-
-                if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
+                if (col.IsAggregated)
                 {
-                    memberType = m!.DeclaringType!;
-                    name = m.Name;
+                    name = Members.Pop().Name;
+                    col = table.GetColumnInfo(name);
                 }
-                table = Context.GetTable(memberType);
-                col = table.Columns.First(c => c.PropertyName == name);
             }
-            if (!table.IsAnonymousType)
+            if (!table.TableEntityInfo.IsAnonymousType)
             {
                 UseAs = col.ColumnName != col.PropertyName;
             }
@@ -435,6 +448,7 @@ public class ExpressionResolver(SqlResolveOptions options, ResolveContext contex
 
     Expression? VisitConstant(ConstantExpression exp)
     {
+        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ConstantExpression: {exp}");
         var value = exp.Value;
         if (Members.Count > 0 && value != null)
         {

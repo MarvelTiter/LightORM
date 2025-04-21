@@ -1,5 +1,7 @@
 ﻿
 
+using System.Threading;
+
 namespace LightORM.Providers.Select;
 
 internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
@@ -27,11 +29,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         this.WhereHandle(exp);
         return (this as TSelect)!;
     }
-    public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
-    {
-        this.WhereHandle(exp);
-        return (this as TSelect)!;
-    }
+    
 
     public TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp)
     {
@@ -41,12 +39,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
-
-    public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
-    {
-        if (condition) this.WhereHandle(exp);
-        return (this as TSelect)!;
-    }
+    //public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
+    //{
+    //    this.WhereHandle(exp);
+    //    return (this as TSelect)!;
+    //}
+    //public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
+    //{
+    //    if (condition) this.WhereHandle(exp);
+    //    return (this as TSelect)!;
+    //}
 
     public TSelect WithParameters(object parameters)
     {
@@ -186,70 +188,70 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public virtual async Task<T1?> FirstAsync()
+    public virtual async Task<T1?> FirstAsync(CancellationToken cancellationToken = default)
     {
         Expression<Func<T1, T1>> exp = t => t;
         this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QuerySingleAsync<T1>(sql, parameters);
+        return await Executor.QuerySingleAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
 
-    public virtual async Task<IList<T1>> ToListAsync()
+    public virtual async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)
     {
         Expression<Func<T1, T1>> exp = t => t;
         this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QueryAsync<T1>(sql, parameters);
+        return await Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
 
-    public Task<DataTable> ToDataTableAsync()
+    public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
     {
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return Executor.ExecuteDataTableAsync(sql, parameters);
+        return Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
 
-    public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp)
+    public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.InternalSingleAsync<TMember>();
+        return this.InternalSingleAsync<TMember>(cancellationToken);
     }
 
-    public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp)
+    public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.InternalSingleAsync<TMember>();
+        return this.InternalSingleAsync<TMember>(cancellationToken);
     }
 
-    public Task<double> SumAsync(Expression<Func<T1, object>> exp)
+    public Task<double> SumAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.InternalSingleAsync<double>();
+        return this.InternalSingleAsync<double>(cancellationToken);
     }
 
-    public Task<int> CountAsync(Expression<Func<T1, object>> exp)
+    public Task<int> CountAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.InternalSingleAsync<int>();
+        return this.InternalSingleAsync<int>(cancellationToken);
     }
 
-    public Task<int> CountAsync()
+    public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.InternalSingleAsync<int>();
+        return this.InternalSingleAsync<int>(cancellationToken);
     }
 
-    public Task<double> AvgAsync(Expression<Func<T1, object>> exp)
+    public Task<double> AvgAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.InternalSingleAsync<double>();
+        return this.InternalSingleAsync<double>(cancellationToken);
     }
 
-    public async Task<bool> AnyAsync()
+    public async Task<bool> AnyAsync(CancellationToken cancellationToken = default)
     {
-        var c = await CountAsync();
+        var c = await CountAsync(cancellationToken);
         return c > 0;
     }
 

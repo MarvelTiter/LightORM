@@ -36,3 +36,27 @@ public static class MethodCallExtensions
         return sel;
     }
 }
+
+public static class ExpressionExtensions
+{
+    public static bool TryGetLambdaExpression(this Expression? expression, out LambdaExpression? result)
+    {
+        if (expression is null)
+        {
+            result = null;
+            return false;
+        }
+        if (expression is  LambdaExpression lambdaExpression)
+        {
+            result = lambdaExpression;
+            return true;
+        }
+        if (expression is UnaryExpression u && u.Operand is LambdaExpression l)
+        {
+            result = l; 
+            return true;
+        }
+        result = null;
+        return false;
+    }
+}

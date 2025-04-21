@@ -91,9 +91,9 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsAggregatedProperty = isAggregaredProp;
     }
 
-    public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
+    public ColumnInfo(PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
     {
-        TableType = owner;
+        TableType = property.DeclaringType!;
         PropertyName = property.Name;
         //Property = property;
         //PropertyType = property.PropertyType;

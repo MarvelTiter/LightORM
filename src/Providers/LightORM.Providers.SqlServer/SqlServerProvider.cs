@@ -44,7 +44,7 @@ public sealed class SqlServerProvider : IDatabaseProvider
 
     public string[] SlaveConnectionStrings { get; }
 
-    public DbProviderFactory DbProviderFactory { get; } = SqlClientFactory.Instance;
+    public DbProviderFactory DbProviderFactory { get; internal set; } = SqlClientFactory.Instance;
     
     public int BulkCopy(DataTable dataTable)
     {
