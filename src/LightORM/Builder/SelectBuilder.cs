@@ -61,7 +61,7 @@ namespace LightORM.Builder
         //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         //}
 
-        private IEnumerable<TableInfo> AllTables()
+        public IEnumerable<TableInfo> AllTables()
         {
             foreach (var item in SelectedTables)
             {
@@ -239,7 +239,7 @@ namespace LightORM.Builder
 
             if (TempViews.Count > 0)
             {
-                sb.Append("WITH ");
+                sb.Append("WITH");
                 foreach (var item in TempViews)
                 {
                     sb.Append(item.ToSqlString());
@@ -251,7 +251,7 @@ namespace LightORM.Builder
             if (IsTemp)
             {
                 Level += 1;
-                sb.AppendLine($"{TempName} AS (");
+                sb.AppendLine($" {TempName} AS (");
             }
 
             if (GroupBy.Count > 0)

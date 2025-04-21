@@ -34,10 +34,10 @@ namespace LightORM.Implements
                 return;
             var formatString = expression.Arguments[0] as ConstantExpression;
             var args = expression.Arguments.Skip(1).Select(a => Expression.Lambda(a).Compile().DynamicInvoke());
-            var formatedValue = string.Format(formatString.Value.ToString(), [..args]);
-            resolver.Sql.Append("'");
+            var formatedValue = string.Format(formatString!.Value!.ToString()!, [..args]);
+            resolver.Sql.Append('\'');
             resolver.Sql.Append(formatedValue);            
-            resolver.Sql.Append("'");
+            resolver.Sql.Append('\'');
         }
 
         #region 子查询专用方法解析
@@ -104,7 +104,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine("(");
                 var sql = sel.SqlBuilder.ToSqlString();
                 resolver.Sql.Append(sql);
-                resolver.Sql.AppendLine(")");
+                resolver.Sql.Append(')');
                 return;
             }
 

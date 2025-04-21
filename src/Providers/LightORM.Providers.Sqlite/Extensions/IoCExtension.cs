@@ -18,9 +18,13 @@ public static class IoCExtension
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
-            throw new ArgumentNullException("连接字符串不能为空");
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
         var provider = SqliteProvider.Create(dbOption.MasterConnectionString!, dbOption.SalveConnectionStrings ?? []);
+        if (dbOption.NewFactory is not null)
+        {
+            provider.DbProviderFactory = dbOption.NewFactory;
+        }
         options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.Sqlite, provider);
     }
 }

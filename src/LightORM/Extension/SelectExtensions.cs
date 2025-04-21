@@ -52,7 +52,7 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
 
-    public static IExpSelect<T1> Result<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
+    public static IExpSelect<T1> SelectField<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;
@@ -68,7 +68,7 @@ public static partial class SelectExtensions
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
 
-    public static IExpSelect<T1, T2> Result<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static IExpSelect<T1, T2> SelectField<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;

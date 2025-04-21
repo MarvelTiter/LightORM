@@ -16,9 +16,6 @@ internal abstract record SqlBuilder : ISqlBuilder
     public TableInfo MainTable => SelectedTables[0];
     public List<TableInfo> SelectedTables { get; set; } = [];
     public int SelectedTableCount => SelectedTables.Count;
-    //public List<ITableEntityInfo> OtherTables { get; } = [];
-    //protected Lazy<ITableEntityInfo[]>? tables;
-    //public ITableEntityInfo[] AllTables => (tables ??= GetAllTables()).Value;
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
@@ -34,10 +31,6 @@ internal abstract record SqlBuilder : ISqlBuilder
         var dic = DbParameterReader.ReadToDictionary(sql, value);
         DbParameters.TryAddDictionary(dic);
     }
-    //protected virtual Lazy<TableInfo[]> GetAllTables()
-    //{
-    //    return new(() => [MainTable]);
-    //}
     protected virtual void BeforeResolveExpressions(ResolveContext context)
     {
 

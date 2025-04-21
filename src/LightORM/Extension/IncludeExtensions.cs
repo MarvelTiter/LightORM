@@ -7,21 +7,35 @@ public static class IncludeExtensions
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
-        var option = SqlResolveOptions.Select;
-        //option.DbType = include.SqlBuilder.DbType;
-        var result = exp.Resolve(option, ResolveContext.Create(include.Executor.Database.DbBaseType));
-        var parentTable = TableInfo.Create<TElement>();
-        var navCol = parentTable.GetColumnInfo(result.NavigateMembers!.First());
+        //var option = SqlResolveOptions.Select;
+        //var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
+        string? includePropertyName = null;
+        Expression? includeWhereExpression = null;
+        if (exp is MemberExpression m)
+        {
+            includePropertyName = m.Member.Name;
+        }
+        else if (exp is MethodCallExpression mc)
+        {
+            var member = mc.Arguments[0] as MemberExpression;
+            includePropertyName = member?.Member.Name;
+            if (mc.Arguments.Count > 1)
+            {
+                includeWhereExpression = mc.Arguments[1];
+            }
+        }
+        LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
+        var navCol = include.SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
-        var table = TableInfo.Create(navInfo.NavigateType);
-        var parentWhereColumn = parentTable.GetColumnInfo(navInfo.MainName!);
+        //var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
+        var parentWhereColumn = include.SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
         var includeInfo = new IncludeInfo
         {
-            SelectedTable = table,
             NavigateInfo = navInfo,
             ParentNavigateColumn = navCol,
             ParentWhereColumn = parentWhereColumn,
-            ExpressionResolvedResult = result
+            ParentTable = include.SqlBuilder.MainTable,
+            IncludeWhereExpression = includeWhereExpression
         };
         include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext(include.Executor.Database.DbBaseType);
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);

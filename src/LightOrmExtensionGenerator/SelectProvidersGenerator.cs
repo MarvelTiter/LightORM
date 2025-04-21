@@ -192,10 +192,10 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp, string? alias = null)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<{{argsStr}}, TTemp>> exp)
     {
@@ -271,11 +271,11 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp, string? alias = null)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
     {

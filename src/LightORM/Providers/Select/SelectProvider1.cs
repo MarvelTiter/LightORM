@@ -142,19 +142,16 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
             }
         }
         LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
-        // TODO 修复Include
         var navCol = SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
-        var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
         var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
         var includeInfo = new IncludeInfo
         {
-            SelectedTable = table,
             NavigateInfo = navInfo,
             ParentNavigateColumn = navCol,
             ParentWhereColumn = parentWhereColumn,
             ParentTable = SqlBuilder.MainTable,
-            //ExpressionResolvedResult = result
+            IncludeWhereExpression = includeWhereExpression
         };
         SqlBuilder.IncludeContext.Includes.Add(includeInfo);
 
@@ -174,10 +171,10 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new TempProvider<TTemp>(name, SqlBuilder);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp, string? alias = null)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
 
     #region Result

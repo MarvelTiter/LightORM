@@ -22,7 +22,7 @@ public sealed class OracleProvider : IDatabaseProvider
 
     public string[] SlaveConnectionStrings { get; }
 
-    public DbProviderFactory DbProviderFactory { get; } = OracleClientFactory.Instance;
+    public DbProviderFactory DbProviderFactory { get; internal set; } = OracleClientFactory.Instance;
 
     public int BulkCopy(DataTable dataTable)
     {

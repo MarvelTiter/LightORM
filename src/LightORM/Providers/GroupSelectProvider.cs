@@ -62,7 +62,7 @@ namespace LightORM.Providers
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
             this.HandleResult(flatExp, null);
-            return new SelectProvider1<TTemp>(Executor, SqlBuilder).AsSubQuery(alias);
+            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
         }
 
         //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)

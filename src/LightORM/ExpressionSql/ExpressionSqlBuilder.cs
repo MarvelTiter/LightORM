@@ -24,28 +24,23 @@ public class ExpressionSqlOptions
     public ExpressionSqlOptions SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
         var k = key ?? ConstString.Main;
-        if (StaticCache<IDatabaseProvider>.HasKey(k))
+        if (!StaticCache<IDatabaseProvider>.HasKey(k))
         {
-#if DEBUG
-            return this;
-#else
-            LightOrmException.Throw($"SetDatabase 设置了重复的Key => {key}");
-#endif
+            StaticCache<IDatabaseProvider>.GetOrAdd(k, () => provider);
+            //LightOrmException.Throw($"SetDatabase 设置了重复的Key => {key}");
         }
-        //var info = new DbConnectInfo(dbBaseType, provider);
-        _ = StaticCache<IDatabaseProvider>.GetOrAdd(k, () => provider);
         //_ = StaticCache<IDatabaseProvider>.GetOrAdd()
         if (!StaticCache<ICustomDatabase>.HasKey(dbBaseType.Name))
         {
             StaticCache<ICustomDatabase>.GetOrAdd(dbBaseType.Name, () => provider.CustomDatabase);
         }
-        if (!StaticCache<DbHandlerRecord>.HasKey(dbBaseType.Name))
+        if (!StaticCache<DbHandlerRecord>.HasKey(k))
         {
-            StaticCache<DbHandlerRecord>.GetOrAdd(dbBaseType.Name, () => new DbHandlerRecord(provider.TableHandler));
+            StaticCache<DbHandlerRecord>.GetOrAdd(k, () => new DbHandlerRecord(provider.TableHandler));
         }
         return this;
     }
-    
+
     public ExpressionSqlOptions SetDatabase(DbBaseType dbBaseType, IDatabaseProvider provider) => SetDatabase(null, dbBaseType, provider);
 
     public ExpressionSqlOptions SetTableContext(ITableContext context)

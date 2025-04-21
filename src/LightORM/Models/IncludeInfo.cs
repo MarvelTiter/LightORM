@@ -24,11 +24,12 @@ internal class IncludeInfo
     {
 
     }
-    public TableInfo? SelectedTable { get; set; }
+    //public TableInfo? SelectedTable { get; set; }
     public NavigateInfo? NavigateInfo { get; set; }
     public ITableColumnInfo? ParentNavigateColumn { get; set; }
     public ITableColumnInfo? ParentWhereColumn { get; set; }
     public TableInfo? ParentTable { get; set; }
-    public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
+    //public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
+    public Expression? IncludeWhereExpression { get; set; }
     //public SelectBuilder? SqlBuilder { get; set; }
 }

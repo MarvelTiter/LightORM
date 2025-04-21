@@ -81,13 +81,12 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// 转换成<see cref="IExpSelect{T1}"/>, 并调用<see cref="IExpSelect{TTable}.AsSubQuery(string?)"/>转为子查询
+    /// 转换成<see cref="IExpSelect{T1}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
-    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp, string? alias = null);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp);
 
     /// <summary>
     /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
@@ -115,13 +114,12 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default);
     /// <summary>
-    /// 转换成<see cref="IExpSelect{TTable}"/>, 并调用<see cref="IExpSelect{TTable}.AsSubQuery(string?)"/>转为子查询
+    /// 转换成<see cref="IExpSelect{TTable}"/>
     /// </summary>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>    
-    /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp, string? alias = null);
+    IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp);
     /// <summary>
     /// 转换成WITH查询，用于<see cref="WithTempQuery"/>
     /// </summary>

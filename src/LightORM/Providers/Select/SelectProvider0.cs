@@ -29,11 +29,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         this.WhereHandle(exp);
         return (this as TSelect)!;
     }
-    public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
-    {
-        this.WhereHandle(exp);
-        return (this as TSelect)!;
-    }
+    
 
     public TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp)
     {
@@ -43,12 +39,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
-
-    public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
-    {
-        if (condition) this.WhereHandle(exp);
-        return (this as TSelect)!;
-    }
+    //public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
+    //{
+    //    this.WhereHandle(exp);
+    //    return (this as TSelect)!;
+    //}
+    //public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
+    //{
+    //    if (condition) this.WhereHandle(exp);
+    //    return (this as TSelect)!;
+    //}
 
     public TSelect WithParameters(object parameters)
     {

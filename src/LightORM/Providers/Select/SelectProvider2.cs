@@ -101,10 +101,10 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     //    return this.HandleSubQuery<TTemp>(alias);
     //}
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp, string? alias = null)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, T2, TTable>> exp)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, T2, TTemp>> exp)
@@ -247,11 +247,11 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     //    return this.HandleSubQuery<TTemp>(alias);
     //}
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp, string? alias = null)
+    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<T1, T2>, TTable>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder).AsSubQuery(alias);
+        return new SelectProvider1<TTable>(Executor, SqlBuilder);
     }
 
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<T1, T2>, TTemp>> exp)

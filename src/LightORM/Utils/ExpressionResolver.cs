@@ -418,25 +418,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     return null;
                 }
             }
+            // TODO 表达式扁平化处理后，只有聚合属性才有 p.XXX.XXX ?
             if (Members.Count > 0)
             {
-                //// g.Group.Property
-                //var member = Members.Pop();
-                //// 如果是聚合的属性，该字段的所属表就是exp.Member.DeclaringType，否则走下面的逻辑
                 if (col.IsAggregated)
                 {
-
+                    name = Members.Pop().Name;
+                    col = table.GetColumnInfo(name);
                 }
-                //    memberType = member.DeclaringType!;
-                //name = member.Name;
-
-                //if (memberType.IsAnonymous() && Context.GetAnonymousInfo(memberType, name, out var m))
-                //{
-                //    memberType = m!.DeclaringType!;
-                //    name = m.Name;
-                //}
-                //table = Context.GetTable(paramExp!);
-                //col = table.GetColumn(name)!;
             }
             if (!table.TableEntityInfo.IsAnonymousType)
             {
