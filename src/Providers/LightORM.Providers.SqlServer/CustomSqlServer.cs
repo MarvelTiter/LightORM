@@ -23,7 +23,7 @@ public sealed class CustomSqlServer(SqlServerVersion version) : CustomDatabase(n
             var orderByType = "";
             if (builder.OrderBy.Count == 0)
             {
-                var col = builder.MainTable.Columns.First(c => c.IsPrimaryKey);
+                var col = builder.MainTable.TableEntityInfo.Columns.First(c => c.IsPrimaryKey);
                 orderByString = $"Sub.{col.ColumnName}";
                 orderByType = " ASC";
             }
