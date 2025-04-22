@@ -13,11 +13,11 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `CategoryId` = @CategoryId
-            `ProductCode` = @ProductCode
-            `ProductName` = @ProductName
-            `DeleteMark` = @DeleteMark
-            `CreateTime` = @CreateTime
+            `CategoryId` = @CategoryId,
+            `ProductCode` = @ProductCode,
+            `ProductName` = @ProductName,
+            `DeleteMark` = @DeleteMark,
+            `CreateTime` = @CreateTime,
             `Last` = @Last
             WHERE (`ProductId` = @ProductId)
             """;
@@ -35,7 +35,7 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `CategoryId` = @CategoryId
+            `CategoryId` = @CategoryId,
             `ProductName` = @ProductName
             WHERE (`ProductId` > 10)
             """;
@@ -54,7 +54,7 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `ProductName` = @ProductName
+            `ProductName` = @ProductName,
             `ProductCode` = NULL
             WHERE (`ProductId` > 10)
             """;
@@ -71,9 +71,9 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `ProductCode` = @ProductCode
-            `DeleteMark` = @DeleteMark
-            `CreateTime` = @CreateTime
+            `ProductCode` = @ProductCode,
+            `DeleteMark` = @DeleteMark,
+            `CreateTime` = @CreateTime,
             `Last` = @Last
             WHERE (`ProductId` = @ProductId)
             """;

@@ -158,10 +158,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(MainTable, false));
         sb.AppendLine(" SET");
-        foreach (var item in finalUpdateCol)
-        {
-            sb.AppendLine(item);
-        }
+        sb.AppendLine(string.Join($",{N}",finalUpdateCol));
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
         //sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
 
