@@ -87,7 +87,7 @@ FieldBuilder.Default
         foreach (var item in items)
         {
             members.Add(PropertyBuilder.Default
-                .Modifiers("public static") 
+                .Modifiers("public static")
                 .PropertyName(item.FormatClassName(true))
                 .MemberType($"{item.FormatClassName(true)}TableInfo")
                 .Readonly()
@@ -245,8 +245,10 @@ FieldBuilder.Default
         // public List<ColumnInfo> Columns { get; } = [];
         members.Add(PropertyBuilder.Default.MemberType("global::LightORM.Interfaces.ITableColumnInfo[]").PropertyName("Columns").Lambda("columns.Value"));
 
-        var columns = target.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>().ToArray();
-        
+        var columns = target.GetAllMembers(s => s.IsAbstract)
+            .Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
+            .Cast<IPropertySymbol>().ToArray();
+
         // GetValue   object? GetValue(ColumnInfo col, object target);
         members.Add(CreateGetValueMethod(target, columns));
         // SetValue   void SetValue(ColumnInfo col, object target, object? value)
