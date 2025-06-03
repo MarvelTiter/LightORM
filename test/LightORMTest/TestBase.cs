@@ -32,7 +32,7 @@ public class TestBase
                 o.DbKey = "v";
                 o.MasterConnectionString = "Data Source=localhost;Database=videocollection;User ID=root;Password=123456;charset=gbk";
             });
-            option.SetTableContext(TableContext);
+            //option.SetTableContext(TableContext);
             option.SetWatcher(aop =>
             {
                 aop.DbLog = (sql, p) =>

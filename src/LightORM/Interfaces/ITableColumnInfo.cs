@@ -23,6 +23,7 @@ public interface ITableColumnInfo
     bool IsNotMapped { get; }
     bool IsPrimaryKey { get; }
     Type? AggregateType { get; }
+    string? AggregateProp { get; }
     bool IsAggregated { get; }
     bool IsAggregatedProperty { get; }
     //object? GetValue(object target);

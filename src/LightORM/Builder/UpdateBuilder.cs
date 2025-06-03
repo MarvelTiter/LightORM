@@ -131,9 +131,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         {
             var autoUpdateCols = MainTable.TableEntityInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-               .Where(c => !c.IsNotMapped)
-               .Where(c => !c.IsNavigate)
-               .Where(c => !c.IsPrimaryKey).ToArray();
+               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated).ToArray();
             //参数处理
             foreach (var item in autoUpdateCols)
             {

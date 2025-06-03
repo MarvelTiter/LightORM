@@ -281,14 +281,15 @@ FieldBuilder.Default
                 && p.HasAttribute(LightFlatAttributeFullName))
             {
                 var flattedProps = p.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+                var flatType = p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
                 foreach (var item in flattedProps)
                 {
-                    var fr = ScanProperty(p);
-                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({p.Type.ToDisplayString()}), false, true)""");
+                    var fr = ScanProperty(item);
+                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true)""");
                 }
                 //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
                 //bodies.Add($"gen_{p.Name}.IsAggregated = true");
-                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({p.Type.ToDisplayString()}), true, false)""");
+                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false)""");
                 continue;
             }
             var r = ScanProperty(p);
@@ -436,9 +437,10 @@ FieldBuilder.Default
                 && column.HasAttribute(LightFlatAttributeFullName))
                 {
                     var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+                    var nullable = column.Type.NullableAnnotation == NullableAnnotation.Annotated ? "?" : "";
                     foreach (var flat in flatProps)
                     {
-                        ss.AddReturnCase($"\"{flat.Name}\"", $"p.{column.Name}.{flat.Name}");
+                        ss.AddReturnCase($"\"{flat.Name}\"", $"p.{column.Name}{nullable}.{flat.Name}");
                     }
                 }
                 else
@@ -484,7 +486,7 @@ FieldBuilder.Default
                         ss.AddBreakCase($"\"{flat.Name}\"",
                             //$"p.{column.Name}.{flat.Name}",
                             IfStatement.Default.If($"p.{column.Name} is null")
-                            .AddStatement($"p.{column.Name} = new {column.Type.ToDisplayString()}();"),
+                            .AddStatement($"p.{column.Name} = {column.Type.New()};"),
                             $"p.{column.Name}.{flat.Name} = ({flat.Type.ToDisplayString()})value"
                             );
                     }
