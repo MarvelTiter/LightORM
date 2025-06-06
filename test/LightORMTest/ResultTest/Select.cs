@@ -31,4 +31,14 @@ public class Select : TestBase
             Console.WriteLine($"{item.UserId} - {item.UserName}");
         }
     }
+
+    [TestMethod]
+    public async Task S1_Select_ToEnumerableAsync()
+    {
+        var list = Db.Select<User>().ToEnumerableAsync();
+        await foreach (var item in list)
+        {
+            Console.WriteLine($"{item.UserId} - {item.UserName}");
+        }
+    }
 }

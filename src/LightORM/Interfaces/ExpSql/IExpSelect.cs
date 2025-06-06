@@ -25,6 +25,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     T1? First();
     DataTable ToDataTable();
     Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default);
     Task<T1?> FirstAsync(CancellationToken cancellationToken = default);
     Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default);
     Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
@@ -104,9 +105,14 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     #region Result
 
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
+    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+
+
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
     /// </summary>
@@ -119,6 +125,13 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
     Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// 需要确保SELECT的列名与TReturn类型的属性名一致
+    /// </summary>
+    /// <typeparam name="TReturn"></typeparam>
+    /// <returns></returns>
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(CancellationToken cancellationToken = default);
+
     #endregion
 
     #region WithTemp
@@ -190,6 +203,9 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default);
 
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default);
+
     #endregion
 
     #region WithTemp
@@ -216,6 +232,10 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default);
+
     ///// <summary>
     ///// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>
     ///// </summary>

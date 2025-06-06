@@ -73,6 +73,8 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
 
     #endregion
 
+    #region result
+
     public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, T2, TReturn>> exp)
     {
         this.HandleResult(exp, null);
@@ -94,6 +96,20 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
+    #endregion
 
     //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<T1, T2, TTemp>> exp, string? alias = null)
     //{
@@ -239,6 +255,21 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.HandleResult(flatExp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
 
     //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<TypeSet<T1, T2>, TTemp>> exp, string? alias = null)
     //{

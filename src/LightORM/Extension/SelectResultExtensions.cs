@@ -24,8 +24,16 @@ internal static class SelectResultExtensions
     {
         var sql = select.SqlBuilder.ToSqlString();
         var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.QueryListAsync<TReturn>(sql, parameters, cancellationToken: cancellationToken);
+    }
+
+    public static IAsyncEnumerable<TReturn> InternalToEnumerableAsync<TReturn>(this IExpSelect select, CancellationToken cancellationToken = default)
+    {
+        var sql = select.SqlBuilder.ToSqlString();
+        var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.QueryAsync<TReturn>(sql, parameters, cancellationToken: cancellationToken);
     }
+
     public static Task<TReturn?> InternalSingleAsync<TReturn>(this IExpSelect select, CancellationToken cancellationToken = default)
     {
         var sql = select.SqlBuilder.ToSqlString();

@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,7 +79,7 @@ public static class SqlExecutorExtensions
         }
     }
 
-    public static async Task<IList<T>> QueryAsync<T>(this ISqlExecutor self
+    public static async Task<IList<T>> QueryListAsync<T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -97,6 +98,10 @@ public static class SqlExecutorExtensions
             List<T> list = [];
             while (await reader.ReadAsync(cancellationToken))
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
                 list.Add((T)des.Invoke(reader));
             }
             return list;
@@ -114,16 +119,69 @@ public static class SqlExecutorExtensions
         }
     }
 
-    public static async Task<IList<dynamic>> QueryAsync(this ISqlExecutor self
+    public static async Task<IList<dynamic>> QueryListAsync(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
         , CommandType commandType = CommandType.Text
         , CancellationToken cancellationToken = default)
     {
-        var list = await QueryAsync<MapperRow>(self, sql, param, trans, commandType,cancellationToken);
+        var list = await QueryListAsync<MapperRow>(self, sql, param, trans, commandType, cancellationToken);
         return [.. list.Cast<dynamic>()];
     }
+
+    public static async IAsyncEnumerable<T> QueryAsync<T>(this ISqlExecutor self
+        , string sql
+        , object? param = null
+        , DbTransaction? trans = null
+        , CommandType commandType = CommandType.Text
+        , [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        DbDataReader? reader = null;
+        try
+        {
+            if (trans != null)
+            {
+                self.DbTransaction = trans;
+            }
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            var des = BuildDeserializer<T>(reader);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                yield return (T)des.Invoke(reader);
+            }
+        }
+        finally
+        {
+#if NET6_0_OR_GREATER
+            if (reader is not null)
+            {
+                await reader.CloseAsync();
+            }
+#else
+            reader?.Close();
+#endif
+        }
+    }
+
+    public static async IAsyncEnumerable<dynamic> QueryAsync(this ISqlExecutor self
+        , string sql
+        , object? param = null
+        , DbTransaction? trans = null
+        , CommandType commandType = CommandType.Text
+        , [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var datas = QueryAsync<MapperRow>(self, sql, param, trans, commandType, cancellationToken);
+        await foreach (var item in datas.WithCancellation(cancellationToken))
+        {
+            yield return item;
+        }
+    }
+
     public static async Task<T?> QuerySingleAsync<T>(this ISqlExecutor self
         , string sql
         , object? param = null
