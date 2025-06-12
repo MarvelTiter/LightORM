@@ -34,7 +34,7 @@ namespace LightORM.Providers
             var sql = SqlBuilder.ToSqlString();
             if (SqlBuilder.IsBatchUpdate)
             {
-                var isTran = executor.DbTransaction == null;
+                var isTran = executor.DbTransaction != null;
                 try
                 {
                     var effectRows = 0;
@@ -81,7 +81,7 @@ namespace LightORM.Providers
                     var effectRows = 0;
                     if (!isTran)
                     {
-                        await executor.BeginTranAsync(cancellationToken);
+                        await executor.BeginTranAsync(cancellationToken: cancellationToken);
                         isTran = true;
                     }
                     foreach (var item in SqlBuilder.BatchInfos!)

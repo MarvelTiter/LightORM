@@ -3,6 +3,8 @@
 [LightTable(Name = "SMS_LOG", DatabaseKey = "Cache")]
 public class SmsLog
 {
+    [LightColumn(Name = "ID", PrimaryKey = true)]
+    public int Id { get; set; }
     [LightFlat]
     public SmsReceive Recive { get; set; } = new();
 

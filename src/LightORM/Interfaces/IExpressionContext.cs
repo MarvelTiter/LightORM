@@ -33,22 +33,27 @@ public interface IExpressionContext : IDbAction
     IExpDelete<T> Delete<T>(T entity);
     //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
-
+    
 }
 
 public interface IDbAction
 {
+
+    //void BeginTranAll();
+    //Task BeginTranAllAsync();
+    //void CommitTranAll();
+    //Task CommitTranAllAsync();
+    //void RollbackTranAll();
+    //Task RollbackTranAllAsync();
+
+    //void BeginTran(string key = ConstString.Main);
+    //Task BeginTranAsync(string key = ConstString.Main);
+    //void CommitTran(string key = ConstString.Main);
+    //Task CommitTranAsync(string key = ConstString.Main);
+    //void RollbackTran(string key = ConstString.Main);
+    //Task RollbackTranAsync(string key = ConstString.Main);
     IExpressionContext Use(IDatabaseProvider db);
     IExpressionContext SwitchDatabase(string key);
-    void BeginTranAll();
-    Task BeginTranAllAsync();
-    void CommitTranAll();
-    Task CommitTranAllAsync();
-    void RollbackTranAll();
-    Task RollbackTranAllAsync();
-
-    void BeginTran(string key = ConstString.Main);
-    Task BeginTranAsync(string key = ConstString.Main);
     /// <summary>
     /// 创建指定数据库的单元操作对象，开启事务
     /// </summary>
@@ -56,34 +61,38 @@ public interface IDbAction
     /// <returns></returns>
     ISingleScopedExpressionContext CreateScoped(string key);
     /// <summary>
+    /// 创建指定数据库的单元操作对象，开启事务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main);
+    /// <summary>
     /// 创建单元操作对象，开启事务
     /// </summary>
     /// <returns></returns>
     IScopedExpressionContext CreateScoped();
-    void CommitTran(string key = ConstString.Main);
-    Task CommitTranAsync(string key = ConstString.Main);
-    void RollbackTran(string key = ConstString.Main);
-    Task RollbackTranAsync(string key = ConstString.Main);
-
 }
 
-//public interface IExpressionSql //<TContext> where TContext : IExpressionSql<TContext>
-//{
-//    IExpSelect<T> Select<T>();
-//    IExpInsert<T> Insert<T>(T entity);
-//    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
-//    IExpUpdate<T> Update<T>();
-//    IExpUpdate<T> Update<T>(T entity);
-//    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
-//    IExpDelete<T> Delete<T>();
-//    IExpDelete<T> Delete<T>(T entity);
-//}
 /// <summary>
 /// UnitOfWork, 该对象的所有操作，都会开启事务
 /// </summary>
-public interface IScopedExpressionContext : ISingleScopedExpressionContext// IExpressionSql<IScopedExpressionContext>
+public interface IScopedExpressionContext : IDisposable// IExpressionSql<IScopedExpressionContext>
 {
     IScopedExpressionContext SwitchDatabase(string key);
+    string Id { get; }
+    ISqlExecutor Ado { get; }
+    IExpSelect<T> Select<T>();
+    IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
+    IExpUpdate<T> Update<T>();
+    IExpUpdate<T> Update<T>(T entity);
+    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+    IExpDelete<T> Delete<T>();
+    IExpDelete<T> Delete<T>(T entity);
+    void CommitTranAll();
+    Task CommitTranAllAsync();
+    void RollbackTranAll();
+    Task RollbackTranAllAsync();
 }
 /// <summary>
 /// 只能对单个数据库操作
@@ -91,7 +100,6 @@ public interface IScopedExpressionContext : ISingleScopedExpressionContext// IEx
 public interface ISingleScopedExpressionContext : IDisposable
 {
     string Id { get; }
-    //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
     IExpInsert<T> Insert<T>(T entity);

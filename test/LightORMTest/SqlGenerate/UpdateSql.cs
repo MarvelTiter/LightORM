@@ -1,4 +1,6 @@
-﻿using LightORMTest;
+﻿using LightORM.SqlExecutor;
+using LightORMTest;
+using System.Threading.Tasks;
 
 namespace LightORMTest.SqlGenerate;
 
@@ -112,5 +114,26 @@ public class UpdateSql : TestBase
             WHERE (`UUID` = @Uuid)
             """;
         Assert.IsTrue(sql == result);
+    }
+
+    [TestMethod]
+    public void U07_Update_Batch()
+    {
+        var datas = GetList();
+       
+        Db.Update<SmsLog>(datas).Execute();
+
+        List<SmsLog> GetList()
+        {
+            return new List<SmsLog>
+            {
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+            };
+        }
     }
 }

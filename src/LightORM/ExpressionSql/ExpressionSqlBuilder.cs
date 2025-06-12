@@ -14,7 +14,7 @@ internal record DbHandlerRecord(Func<TableGenerateOption, IDatabaseTableHandler>
 
 public class ExpressionSqlOptions
 {
-    private int poolSize = Environment.ProcessorCount * 2;
+    private int poolSize = Environment.ProcessorCount * 4;
     internal int PoolSize => poolSize;
     public ExpressionSqlOptions SetConnectionPoolSize(int poolSize)
     {

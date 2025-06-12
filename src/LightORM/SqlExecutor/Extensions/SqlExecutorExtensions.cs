@@ -29,7 +29,7 @@ public static class SqlExecutorExtensions
         {
             if (trans != null)
             {
-                self.DbTransaction = trans;
+                self.UseExternalTransaction(trans);
             }
             reader = self.ExecuteReader(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
@@ -62,7 +62,7 @@ public static class SqlExecutorExtensions
         {
             if (trans != null)
             {
-                self.DbTransaction = trans;
+                self.UseExternalTransaction(trans);
             }
             reader = self.ExecuteReader(sql, param, commandType);
             var des = BuildDeserializer<T>(reader);
@@ -91,7 +91,7 @@ public static class SqlExecutorExtensions
         {
             if (trans != null)
             {
-                self.DbTransaction = trans;
+                self.UseExternalTransaction(trans);
             }
             reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
             var des = BuildDeserializer<T>(reader);
@@ -142,7 +142,7 @@ public static class SqlExecutorExtensions
         {
             if (trans != null)
             {
-                self.DbTransaction = trans;
+                self.UseExternalTransaction(trans);
             }
             reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
             var des = BuildDeserializer<T>(reader);
@@ -194,7 +194,7 @@ public static class SqlExecutorExtensions
         {
             if (trans != null)
             {
-                self.DbTransaction = trans;
+                self.UseExternalTransaction(trans);
             }
             reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
             var des = BuildDeserializer<T>(reader);

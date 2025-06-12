@@ -138,29 +138,20 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
     private readonly SqlExecutorProvider executorProvider;
     public string Id { get; } = $"{Guid.NewGuid():N}";
     private string? dbKey;
-    //class FinallyAction : IDisposable
-    //{
-    //    private readonly Action action;
+    private readonly Dictionary<string, int> usingAdos = [];
 
-    //    public FinallyAction(Action action)
-    //    {
-    //        this.action = action;
-    //    }
-    //    public void Dispose()
-    //    {
-    //        action.Invoke();
-    //    }
-    //}
     public override ISqlExecutor Ado
     {
         get
         {
             //using var _ = new FinallyAction(() => dbKey = null);
-            if (dbKey is null)
-            {
-                return executorProvider.GetSqlExecutor(ConstString.Main, true);
-            }
-            var ado = executorProvider.GetSqlExecutor(dbKey, true);
+            dbKey ??= ConstString.Main;
+            //if (dbKey is null)
+            //{
+            //    return executorProvider.GetSqlExecutor(ConstString.Main, false);
+            //}
+            var ado = executorProvider.GetSqlExecutor(dbKey, false);
+            ado.BeginTran();
             dbKey = null;
             return ado;
         }
@@ -176,30 +167,30 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
         return this;
     }
 
-    public void CommitTran()
+
+    public void Dispose()
+    {
+        executorProvider.Dispose();
+    }
+
+    public void CommitTranAll()
     {
         executorProvider.Executors.ForEach(e => e.CommitTran());
     }
 
-    public async Task CommitTranAsync()
+    public async Task CommitTranAllAsync()
     {
         await executorProvider.Executors.ForEachAsync(e => e.CommitTranAsync());
     }
 
-    public void RollbackTran()
+    public void RollbackTranAll()
     {
         executorProvider.Executors.ForEach(e => e.RollbackTran());
     }
 
-    public async Task RollbackTranAsync()
+    public async Task RollbackTranAllAsync()
     {
         await executorProvider.Executors.ForEachAsync(e => e.RollbackTranAsync());
-    }
-
-    public void Dispose()
-    {
-        RollbackTran();
-        executorProvider.Dispose();
     }
 }
 
@@ -221,7 +212,6 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
 
     public void Dispose()
     {
-        Ado.RollbackTran();
         Ado.Dispose();
     }
 }
