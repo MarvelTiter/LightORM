@@ -52,7 +52,7 @@ namespace LightORM.Utils
         {
             return executors.GetOrAdd(key, k =>
             {
-                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k),option.PoolSize)
+                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k),option.PoolSize,k)
                 {
                     DbLog = option.Aop.DbLog
                 };

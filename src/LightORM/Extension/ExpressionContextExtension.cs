@@ -100,6 +100,11 @@ public static class ExpressionContextExtension
         throw new NotImplementedException();
     }
 
+    public static ISingleScopedExpressionContext CreateMainDbScope(this IExpressionContext context)
+    {
+        return context.CreateScoped("MainDb");
+    }
+
     private static void HandleFromTemp(SelectBuilder sqlbuilder, params IExpTemp[] temps)
     {
         foreach (var temp in temps)

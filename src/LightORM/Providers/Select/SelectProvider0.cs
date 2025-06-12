@@ -203,7 +203,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return await Executor.QueryListAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default)
+    {
+        Expression<Func<T1, T1>> exp = t => t;
+        this.HandleResult(exp, null);
+        var sql = SqlBuilder.ToSqlString();
+        var parameters = SqlBuilder.DbParameters;
+        return Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
 
     public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
@@ -254,6 +263,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         var c = await CountAsync(cancellationToken);
         return c > 0;
     }
+
 
 
     #endregion

@@ -5,7 +5,7 @@
     },
     "lightorm": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\TestProject1\\TestProject1.csproj"
+      "targetProject": "..\\..\\test\\TestProject1\\TestProject1.csproj"
     }
   }
 }

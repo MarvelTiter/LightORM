@@ -16,14 +16,15 @@ public interface ISqlExecutor : IDisposable, ICloneable
     ///// <summary>
     ///// 数据库事务
     ///// </summary>
-    public DbTransaction? DbTransaction { get; set; }
+    public DbTransaction? DbTransaction { get; }
 
     //public DbConnection GetConnection();
-
+    internal string Id { get; }
+    void UseExternalTransaction(DbTransaction externalTransaction);
     /// <summary>
     /// 开启事务
     /// </summary>
-    void BeginTran();
+    void BeginTran(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
 
     /// <summary>
     /// 提交事务
@@ -39,9 +40,10 @@ public interface ISqlExecutor : IDisposable, ICloneable
     /// <summary>
     /// 开启事务异步
     /// </summary>
+    /// <param name="isolationLevel"></param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task BeginTranAsync(CancellationToken cancellationToken = default);
+    Task BeginTranAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 提交事务异步

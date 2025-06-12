@@ -131,9 +131,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         {
             var autoUpdateCols = MainTable.TableEntityInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-               .Where(c => !c.IsNotMapped)
-               .Where(c => !c.IsNavigate)
-               .Where(c => !c.IsPrimaryKey).ToArray();
+               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated).ToArray();
             //参数处理
             foreach (var item in autoUpdateCols)
             {
@@ -158,10 +156,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(MainTable, false));
         sb.AppendLine(" SET");
-        foreach (var item in finalUpdateCol)
-        {
-            sb.AppendLine(item);
-        }
+        sb.AppendLine(string.Join($",{N}",finalUpdateCol));
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
         //sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
 

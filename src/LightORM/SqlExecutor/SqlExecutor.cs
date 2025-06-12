@@ -10,109 +10,57 @@ using System.Threading;
 using System.Collections.Concurrent;
 namespace LightORM.SqlExecutor;
 
-internal class ConnectionPool : IDisposable
+internal partial class SqlExecutor : ISqlExecutor, IDisposable
 {
-    private readonly Func<DbConnection> _createFunc;
-    private readonly int _maxCapacity;
-    private int _numItems;
-    private protected readonly ConcurrentQueue<DbConnection> _items = new();
-    private protected DbConnection? _fastItem;
-    private bool disposedValue;
-
-    public ConnectionPool(Func<DbConnection> func, int maxCapacity)
-    {
-        _createFunc = func;
-        _maxCapacity = maxCapacity;
-    }
-    public DbConnection Get()
-    {
-        DbConnection? item = _fastItem;
-        if (item == null || Interlocked.CompareExchange(ref _fastItem, null, item) != item)
-        {
-            if (_items.TryDequeue(out item))
-            {
-                Interlocked.Decrement(ref _numItems);
-                return item;
-            }
-            return _createFunc();
-        }
-        return item;
-    }
-
-    public void Return(DbConnection connection)
-    {
-        if (_fastItem != null || Interlocked.CompareExchange(ref _fastItem, connection, null) != null)
-        {
-            if (Interlocked.Increment(ref _numItems) <= _maxCapacity)
-            {
-                _items.Enqueue(connection);
-                return;
-            }
-            Interlocked.Decrement(ref _numItems);
-            if (connection.State == ConnectionState.Closed)
-            {
-                connection.Dispose();
-            }
-            else
-            {
-                connection.StateChange += Connection_StateChange;
-            }
-        }
-    }
-
-    private static void Connection_StateChange(object sender, StateChangeEventArgs e)
-    {
-        if (e.CurrentState == ConnectionState.Closed)
-        {
-            var conn = (DbConnection)sender;
-            conn.StateChange -= Connection_StateChange;
-            conn.Dispose();
-        }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                while (_items.TryDequeue(out var i))
-                {
-                    i.Dispose();
-                }
-                _fastItem?.Dispose();
-            }
-            disposedValue = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-}
-
-internal class SqlExecutor : ISqlExecutor, IDisposable
-{
+    // 事务上下文管理
+    private static readonly AsyncLocal<TransactionContext?> currentTransactionContext = new AsyncLocal<TransactionContext?>();
+    public string Id { get; set; }
+    private static readonly ConcurrentDictionary<IDatabaseProvider, ConnectionPool> pools = [];
+    private static readonly ConcurrentDictionary<IDatabaseProvider, int> poolSizes = [];
     public Action<string, object?>? DbLog { get; set; }
     public IDatabaseProvider Database { get; private set; }
     /// <summary>
     /// 数据库事务
     /// </summary>
-    public DbTransaction? DbTransaction { get; set; }
-    private DbConnection connection;
-    private bool useTran;
+    public DbTransaction? DbTransaction
+    {
+        get => currentTransactionContext.Value?.Transaction;
+    }
+
     //public DbConnection DbConnection { get; private set; }
     private readonly ConnectionPool pool;
-    private readonly int poolSize;
 
-    public SqlExecutor(IDatabaseProvider database, int poolSize)
+    public SqlExecutor(IDatabaseProvider database, int poolSize, string? id = null)
     {
         Database = database;
-        this.poolSize = poolSize;
-        pool = new ConnectionPool(GetConnection, poolSize);
-        connection = pool.Get();
+        _ = poolSizes.GetOrAdd(database, poolSize);
+        pool = pools.GetOrAdd(database, db =>
+        {
+            poolSizes.TryGetValue(db, out var size);
+            return new ConnectionPool(() =>
+            {
+                var conn = db.DbProviderFactory.CreateConnection()!;
+                conn.ConnectionString = db.MasterConnectionString;
+                return conn;
+            }, size);
+        });
+        Id = id ?? Guid.NewGuid().ToString();
+    }
+
+    public SqlExecutor(IDatabaseProvider database, string? id = null)
+    {
+        Database = database;
+        pool = pools.GetOrAdd(database, db =>
+        {
+            poolSizes.TryGetValue(db, out var size);
+            return new ConnectionPool(() =>
+            {
+                var conn = db.DbProviderFactory.CreateConnection()!;
+                conn.ConnectionString = db.MasterConnectionString;
+                return conn;
+            }, size);
+        });
+        Id = id ?? Guid.NewGuid().ToString();
     }
 
     private DbConnection GetConnection()
@@ -121,58 +69,214 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         conn.ConnectionString = Database.MasterConnectionString;
         return conn;
     }
-
-    public void BeginTran()
+    // 事务上下文类
+    public class TransactionContext(DbTransaction transaction)
     {
-        if (connection.State != ConnectionState.Open)
+        public DbTransaction Transaction { get; } = transaction;
+        public Stack<DbTransaction> TranscationStack { get; set; } = [];
+        public int NestLevel { get; set; }
+        public bool IsExternal { get; internal set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+    }
+
+    // 使用外部事务
+    public void UseExternalTransaction(DbTransaction externalTransaction)
+    {
+        if (externalTransaction == null)
+            throw new ArgumentNullException(nameof(externalTransaction));
+
+        if (currentTransactionContext.Value != null)
+            throw new InvalidOperationException("Already in a transaction context");
+
+        currentTransactionContext.Value = new TransactionContext(externalTransaction)
         {
-            connection.Open();
+            IsExternal = true
+        };
+    }
+    public void BeginTran(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+    {
+        var context = currentTransactionContext.Value;
+
+        if (context == null)
+        {
+            // 新事务
+            var conn = pool.Get();
+            if (conn.State != ConnectionState.Open)
+            {
+                conn.Open();
+            }
+            var transaction = isolationLevel == IsolationLevel.Unspecified
+                ? conn.BeginTransaction()
+                : conn.BeginTransaction(isolationLevel);
+            currentTransactionContext.Value = new TransactionContext(transaction);
         }
-        DbTransaction ??= connection.BeginTransaction();
+        else
+        {
+            // 嵌套事务
+            context.NestLevel++;
+#if NET6_0_OR_GREATER
+            if (context.Transaction.SupportsSavepoints)
+            {
+                context.Transaction.Save($"savePoint{context.NestLevel}");
+            }
+#endif
+        }
+        Debug.WriteLine($"BeginTran： {currentTransactionContext.Value?.Id}");
     }
     public void CommitTran()
     {
-        DbTransaction?.Commit();
-        DbTransaction = null;
+        var context = currentTransactionContext.Value ??
+            throw new InvalidOperationException("No active transaction to commit");
+
+        if (context.NestLevel > 0)
+        {
+            // 嵌套事务只减少计数器
+            context.NestLevel--;
+            return;
+        }
+
+        // 最外层事务提交
+        try
+        {
+            context.Transaction.Commit();
+            Debug.WriteLine($"CommitTran： {context.Id}");
+        }
+        finally
+        {
+            DisposeTransactionContext();
+        }
     }
     public void RollbackTran()
     {
-        DbTransaction?.Rollback();
-        DbTransaction = null;
+        var context = currentTransactionContext.Value ??
+             throw new InvalidOperationException("No active transaction to rollback");
+        if (context.NestLevel > 0)
+        {
+#if NET6_0_OR_GREATER
+            if (context.Transaction.SupportsSavepoints)
+            {
+                context.Transaction.Rollback($"savePoint{context.NestLevel}");
+            }
+#endif
+            context.NestLevel--;
+            return;
+        }
+        try
+        {
+            context.Transaction.Rollback();
+        }
+        finally
+        {
+            DisposeTransactionContext();
+        }
+    }
+
+    private void DisposeTransactionContext(bool forceDispose = false)
+    {
+        var context = currentTransactionContext.Value;
+        if (context == null) return;
+        if (context.NestLevel > 0)
+        {
+            if (forceDispose)
+            {
+                throw new InvalidOperationException("未完成提交就释放对象");
+            }
+            return;
+        }
+        // 内部事务创建的事务上下文
+        if (!context.IsExternal)
+        {
+            var conn = context.Transaction.Connection;
+            context.Transaction.Dispose();
+            if (conn is not null)
+            {
+                conn.Close();
+                pool.Return(conn);
+            }
+        }
+        currentTransactionContext.Value = null;
+
     }
 
 #if NET6_0_OR_GREATER
-    public async Task BeginTranAsync(CancellationToken cancellationToken = default)
+    public async Task BeginTranAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
     {
-        if (connection.State != ConnectionState.Open)
+        var context = currentTransactionContext.Value;
+
+        if (context == null)
         {
-            await connection.OpenAsync(cancellationToken);
+            // 新事务
+            var conn = pool.Get();
+            if (conn.State != ConnectionState.Open)
+            {
+                conn.Open();
+            }
+            var transaction = await (isolationLevel == IsolationLevel.Unspecified
+                ? conn.BeginTransactionAsync(cancellationToken)
+                : conn.BeginTransactionAsync(isolationLevel, cancellationToken));
+
+            currentTransactionContext.Value = new TransactionContext(transaction);
         }
-        DbTransaction ??= await connection.BeginTransactionAsync(cancellationToken);
+        else
+        {
+            // 嵌套事务
+            context.NestLevel++;
+            context.Transaction.Save($"savePoint{context.NestLevel}");
+        }
+        Debug.WriteLine($"BeginTranAsync： {currentTransactionContext.Value?.Id}");
     }
 
     public async Task CommitTranAsync(CancellationToken cancellationToken = default)
     {
-        if (DbTransaction != null)
+        var context = currentTransactionContext.Value ??
+           throw new InvalidOperationException("No active transaction to commit");
+
+        if (context.NestLevel > 0)
         {
-            await DbTransaction.CommitAsync(cancellationToken);
-            DbTransaction = null;
+            // 嵌套事务只减少计数器
+            context.NestLevel--;
+            return;
+        }
+
+        // 最外层事务提交
+        try
+        {
+            await context.Transaction.CommitAsync(cancellationToken);
+            Debug.WriteLine($"CommitTranAsync： {context.Id}");
+        }
+        finally
+        {
+            DisposeTransactionContext();
         }
     }
 
     public async Task RollbackTranAsync(CancellationToken cancellationToken = default)
     {
-        if (DbTransaction != null)
+        var context = currentTransactionContext.Value ??
+             throw new InvalidOperationException("No active transaction to rollback");
+
+        try
         {
-            await DbTransaction.RollbackAsync(cancellationToken);
-            DbTransaction = null;
+            if (context.NestLevel > 0)
+            {
+                await context.Transaction.RollbackAsync($"savePoint{context.NestLevel}", cancellationToken);
+                context.NestLevel--;
+            }
+            else
+            {
+                await context.Transaction.RollbackAsync(cancellationToken);
+            }
+        }
+        finally
+        {
+            DisposeTransactionContext();
         }
     }
 
 #else
-    public Task BeginTranAsync(CancellationToken cancellationToken = default)
+    public Task BeginTranAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
     {
-        BeginTran();
+        BeginTran(isolationLevel);
         return Task.FromResult(true);
     }
 
@@ -190,121 +294,123 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
 #endif
 
-    private async Task TryCloseAsync(CommandResult result)
-    {
-        result.Command.Parameters.Clear();
-        result.Command.Dispose();
-#if NET6_0_OR_GREATER
-        if (result.NeedToClose)
-        {
-            await result.Connection.CloseAsync();
-        }
-        if (result.NeedToReturn)
-        {
-            pool.Return(result.Connection);
-        }
-#else
-        if (result.NeedToClose)
-        {
-            result.Connection.Close();
-        }
-        if (result.NeedToReturn)
-        {
-            pool.Return(result.Connection);
-        }
-        await Task.CompletedTask;
-#endif
-    }
+    //    private async Task TryCloseAsync(CommandResult result)
+    //    {
+    //        result.Command.Parameters.Clear();
+    //        result.Command.Dispose();
+    //#if NET6_0_OR_GREATER
+    //        if (result.NeedToReturn)
+    //        {
+    //            await result.Connection.CloseAsync();
+    //            pool.Return(result.Connection);
+    //        }
+    //#else
+    //        if (result.NeedToReturn)
+    //        {
+    //            result.Connection.Close();
+    //            pool.Return(result.Connection);
+    //        }
+    //        await Task.CompletedTask;
+    //#endif
+    //    }
 
-    private void TryClose(CommandResult result)
+    private void DisposeCommand(CommandResult result)
     {
         result.Command.Parameters.Clear();
         result.Command.Dispose();
-        if (result.NeedToClose)
-        {
-            result.Connection.Close();
-        }
         if (result.NeedToReturn)
         {
             pool.Return(result.Connection);
         }
     }
 
-    private struct CommandResult(DbCommand command, DbConnection connection, bool needToClose, bool needToReturn)
+    private readonly struct CommandResult(DbCommand command, DbConnection connection, bool needToReturn)
     {
         public DbCommand Command { get; } = command;
         public DbConnection Connection { get; } = connection;
-        public bool NeedToClose { get; } = needToClose;
         public bool NeedToReturn { get; } = needToReturn;
     }
 
     private CommandResult PrepareCommand(CommandType commandType, string commandText, object? dbParameters)
     {
         DbLog?.Invoke(commandText, dbParameters);
-        bool isSelect = commandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) || commandText.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase);
-        var conn = connection;
-        var needToClose = false;
-        var needToReturn = false;
-        if (isSelect)
+        var context = currentTransactionContext.Value;
+        DbConnection conn;
+        bool needToReturn;
+        if (context != null)
         {
+            // 事务操作使用事务连接
+            conn = context.Transaction.Connection!;
+            needToReturn = false;
+        }
+        else
+        {
+            // 非事务操作从池中获取连接
             conn = pool.Get();
             needToReturn = true;
         }
-        var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+
         if (conn.State != ConnectionState.Open)
         {
             conn.Open();
-            needToClose = true;
         }
-        if (!isSelect && DbTransaction != null)
+        var command = conn.CreateCommand();
+        GetInit(command.GetType())?.Invoke(command);
+        if (context != null)
         {
-            command.Transaction = DbTransaction;
-            needToClose = false;
+            command.Transaction = context.Transaction;
         }
         command.CommandText = commandText;
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = DbParameterReader.GetDbParameterReader(connection.ConnectionString, commandText, dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(conn.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
 
-        return new(command, conn, needToClose, needToReturn);
+        return new(command, conn, needToReturn);
     }
 
     private async Task<CommandResult> PrepareCommandAsync(CommandType commandType, string commandText, object? dbParameters, CancellationToken cancellationToken = default)
     {
         DbLog?.Invoke(commandText, dbParameters);
-        bool isSelect = commandText.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) || commandText.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase);
-        var conn = connection;
-        var needToClose = false;
-        var needToReturn = false;
-        if (isSelect)
+        var context = currentTransactionContext.Value;
+        DbConnection conn;
+        bool needToReturn;
+
+        if (context != null)
         {
+            // 事务操作使用事务连接
+            conn = context.Transaction.Connection!;
+            needToReturn = false;
+        }
+        else
+        {
+            // 非事务操作从池中获取连接
             conn = pool.Get();
             needToReturn = true;
         }
-        var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+
         if (conn.State != ConnectionState.Open)
         {
             await conn.OpenAsync(cancellationToken);
-            needToClose = true;
         }
-        if (!isSelect && DbTransaction != null)
+
+        var command = conn.CreateCommand();
+        GetInit(command.GetType())?.Invoke(command);
+
+        if (context != null)
         {
-            command.Transaction = DbTransaction;
-            needToClose = false;
+            command.Transaction = context.Transaction;
         }
         command.CommandText = commandText;
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = DbParameterReader.GetDbParameterReader(connection.ConnectionString, commandText, dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(conn.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
-        return new(command, conn, needToClose, needToReturn);
+        return new(command, conn, needToReturn);
     }
 
     public int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
@@ -317,7 +423,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            TryClose(r);
+            DisposeCommand(r);
         }
     }
 
@@ -335,7 +441,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            TryClose(r);
+            DisposeCommand(r);
         }
     }
 
@@ -344,21 +450,20 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         var r = PrepareCommand(commandType, commandText, dbParameters);
         try
         {
-            if (r.NeedToClose)
+            if (r.NeedToReturn)
             {
-                return r.Command.ExecuteReader(CommandBehavior.CloseConnection);
+                var reader = r.Command.ExecuteReader(CommandBehavior.CloseConnection);
+                return new InternalDataReader(reader, r, pool);
             }
             else
             {
-                return r.Command.ExecuteReader();
+                var reader = r.Command.ExecuteReader();
+                return new InternalDataReader(reader, r, pool);
             }
         }
         finally
         {
-            r.Command.Parameters.Clear();
-            r.Command.Dispose();
-            if (r.NeedToReturn)
-                pool.Return(r.Connection);
+
         }
     }
 
@@ -374,7 +479,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            TryClose(r);
+            DisposeCommand(r);
         }
         return ds;
     }
@@ -393,7 +498,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         {
             r.Command.Parameters.Clear();
             r.Command.Dispose();
-            TryClose(r);
+            DisposeCommand(r);
         }
         return ds;
     }
@@ -407,7 +512,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            await TryCloseAsync(r);
+            DisposeCommand(r);
         }
     }
 
@@ -425,31 +530,28 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            await TryCloseAsync(r);
+            DisposeCommand(r);
         }
     }
     public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
-        var r = await PrepareCommandAsync(commandType, commandText, dbParameters);
+        var r = await PrepareCommandAsync(commandType, commandText, dbParameters, cancellationToken);
         try
         {
-            if (r.NeedToClose)
+            if (r.NeedToReturn)
             {
-                return await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken);
+                var reader = await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken);
+                return new InternalDataReader(reader, r, pool);
             }
             else
             {
-                return await r.Command.ExecuteReaderAsync(cancellationToken);
+                var reader = await r.Command.ExecuteReaderAsync(cancellationToken);
+                return new InternalDataReader(reader, r, pool);
             }
         }
         finally
         {
-            r.Command.Parameters.Clear();
-            r.Command.Dispose();
-            if (r.NeedToReturn)
-            {
-                pool.Return(r.Connection);
-            }
+
         }
     }
 
@@ -465,7 +567,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            await TryCloseAsync(r);
+            DisposeCommand(r);
         }
         return ds;
     }
@@ -482,7 +584,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
         }
         finally
         {
-            await TryCloseAsync(r);
+            DisposeCommand(r);
         }
         return ds;
     }
@@ -569,7 +671,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
 
     public object Clone()
     {
-        return new SqlExecutor(Database, poolSize);
+        return new SqlExecutor(Database);
     }
 
 
@@ -582,10 +684,7 @@ internal class SqlExecutor : ISqlExecutor, IDisposable
             if (disposing)
             {
                 Debug.WriteLine("SqlExecutor disposing.........");
-                DbTransaction?.Rollback();
-                DbTransaction = null;
-                pool.Dispose();
-                connection?.Dispose();
+                DisposeTransactionContext(disposing);
             }
             disposedValue = true;
         }

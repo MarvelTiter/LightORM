@@ -1,19 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using LightORM.Extension;
-using System.Xml.Linq;
-using LightORM.Utils;
-using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Models;
 public static class ColumnInfoExtensions
 {
-    public static object? GetValue(this ITableColumnInfo col, object target) => TableContext.GetValue(col, target);
-    public static void SetValue(this ITableColumnInfo col, object target, object? value) => TableContext.SetValue(col, target, value);
+    public static object? GetValue(this ITableColumnInfo col, object target)
+    {
+        //Console.WriteLine($"{col.PropertyName} -> {col.IsAggregated} -> {col.IsAggregatedProperty}");
+        return col.IsAggregated ? null : TableContext.GetValue(col, target);
+    }
+    public static void SetValue(this ITableColumnInfo col, object target, object? value)
+    {
+        if (col.IsAggregated)
+        {
+            return;
+        }
+        TableContext.SetValue(col, target, value);
+    }
 }
 public sealed record ColumnInfo : ITableColumnInfo
 {
@@ -46,6 +50,9 @@ public sealed record ColumnInfo : ITableColumnInfo
     public Type? AggregateType { get; }
     public bool IsAggregated { get; }
     public bool IsAggregatedProperty { get; }
+
+    public string? AggregateProp { get; set; }
+
     //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
     //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
     public ColumnInfo(Type owner
@@ -91,9 +98,9 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsAggregatedProperty = isAggregaredProp;
     }
 
-    public ColumnInfo(PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
+    public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
     {
-        TableType = property.DeclaringType!;
+        TableType = owner;
         PropertyName = property.Name;
         //Property = property;
         //PropertyType = property.PropertyType;
