@@ -27,6 +27,7 @@
   - [批量插入](#批量插入)
 - [删除](#删除)
 - [Ado对象](#ado对象)
+- [事务](#事务)
 - [待办](#待办)
 - [复杂查询示例(Oracle)](#复杂查询示例oracle)
 
@@ -385,7 +386,59 @@ VALUES
 
 # Ado对象
 
-直接执行sql语句, 可返回`IEnumerable<T>`,`DataTable`,`DataReader`等等
+直接执行sql语句, 可返回`IEnumerable<T>`,`IAsyncEnumerable<T>`,`DataTable`,`DataReader`等等
+
+# 事务
+
+使用`IExpressionContext.CreateScoped`创建`IScopedExpressionContext`或者`ISingleScopedExpressionContext`对象，提供了BeginTransaction、CommitTransaction、RollbackTransaction以及对应的异步版本，其中`IScopedExpressionContext`支持切换数据库，CommitTransaction+RollbackTransaction的次数必须等于BeginTransaction的次数
+
+```csharp
+using var scoped = Db.CreateScoped("MainDb");
+var role = new Role()
+{
+    RoleId = "TT001",
+    RoleName = "测试",
+    Powers = pp.Select(p => new Power() { PowerId = p })
+};
+try
+{
+    await scoped.BeginTransactionAsync();
+    var n = await scoped.Update(role)
+        .Where(r => r.RoleId == role.RoleId)
+        .ExecuteAsync();
+    var roleId = role.RoleId;
+    string[] powers = [.. role.Powers.Select(p => p.PowerId).Distinct()];
+    var d = await scoped.Delete<RolePower>().Where(r => r.RoleId == roleId).ExecuteAsync();
+    var i = 0;
+    
+    var ef = await scoped.Insert<RolePower>(powers.Select(p => new RolePower()
+    {
+        RoleId = roleId,
+        PowerId = p
+    })).ExecuteAsync();
+    i += ef;
+    if (powers.Length == 3)
+    {
+        await scoped.CommitTransactionAsync();
+    }
+    else
+    {
+        await scoped.RollbackTransactionAsync();
+    }
+}
+catch
+{
+    await scoped.RollbackTransactionAsync();
+}
+```
+
+```csharp
+using var scoped = Db.CreateScoped();
+await scoped.BeginTransactionAsync("v");
+await scoped.Select<UserRole>().ToListAsync();
+await scoped.SwitchDatabase("v").Select<UserRole>().ToListAsync();
+await scoped.CommitTransactionAsync("v");
+```
 
 # 待办
 

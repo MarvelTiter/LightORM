@@ -7,10 +7,86 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using static LightORM.SqlExecutor.SqlExecutor;
 
 namespace LightORM;
 
-public static class SqlExecutorExtensions
+//public static partial class SqlExecutorExtensions
+//{
+//    /// <summary>
+//    /// 开启事务-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    /// <param name="isolationLevel"></param>
+//    public static void BeginTran(this ISqlExecutor executor, string savePoint, IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+//    {
+//        var context = currentTransactionContext.Value ?? throw new InvalidOperationException("No active transaction to begin savepoint");
+//        // 嵌套事务
+//        context.NestLevel++;
+//#if NET6_0_OR_GREATER
+//        if (context.Transaction.SupportsSavepoints)
+//        {
+//            context.Transaction.Save($"savePoint{context.NestLevel}");
+//        }
+//#endif
+//    }
+//    /// <summary>
+//    /// 提交事务-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    public static void CommitTran(this ISqlExecutor executor, string savePoint)
+//    {
+
+//    }
+
+//    /// <summary>
+//    /// 回滚事务-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    public static void RollbackTran(this ISqlExecutor executor, string savePoint)
+//    {
+
+//    }
+//    /// <summary>
+//    /// 开启事务异步-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    /// <param name="isolationLevel"></param>
+//    /// <param name="cancellationToken"></param>
+//    /// <returns></returns>
+//    public static Task BeginTranAsync(this ISqlExecutor executor, string savePoint, IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
+//    {
+
+//    }
+//    /// <summary>
+//    /// 提交事务异步-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    /// <param name="cancellationToken"></param>
+//    /// <returns></returns>
+//    public static Task CommitTranAsync(this ISqlExecutor executor, string savePoint, CancellationToken cancellationToken = default)
+//    {
+
+//    }
+//    /// <summary>
+//    /// 回滚事务异步-savePoint
+//    /// </summary>
+//    /// <param name="executor"></param>
+//    /// <param name="savePoint"></param>
+//    /// <param name="cancellationToken"></param>
+//    /// <returns></returns>
+//    public static Task RollbackTranAsync(this ISqlExecutor executor, string savePoint, CancellationToken cancellationToken = default)
+//    {
+
+//    }
+//}
+
+public static partial class SqlExecutorExtensions
 {
     //public static DbConnection GetConnection(this ISqlExecutor executor)
     //{

@@ -9,17 +9,17 @@ public class AdoTest : TestBase
     public async Task MultiUpdate()
     {
         await Parallel.ForAsync(0, 20, Update);
-
     }
 
     private async ValueTask Update(int i, CancellationToken cancellationToken)
     {
         await Task.Delay(i * 500, cancellationToken);
-        using var scope = Db.CreateScoped("v");
+        using var scope = Db.CreateScoped();
+        await scope.BeginTransactionAsync();
         var delay = Random.Shared.Next(100, 1500);
         await Task.Delay(delay, cancellationToken);
         var r = await scope.Select<UserRole>().ToListAsync(cancellationToken);
         Console.WriteLine($"任务{i} -> 结果:{r.Count}");
-        await scope.CommitTranAsync();
+        await scope.CommitTransactionAsync();
     }
 }

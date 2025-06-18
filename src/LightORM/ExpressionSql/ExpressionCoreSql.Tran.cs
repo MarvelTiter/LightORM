@@ -9,22 +9,12 @@ namespace LightORM.ExpressionSql
 {
     partial class ExpressionCoreSql : IExpressionContext
     {
-        bool useTrans;
-        public bool UseTrans { get => useTrans; set => useTrans = value; }
 
         public IExpressionContext Use(IDatabaseProvider db)
         {
             // 确保Use之后，拿到的ISqlExecutor是对应的
             switchSign.Wait();
-            executorProvider.UseCustomExecutor((k, t) =>
-            {
-                var executor = new SqlExecutor.SqlExecutor(db, option.PoolSize);
-                if (t)
-                {
-                    executor.BeginTran();
-                }
-                return executor;
-            });
+            executorProvider.UseCustomExecutor(() => new SqlExecutor.SqlExecutor(db, option.PoolSize));
             return this;
         }
         //public void BeginTranAll()
@@ -98,21 +88,13 @@ namespace LightORM.ExpressionSql
 
         public ISingleScopedExpressionContext CreateScoped(string key)
         {
-            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key, false).Clone();
-            ado.BeginTran();
+            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key).Clone();
             return new SingleScopedExpressionCoreSql(ado);
         }
 
         public IScopedExpressionContext CreateScoped()
         {
             return new ScopedExpressionCoreSql(option);
-        }
-
-        public async Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main)
-        {
-            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key, false).Clone();
-            await ado.BeginTranAsync();
-            return new SingleScopedExpressionCoreSql(ado);
         }
 
         //public void CommitTran(string key = ConstString.Main)

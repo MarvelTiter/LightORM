@@ -34,30 +34,29 @@ namespace LightORM.Providers
             var sql = SqlBuilder.ToSqlString();
             if (SqlBuilder.IsBatchUpdate)
             {
-                var isTran = executor.DbTransaction != null;
+                var usingTransaction = executor.DbTransaction != null;
                 try
                 {
                     var effectRows = 0;
-                    if (!isTran)
+                    if (usingTransaction)
                     {
-                        executor.BeginTran();
-                        isTran = true;
+                        executor.BeginTransaction();
                     }
                     foreach (var item in SqlBuilder.BatchInfos!)
                     {
                         effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                     }
-                    if (isTran)
+                    if (usingTransaction)
                     {
-                        executor.CommitTran();
+                        executor.CommitTransaction();
                     }
                     return effectRows;
                 }
                 catch
                 {
-                    if (isTran)
+                    if (usingTransaction)
                     {
-                        executor.RollbackTran();
+                        executor.RollbackTransaction();
                     }
                     throw;
                 }
@@ -75,30 +74,29 @@ namespace LightORM.Providers
             var sql = SqlBuilder.ToSqlString();
             if (SqlBuilder.IsBatchUpdate)
             {
-                var isTran = executor.DbTransaction == null;
+                var usingTransaction = executor.DbTransaction == null;
                 try
                 {
                     var effectRows = 0;
-                    if (!isTran)
+                    if (usingTransaction)
                     {
-                        await executor.BeginTranAsync(cancellationToken: cancellationToken);
-                        isTran = true;
+                        await executor.BeginTransactionAsync(cancellationToken: cancellationToken);
                     }
                     foreach (var item in SqlBuilder.BatchInfos!)
                     {
                         effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
                     }
-                    if (isTran)
+                    if (usingTransaction)
                     {
-                        await executor.CommitTranAsync(cancellationToken);
+                        await executor.CommitTransactionAsync(cancellationToken);
                     }
                     return effectRows;
                 }
                 catch
                 {
-                    if (isTran)
+                    if (usingTransaction)
                     {
-                        await executor.RollbackTranAsync(cancellationToken);
+                        await executor.RollbackTransactionAsync(cancellationToken);
                     }
                     throw;
                 }

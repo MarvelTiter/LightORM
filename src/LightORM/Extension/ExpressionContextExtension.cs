@@ -100,7 +100,7 @@ public static class ExpressionContextExtension
         throw new NotImplementedException();
     }
 
-    public static ISingleScopedExpressionContext CreateMainDbScope(this IExpressionContext context)
+    public static ISingleScopedExpressionContext CreateMainDbScoped(this IExpressionContext context)
     {
         return context.CreateScoped("MainDb");
     }

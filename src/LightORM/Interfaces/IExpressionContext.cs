@@ -33,7 +33,7 @@ public interface IExpressionContext : IDbAction
     IExpDelete<T> Delete<T>(T entity);
     //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
     ISqlExecutor Ado { get; }
-    
+
 }
 
 public interface IDbAction
@@ -55,26 +55,26 @@ public interface IDbAction
     IExpressionContext Use(IDatabaseProvider db);
     IExpressionContext SwitchDatabase(string key);
     /// <summary>
-    /// 创建指定数据库的单元操作对象，开启事务
+    /// 创建指定数据库的单元操作对象，支持事务
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
     ISingleScopedExpressionContext CreateScoped(string key);
+    ///// <summary>
+    ///// 创建指定数据库的单元操作对象，开启事务
+    ///// </summary>
+    ///// <param name="key"></param>
+    ///// <returns></returns>
+    //Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main);
     /// <summary>
-    /// 创建指定数据库的单元操作对象，开启事务
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main);
-    /// <summary>
-    /// 创建单元操作对象，开启事务
+    /// 创建单元操作对象，支持事务
     /// </summary>
     /// <returns></returns>
     IScopedExpressionContext CreateScoped();
 }
 
 /// <summary>
-/// UnitOfWork, 该对象的所有操作，都会开启事务
+/// UnitOfWork, 该对象的所有操作，支持事务
 /// </summary>
 public interface IScopedExpressionContext : IDisposable// IExpressionSql<IScopedExpressionContext>
 {
@@ -89,10 +89,18 @@ public interface IScopedExpressionContext : IDisposable// IExpressionSql<IScoped
     IExpUpdate<T> Update<T>(IEnumerable<T> entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(T entity);
-    void CommitTranAll();
-    Task CommitTranAllAsync();
-    void RollbackTranAll();
-    Task RollbackTranAllAsync();
+    void BeginTransaction(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    Task BeginTransactionAsync(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    void CommitTransaction(string key = ConstString.Main);
+    Task CommitTransactionAsync(string key = ConstString.Main);
+    void RollbackTransaction(string key = ConstString.Main);
+    Task RollbackTransactionAsync(string key = ConstString.Main);
+    void BeginAllTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    void CommitAllTransaction();
+    Task CommitAllTransactionAsync();
+    void RollbackAllTransaction();
+    Task RollbackAllTransactionAsync();
 }
 /// <summary>
 /// 只能对单个数据库操作
@@ -109,8 +117,10 @@ public interface ISingleScopedExpressionContext : IDisposable
     IExpUpdate<T> Update<T>(IEnumerable<T> entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(T entity);
-    void CommitTran();
-    Task CommitTranAsync();
-    void RollbackTran();
-    Task RollbackTranAsync();
+    void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    void CommitTransaction();
+    Task CommitTransactionAsync();
+    void RollbackTransaction();
+    Task RollbackTransactionAsync();
 }
