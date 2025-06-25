@@ -27,7 +27,7 @@ A.TABLE_NAME TableName
 FROM INFORMATION_SCHEMA.TABLES A
 WHERE A.TABLE_SCHEMA = '{database}'
 ";
-            return context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql, null);
+            return context.Use(GetConnectInfo()).Ado.QueryListAsync<DatabaseTable>(sql, null);
         }
 
         public Task<IList<TableColumn>> GetTableStructAsync(string table)
@@ -43,7 +43,7 @@ WHERE A.TABLE_SCHEMA='{database}'
 AND A.TABLE_NAME = '{table}'
 ORDER BY A.TABLE_SCHEMA,A.TABLE_NAME,A.ORDINAL_POSITION
 ";
-            return context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql, null);
+            return context.Use(GetConnectInfo()).Ado.QueryListAsync<TableColumn>(sql, null);
         }
 
         protected override IDatabaseProvider GetConnectInfo()

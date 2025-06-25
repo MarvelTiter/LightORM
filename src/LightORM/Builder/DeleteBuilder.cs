@@ -3,9 +3,13 @@ using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
-internal record DeleteBuilder(DbBaseType type) : SqlBuilder(type)
+internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
 {
-    public bool IsDeleteList { get; set; }
+    public new T? TargetObject { get; set; }
+    public IEnumerable<T> TargetObjects { get; set; } = [];
+    private bool batchDone = false;
+    public bool IsBatchDelete { get; set; }
+    public List<BatchSqlInfo>? BatchInfos { get; set; }
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
@@ -13,9 +17,43 @@ internal record DeleteBuilder(DbBaseType type) : SqlBuilder(type)
             Where.Add(result.SqlString!);
         }
     }
+    private void CreateBatchDeleteSql()
+    {
+        if (batchDone)
+        {
+            return;
+        }
+        ResolveExpressions();
+        var columns = MainTable.TableEntityInfo.Columns
+                   .Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
+
+        BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
+        var delete = $"DELETE FROM {GetTableName(MainTable, false)}";
+        foreach (var batch in BatchInfos)
+        {
+            StringBuilder sb = new();
+            sb.AppendLine(delete);
+            List<string> autoWhereList = [];
+            foreach (var p in batch.Parameters)
+            {
+                var where = string.Join(" AND ", p.Select(c => $"{c.ColumnName} = {c.ParameterName}"));
+                autoWhereList.Add($"({where})");
+            }
+            var autoWhere = string.Join(" OR ", autoWhereList);
+            Where.Add(autoWhere);
+            sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+            batch.Sql = sb.ToString();
+        }
+        batchDone = true;
+    }
     public override string ToSqlString()
     {
         //TODO 处理批量删除
+        if (IsBatchDelete)
+        {
+            CreateBatchDeleteSql();
+            return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
+        }
         ResolveExpressions();
         if (Where.Count == 0)
         {

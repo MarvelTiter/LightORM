@@ -6,8 +6,6 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<Description>表达式树（ExpressionTree）构建Sql</Description>
-		<Version>3.1.5</Version>
-		<AssemblyVersion>3.1.4</AssemblyVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/MarvelTiter/LightORM</PackageProjectUrl>
@@ -16,9 +14,10 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
-		
+	<Import Project="Versions.props"/>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
@@ -30,20 +29,20 @@
 			<PrivateAssets>all</PrivateAssets>
 		</ProjectReference>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<None Update="README.md">
-		  <Pack>True</Pack>
-		  <PackagePath>\</PackagePath>
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="..\Nuget.md">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
+		<None Include="..\Nuget.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
 
 </Project>

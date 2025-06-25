@@ -11,6 +11,6 @@ public class Role
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(RoleId), SubName = nameof(UserRole.RoleId))]
     public IEnumerable<User> Users { get; set; }
 
-    [LightNavigate(ManyToMany =typeof(RolePower), MainName = nameof(RoleId), SubName = nameof(RolePower.RoleId))]
-    public IEnumerable<Power> Powers { get; set; }
+    [LightNavigate(ManyToMany = typeof(RolePower), MainName = nameof(RoleId), SubName = nameof(RolePower.RoleId))]
+    public IEnumerable<Power> Powers { get; set; } = [];
 }

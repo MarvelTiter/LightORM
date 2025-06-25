@@ -32,31 +32,24 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         var sql = SqlBuilder.ToSqlString();
         if (SqlBuilder.IsBatchInsert)
         {
-            var isTran = executor.DbTransaction == null;
+            var usingTransaction = executor.DbTransaction != null;
             try
             {
                 var effectRows = 0;
-                if (!isTran)
-                {
-                    executor.BeginTran();
-                    isTran = true;
-                }
+                if (usingTransaction)
+                    executor.BeginTransaction();
                 foreach (var item in SqlBuilder.BatchInfos!)
                 {
                     effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                 }
-                if (isTran)
-                {
-                    executor.CommitTran();
-                }
+                if (usingTransaction)
+                    executor.CommitTransaction();
                 return effectRows;
             }
             catch
             {
-                if (isTran)
-                {
-                    executor.RollbackTran();
-                }
+                if (usingTransaction)
+                    executor.RollbackTransaction();
                 throw;
             }
 
@@ -73,38 +66,31 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         var sql = SqlBuilder.ToSqlString();
         if (SqlBuilder.IsBatchInsert)
         {
-            var isTran = executor.DbTransaction == null;
+            var usingTransaction = executor.DbTransaction != null;
             try
             {
                 var effectRows = 0;
-                if (!isTran)
-                {
-                    await executor.BeginTranAsync(cancellationToken);
-                    isTran = true;
-                }
+                if (usingTransaction)
+                    await executor.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
                 foreach (var item in SqlBuilder.BatchInfos!)
                 {
-                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
+                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
-                if (isTran)
-                {
-                    await executor.CommitTranAsync(cancellationToken);
-                }
+                if (usingTransaction)
+                    await executor.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
                 return effectRows;
             }
             catch
             {
-                if (isTran)
-                {
-                    await executor.RollbackTranAsync(cancellationToken);
-                }
+                if (usingTransaction)
+                    await executor.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
                 throw;
             }
         }
         else
         {
             var parameters = SqlBuilder.DbParameters;
-            return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken);
+            return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 

@@ -11,18 +11,18 @@ namespace LightORM.Utils
 {
     internal class SqlExecutorProvider : IDisposable
     {
-        public static ISqlExecutor GetExecutor(string key = ConstString.Main)
+        //public static ISqlExecutor GetExecutor(string key = ConstString.Main)
+        //{
+        //    var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
+        //    return new SqlExecutor.SqlExecutor(dbInfo, 5);
+        //}
+
+        public IDatabaseProvider GetDbInfo(string key)
         {
-            var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
-            return new SqlExecutor.SqlExecutor(dbInfo, 5);
+            return option.DatabaseProviders.TryGetValue(key, out var db) ? db : throw new ArgumentException($"{key} not register");
         }
 
-        public static IDatabaseProvider GetDbInfo(string key)
-        {
-            return StaticCache<IDatabaseProvider>.Get(key) ?? throw new ArgumentException($"{key} not register");
-        }
-
-        Func<string, bool, ISqlExecutor>? customHandler;
+        Func<ISqlExecutor>? customHandler;
         private readonly ConcurrentDictionary<string, ISqlExecutor> executors = [];
         private readonly ExpressionSqlOptions option;
         public SqlExecutorProvider(ExpressionSqlOptions option)
@@ -31,35 +31,32 @@ namespace LightORM.Utils
         }
 
 
-        public void UseCustomExecutor(Func<string, bool, ISqlExecutor> customHandler)
+        public void UseCustomExecutor(Func<ISqlExecutor> customHandler)
         {
             this.customHandler = customHandler;
         }
 
-        private ISqlExecutor? CreateCustomExecutor(string key, bool useTrans)
+        private ISqlExecutor? CreateCustomExecutor()
         {
             if (customHandler == null) return null;
-            var e = customHandler.Invoke(key, useTrans);
+            var e = customHandler.Invoke();
             customHandler = null;
             return e;
         }
 
         public ConcurrentDictionary<string, ISqlExecutor> Executors => executors;
 
-        public ISqlExecutor GetSqlExecutor(string key, bool useTrans) => CreateCustomExecutor(key, useTrans) ?? InternalCreator(key, useTrans);
+        public ISqlExecutor GetSqlExecutor(string key = ConstString.Main) => CreateCustomExecutor() ?? InternalCreator(key);
 
-        private ISqlExecutor InternalCreator(string key, bool useTrans)
+        private ISqlExecutor InternalCreator(string key)
         {
             return executors.GetOrAdd(key, k =>
             {
-                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k),option.PoolSize)
-                {
-                    DbLog = option.Aop.DbLog
-                };
-                if (useTrans)
-                {
-                    ado.BeginTran();
-                }
+                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k), option.PoolSize, new AdoInterceptor(option.Interceptors), k);
+                //if (useTrans)
+                //{
+                //    ado.BeginTran();
+                //}
                 return ado;
             });
         }

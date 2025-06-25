@@ -1,19 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 using LightORM.Extension;
-using System.Xml.Linq;
-using LightORM.Utils;
-using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Models;
 public static class ColumnInfoExtensions
 {
-    public static object? GetValue(this ITableColumnInfo col, object target) => TableContext.GetValue(col, target);
-    public static void SetValue(this ITableColumnInfo col, object target, object? value) => TableContext.SetValue(col, target, value);
+    public static object? GetValue(this ITableColumnInfo col, object target)
+    {
+        //Console.WriteLine($"{col.PropertyName} -> {col.IsAggregated} -> {col.IsAggregatedProperty}");
+        return col.IsAggregated ? null : TableContext.GetValue(col, target);
+    }
+    public static void SetValue(this ITableColumnInfo col, object target, object? value)
+    {
+        if (col.IsAggregated)
+        {
+            return;
+        }
+        TableContext.SetValue(col, target, value);
+    }
 }
 public sealed record ColumnInfo : ITableColumnInfo
 {
@@ -27,6 +31,8 @@ public sealed record ColumnInfo : ITableColumnInfo
     public int? Length { get; set; }
     public object? Default { get; set; }
     public string? Comment { get; set; }
+    public bool IsVersionColumn { get; set; }
+    public bool IsIgnoreUpdate { get; set; }
     //public PropertyInfo Property { get; set; }
     //public Type PropertyType { get; set; }
     //public Type UnderlyingType { get; set; }
@@ -46,6 +52,9 @@ public sealed record ColumnInfo : ITableColumnInfo
     public Type? AggregateType { get; }
     public bool IsAggregated { get; }
     public bool IsAggregatedProperty { get; }
+
+    public string? AggregateProp { get; set; }
+
     //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
     //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
     public ColumnInfo(Type owner
@@ -65,6 +74,8 @@ public sealed record ColumnInfo : ITableColumnInfo
         , Type? aggregateType
         , bool isAggregated
         , bool isAggregaredProp
+        , bool isVersionColumn
+        , bool isIgnoreUpdate
         )
     {
         TableType = owner;
@@ -89,11 +100,13 @@ public sealed record ColumnInfo : ITableColumnInfo
         AggregateType = aggregateType;
         IsAggregated = isAggregated;
         IsAggregatedProperty = isAggregaredProp;
+        IsVersionColumn = isVersionColumn;
+        IsIgnoreUpdate = isIgnoreUpdate;
     }
 
-    public ColumnInfo(PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
+    public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
     {
-        TableType = property.DeclaringType!;
+        TableType = owner;
         PropertyName = property.Name;
         //Property = property;
         //PropertyType = property.PropertyType;
@@ -105,7 +118,6 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsNullable = underlying != null;
 
         var lightColAttr = property.GetAttribute<LightColumnAttribute>();
-        var oldColAttr = property.GetAttribute<ColumnAttribute>();
 #if NET6_0_OR_GREATER
         //var databaseGeneratedAttribute = property.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.DatabaseGeneratedAttribute>(false);
         //if (databaseGeneratedAttribute != null)
@@ -115,11 +127,11 @@ public sealed record ColumnInfo : ITableColumnInfo
         var colAttr = property.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
         IsNotMapped = property.HasAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() || property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = property.HasAttribute<System.ComponentModel.DataAnnotations.KeyAttribute>() || (lightColAttr?.PrimaryKey ?? false);
-        CustomName = lightColAttr?.Name ?? colAttr?.Name ?? oldColAttr?.Name;
+        CustomName = lightColAttr?.Name ?? colAttr?.Name;
 #else
         IsNotMapped = property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = (lightColAttr?.PrimaryKey ?? false);
-        CustomName = lightColAttr?.Name ?? oldColAttr?.Name;
+        CustomName = lightColAttr?.Name ;
 #endif
 
         AutoIncrement = lightColAttr?.AutoIncrement ?? false;
@@ -127,6 +139,8 @@ public sealed record ColumnInfo : ITableColumnInfo
         Length = lightColAttr?.Length;
         Default = lightColAttr?.Default;
         Comment = lightColAttr?.Comment;
+        IsVersionColumn = lightColAttr?.Version ?? false;
+        IsIgnoreUpdate = lightColAttr?.IgnoreUpdate ?? false;
 
         var navigateInfo = property.GetAttribute<LightNavigateAttribute>();
         if (navigateInfo != null)

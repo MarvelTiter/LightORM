@@ -17,7 +17,7 @@ namespace DatabaseUtils.Services
         public async Task<IList<DatabaseTable>> GetTablesAsync()
         {
             string sql = "select table_name TableName from user_tab_columns group by table_name order by table_name";
-            return await context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql, null);
+            return await context.Use(GetConnectInfo()).Ado.QueryListAsync<DatabaseTable>(sql, null);
         }
 
         public async Task<IList<TableColumn>> GetTableStructAsync(string table)
@@ -33,7 +33,7 @@ WHERE a.TABLE_NAME = '{table}'
 and b.table_name = '{table}'
 and a.column_name = b.column_name
 ";
-            return await context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql.ToString(), null);
+            return await context.Use(GetConnectInfo()).Ado.QueryListAsync<TableColumn>(sql.ToString(), null);
         }
 
 

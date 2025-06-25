@@ -27,6 +27,7 @@
   - [批量插入](#批量插入)
 - [删除](#删除)
 - [Ado对象](#ado对象)
+- [事务](#事务)
 - [待办](#待办)
 - [复杂查询示例(Oracle)](#复杂查询示例oracle)
 
@@ -35,14 +36,21 @@
 无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。使用`Expression`动态构建类型映射。
 
 主体
+
 ```
 dotnet add package MT.LightORM --version *
 ```
+
 Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` )
+
 ```
 dotnet add package LightORM.Providers.Sqlite --version *
 ```
+
+[更新日志](./doc/版本日志.md)
+
 # 注册和配置
+
 ```csharp
 // IServiceCollection
 // 注入IExpressionContext对象使用
@@ -66,10 +74,15 @@ ExpSqlFactory.Configuration(option =>
 });
 IExpressionContext Db = ExpSqlFactory.GetContext();
 ```
+
 # 使用生成器(可选)
+
 ## 用途
+
 用于收集实体类型信息，以及创建读写值的方法
+
 ## 使用
+
 ```csharp
 // 创建一个partial class, 例如 TestTableContext
 // 标注`LightORMTableContext`Attribute
@@ -81,19 +94,25 @@ public partial class TestTableContext
 // 在配置的时候应用
 option.SetTableContext(new TestTableContext());
 ```
+
 # 查询(示例代码中使用的Db均为IExpressionContext对象)
+
 ## 基础查询
+
 ```csharp
 Db.Select<Product>()
     .Where(p => p.ModifyTime > DateTime.Now)
     .ToSql(p => new { p.ProductId, p.ProductName });
 ```
+
 ```sql
 SELECT `a1`.`ProductId`, `a1`.`ProductName`
 FROM `Product` `a1`
 WHERE ( `a1`.`ModifyTime` > @Now_0 )
 ```
+
 ## Join查询
+
 ```csharp
 Db.Select<User>()
     .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
@@ -101,6 +120,7 @@ Db.Select<User>()
     .Where(u => u.UserId == "admin")
     .ToSql(w => w.Tb1);
 ```
+
 ```sql
 SELECT `a5`.*
 FROM `USER` `a5`
@@ -108,19 +128,24 @@ INNER JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
 INNER JOIN `ROLE` `a2` ON ( `a6`.`ROLE_ID` = `a2`.`ROLE_ID` )
 WHERE ( `a5`.`USER_ID` = @Const_0 )
 ```
+
 ## 多表查询
+
 ```csharp
 Db.Select<Power, RolePower, Role>()
     .Distinct()
     .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3RoleId)
     .ToSql(w => new { w.Tb1 });
 ```
+
 ```sql
 SELECT DISTINCT `a0`.*
 FROM `POWERS` `a0`, `ROLE_POWER` `a3`, `ROLE` `a2`
 WHERE ( ( `a0`.`POWER_ID` = `a3`.`POWER_ID` ) AND ( `a3`.`ROLE_ID` = `a2`.`ROLE_ID` ) )
 ```
+
 ## 子查询
+
 ```csharp
 Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
     {
@@ -133,6 +158,7 @@ Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
     .Where(t => t.UserId.Contains("admin"))
     .ToSql();
 ```
+
 ```sql
 SELECT *
 FROM (
@@ -143,7 +169,9 @@ FROM (
 ) `temp`
 WHERE `temp`.`UserId` LIKE '%'||'admin'||'%'
 ```
+
 ## Join 子查询
+
 ```csharp
 Db.Select<User>()
     .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId })ToSelect(g => new
@@ -154,6 +182,7 @@ Db.Select<User>()
     .Where(w => w.Tb2.Total > 10)
     .ToSql();
 ```
+
 ```sql
 SELECT *
 FROM `USER` `a5`
@@ -164,7 +193,9 @@ LEFT JOIN (
 ) `temp0` ON ( `a5`.`AGE` = `temp0`.`ProductId` )
 WHERE ( `temp0`.`Total` > 10 )
 ```
+
 ## With (tempName) AS (...) 查询
+
 ```csharp
 var tempU = Db.Select<User>().GroupBy(u => new { u.UserId }).ToSelect(g => new
 {
@@ -185,6 +216,7 @@ var sql = Db.Select<Power>().WithTempQuery(tempU, tempR)
     .Where(w => w.Tb2.Total > 10 || w.Tb3.UserId.Contains("admin"))
     .ToSql();
 ```
+
 ```sql
 WITH us AS (
     SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
@@ -200,13 +232,17 @@ SELECT *
 FROM `POWERS` `a0`, `us` `temp0`, `temp` `temp1`
 WHERE ( ( `temp0`.`Total` > 10 ) OR `temp1`.`UserId` LIKE '%'||@Const_0||'%' )
 ```
+
 ## Include查询
+
 需要配置导航关系
+
 ```csharp
 Db.Select<User>()
     .Where(u => u.UserRoles.When(r => r.RoleId.StartsWith("ad")))
     .ToSql();
 ```
+
 ```sql
 SELECT DISTINCT *
 FROM `USER` `a5`
@@ -214,13 +250,17 @@ LEFT JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
 LEFT JOIN `ROLE` `a2` ON ( `a2`.`ROLE_ID` = `a6`.`ROLE_ID` )
 WHERE `a2`.`ROLE_ID` LIKE @Const_0||'%'
 ```
+
 ## Union 查询
+
 ### 已有查询Union新的查询
+
 ```csharp
 Db.Select<User>().Union(Db.Select<User>())
     .Where(u => u.Age > 10)
     .ToSql();
 ```
+
 ```sql
 SELECT *
 FROM (
@@ -232,12 +272,15 @@ FROM (
 ) `a5`
 WHERE ( `a5`.`AGE` > 10 )
 ```
+
 ### 使用`IExpressionContext.Union`
+
 ```csharp
 Db.Union(Db.Select<User>(), Db.Select<User>())
     .Where(u => u.Age > 10)
     .ToSql();
 ```
+
 ```sql
 SELECT *
 FROM (
@@ -249,8 +292,11 @@ FROM (
 ) `a5`
 WHERE ( `a5`.`AGE` > 10 )
 ```
+
 ## 数据库函数
+
 ### 聚合函数(使用SqlFn的静态方法调用，或者GroupBy后的方法调用中的参数`IExpSelectGrouping<TGroup, TTables>`中调用)
+
 COUNT(*)
 
 COUNT<T>(T column), 当 column 是(一个二元表达式，并且T的类型是bool) 或者 是一个三元表达式, 会解析成 CASE WHEN 语句
@@ -258,14 +304,21 @@ COUNT<T>(T column), 当 column 是(一个二元表达式，并且T的类型是bo
 MAX、MIN、AVG、SUM
 
 Join(在分组数据中拼接字符串，不同数据库，调用的函数不同，例如，mysql是group_concat， oracle是listagg等)
+
 ### 开窗函数(窗口函数)
+
 RowNumber、Lag、Rank
+
 # 更新
+
 ## 实体更新
+
 根据配置的主键更新实体，并且忽略null值
+
 ```csharp
 Db.Update(p).ToSql();
 ```
+
 ```sql
 UPDATE `Product` SET
 `CategoryId` = @CategoryId,
@@ -276,25 +329,31 @@ UPDATE `Product` SET
 `Last` = @Last
 WHERE `ProductId` = @ProductId
 ```
+
 ## 指定列更新
+
 ```csharp
 Db.Update<Product>()
     .UpdateColumns(() => new { p.ProductName, p.CategoryId })
     .Where(p => p.ProductId > 10)
     .ToSql()
 ```
+
 ```sql
 UPDATE `Product` SET
 `CategoryId` = @CategoryId,
 `ProductName` = @ProductName
 WHERE ( `ProductId` > 10 )
 ```
+
 ## 忽略列更新
+
 ```csharp
 Db.Update(p)
     .IgnoreColumns(p => new { p.ProductName, p.CategoryId })
     .ToSql();
 ```
+
 ```sql
 UPDATE `Product` SET
 `ProductCode` = @ProductCode,
@@ -303,25 +362,90 @@ UPDATE `Product` SET
 `Last` = @Last
 WHERE `ProductId` = @ProductId
 ```
+
 ## 批量更新
+
 # 插入
+
 ## 实体插入
+
 ```csharp
 Db.Insert(p).ToSql();
 ```
+
 ```sql
 INSERT INTO `Product` 
 (`ProductId`, `CategoryId`, `ProductCode`, `ProductName`, `DeleteMark`, `CreateTime`, `Last`) 
 VALUES 
 (@ProductId, @CategoryId, @ProductCode, @ProductName, @DeleteMark, @CreateTime, @Last)
 ```
+
 ## 批量插入
+
 # 删除
+
 # Ado对象
-直接执行sql语句, 可返回`IEnumerable<T>`,`DataTable`,`DataReader`等等
+
+直接执行sql语句, 可返回`IEnumerable<T>`,`IAsyncEnumerable<T>`,`DataTable`,`DataReader`等等
+
+# 事务
+
+使用`IExpressionContext.CreateScoped`创建`IScopedExpressionContext`或者`ISingleScopedExpressionContext`对象，提供了BeginTransaction、CommitTransaction、RollbackTransaction以及对应的异步版本，其中`IScopedExpressionContext`支持切换数据库，CommitTransaction+RollbackTransaction的次数必须等于BeginTransaction的次数
+
+```csharp
+using var scoped = Db.CreateScoped("MainDb");
+var role = new Role()
+{
+    RoleId = "TT001",
+    RoleName = "测试",
+    Powers = pp.Select(p => new Power() { PowerId = p })
+};
+try
+{
+    await scoped.BeginTransactionAsync();
+    var n = await scoped.Update(role)
+        .Where(r => r.RoleId == role.RoleId)
+        .ExecuteAsync();
+    var roleId = role.RoleId;
+    string[] powers = [.. role.Powers.Select(p => p.PowerId).Distinct()];
+    var d = await scoped.Delete<RolePower>().Where(r => r.RoleId == roleId).ExecuteAsync();
+    var i = 0;
+    
+    var ef = await scoped.Insert<RolePower>(powers.Select(p => new RolePower()
+    {
+        RoleId = roleId,
+        PowerId = p
+    })).ExecuteAsync();
+    i += ef;
+    if (powers.Length == 3)
+    {
+        await scoped.CommitTransactionAsync();
+    }
+    else
+    {
+        await scoped.RollbackTransactionAsync();
+    }
+}
+catch
+{
+    await scoped.RollbackTransactionAsync();
+}
+```
+
+```csharp
+using var scoped = Db.CreateScoped();
+await scoped.BeginTransactionAsync("v");
+await scoped.Select<UserRole>().ToListAsync();
+await scoped.SwitchDatabase("v").Select<UserRole>().ToListAsync();
+await scoped.CommitTransactionAsync("v");
+```
+
 # 待办
+
 # 复杂查询示例(Oracle)
+
 示例数据库表
+
 ```csharp
 class Jobs
 {
@@ -329,7 +453,9 @@ class Jobs
     public string? StnId { get; set; }
 }
 ```
+
 C#代码
+
 ```csharp
 // 从Jobs表中，选择Plate的第一个字符作为Fzjg字段，选择Fzjg和StnId，作为temp表，并命名为info
 // With info as (...)
@@ -394,6 +520,7 @@ var result = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
     });
 Console.WriteLine(result);
 ```
+
 ```sql
 WITH info AS (
     SELECT SUBSTR("r0"."Plate",1,2) AS "Fzjg", "r0"."StnId"
@@ -429,3 +556,4 @@ FROM (
 ) "t4"
 INNER JOIN all_station "t3" ON ("t4"."StnId" = "t3"."StnId")
 ```
+

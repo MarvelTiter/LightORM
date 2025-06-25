@@ -14,6 +14,8 @@ public interface ITableColumnInfo
     int? Length { get; }
     object? Default { get; }
     string? Comment { get; }
+    bool IsVersionColumn { get; }
+    bool IsIgnoreUpdate { get; }
     bool CanRead { get; }
     bool CanWrite { get; }
     bool CanInit { get; }
@@ -23,6 +25,7 @@ public interface ITableColumnInfo
     bool IsNotMapped { get; }
     bool IsPrimaryKey { get; }
     Type? AggregateType { get; }
+    string? AggregateProp { get; }
     bool IsAggregated { get; }
     bool IsAggregatedProperty { get; }
     //object? GetValue(object target);

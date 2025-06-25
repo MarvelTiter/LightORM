@@ -55,7 +55,7 @@ public class UserFlat
     public IEnumerable<Role> UserRoles { get; set; }
 
     [LightFlat]
-    public PrivateInfo PriInfo { get; set; }
+    public PrivateInfo? PriInfo { get; set; }
 }
 
 public class PrivateInfo

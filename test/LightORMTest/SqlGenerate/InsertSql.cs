@@ -11,7 +11,7 @@ public class InsertSql : TestBase
 {
     const string UID = "TEST_USER";
     [TestMethod]
-    public void InsertEntity()
+    public void I01_InsertEntity()
     {
         int hour = DateTime.Now.Hour;
         User? u = new()
@@ -29,5 +29,12 @@ public class InsertSql : TestBase
                 (@UserId, @Age, @LastLogin, @IsLock)
                 """;
         Assert.IsTrue(result == sql);
+    }
+
+    [TestMethod]
+    public void I02_Insert_Flat_Entity()
+    {
+        var sql = Db.Insert(new SmsLog()).ToSql();
+        Console.WriteLine(sql);
     }
 }

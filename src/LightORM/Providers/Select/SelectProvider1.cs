@@ -207,6 +207,21 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     public Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default) => this.InternalToListAsync<TReturn>(cancellationToken);
 
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+    }
+
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(CancellationToken cancellationToken = default)
+        => this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+
     #endregion
 
     #region with temp

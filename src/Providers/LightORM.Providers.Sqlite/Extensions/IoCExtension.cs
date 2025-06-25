@@ -1,18 +1,19 @@
-﻿using LightORM.Models;
+﻿using LightORM.Interfaces;
+using LightORM.Models;
 using System.Data.SQLite;
 
 namespace LightORM.Providers.Sqlite.Extensions;
 
 public static class IoCExtension
 {
-    public static void UseSqlite(this ExpressionSqlOptions options, string masterConnectString, params string[] slaveConnectStrings)
+    public static void UseSqlite(this IExpressionContextSetup options, string masterConnectString, params string[] slaveConnectStrings)
         => UseSqlite(options, "MainDb", masterConnectString, slaveConnectStrings);
-    public static void UseSqlite(this ExpressionSqlOptions options, string? key, string masterConnectString, params string[] slaveConnectStrings)
+    public static void UseSqlite(this IExpressionContextSetup options, string? key, string masterConnectString, params string[] slaveConnectStrings)
     {
         var provider = SqliteProvider.Create(masterConnectString, slaveConnectStrings);
         options.SetDatabase(key, DbBaseType.Sqlite, provider);
     }
-    public static void UseSqlite(this ExpressionSqlOptions options, Action<DataBaseOption> setting)
+    public static void UseSqlite(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
         var dbOption = new DataBaseOption(CustomSqlite.Instance.MethodResolver);
         setting.Invoke(dbOption);
