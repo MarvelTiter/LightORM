@@ -123,7 +123,7 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         interceptorTypes.Add(typeof(T));
         if (WeakServices?.TryGetTarget(out var services) == true)
         {
-            services?.AddScoped<IAdoInterceptor, T>();
+            services?.AddScoped<T>();
         }
 
         return this;
