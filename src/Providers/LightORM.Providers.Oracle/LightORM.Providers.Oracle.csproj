@@ -7,7 +7,7 @@
 		<LangVersion>latest</LangVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Authors>MarvelTiter</Authors>
-		<Version>0.0.6</Version>
+		<Version>0.0.7</Version>
 		<Description>LightORM Oracle扩展</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>

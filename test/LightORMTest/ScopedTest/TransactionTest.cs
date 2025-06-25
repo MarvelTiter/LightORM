@@ -43,11 +43,11 @@ public class TransactionTest : TestBase
             var d = await scoped.Delete<RolePower>().Where(r => r.RoleId == roleId).ExecuteAsync();
             var i = 0;
             
-            var ef = await scoped.Insert<RolePower>(powers.Select(p => new RolePower()
+            var ef = await scoped.Insert<RolePower>([..powers.Select(p => new RolePower()
             {
                 RoleId = roleId,
                 PowerId = p
-            })).ExecuteAsync();
+            })]).ExecuteAsync();
             i += ef;
             if (powers.Length == 3)
             {

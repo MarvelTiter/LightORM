@@ -24,14 +24,14 @@ public interface IExpressionContext : IDbAction
     IExpSelect<T> FromQuery<T>(IExpSelect<T> select);
     IExpSelect<T> FromTemp<T>(IExpTemp<T> temp);
     IExpSelect<T> Select<T>();
-    IExpInsert<T> Insert<T>(T entity);
-    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
+    //IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(params T[] entities);
     IExpUpdate<T> Update<T>();
-    IExpUpdate<T> Update<T>(T entity);
-    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+    //IExpUpdate<T> Update<T>(T entity);
+    IExpUpdate<T> Update<T>(params T[] entities);
     IExpDelete<T> Delete<T>();
-    IExpDelete<T> Delete<T>(T entity);
-    //IExpDelete<T> Delete<T>(IEnumerable<T> entities);
+    //IExpDelete<T> Delete<T>(T entity);
+    IExpDelete<T> Delete<T>(params T[] entities);
     ISqlExecutor Ado { get; }
 
 }
@@ -82,13 +82,13 @@ public interface IScopedExpressionContext : IDisposable// IExpressionSql<IScoped
     string Id { get; }
     ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
-    IExpInsert<T> Insert<T>(T entity);
-    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
+    //IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(params T[] entities);
     IExpUpdate<T> Update<T>();
-    IExpUpdate<T> Update<T>(T entity);
-    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+    //IExpUpdate<T> Update<T>(T entity);
+    IExpUpdate<T> Update<T>(params T[] entities);
     IExpDelete<T> Delete<T>();
-    IExpDelete<T> Delete<T>(T entity);
+    IExpDelete<T> Delete<T>(params T[] entity);
     void BeginTransaction(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     Task BeginTransactionAsync(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction(string key = ConstString.Main);
@@ -110,13 +110,13 @@ public interface ISingleScopedExpressionContext : IDisposable
     string Id { get; }
     ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
-    IExpInsert<T> Insert<T>(T entity);
-    IExpInsert<T> Insert<T>(IEnumerable<T> entities);
+    //IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(params T[] entities);
     IExpUpdate<T> Update<T>();
-    IExpUpdate<T> Update<T>(T entity);
-    IExpUpdate<T> Update<T>(IEnumerable<T> entities);
+    //IExpUpdate<T> Update<T>(T entity);
+    IExpUpdate<T> Update<T>(params T[] entities);
     IExpDelete<T> Delete<T>();
-    IExpDelete<T> Delete<T>(T entity);
+    IExpDelete<T> Delete<T>(params T[] entity);
     void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction();

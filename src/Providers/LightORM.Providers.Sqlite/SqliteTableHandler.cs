@@ -9,10 +9,10 @@ public sealed class SqliteTableHandler(TableGenerateOption option) : BaseDatabas
     protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
-        var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
+        DbColumn[] primaryKeys = [..table.Columns.Where(col => col.PrimaryKey)];
         string primaryKeyConstraint = "";
 
-        if (primaryKeys.Count() > 0)
+        if (primaryKeys.Length > 0)
         {
             primaryKeyConstraint =
 $@"
@@ -25,7 +25,7 @@ $@"
         var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
         sql.AppendLine(@$"
 CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(col => BuildColumn(col)))}
+{string.Join($",{Environment.NewLine}", table.Columns.Select(BuildColumn))}
 {primaryKeyConstraint}
 );
 ");

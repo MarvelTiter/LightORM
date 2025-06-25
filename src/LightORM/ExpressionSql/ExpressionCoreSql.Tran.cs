@@ -14,7 +14,7 @@ namespace LightORM.ExpressionSql
         {
             // 确保Use之后，拿到的ISqlExecutor是对应的
             switchSign.Wait();
-            executorProvider.UseCustomExecutor(() => new SqlExecutor.SqlExecutor(db, option.PoolSize));
+            executorProvider.UseCustomExecutor(() => new SqlExecutor.SqlExecutor(db, option.PoolSize,new AdoInterceptor(option.Interceptors)));
             return this;
         }
         //public void BeginTranAll()

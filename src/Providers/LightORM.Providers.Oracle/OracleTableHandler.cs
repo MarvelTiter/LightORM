@@ -90,18 +90,19 @@ ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(primary
             var increments = table.Columns.Where(col => col.AutoIncrement);
             foreach (var col in increments)
             {
-                sql.AppendLine($"CREATE SEQUENCE {AttachUserId($"SEQ_{table.Name}_{col.Name}").ToUpper()} START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999999999999 ORDER;");
-                sql.AppendLine($@"
-CREATE OR REPLACE TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()}
-    BEFORE INSERT ON {table.Name.ToUpper()}
-    FOR EACH ROW
-BEGIN
-    IF :NEW.{col.Name.ToUpper()} IS NULL THEN
-        SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{col.Name.ToUpper()} FROM DUAL;
-    END IF;
-END;
-ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
-");
+                var autoIncrement = $"""
+ CREATE SEQUENCE {AttachUserId($"SEQ_{table.Name}_{col.Name}").ToUpper()} START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999999999999 ORDER;
+ CREATE OR REPLACE TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()}
+     BEFORE INSERT ON {table.Name.ToUpper()}
+     FOR EACH ROW
+ BEGIN
+     IF :NEW.{col.Name.ToUpper()} IS NULL THEN
+         SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{col.Name.ToUpper()} FROM DUAL;
+     END IF;
+ END;
+ ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
+ """;
+                sql.AppendLine(autoIncrement);
             }
         }
 

@@ -427,6 +427,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     col = table.GetColumnInfo(name);
                 }
             }
+
+            if (Options.SqlType == SqlPartial.Where)
+            {
+                ResolvedMembers.Add(col.PropertyName);
+            }
+
             if (!table.TableEntityInfo.IsAnonymousType)
             {
                 UseAs = col.ColumnName != col.PropertyName;

@@ -13,17 +13,19 @@ internal struct UpdateValue
 internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
 {
     public new T? TargetObject { get; set; }
-    public IEnumerable<T> TargetObjects { get; set; } = Enumerable.Empty<T>();
+    public IEnumerable<T> TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     List<string> IgnoreMembers { get; set; } = [];
     public List<string> SetNullMembers { get; set; } = [];
     public bool IsBatchUpdate { get; internal set; }
+    public List<string> WhereMembers { get; set; } = [];
 
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
         {
             Where.Add(result.SqlString!);
+            WhereMembers.AddRange(result?.Members?.Distinct() ?? []);
         }
         else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Update)
         {
@@ -64,27 +66,40 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         }
         ResolveExpressions();
 
-        var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
+        //var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
+        // 筛选需要的列
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(CheckMembers)
-                   .Where(c => !c.IsNotMapped)
-                   .Where(c => !c.IsNavigate).ToArray();
+                   .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated).ToArray();
 
         BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
         var update = $"UPDATE {GetTableName(MainTable, false)} SET";
-        var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
+        //var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
         {
+            // 每一个BatchSqInfo就是每批次更新的数据量
             StringBuilder sb = new(update);
             foreach (var col in columns)
             {
+                if (col.IsPrimaryKey) continue;
                 sb.Append($"\n{AttachEmphasis(col.ColumnName)} = CASE ");
 
+                // 每一条记录的参数数量
                 foreach (var rowDatas in batch.Parameters)
                 {
                     var currentCol = rowDatas.First(r => r.PropName == col.PropertyName);
-                    sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey).Select(r => $"{AttachEmphasis(r.ColumnName)} = {AttachPrefix(r.ParameterName)}"))} THEN {(currentCol.Value == null ? "NULL" : AttachPrefix(currentCol.ParameterName))} ");
+                    if (currentCol.IsVersion)
+                    {
+                        var newVersion = VersionPlus(currentCol.Value);
+                        var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_new", Value = newVersion };
+                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{AttachEmphasis(r.ColumnName)} = {AttachPrefix(r.ParameterName)}"))} THEN {(newCol.Value == null ? "NULL" : AttachPrefix(newCol.ParameterName))} ");
+                        rowDatas.Add(newCol);
+                    }
+                    else
+                    {
+                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{AttachEmphasis(r.ColumnName)} = {AttachPrefix(r.ParameterName)}"))} THEN {(currentCol.Value == null ? "NULL" : AttachPrefix(currentCol.ParameterName))} ");
+                    }
                 }
                 sb.Append("END,");
             }
@@ -95,10 +110,10 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
 
             foreach (var item in pValues.GroupBy(c => c.ColumnName))
             {
-                Where.Add($"( {AttachEmphasis(item.Key)} IN ({string.Join(", ", item.Select(i => AttachPrefix(i.ParameterName)))}) )");
+                Where.Add($"( {AttachEmphasis(item.Key)} IN ({string.Join(", ", item.Select(i => AttachPrefix(i.ParameterName)))}))");
             }
 
-            sb.AppendFormat($"{N}WHERE {0}", string.Join($"{N}AND ", Where));
+            sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
 
             batch.Sql = sb.ToString();
         }
@@ -115,7 +130,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         ResolveExpressions();
         if (Where.Count == 0)
         {
-            var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
+            var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
             if (primaryCol.Length == 0) LightOrmException.Throw("Where Condition is null and no primarykey");
             if (TargetObject == null) LightOrmException.Throw("Where Condition is null and no entity");
             foreach (var item in primaryCol)
@@ -124,6 +139,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 if (val == null) continue;
                 DbParameters.Add(item.PropertyName, val);
                 Where.Add($"({AttachEmphasis(item.ColumnName)} = {AttachPrefix(item.PropertyName)})");
+                WhereMembers.Add(item.PropertyName);
             }
         }
 
@@ -131,11 +147,11 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         {
             var autoUpdateCols = MainTable.TableEntityInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated).ToArray();
+               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated && !c.IsVersionColumn && !c.IsIgnoreUpdate).ToList();
             //参数处理
             foreach (var item in autoUpdateCols)
             {
-                if (TargetObject != null)
+                if (TargetObject is not null)
                 {
                     var val = item.GetValue(TargetObject);
                     if (val == null) continue;
@@ -144,26 +160,45 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 }
             }
         }
-
+        var versionColumns = MainTable.TableEntityInfo.Columns.Where(c => c.IsVersionColumn).ToList();
+        foreach (var item in versionColumns)
+        {
+            if (TargetObject is not null)
+            {
+                var version = item.GetValue(TargetObject);
+                var newVersion = VersionPlus(version);
+                DbParameters.Add($"{item.PropertyName}_new", newVersion);
+#if NET462
+                if (!DbParameters.ContainsKey(item.PropertyName))
+                {
+                    DbParameters.Add(item.PropertyName, version!);
+                }
+#else
+                DbParameters.TryAdd(item.PropertyName, version!);
+#endif
+            }
+        }
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
-        var finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropertyName)}");
+        IEnumerable<string>? finalUpdateCol = customCols.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.PropertyName)}");
 
         var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
         if (setNullCol.Length > 0)
         {
             finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));
         }
+        if (versionColumns.Count > 0)
+        {
+            finalUpdateCol = finalUpdateCol.Concat(versionColumns.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix($"{c.PropertyName}_new")}"));
+            var versonCondition = string.Join(" AND ", versionColumns.Where(c => !WhereMembers.Contains(c.PropertyName)).Select(c => $"({AttachEmphasis(c.ColumnName)} = {AttachPrefix($"{c.PropertyName}")})"));
+            if (!string.IsNullOrEmpty(versonCondition))
+                Where.Add(versonCondition);
+        }
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(MainTable, false));
         sb.AppendLine(" SET");
-        sb.AppendLine(string.Join($",{N}",finalUpdateCol));
+        sb.AppendLine(string.Join($",{N}", finalUpdateCol));
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
-        //sb.AppendFormat("UPDATE {0} SET\n{1}", GetTableName(MainTable, false), string.Join(",\n", finalUpdateCol));
-
-        //sb.AppendFormat("\nWHERE {0}", string.Join("\nAND ", Where));
 
         return sb.Trim();
     }
-
-
 }
