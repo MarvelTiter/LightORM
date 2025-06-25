@@ -20,7 +20,13 @@ builder.Services.AddLightOrm(option =>
         option.DbKey = "Oracle";
         option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
     });
-    
+    option.SetWatcher(aop =>
+    {
+        aop.DbLog = (sql, p) =>
+        {
+            Console.WriteLine(sql);
+        };
+    });//.InitializedContext<TestInitContext>();
 });
 builder.Services.AddScoped<Services1>();
 builder.Services.AddScoped<Services2>();

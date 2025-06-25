@@ -83,13 +83,12 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
         ResolveExpressions();
         if (Members.Count == 0)
         {
-            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.IsAggregated).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
         }
         var insertColumns = MainTable.TableEntityInfo.Columns
-            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate)
-            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => c.GetValue(TargetObject!) != null)
-            .ToArray();
+            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
+            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
         foreach (var item in insertColumns)
         {
             var val = item.GetValue(TargetObject!);

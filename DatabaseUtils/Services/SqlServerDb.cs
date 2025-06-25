@@ -16,7 +16,7 @@ namespace DatabaseUtils.Services
         public async Task<IList<DatabaseTable>> GetTablesAsync()
         {
             string sql = "SELECT NAME FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
-            return await context.Use(GetConnectInfo()).Ado.QueryListAsync<DatabaseTable>(sql);
+            return await context.Use(GetConnectInfo()).Ado.QueryAsync<DatabaseTable>(sql);
         }
 
         public async Task<IList<TableColumn>> GetTableStructAsync(string table)
@@ -48,7 +48,7 @@ left join sys.extended_properties f on d.id = f.major_id and f.minor_id = 0
 where d.name = '{table}'--如果只查询指定表,加上此条件 
 order by a.id,a.colorder 
 ";
-            return await context.Use(GetConnectInfo()).Ado.QueryListAsync<TableColumn>(sql);
+            return await context.Use(GetConnectInfo()).Ado.QueryAsync<TableColumn>(sql);
 
         }
 

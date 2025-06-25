@@ -1,27 +1,28 @@
-﻿using LightORM.ExpressionSql;
+﻿#if NET6_0_OR_GREATER
+using LightORM.ExpressionSql;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace LightORM;
 public static class IocExtension
 {
 
-    public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options)
+    public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<ExpressionSqlOptions> options)
     {
-        //var option = ExpressionSqlOptions.Instance.Value;
-        var builder = new ExpressionOptionBuilder();
-        builder.WeakServices = new WeakReference<IServiceCollection>(services);
-        options(builder);
-        //if (option.InitialContexts.Count > 0)
-        //{
-        //    option.Check();
-        //}
-        services.AddSingleton(provider =>
+        var option = new ExpressionSqlOptions();
+        options(option);
+        if (option.InitialContexts.Count > 0)
         {
-            var option = builder.Build(provider);
-            return option;
-        });
-       
+            option.Check();
+        }
+        services.AddSingleton(option);
+        //var builder = new ExpressionSqlBuilder(option);
+        //services.AddSingleton(builder);
+        //services.AddScoped(provider =>
+        //{
+        //    var builder = provider.GetService<ExpressionSqlBuilder>()!;
+        //    var ins = builder.Build();
+        //    return ins;
+        //});
         services.AddScoped<IExpressionContext, ExpressionCoreSql>();
         return services;
     }
@@ -33,3 +34,4 @@ public static class IocExtension
     //}
 
 }
+#endif

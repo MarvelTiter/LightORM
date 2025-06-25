@@ -18,6 +18,4 @@ struct PropertyScanResult
     public string CanWrite { get; set; }
     public string CanInit { get; set; }
     public string NavInfo { get; set; }
-    public string IsVersion { get; set; }
-    public string IgnoreUpdate { get; set; }
 }

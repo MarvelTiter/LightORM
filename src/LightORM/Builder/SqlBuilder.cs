@@ -1,9 +1,5 @@
-﻿using LightORM.Builder;
-using LightORM.Extension;
+﻿using LightORM.Extension;
 using LightORM.Implements;
-using System;
-using System.Linq;
-using System.Text;
 
 namespace LightORM.Builder;
 
@@ -93,16 +89,4 @@ internal abstract record SqlBuilder : ISqlBuilder
     protected abstract void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result);
 
     public abstract string ToSqlString();
-
-    protected static object VersionPlus(object? oldVersion)
-    {
-        return oldVersion switch
-        {
-            int i => i + 1,
-            long l => l + 1,
-            double d => d + 1,
-            float f => f + 1,
-            _ => throw new NotSupportedException("不支持的Version列类型"),
-        };
-    }
 }

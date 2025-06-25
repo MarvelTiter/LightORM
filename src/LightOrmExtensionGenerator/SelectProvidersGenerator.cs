@@ -192,18 +192,6 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
-    {
-        this.HandleResult(exp, null);
-        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
-    }
-
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
-    {
-        this.HandleResult(exp, null);
-        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
-    }
-
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
     {
         this.HandleResult(exp, null);
@@ -281,20 +269,6 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
-    }
-
-     public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
-    }
-
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(exp)!;
-        this.HandleResult(flatExp, null);
-        return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
     public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)

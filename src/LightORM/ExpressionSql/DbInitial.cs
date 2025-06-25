@@ -45,9 +45,4 @@ public class DbInitial : IDbInitial
         }
         return this;
     }
-
-    public IDbInitial CreateOrUpdateTable<T>(params T[]? datas)
-    {
-        throw new NotImplementedException();
-    }
 }

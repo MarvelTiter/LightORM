@@ -4,65 +4,58 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM;
-public partial interface ISqlExecutor
+
+public interface ISqlExecutor : IDisposable, ICloneable
 {
-    internal ConnectionPool Pool { get; }
-    internal AdoInterceptor Interceptor { get; }
-    internal IDatabaseProvider Database { get; }
-    internal void InitTransactionContext();
-    internal void InitTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     /// <summary>
-    /// 开启事务异步
+    /// 数据库日志
     /// </summary>
-    /// <param name="isolationLevel"></param>
-    /// <param name="cancellationToken">异步取消令牌</param>
-    /// <returns></returns>
-    internal Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
-}
-public partial interface ISqlExecutor : IDisposable, ICloneable
-{
-    ///// <summary>
-    ///// 数据库日志
-    ///// </summary>
-    //public Action<string, object?>? DbLog { get; set; }
+    public Action<string, object?>? DbLog { get; set; }
+
+    internal IDatabaseProvider Database { get; }
     ///// <summary>
     ///// 数据库事务
     ///// </summary>
-    public DbTransaction? DbTransaction { get; }
+    public DbTransaction? DbTransaction { get; set; }
 
     //public DbConnection GetConnection();
-    internal string Id { get; }
-    void UseExternalTransaction(DbTransaction externalTransaction);
-    
+
     /// <summary>
     /// 开启事务
     /// </summary>
-    void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+    void BeginTran();
 
     /// <summary>
     /// 提交事务
     /// </summary>
-    void CommitTransaction();
+    void CommitTran();
 
     /// <summary>
     /// 回滚事务
     /// </summary>
     /// <returns></returns>
-    void RollbackTransaction();
+    void RollbackTran();
+
+    /// <summary>
+    /// 开启事务异步
+    /// </summary>
+    /// <param name="cancellationToken">异步取消令牌</param>
+    /// <returns></returns>
+    Task BeginTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 提交事务异步
     /// </summary>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+    Task CommitTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 回滚事务异步
     /// </summary>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+    Task RollbackTranAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行非查询

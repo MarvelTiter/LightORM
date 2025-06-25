@@ -17,18 +17,13 @@ public abstract class DbInitialContext
     {
         bool hasTable = true;
         bool update = false;
-        var key = DatabaseKey();
-        if (!option.DatabaseProviders.TryGetValue(key, out var db))
-        {
-            throw new LightOrmException($"{key} not register");
-        }
-        using var executor = new SqlExecutor.SqlExecutor(db, new AdoInterceptor(option.Interceptors));
-        option.DatabaseHandlers.TryGetValue(key, out var handler);
+        using var executor = SqlExecutorProvider.GetExecutor(DatabaseKey());
+        var handler = StaticCache<DbHandlerRecord>.Get(DatabaseKey());
         if (handler?.Factory == null)
         {
             return;
         }
-
+        executor.DbLog = option.Aop.DbLog;
         try
         {
             var d = executor.Query<DbInfo>("SELECT * FROM DB_INITIAL_INFO").FirstOrDefault();
@@ -47,6 +42,7 @@ public abstract class DbInitialContext
         if (!hasTable)
         {
             context.CreateTable<DbInfo>();
+            Info.Initialized = false;
         }
         if (!Info.Initialized)
         {

@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using LightORM;
-using LightORM.Implements;
-
 namespace DatabaseUtils
 {
     [LightORMTableContext]
@@ -18,8 +16,14 @@ namespace DatabaseUtils
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddLightOrm(option =>
             {
-                option.SetTableContext<DbContext>();
-                option.UseInterceptor<SqlLogger>();
+                option.SetTableContext(new DbContext());
+                option.SetWatcher(aop =>
+                {
+                    aop.DbLog = (s, p) =>
+                    {
+                        Console.WriteLine(s);
+                    };
+                });
             });
             builder.Services.AddAntDesign();
             builder.Services.AddSingleton<App>();
@@ -30,9 +34,4 @@ namespace DatabaseUtils
             builder.Build().Run();
         }
     }
-}
-
-public class SqlLogger : AdoInterceptorBase
-{
-    
 }

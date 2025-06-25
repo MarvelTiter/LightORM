@@ -65,7 +65,7 @@ public static class ExpressionContextExtension
         context.SwitchDb<T>();
         return context.Insert<T>(entity);
     }
-    public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, params T[] entities)
+    public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
     {
         context.SwitchDb<T>();
         return context.Insert<T>(entities);
@@ -80,7 +80,7 @@ public static class ExpressionContextExtension
         context.SwitchDb<T>();
         return context.Update<T>(entity);
     }
-    public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, params T[] entities)
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
     {
         context.SwitchDb<T>();
         return context.Update<T>(entities);
@@ -95,14 +95,9 @@ public static class ExpressionContextExtension
         context.SwitchDb<T>();
         return context.Delete<T>(entity);
     }
-    public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, params T[] entities)
+    public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, IEnumerable<T> entities)
     {
         throw new NotImplementedException();
-    }
-
-    public static ISingleScopedExpressionContext CreateMainDbScoped(this IExpressionContext context)
-    {
-        return context.CreateScoped("MainDb");
     }
 
     private static void HandleFromTemp(SelectBuilder sqlbuilder, params IExpTemp[] temps)
@@ -167,7 +162,7 @@ public static class ScopedExpressionContextExtensions
         context.SwitchDb<T>();
         return context.Insert<T>(entity);
     }
-    public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
+    public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
     {
         context.SwitchDb<T>();
         return context.Insert<T>(entities);
@@ -182,7 +177,7 @@ public static class ScopedExpressionContextExtensions
         context.SwitchDb<T>();
         return context.Update<T>(entity);
     }
-    public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
+    public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
     {
         context.SwitchDb<T>();
         return context.Update<T>(entities);
@@ -197,7 +192,7 @@ public static class ScopedExpressionContextExtensions
         context.SwitchDb<T>();
         return context.Delete<T>(entity);
     }
-    public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
+    public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, IEnumerable<T> entities)
     {
         throw new NotImplementedException();
     }

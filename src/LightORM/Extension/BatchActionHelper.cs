@@ -14,7 +14,6 @@ namespace LightORM.Extension
         /// <param name="column">列数，对应参数个数</param>
         /// <param name="limit">参数个数最大值</param>
         /// <param name="dataCount">更新实体数量</param>
-        /// <param name="rows">每次更新的行数</param>
         /// <returns></returns>
         private static int CalcBatchSize(int column, int limit, int dataCount, out int rows)
         {
@@ -32,8 +31,7 @@ namespace LightORM.Extension
         public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns, List<T> datas, int limit = 2000)
         {
             var list = new List<BatchSqlInfo>();
-            var verions = columns.Count(c => c.IsVersionColumn);
-            var size = CalcBatchSize(columns.Length + verions, limit, datas.Count, out var rows);
+            var size = CalcBatchSize(columns.Length, limit, datas.Count, out var rows);
             for (var i = 0; i < size; i++)
             {
                 var rowIndex = 0;
@@ -45,7 +43,7 @@ namespace LightORM.Extension
                     foreach (var col in columns)
                     {
                         var val = col.GetValue(obj!);
-                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val)
+                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val)
                         );
                     }
                     rowIndex++;

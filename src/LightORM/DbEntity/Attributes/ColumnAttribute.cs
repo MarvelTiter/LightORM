@@ -65,12 +65,4 @@ public class LightColumnAttribute : Attribute
     /// 注释
     /// </summary>
     public string? Comment { get; set; }
-    /// <summary>
-    /// 是否作为版本列
-    /// </summary>
-    public bool Version { get; set; }
-    /// <summary>
-    /// 忽略更新
-    /// </summary>
-    public bool IgnoreUpdate { get; set; }
 }

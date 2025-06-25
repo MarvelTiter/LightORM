@@ -1,24 +1,23 @@
-﻿using LightORM.SqlExecutor;
-using LightORMTest;
-using System.Threading.Tasks;
+﻿using LightORMTest;
 
 namespace LightORMTest.SqlGenerate;
+
 [TestClass]
 public class UpdateSql : TestBase
 {
     [TestMethod]
-    public void U01_UpdateEntity()
+    public void UpdateEntity()
     {
         var p = new Product();
         var sql = Db.Update(p).ToSql();
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `CategoryId` = @CategoryId,
-            `ProductCode` = @ProductCode,
-            `ProductName` = @ProductName,
-            `DeleteMark` = @DeleteMark,
-            `CreateTime` = @CreateTime,
+            `CategoryId` = @CategoryId
+            `ProductCode` = @ProductCode
+            `ProductName` = @ProductName
+            `DeleteMark` = @DeleteMark
+            `CreateTime` = @CreateTime
             `Last` = @Last
             WHERE (`ProductId` = @ProductId)
             """;
@@ -26,7 +25,7 @@ public class UpdateSql : TestBase
     }
 
     [TestMethod]
-    public void U02_UpdateColumns()
+    public void UpdateColumns()
     {
         var p = new Product();
         var sql = Db.Update<Product>()
@@ -36,7 +35,7 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `CategoryId` = @CategoryId,
+            `CategoryId` = @CategoryId
             `ProductName` = @ProductName
             WHERE (`ProductId` > 10)
             """;
@@ -44,7 +43,7 @@ public class UpdateSql : TestBase
     }
 
     [TestMethod]
-    public void U03_UpdateColumn()
+    public void UpdateColumn()
     {
         var p = new Product();
         var sql = Db.Update<Product>()
@@ -55,7 +54,7 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `ProductName` = @ProductName,
+            `ProductName` = @ProductName
             `ProductCode` = NULL
             WHERE (`ProductId` > 10)
             """;
@@ -63,7 +62,7 @@ public class UpdateSql : TestBase
     }
 
     [TestMethod]
-    public void U04_IgnoreColumn()
+    public void IgnoreColumn()
     {
         var p = new Product();
         var sql = Db.Update(p)
@@ -72,79 +71,12 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `Product` SET
-            `ProductCode` = @ProductCode,
-            `DeleteMark` = @DeleteMark,
-            `CreateTime` = @CreateTime,
+            `ProductCode` = @ProductCode
+            `DeleteMark` = @DeleteMark
+            `CreateTime` = @CreateTime
             `Last` = @Last
             WHERE (`ProductId` = @ProductId)
             """;
         Assert.IsTrue(sql == result);
-    }
-
-    [TestMethod]
-    public void U05_Update_Flat_Column()
-    {
-        var p = new SmsLog();
-        var sql = Db.Update(p)
-            .Set(s => s.Recive.Code, 100)
-            .Where(s => s.Recive.Uuid == "123")
-            .ToSql();
-        Console.WriteLine(sql);
-        var result = """
-            UPDATE `SMS_LOG` SET
-            `CODE` = @Code,
-            `VERSION` = @Version_new
-            WHERE (`UUID` = '123') AND (`VERSION` = @Version)
-            """;
-        Assert.IsTrue(sql == result);
-    }
-
-    [TestMethod]
-    public void U06_Update_Flat_Entity()
-    {
-        var p = new SmsLog();
-        var sql = Db.Update(p)
-            .ToSql();
-        Console.WriteLine(sql);
-        var result = """
-            UPDATE `SMS_LOG` SET
-            `CODE` = @Code,
-            `MSG` = @Msg,
-            `CREATE_TIME` = @CreateTime,
-            `VERSION` = @Version_new
-            WHERE (`ID` = @Id) AND (`UUID` = @Uuid) AND (`VERSION` = @Version)
-            """;
-        Assert.IsTrue(sql == result);
-    }
-
-    [TestMethod]
-    public void U07_Update_With_Version()
-    {
-        var p = new SmsLog();
-        var sql = Db.Update(p)
-            .ToSql();
-        Console.WriteLine(sql);
-        
-    }
-
-    [TestMethod]
-    public void U08_Update_Batch()
-    {
-        var datas = GetList();
-
-        var sql = Db.Update([..datas]).ToSql();
-        Console.WriteLine(sql);
-        List<SmsLog> GetList()
-        {
-            return new List<SmsLog>
-            {
-                new() ,
-                new() ,
-                new() ,
-                new() ,
-                new() ,
-                new() ,
-            };
-        }
     }
 }

@@ -581,22 +581,4 @@ public class SelectSql : TestBase
     }
 
     #endregion
-
-    #region flat prop
-
-    [TestMethod]
-    public void S20_Select_Flat_Property()
-    {
-        var sql = Db.Select<SmsLog>()
-            .Where(l => l.Recive.Code == 100)
-            .ToSql();
-        var result = """
-            SELECT *
-            FROM `SMS_LOG` `a`
-            WHERE (`a`.`CODE` = 100)
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
-    }
-
-    #endregion
 }

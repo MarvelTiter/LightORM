@@ -39,17 +39,8 @@ internal static class TableContext
             var key = $"{type.FullName}_{col.PropertyName}_Setter";
             var reflectAction = StaticCache<Action<object, object?>>.GetOrAdd(key, () =>
             {
-                if (col.IsAggregatedProperty && col.AggregateType is not null)
-                {
-                    var property = col.AggregateType.GetProperty(col.PropertyName)!;
-                    var aggregate = col.TableType.GetProperty(col.AggregateProp!)!;
-                    return col.TableType.GetFlatPropertySetter(property, aggregate);
-                }
-                else
-                {
-                    var property = col.TableType.GetProperty(col.PropertyName)!;
-                    return col.TableType.GetPropertySetter(property);
-                }
+                var property = col.TableType.GetProperty(col.PropertyName)!;
+                return col.TableType.GetPropertySetter(property);
             });
             reflectAction.Invoke(target, value);
         }
@@ -67,17 +58,8 @@ internal static class TableContext
             var key = $"{type.FullName}_{col.PropertyName}_Getter";
             var reflectAction = StaticCache<Func<object, object?>>.GetOrAdd(key, () =>
             {
-                if (col.IsAggregatedProperty && col.AggregateType is not null)
-                {
-                    var property = col.AggregateType.GetProperty(col.PropertyName)!;
-                    var aggregate = col.TableType.GetProperty(col.AggregateProp!)!;
-                    return col.TableType.GetFlatPropertyAccessor(property, aggregate);
-                }
-                else
-                {
-                    var property = col.TableType.GetProperty(col.PropertyName)!;
-                    return col.TableType.GetPropertyAccessor(property);
-                }
+                var property = col.TableType.GetProperty(col.PropertyName)!;
+                return col.TableType.GetPropertyAccessor(property);
             });
             return reflectAction.Invoke(target);
         }
@@ -161,16 +143,13 @@ internal static class TableContext
             var flatProps = prop.PropertyType.GetProperties();
             foreach (var item in flatProps)
             {
-                yield return new ColumnInfo(prop.DeclaringType!, item, prop.PropertyType, false, true)
-                {
-                    AggregateProp = prop.Name
-                };
+                yield return new ColumnInfo(item, prop.PropertyType, false, true);
             }
-            yield return new ColumnInfo(prop.DeclaringType!, prop, prop.PropertyType, true, false);
+            yield return new ColumnInfo(prop, prop.PropertyType, true, false);
         }
         else
         {
-            yield return new ColumnInfo(prop.DeclaringType!, prop, null, false, false);
+            yield return new ColumnInfo(prop, null, false, false);
         }
     }
 }
