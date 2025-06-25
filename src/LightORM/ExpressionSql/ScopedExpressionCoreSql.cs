@@ -28,10 +28,10 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
     public ScopedExpressionCoreSql(ExpressionSqlOptions options)
     {
         this.executorProvider = new SqlExecutorProvider(options);
-        foreach (var item in StaticCache<IDatabaseProvider>.Values)
+        foreach (var item in options.DatabaseProviders.Values)
         {
             var ctx = AsyncLocalTransactionContexts.GetOrAdd(item, new AsyncLocal<TransactionContext?>());
-            ctx.Value ??= new TransactionContext(null!);
+            ctx.Value ??= new TransactionContext(null);
         }
 
     }

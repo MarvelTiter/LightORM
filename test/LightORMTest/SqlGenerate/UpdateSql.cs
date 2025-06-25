@@ -3,7 +3,6 @@ using LightORMTest;
 using System.Threading.Tasks;
 
 namespace LightORMTest.SqlGenerate;
-
 [TestClass]
 public class UpdateSql : TestBase
 {
@@ -93,8 +92,9 @@ public class UpdateSql : TestBase
         Console.WriteLine(sql);
         var result = """
             UPDATE `SMS_LOG` SET
-            `CODE` = @Code
-            WHERE (`UUID` = '123')
+            `CODE` = @Code,
+            `VERSION` = @Version_new
+            WHERE (`UUID` = '123') AND (`VERSION` = @Version)
             """;
         Assert.IsTrue(sql == result);
     }
@@ -110,19 +110,30 @@ public class UpdateSql : TestBase
             UPDATE `SMS_LOG` SET
             `CODE` = @Code,
             `MSG` = @Msg,
-            `CREATE_TIME` = @CreateTime
-            WHERE (`UUID` = @Uuid)
+            `CREATE_TIME` = @CreateTime,
+            `VERSION` = @Version_new
+            WHERE (`ID` = @Id) AND (`UUID` = @Uuid) AND (`VERSION` = @Version)
             """;
         Assert.IsTrue(sql == result);
     }
 
     [TestMethod]
-    public void U07_Update_Batch()
+    public void U07_Update_With_Version()
+    {
+        var p = new SmsLog();
+        var sql = Db.Update(p)
+            .ToSql();
+        Console.WriteLine(sql);
+        
+    }
+
+    [TestMethod]
+    public void U08_Update_Batch()
     {
         var datas = GetList();
-       
-        Db.Update<SmsLog>(datas).Execute();
 
+        var sql = Db.Update([..datas]).ToSql();
+        Console.WriteLine(sql);
         List<SmsLog> GetList()
         {
             return new List<SmsLog>

@@ -10,6 +10,9 @@ public class SmsLog
 
     [LightColumn(Name = "CREATE_TIME")]
     public DateTime CreateTime { get; set; } = DateTime.Now;
+
+    [LightColumn(Name = "VERSION", Version = true)]
+    public int Version { get; set; }
 }
 
 public class SmsReceive

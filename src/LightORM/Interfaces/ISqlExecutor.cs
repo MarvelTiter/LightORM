@@ -7,6 +7,7 @@ namespace LightORM;
 public partial interface ISqlExecutor
 {
     internal ConnectionPool Pool { get; }
+    internal AdoInterceptor Interceptor { get; }
     internal IDatabaseProvider Database { get; }
     internal void InitTransactionContext();
     internal void InitTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
@@ -20,10 +21,10 @@ public partial interface ISqlExecutor
 }
 public partial interface ISqlExecutor : IDisposable, ICloneable
 {
-    /// <summary>
-    /// 数据库日志
-    /// </summary>
-    public Action<string, object?>? DbLog { get; set; }
+    ///// <summary>
+    ///// 数据库日志
+    ///// </summary>
+    //public Action<string, object?>? DbLog { get; set; }
     ///// <summary>
     ///// 数据库事务
     ///// </summary>

@@ -15,11 +15,11 @@ public class AdoTest : TestBase
     {
         await Task.Delay(i * 500, cancellationToken);
         using var scope = Db.CreateScoped();
-        await scope.BeginTransactionAsync();
+        await scope.BeginAllTransactionAsync();
         var delay = Random.Shared.Next(100, 1500);
         await Task.Delay(delay, cancellationToken);
-        var r = await scope.Select<UserRole>().ToListAsync(cancellationToken);
+        var r = await scope.SwitchDatabase("v").Select<UserRole>().ToListAsync(cancellationToken);
         Console.WriteLine($"任务{i} -> 结果:{r.Count}");
-        await scope.CommitTransactionAsync();
+        await scope.CommitAllTransactionAsync();
     }
 }

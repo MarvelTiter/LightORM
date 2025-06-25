@@ -11,15 +11,15 @@ namespace LightORM.Utils
 {
     internal class SqlExecutorProvider : IDisposable
     {
-        public static ISqlExecutor GetExecutor(string key = ConstString.Main)
-        {
-            var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
-            return new SqlExecutor.SqlExecutor(dbInfo, 5);
-        }
+        //public static ISqlExecutor GetExecutor(string key = ConstString.Main)
+        //{
+        //    var dbInfo = StaticCache<IDatabaseProvider>.Get(key) ?? throw new LightOrmException($"{key} not register");
+        //    return new SqlExecutor.SqlExecutor(dbInfo, 5);
+        //}
 
-        public static IDatabaseProvider GetDbInfo(string key)
+        public IDatabaseProvider GetDbInfo(string key)
         {
-            return StaticCache<IDatabaseProvider>.Get(key) ?? throw new ArgumentException($"{key} not register");
+            return option.DatabaseProviders.TryGetValue(key, out var db) ? db : throw new ArgumentException($"{key} not register");
         }
 
         Func<ISqlExecutor>? customHandler;
@@ -46,16 +46,13 @@ namespace LightORM.Utils
 
         public ConcurrentDictionary<string, ISqlExecutor> Executors => executors;
 
-        public ISqlExecutor GetSqlExecutor(string key) => CreateCustomExecutor() ?? InternalCreator(key);
+        public ISqlExecutor GetSqlExecutor(string key = ConstString.Main) => CreateCustomExecutor() ?? InternalCreator(key);
 
         private ISqlExecutor InternalCreator(string key)
         {
             return executors.GetOrAdd(key, k =>
             {
-                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k),option.PoolSize,k)
-                {
-                    DbLog = option.Aop.DbLog
-                };
+                var ado = new SqlExecutor.SqlExecutor(GetDbInfo(k), option.PoolSize, new AdoInterceptor(option.Interceptors), k);
                 //if (useTrans)
                 //{
                 //    ado.BeginTran();
