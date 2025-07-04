@@ -1,24 +1,24 @@
-<AntContainer />
+﻿<AntContainer />
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="@FlexGap.Small">
-            <SimpleSelect Style="width:150px;" AllowClear Placeholder="ѡ�����ݿ�" @bind-Value="@selectedDb" DropdownMatchSelectWidth="@false">
+            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@LastSelectedDb" DropdownMatchSelectWidth="@false">
                 <SimpleSelectOption Value="Mysql" Label="MySql"></SimpleSelectOption>
                 <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
                 <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
             </SimpleSelect>
-            <Input @bind-Value="@connectstring"></Input>
-            <Button Type="@ButtonType.Primary" OnClick="@Connect">����</Button>
-            <Button Type="@ButtonType.Primary" OnClick="@Build">����</Button>
-            <Button OnClick="@(()=> showSetting = true)">����</Button>
-            <Button OnClick="@SaveToLocal">����ΪCS</Button>
+            <Input @bind-Value="@Connectstring"></Input>
+            <Button Type="@ButtonType.Primary" OnClick="@Connect">连接</Button>
+            <Button Type="@ButtonType.Primary" OnClick="@Build">生成</Button>
+            <Button OnClick="@(()=> showSetting = true)">设置</Button>
+            <Button OnClick="@SaveToLocal">保存为CS</Button>
         </Flex>
     </header>
     <section style="flex:1;overflow:hidden;display:flex;">
         <aside style="height:100%;width:fit-content;">
             <div style="padding:10px;height:50px;line-height:30px;">
-                ���ݿ��б�
-                <Checkbox OnChange="AllHandle">ȫѡ</Checkbox>
+                数据库列表
+                <Checkbox OnChange="AllHandle">全选</Checkbox>
             </div>
             <Card Style="height:calc(100% - 50px);overflow-y:auto;width:fit-content;min-width:200px;">
                 <ChildContent>
@@ -49,16 +49,16 @@
 
 <Modal @bind-Visible="@showSetting" Width="450">
     <Form Model="Config" LabelColSpan="6">
-        <FormItem Label="ǰ׺">
+        <FormItem Label="前缀">
             <Input @bind-Value="@context.Prefix"></Input>
         </FormItem>
-        <FormItem Label="�ָ���">
+        <FormItem Label="分隔符">
             <Input @bind-Value="@context.Separator"></Input>
         </FormItem>
-        <FormItem Label="�����ռ�">
+        <FormItem Label="命名空间">
             <Input @bind-Value="@context.Namespace"></Input>
         </FormItem>
-        <FormItem Label="����·��">
+        <FormItem Label="保存路径">
             <div @onclick="e => SelectPath()">
                 <Input @bind-Value="@context.SavedPath" ReadOnly></Input>
             </div>

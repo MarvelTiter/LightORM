@@ -37,4 +37,25 @@ public class InsertSql : TestBase
         var sql = Db.Insert(new SmsLog()).ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void I03_InsertEntity_AutoIncrement()
+    {
+        int hour = DateTime.Now.Hour;
+        User? u = new()
+        {
+            UserId = UID,
+            Age = hour,
+            LastLogin = DateTime.Now,
+        };
+        var sql = Db.Insert(u).ToSql();
+        Console.WriteLine(sql);
+        var result = """
+                INSERT INTO `USER` 
+                (`USER_ID`, `AGE`, `LAST_LOGIN`, `IS_LOCK`)
+                VALUES
+                (@UserId, @Age, @LastLogin, @IsLock)
+                """;
+        Assert.IsTrue(result == sql);
+    }
 }

@@ -34,7 +34,7 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
 
         if (Members.Count == 0)
         {
-            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.AutoIncrement && !c.IsAggregated).Select(c => c.PropertyName));
         }
         var insertColumns = MainTable.TableEntityInfo.Columns
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
@@ -83,7 +83,7 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
         ResolveExpressions();
         if (Members.Count == 0)
         {
-            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.IsAggregated).Select(c => c.PropertyName));
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.IsAggregated && !c.AutoIncrement).Select(c => c.PropertyName));
         }
         var insertColumns = MainTable.TableEntityInfo.Columns
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate)

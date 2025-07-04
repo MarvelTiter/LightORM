@@ -28,5 +28,18 @@
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.Oracle\LightORM.Providers.Oracle.csproj" />
 		<ProjectReference Include="..\src\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Properties\local.Designer.cs">
+	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Local.settings</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="Properties\Local.settings">
+	    <Generator>SettingsSingleFileGenerator</Generator>
+	    <LastGenOutput>local.Designer.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace DatabaseUtils.Helper
 {
-    public static class Ex
+    public static partial class Ex
     {
         public static string PascalName(this DatabaseTable self, string prefix, string separator)
         {
@@ -46,16 +46,33 @@ namespace DatabaseUtils.Helper
 
         private static string Parse(string text, string prefix, string separator)
         {
-            var removePrefix = Regex.Replace(text.ToLower(), $"^{prefix}", m => "");
-            var fix = Regex.Replace(removePrefix, "^.", m =>
+            var removePrefix = Regex.Replace(text, $"^{prefix}", m => "");
+
+            if (removePrefix.Contains(separator))
             {
-                if (m.Value == separator) return separator;
-                else return $"{separator}{m.Value}";
-            });
-            return Regex.Replace(fix, $"({separator})(?<={separator})(\\w)", m =>
+                var fix = MatchFirstChar().Replace(removePrefix, m =>
+                {
+                    if (m.Value == separator) return separator;
+                    else return $"{separator}{m.Value}";
+                });
+                return Regex.Replace(fix, $"(?:{separator})([A-Za-z0-9]+)", m =>
+                {
+                    var fragment = m.Groups[1].Value;
+                    return $"{fragment[0..1].ToUpper()}{fragment[1..].ToLower()}";
+                    //return m.Groups[1].Value;
+                });
+            }
+            else
             {
-                return m.Groups[2].Value.ToUpper();
-            });
+                //return Regex.Replace(removePrefix, @$"(?<!{separator})([A-Z]+(?=[A-Z][a-z]|$)|[A-Za-z0-9]*)", m =>
+                //{
+                //    return $"{separator}{m.Value}";
+                //});
+                return removePrefix;
+            }
         }
+
+        [GeneratedRegex("^.")]
+        private static partial Regex MatchFirstChar();
     }
 }

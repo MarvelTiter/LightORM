@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using LightORM;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace DatabaseUtils
 {
@@ -34,5 +35,8 @@ namespace DatabaseUtils
 
 public class SqlLogger : AdoInterceptorBase
 {
-    
+    public override void OnException(SqlExecuteExceptionContext context)
+    {
+        base.OnException(context);
+    }
 }

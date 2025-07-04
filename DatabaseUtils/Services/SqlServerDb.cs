@@ -15,7 +15,7 @@ namespace DatabaseUtils.Services
         }
         public async Task<IList<DatabaseTable>> GetTablesAsync()
         {
-            string sql = "SELECT NAME FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
+            string sql = "SELECT NAME TableName FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
             return await context.Use(GetConnectInfo()).Ado.QueryListAsync<DatabaseTable>(sql);
         }
 

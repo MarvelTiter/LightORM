@@ -7,6 +7,8 @@ namespace LightORMTest.Models;
 [LightTable(Name = "USER")]
 public class User
 {
+    [LightColumn(Name = "USER_ID", AutoIncrement = true)]
+    public int Id { get; set; }
     [LightColumn(Name = "USER_ID", PrimaryKey = true)]
     public string UserId { get; set; }
     [LightColumn(Name = "USER_NAME")]

@@ -19,24 +19,39 @@ namespace DatabaseUtils
 {
     public partial class WpfApp
     {
-        string? selectedDb = "MySql";
-        string? connectstring;
-
         IEnumerable<DatabaseTable> Tables = [];
         IDbOperator? dbOperator = null;
         Config Config = new Config();
         bool showSetting;
+        public static string? LastSelectedDb
+        {
+            get => Properties.Local.Default.LastSelectedDb;
+            set
+            {
+                Properties.Local.Default.LastSelectedDb = value;
+                Properties.Local.Default.Save();
+            }
+        }
 
+        public static string? Connectstring
+        {
+            get => Properties.Local.Default.Connectstring;
+            set
+            {
+                Properties.Local.Default.Connectstring = value;
+                Properties.Local.Default.Save();
+            } 
+        }
         [Inject, NotNull] IExpressionContext? Context { get; set; }
 
         async Task Connect()
         {
-            if (selectedDb == null || string.IsNullOrWhiteSpace(connectstring))
+            if (LastSelectedDb == null || string.IsNullOrWhiteSpace(Connectstring))
             {
                 MessageBox.Show("数据库类型和连接字符串不能为空");
                 return;
             }
-            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(selectedDb), connectstring!);
+            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(LastSelectedDb), Connectstring!);
             Tables = await dbOperator.GetTablesAsync();
         }
 
