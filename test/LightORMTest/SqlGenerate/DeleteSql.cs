@@ -25,4 +25,12 @@ public class DeleteSql : TestBase
             };
         }
     }
+    [TestMethod]
+    public void D2_Delete_Force()
+    {
+
+        var sql = Db.Delete<SmsLog>(true, true)
+            .ToSql();
+        Console.WriteLine(sql);
+    }
 }

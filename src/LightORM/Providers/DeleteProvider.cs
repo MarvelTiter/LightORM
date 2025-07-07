@@ -14,6 +14,8 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder<T> sqlBuilder;
+        public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
+        public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
@@ -30,6 +32,7 @@ namespace LightORM.Providers
             sqlBuilder.TargetObjects = entities;
             sqlBuilder.IsBatchDelete = true;
         }
+
 
         public int Execute()
         {

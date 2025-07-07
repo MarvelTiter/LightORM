@@ -9,6 +9,8 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
     public IEnumerable<T> TargetObjects { get; set; } = [];
     private bool batchDone = false;
     public bool IsBatchDelete { get; set; }
+    public bool ForceDelete { get; set; }
+    public bool Truncate { get; set; }
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -55,22 +57,40 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
             return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
         ResolveExpressions();
-        if (Where.Count == 0)
+        if (ForceDelete)
         {
-            if (TargetObject is null) LightOrmException.Throw("Where Condition is null and not provider a entity value");
-            var primary = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
-            if (primary.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
-            var wheres = primary.Select(c =>
-             {
-                 DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
-                 return $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.ColumnName)}";
-             });
-            Where.AddRange(wheres);
+            if (Truncate)
+            {
+                return $"TRUNCATE TABLE {GetTableName(MainTable, false)}";
+            }
+            else
+            {
+                return $"DELETE FROM {GetTableName(MainTable, false)}";
+            }
         }
-        StringBuilder sql = new("DELETE FROM ");
-        sql.AppendLine(GetTableName(MainTable, false));
-        sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
-        return sql.Trim();
+        else
+        {
+            // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件
+            if (Where.Count == 0)
+            {
+                if (TargetObject is null) LightOrmException.Throw("Where Condition is null and not provider a entity value");
+                var primary = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
+                if (primary.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+                var wheres = primary.Select(c =>
+                 {
+                     DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
+                     return $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.ColumnName)}";
+                 });
+                Where.AddRange(wheres);
+            }
+            StringBuilder sql = new("DELETE FROM ");
+            sql.AppendLine(GetTableName(MainTable, false));
+            if (Where.Count > 0)
+            {
+                sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+            }
+            return sql.Trim();
+        }
     }
 
 

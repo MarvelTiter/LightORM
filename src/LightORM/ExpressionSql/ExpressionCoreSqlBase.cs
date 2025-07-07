@@ -40,6 +40,13 @@ internal abstract class ExpressionCoreSqlBase
     UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
 
     public IExpDelete<T> Delete<T>() => CreateDeleteProvider<T>();
+    public IExpDelete<T> Delete<T>(bool force, bool truncate = false)
+    {
+        var provider = CreateDeleteProvider<T>();
+        provider.ForceDelete = force;
+        provider.Truncate = truncate;
+        return provider;
+    }
     //public IExpDelete<T> Delete<T>(T entity) => CreateDeleteProvider<T>(entity);
     //public IExpDelete<T> Delete<T>(IEnumerable<T> entities) => CreateDeleteProvider<T>(entities);
     public IExpDelete<T> Delete<T>(params T[] entities)
