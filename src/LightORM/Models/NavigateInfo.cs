@@ -15,11 +15,11 @@ public sealed record NavigateInfo
         IsMultiResult = isMulti;
     }
     /// <summary>
-    /// 多对多类型
+    /// 导航目标类型
     /// </summary>
     public Type NavigateType { get; }
     /// <summary>
-    /// 多对多关联表
+    /// 导航关联中间表
     /// </summary>
     public Type? MappingType { get; set; }
 

@@ -12,6 +12,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     protected SqlBuilder(DbBaseType type)
     {
         DbType = type;
+        dbHelperLazy = new Lazy<ICustomDatabase>(() => DbType.GetDbCustom());
     }
     public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
@@ -24,7 +25,8 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
-    public ICustomDatabase DbHelper => DbType.GetDbCustom();
+    private readonly Lazy<ICustomDatabase> dbHelperLazy;
+    public ICustomDatabase DbHelper => dbHelperLazy.Value;
     public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
     public int DbParameterStartIndex { get; set; }
@@ -72,7 +74,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     }
 
     //TODO Oracle?
-    private string NpTableName(ITableEntityInfo table)
+    protected string NpTableName(ITableEntityInfo table)
     {
         if (table.IsTempTable)
         {

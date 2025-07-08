@@ -54,8 +54,9 @@ namespace LightORM.Builder
 
         public List<string> GroupBy { get; set; } = [];
         public List<string> OrderBy { get; set; } = [];
+        public int TableIndexFix { get; set; }
         public object? AdditionalValue { get; set; }
-        public int NextTableIndex => SelectedTables.Count + Joins.Count;
+        public int NextTableIndex => SelectedTables.Count + Joins.Count + TableIndexFix;
         //protected override Lazy<TableInfo[]> GetAllTables()
         //{
         //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
@@ -102,7 +103,7 @@ namespace LightORM.Builder
                         List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
                         ps.RemoveAt(ps.Count - 1);
                         var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
-                          var ee = new ExpressionInfo()
+                        var ee = new ExpressionInfo()
                         {
                             ResolveOptions = SqlResolveOptions.Where,
                             Expression = newWhereExpression,
@@ -199,6 +200,16 @@ namespace LightORM.Builder
                         JoinType = TableLinkType.InnerJoin,
                         Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} )"
                     });
+                    var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
+                    if (n is not null)
+                    {
+                        var c = targetTable.GetColumn(n);
+                        if (c is not null)
+                        {
+                            var where = $"{AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(c.ColumnName)}{result.SqlString}";
+                            Where.Add(where);
+                        }
+                    }
                 }
 
                 if (result.NavigateDeep > 1)

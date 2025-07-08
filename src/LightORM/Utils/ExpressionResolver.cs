@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Xml.Linq;
 using System.Linq.Expressions;
+using System.Collections.ObjectModel;
 namespace LightORM;
 
 internal static class ExpressionExtensions
@@ -60,6 +61,9 @@ public interface IExpressionResolver
     SqlResolveOptions Options { get; }
     Expression? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
+    Expression? Body { get; }
+    ReadOnlyCollection<ParameterExpression>? Parameters { get; }
+
 }
 
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
@@ -81,6 +85,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
+    public Expression? Body => bodyExpression;
+    public ReadOnlyCollection<ParameterExpression>? Parameters => parametersExpression;
     public Expression? Visit(Expression? expression)
     {
         //Debug.Write($"");
@@ -101,6 +107,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         };
     }
     Expression? bodyExpression;
+    ReadOnlyCollection<ParameterExpression>? parametersExpression;
     bool useAs;
     bool UseAs
     {
@@ -122,6 +129,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     {
         Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
         bodyExpression = exp.Body;
+        parametersExpression = exp.Parameters;
         //Context.Tables.Clear();
         for (int i = 0; i < exp.Parameters.Count; i++)
         {
@@ -411,12 +419,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 NavigateMembers.Add(col.PropertyName);
                 if (NavigateDeep == 0)
                 {
+                    if (Members.Count > 0)
+                    {
+                        ResolvedMembers.Add(Members.Pop().Name);
+                    }
                     Members.Clear();
                 }
-                else
-                {
-                    return null;
-                }
+                //else
+                //{
+                //    return null;
+                //}
+                return null;
             }
             // TODO 表达式扁平化处理后，只有聚合属性才有 p.XXX.XXX ?
             if (Members.Count > 0)

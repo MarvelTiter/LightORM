@@ -33,4 +33,20 @@ public class DeleteSql : TestBase
             .ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void D3_Delete_Exits()
+    {
+
+        var sql = Db.Delete<User>()
+            .Where(s => s.UserRoles.Where(ur => ur.RoleName.StartsWith("admin")).Any())
+            .ToSql();
+        Console.WriteLine(sql);
+
+        sql = Db.Delete<UserRole>()
+           .Where(ur => ur.User.Age > 10)
+           .ToSql();
+        Console.WriteLine(sql);
+
+    }
 }

@@ -16,6 +16,7 @@ internal class ResolveContext
     public ICustomDatabase Database { get; }
     public IEnumerable<TableInfo> Tables => lambdaParameterInfos.Values;
     public int Level { get; set; }
+    
     public ResolveContext(ICustomDatabase database, params ITableEntityInfo[] selectedTables)
     {
         //foreach (var item in selectedTables)

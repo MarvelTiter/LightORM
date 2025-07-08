@@ -16,4 +16,5 @@ internal class ExpressionResolvedResult
     public int NavigateDeep {  get; set; }
     public List<string>? NavigateMembers { get; set; }
     public Expression? NavigateWhereExpression { get; set; }
+
 }

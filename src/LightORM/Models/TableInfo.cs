@@ -37,8 +37,15 @@ public class TableInfo
         get => index;
         set
         {
-            index = value;
-            Alias = ALIAS[value].ToString();
+            if (value == -1)
+            {
+                Alias = TableEntityInfo.TableName;
+            }
+            else
+            {
+                index = value;
+                Alias = ALIAS[value].ToString();
+            }
         }
     }
     /// <summary>

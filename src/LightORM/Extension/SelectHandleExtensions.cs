@@ -71,6 +71,25 @@ internal static class SelectHandleExtensions
         select.SqlBuilder.Joins.Add(joinInfo);
     }
 
+    internal static void JoinHandle(this IExpSelect select, Type type, Expression? exp, TableLinkType joinType)
+    {
+        var expression = new ExpressionInfo
+        {
+            ResolveOptions = SqlResolveOptions.Join,
+            Expression = exp,
+        };
+
+        select.SqlBuilder.Expressions.Add(expression);
+        var joinInfo = new JoinInfo()
+        {
+            ExpressionId = expression.Id,
+            JoinType = joinType,
+            EntityInfo = TableInfo.Create(type, select.SqlBuilder.NextTableIndex),
+        };
+
+        select.SqlBuilder.Joins.Add(joinInfo);
+    }
+
     internal static void JoinHandle<TJoin>(this IExpSelect select, Expression? exp, TableLinkType joinType, IExpTemp tempQuery)
     {
         var expression = new ExpressionInfo

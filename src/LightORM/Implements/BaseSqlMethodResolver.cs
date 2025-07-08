@@ -62,11 +62,13 @@ namespace LightORM.Implements
         {
             //var subQuery = methodCall.Arguments[0];
             //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
+            //var parameters = resolver.Parameters;
             var sel = methodCall.GetExpSelectObject();
             if (sel is not null)
             {
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
+                sel.SqlBuilder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
                 var sql = sel.SqlBuilder.ToSqlString();
                 resolver.Sql.Append(sql);
@@ -395,8 +397,9 @@ namespace LightORM.Implements
 
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
-            resolver.Sql.Clear();
-            resolver.Visit(methodCall.Arguments[1]);
+            //resolver.Sql.Clear();
+            //resolver.Visit(methodCall.Arguments[1]);
+            resolver.NavigateWhereExpression = methodCall.Arguments[1];
         }
 
         public virtual void WhereIf(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -410,6 +413,11 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
             //resolver.Visit(methodCall.Arguments[1]);
             resolver.NavigateWhereExpression = methodCall.Arguments[1];
+        }
+
+        public virtual void Any(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Visit(methodCall.Arguments[0]);
         }
 
         #endregion

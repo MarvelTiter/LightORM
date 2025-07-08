@@ -331,9 +331,9 @@ public class SelectSql : TestBase
                 SELECT *
                 FROM `USER` `a`
                 WHERE EXISTS (
-                    SELECT *
-                    FROM `USER_ROLE` `a`
-                    WHERE `a`.`ROLE_ID` LIKE '%'||'admin'||'%'
+                    SELECT 1
+                    FROM `USER_ROLE` `b`
+                    WHERE `b`.`ROLE_ID` LIKE '%'||'admin'||'%'
                 )
                 """;
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
@@ -397,8 +397,11 @@ public class SelectSql : TestBase
     public void S14_Select_Navigate_Where()
     {
         var sql = Db.Select<User>()
+            // 两种写法都可以
+            //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
             .ToSql();
+        Console.WriteLine(sql);
         var result = """
             SELECT DISTINCT *
             FROM `USER` `a`
@@ -407,6 +410,13 @@ public class SelectSql : TestBase
             WHERE `c`.`ROLE_ID` LIKE '%'||'admin'||'%'
             """;
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+
+        sql = Db.Select<User>()
+           // 两种写法都可以
+           //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
+           .Where(u => u.UserProduct.ProductName.StartsWith("h"))
+           .ToSql();
+        Console.WriteLine(sql);
     }
 
     #endregion

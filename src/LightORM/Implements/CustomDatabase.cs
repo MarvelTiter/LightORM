@@ -25,4 +25,6 @@ public abstract class CustomDatabase : ICustomDatabase
     {
         return value ? " 1" : " 0";
     }
+
+    public virtual string DeleteTemplate => throw new NotImplementedException();
 }

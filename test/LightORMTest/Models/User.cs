@@ -28,6 +28,9 @@ public class User
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 
+    [LightNavigate(nameof(Id),nameof(Product.ProductCode))]
+    public Product UserProduct { get; set; }
+
 }
 
 
