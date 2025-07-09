@@ -34,9 +34,9 @@ namespace LightORM.Implements
                 return;
             var formatString = expression.Arguments[0] as ConstantExpression;
             var args = expression.Arguments.Skip(1).Select(a => Expression.Lambda(a).Compile().DynamicInvoke());
-            var formatedValue = string.Format(formatString!.Value!.ToString()!, [..args]);
+            var formatedValue = string.Format(formatString!.Value!.ToString()!, [.. args]);
             resolver.Sql.Append('\'');
-            resolver.Sql.Append(formatedValue);            
+            resolver.Sql.Append(formatedValue);
             resolver.Sql.Append('\'');
         }
 
@@ -181,6 +181,10 @@ namespace LightORM.Implements
 
         public virtual void Sum(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (HandleSubContext(resolver, methodCall, "SUM({0})"))
+            {
+                return;
+            }
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("SUM(CASE WHEN ");
@@ -199,6 +203,10 @@ namespace LightORM.Implements
 
         public virtual void Avg(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (HandleSubContext(resolver, methodCall, "AVG({0})"))
+            {
+                return;
+            }
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("AVG(CASE WHEN ");
@@ -217,6 +225,24 @@ namespace LightORM.Implements
 
         public virtual void Max(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            //{
+            //    var sel = methodCall.GetExpSelectObject()!;
+
+            //    sel.HandleResult(methodCall.Arguments[0], "MAX({0})");
+
+            //    sel.SqlBuilder.Level = resolver.Level + 1;
+            //    sel.SqlBuilder.IsSubQuery = true;
+            //    resolver.Sql.AppendLine("(");
+            //    var sql = sel.SqlBuilder.ToSqlString();
+            //    resolver.Sql.Append(sql);
+            //    resolver.Sql.Append(')');
+            //    return;
+            //}
+            if (HandleSubContext(resolver,methodCall, "MAX({0})"))
+            {
+                return;
+            }
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("MAX(CASE WHEN ");
@@ -235,6 +261,10 @@ namespace LightORM.Implements
 
         public virtual void Min(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (HandleSubContext(resolver, methodCall, "MIN({0})"))
+            {
+                return;
+            }
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("MIN(CASE WHEN ");
@@ -512,5 +542,25 @@ namespace LightORM.Implements
         }
 
         #endregion
+
+
+        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template)
+        {
+            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            {
+                var sel = methodCall.GetExpSelectObject()!;
+
+                sel.HandleResult(methodCall.Arguments[0], template);
+
+                sel.SqlBuilder.Level = resolver.Level + 1;
+                sel.SqlBuilder.IsSubQuery = true;
+                resolver.Sql.AppendLine("(");
+                var sql = sel.SqlBuilder.ToSqlString();
+                resolver.Sql.Append(sql);
+                resolver.Sql.Append(')');
+                return true;
+            }
+            return false;
+        }
     }
 }

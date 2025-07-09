@@ -320,6 +320,11 @@ public class SelectSql : TestBase
                 ))
                 """;
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+
+        sql = Db.Select<User>()
+            .Where(u => u.Age > Db.Select<User>().Max(u => u.Age))
+            .ToSql();
+        Console.WriteLine(sql);
     }
 
     [TestMethod]

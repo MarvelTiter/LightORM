@@ -83,7 +83,7 @@ public static partial class SqlFn
     /// <param name="val"></param>
     /// <returns></returns>
     public static double Avg<T>(T val) => 0;
-
+    public static T Max<T>(T val) => default!;
     public static ICaseFragment<T> Case<T>(T? column) => default!;
     public static ICaseFragment<T> Case<T>() => default!;
 
