@@ -22,6 +22,11 @@ public class TableContextGenerator : IIncrementalGenerator
             , static (node, _) => node is ClassDeclarationSyntax
             , (ctx, _) => ctx);
 
+        //context.RegisterSourceOutput(context.AdditionalTextsProvider.Collect(), static (context, additionals) =>
+        //{
+
+        //});
+
         context.RegisterSourceOutput(source, static (context, source) =>
         {
             var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
@@ -336,6 +341,9 @@ FieldBuilder.Default
 
         static PropertyScanResult ScanProperty(IPropertySymbol p)
         {
+            var commentId = p.GetDocumentationCommentId();
+            var commentDoc = p.GetDocumentationCommentXml();
+            System.Diagnostics.Debug.WriteLine($"{commentId} -> 注释: {commentDoc}");
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.ColumnAttribute", out var cmCol);
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);

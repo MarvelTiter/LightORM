@@ -34,7 +34,7 @@ public class InsertSql : TestBase
     [TestMethod]
     public void I02_Insert_Flat_Entity()
     {
-        var sql = Db.Insert(new SmsLog()).ToSql();
+        var sql = Db.Insert(new UserFlat()).ToSql();
         Console.WriteLine(sql);
     }
 

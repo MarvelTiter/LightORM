@@ -17,10 +17,10 @@ internal static class TypeExtension
 
     internal static DbTable CollectDbTableInfo(this Type tableType)
     {
-        var tableName = tableType.GetAttribute<LightTableAttribute>()?.Name ?? tableType.Name;
-        var columns = CollectColumns(tableType);
+        var table = TableContext.GetTableInfo(tableType);
+        var columns = CollectColumns(table);
         var indexs = CollectIndexs(tableType, columns);
-        return new DbTable { Name = tableName, Columns = columns, Indexs = indexs };
+        return new DbTable { Name = table.TableName, Columns = columns, Indexs = indexs };
     }
 
     public static Type GetRealType(this Type type, out bool isCollection)
@@ -76,26 +76,36 @@ internal static class TypeExtension
         return indexs;
     }
 
-    private static List<DbColumn> CollectColumns(Type tableType)
+    private static List<DbColumn> CollectColumns(ITableEntityInfo entityInfo)
     {
-        var props = tableType.GetProperties();
         var columns = new List<DbColumn>();
-        foreach (var prop in props)
+        foreach (var col in entityInfo.Columns.Where(c => !c.IsNavigate && !c.IsAggregated && !c.IsNotMapped))
         {
-            var ignore = prop.GetAttribute<IgnoreAttribute>();
-            if (ignore != null) { continue; }
-            var columnInfo = prop.GetAttribute<LightColumnAttribute>();
+            Type? propType;
+            if (col.IsAggregatedProperty && col.AggregateType is not null)
+            {
+                propType = col.AggregateType.GetProperty(col.PropertyName)?.PropertyType;
+            }
+            else
+            {
+                propType = col.TableType.GetProperty(col.PropertyName)?.PropertyType;
+
+            }
+            if (propType is null)
+            {
+                continue;
+            }
             columns.Add(new DbColumn
             {
-                Name = columnInfo?.Name ?? prop.Name,
-                PropName = prop.Name,
-                PrimaryKey = columnInfo?.PrimaryKey ?? false,
-                AutoIncrement = columnInfo?.AutoIncrement ?? false,
-                NotNull = columnInfo?.NotNull ?? false,
-                Length = columnInfo?.Length,
-                Default = columnInfo?.Default,
-                Comment = columnInfo?.Comment,
-                DataType = prop.PropertyType,
+                Name = col.ColumnName,
+                PropName = col.PropertyName,
+                PrimaryKey = col.IsPrimaryKey,
+                AutoIncrement = col.AutoIncrement,
+                NotNull = col.NotNull,
+                Length = col.Length,
+                Default = col.Default,
+                Comment = col.Comment,
+                DataType = propType,
             });
         }
         return columns;

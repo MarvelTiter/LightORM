@@ -2,10 +2,61 @@
 {
     public class Config
     {
-        public string? Prefix { get; set; }
-        public string? Separator { get; set; } = "_";
-        public string? Namespace { get; set; } = "StatisticsApi.Models.Tables";
-        public string SavedPath { get; set; } = "E:\\CodeGenerated\\WIS";
+        public static string? LastSelectedDb
+        {
+            get => Properties.Local.Default.LastSelectedDb;
+            set
+            {
+                Properties.Local.Default.LastSelectedDb = value;
+                Properties.Local.Default.Save();
+            }
+        }
+        public static string? Connectstring
+        {
+            get => Properties.Local.Default.Connectstring;
+            set
+            {
+                Properties.Local.Default.Connectstring = value;
+                Properties.Local.Default.Save();
+            }
+        }
+        public static string? Prefix
+        {
+            get => Properties.Local.Default.Prefix;
+            set
+            {
+                Properties.Local.Default.Prefix = value;
+                Properties.Local.Default.Save();
+            }
+        }
+        public static string? Separator
+        {
+            get => Properties.Local.Default.Prefix ?? "_";
+            set
+            {
+                Properties.Local.Default.Prefix = value;
+                Properties.Local.Default.Save();
+            }
+        }
+
+        public static string? Namespace
+        {
+            get => Properties.Local.Default.Namespace;
+            set
+            {
+                Properties.Local.Default.Namespace = value;
+                Properties.Local.Default.Save();
+            }
+        }
+        public static string SavedPath
+        {
+            get => Properties.Local.Default.Namespace;
+            set
+            {
+                Properties.Local.Default.Namespace = value;
+                Properties.Local.Default.Save();
+            }
+        }
 
     }
 }

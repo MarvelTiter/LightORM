@@ -21,7 +21,7 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
             type = Nullable.GetUnderlyingType(type) ?? type;
         }
         var isDatetime = type == typeof(DateTime);
-        resolver.Sql.Append("CONVERT(VARCHAR(255),");
+        resolver.Sql.Append("CONVERT(VARCHAR(MAX),");
         resolver.Visit(methodCall.Object);
         if (isDatetime)
         {

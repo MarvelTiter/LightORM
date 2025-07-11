@@ -12,67 +12,35 @@ using LightORM.Models;
 using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 namespace LightORMTest;
 
 public class TestBase
 {
-    public IExpressionContext Db { get; }
-    internal ResolveContext ResolveCtx { get; }
-    protected ITableContext TableContext { get; } = new TestTableContext();
+    public IExpressionContext Db { get;  }
+    internal ResolveContext ResolveCtx { get; set; }
+    public ITableContext TableContext { get; } = new TestTableContext();
+    [NotNull]
+    public virtual DbBaseType? DbType { get; }
     public TestBase()
     {
-        var path = Path.GetFullPath("../../../../../test.db");
         IServiceCollection services = new ServiceCollection();
         services.AddLightOrm(option =>
         {
-            option.UseSqlite("DataSource=" + path);
-            option.UseOracle(option =>
-            {
-                option.DbKey = "Oracle";
-                option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
-            });
-            option.UseMySql(o =>
-            {
-                o.DbKey = "v";
-                o.MasterConnectionString = "Data Source=localhost;Database=videocollection;User ID=root;Password=123456;charset=gbk";
-            });
+            Configura(option);
             option.UseInterceptor<LightOrmAop>();
         });
-        
+
         var provider = services.BuildServiceProvider();
-        
+
         Db = provider.GetRequiredService<IExpressionContext>();
 
-        //ExpSqlFactory.Configuration(option =>
-        //{
-        //    //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
-        //    option.UseSqlite("DataSource=" + path);
-        //    option.UseOracle(option =>
-        //    {
-        //        option.DbKey = "Oracle";
-        //        option.MasterConnectionString = "User ID=IFSAPP;Password=IFSAPP;Data Source=RACE;";
-        //    });
-        //    option.UseMySql(o =>
-        //    {
-        //        o.DbKey = "v";
-        //        o.MasterConnectionString = "Data Source=localhost;Database=videocollection;User ID=root;Password=123456;charset=gbk";
-        //    });
-        //    option.SetTableContext<TestTableContext>();
-        //    option.UseInterceptor<LightOrmAop>();
-        //    //option.SetTableContext(TableContext);
-        //    //option.SetWatcher(aop =>
-        //    //{
-        //    //    aop.DbLog = (sql, p) =>
-        //    //    {
-        //    //        Console.WriteLine(sql);
-        //    //        Console.WriteLine();
-        //    //    };
-        //    //});
-        //    //.InitializedContext<TestInitContext>();
-        //});
-        //Db = ExpSqlFactory.GetContext();
+        ResolveCtx = ResolveContext.Create(DbType);
+    }
 
-        ResolveCtx = ResolveContext.Create(DbBaseType.Oracle);
+    public virtual void Configura(IExpressionContextSetup option)
+    {
+
     }
 }
 

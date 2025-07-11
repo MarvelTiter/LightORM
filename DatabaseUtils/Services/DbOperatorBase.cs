@@ -1,4 +1,5 @@
-﻿using LightORM;
+﻿using DatabaseUtils.Models;
+using LightORM;
 using LightORM.Interfaces;
 
 namespace DatabaseUtils.Services
@@ -16,5 +17,6 @@ namespace DatabaseUtils.Services
 
         protected abstract IDatabaseProvider GetConnectInfo();
 
+        public abstract bool ParseDataType(TableColumn column, out string type);
     }
 }

@@ -34,7 +34,6 @@ public interface IExpressionContext : IDbAction
     //IExpDelete<T> Delete<T>(T entity);
     IExpDelete<T> Delete<T>(params T[] entities);
     ISqlExecutor Ado { get; }
-
 }
 
 public interface IDbAction
@@ -72,6 +71,9 @@ public interface IDbAction
     /// </summary>
     /// <returns></returns>
     IScopedExpressionContext CreateScoped();
+    string? CreateTableSql<T>();
+    Task<bool> CreateTableAsync<T>();
+
 }
 
 /// <summary>

@@ -1,20 +1,19 @@
 ﻿namespace LightORMTest.SqlGenerate;
 
-[TestClass]
 public class DeleteSql : TestBase
 {
     [TestMethod]
-    public void D1_Delete_Batch()
+    public void Delete_Batch()
     {
         var datas = GetList();
 
         var sql = Db.Delete(datas.ToArray())
-            .Where(s => s.Recive.Code == 100)
+            .Where(s => s.PriInfo.Age == 100)
             .ToSql();
         Console.WriteLine(sql);
-        List<SmsLog> GetList()
+        List<UserFlat> GetList()
         {
-            return new List<SmsLog>
+            return new List<UserFlat>
             {
                 new() ,
                 new() ,
@@ -26,16 +25,16 @@ public class DeleteSql : TestBase
         }
     }
     [TestMethod]
-    public void D2_Delete_Force()
+    public void Delete_Force()
     {
 
-        var sql = Db.Delete<SmsLog>(true, true)
+        var sql = Db.Delete<UserFlat>(true, true)
             .ToSql();
         Console.WriteLine(sql);
     }
 
     [TestMethod]
-    public void D3_Delete_Exits()
+    public void Delete_Exits()
     {
 
         var sql = Db.Delete<User>()

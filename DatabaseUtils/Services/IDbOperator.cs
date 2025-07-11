@@ -6,5 +6,6 @@ namespace DatabaseUtils.Services
     {
         Task<IList<DatabaseTable>> GetTablesAsync();
         Task<IList<TableColumn>> GetTableStructAsync(string table);
+        bool ParseDataType(TableColumn column, out string type);
     }
 }

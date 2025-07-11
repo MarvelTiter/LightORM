@@ -1,16 +1,17 @@
-﻿<AntContainer />
+﻿@using DatabaseUtils.Models
+<AntContainer />
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="@FlexGap.Small">
-            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@LastSelectedDb" DropdownMatchSelectWidth="@false">
+            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@Config.LastSelectedDb" DropdownMatchSelectWidth="@false">
                 <SimpleSelectOption Value="Mysql" Label="MySql"></SimpleSelectOption>
                 <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
                 <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
             </SimpleSelect>
-            <Input @bind-Value="@Connectstring"></Input>
+            <Input @bind-Value="@Config.Connectstring"></Input>
             <Button Type="@ButtonType.Primary" OnClick="@Connect">连接</Button>
             <Button Type="@ButtonType.Primary" OnClick="@Build">生成</Button>
-            <Button OnClick="@(()=> showSetting = true)">设置</Button>
+            <Button OnClick="@(() => showSetting = true)">设置</Button>
             <Button OnClick="@SaveToLocal">保存为CS</Button>
         </Flex>
     </header>
@@ -38,8 +39,14 @@
             <Collapse>
                 @foreach (var table in GeneratedTables)
                 {
-                    <Panel Header="@table.TableName" Key="@table.TableName">
-                        <pre>@table.GeneratedResult</pre>
+                    <Panel Key="@table.TableName">
+                        <HeaderTemplate>
+                            @table.TableName
+                            <Button OnClick="@(e => CopyToClipboard(table))">复制</Button>
+                        </HeaderTemplate>
+                        <ChildContent>
+                            <pre>@table.GeneratedResult</pre>
+                        </ChildContent>
                     </Panel>
                 }
             </Collapse>

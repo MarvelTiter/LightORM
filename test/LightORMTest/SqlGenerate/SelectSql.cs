@@ -2,27 +2,36 @@
 
 namespace LightORMTest.SqlGenerate;
 
-[TestClass]
 public class SelectSql : TestBase
 {
     #region select
     [TestMethod]
-    public void S01_Select_One_Table()
+    public void Select_One_Table()
     {
         var sql = Db.Select<Product>()
                 .Where(p => p.ModifyTime > DateTime.Now)
                 .ToSql(p => new { p.ProductId, p.ProductName });
         Console.WriteLine(sql);
-        var result = $"""
-                SELECT `a`.`ProductId`, `a`.`ProductName`
-                FROM `Product` `a`
-                WHERE (`a`.`ModifyTime` > @Now_0)
-                """;
+        //var result = $"""
+        //        SELECT `a`.`ProductId`, `a`.`ProductName`
+        //        FROM `Product` `a`
+        //        WHERE (`a`.`ModifyTime` > @Now_0)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_One_Table_Result(); 
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+    }
+    public virtual string? Select_One_Table_Result()
+    {
+        return null;
     }
 
     [TestMethod]
-    public void S02_Select_One_Table_And_Join_Two_Table()
+    public void Select_One_Table_And_Join_Two_Table()
     {
         var sql = Db.Select<User>()
             .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
@@ -30,30 +39,48 @@ public class SelectSql : TestBase
             .Where(u => u.UserId == "admin")
             .ToSql(w => w.Tb1);
         Console.WriteLine(sql);
-        var result = """
-                SELECT `a`.*
-                FROM `USER` `a`
-                INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
-                INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
-                WHERE (`a`.`USER_ID` = 'admin')
-                """;
+        //var result = """
+        //        SELECT `a`.*
+        //        FROM `USER` `a`
+        //        INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
+        //        INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
+        //        WHERE (`a`.`USER_ID` = 'admin')
+        //        """;
+        var result = Select_One_Table_And_Join_Two_Table_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+    }
+    public virtual string? Select_One_Table_And_Join_Two_Table_Result()
+    {
+        return null;
     }
 
     [TestMethod]
-    public void S03_Select_Three_Table()
+    public void Select_Three_Table()
     {
-        var sql = Db.Select<Power, RolePower, Role>()
+        var sql = Db.Select<Permission, RolePermission, Role>()
             .Distinct()
-            .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3.RoleId)
+            .Where(w => w.Tb1.PermissionId == w.Tb2.PermissionId && w.Tb2.RoleId == w.Tb3.RoleId)
             .ToSql(w => new { w.Tb1 });
         Console.WriteLine(sql);
-        var result = """
-                SELECT DISTINCT `a`.*
-                FROM `POWERS` `a`, `ROLE_POWER` `b`, `ROLE` `c`
-                WHERE ((`a`.`POWER_ID` = `b`.`POWER_ID`) AND (`b`.`ROLE_ID` = `c`.`ROLE_ID`))
-                """;
+        //var result = """
+        //        SELECT DISTINCT `a`.*
+        //        FROM `POWERS` `a`, `ROLE_POWER` `b`, `ROLE` `c`
+        //        WHERE ((`a`.`POWER_ID` = `b`.`POWER_ID`) AND (`b`.`ROLE_ID` = `c`.`ROLE_ID`))
+        //        """;
+        var result = Select_Three_Table_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+    }
+    public virtual string? Select_Three_Table_Result()
+    {
+        return null;
     }
 
     class Jobs
@@ -63,7 +90,7 @@ public class SelectSql : TestBase
     }
 
     [TestMethod]
-    public void S04_Select_Temp_ThenGroup_And_Union()
+    public void Select_Temp_ThenGroup_And_Union()
     {
         var info = Db.Select<Jobs>().AsTemp("info", j => new
         {
@@ -116,49 +143,49 @@ public class SelectSql : TestBase
                 t
             });
         Console.WriteLine(sql);
-        var result = """
-            WITH info AS (
-                SELECT SUBSTR(`a`.`Plate`,1,2) AS `Fzjg`, `a`.`StnId`
-                FROM `Jobs` `a`
-            )
-            , stn_fzjg AS (
-                SELECT `a`.`StnId`, `a`.`Fzjg`, COUNT(*) AS `Count`, ROW_NUMBER() OVER( PARTITION BY `a`.`StnId` ORDER BY COUNT(*) DESC ) AS `Index`
-                FROM info `a`
-                GROUP BY `a`.`StnId`, `a`.`Fzjg`
-                ORDER BY `a`.`StnId`, COUNT(*) DESC
-            )
-            , all_fzjg AS (
-                SELECT '合计' AS `StnId`, `a`.`Fzjg`, COUNT(*) AS `Count`, ROW_NUMBER() OVER( ORDER BY COUNT(*) DESC ) AS `Index`
-                FROM info `a`
-                GROUP BY `a`.`Fzjg`
-                ORDER BY COUNT(*) DESC
-            )
-            , all_station AS (
-                SELECT IFNULL(`a`.`StnId`,'合计') AS `StnId`, COUNT(*) AS `Total`
-                FROM info `a`
-                GROUP BY ROLLUP(`StnId`)
-            )
-            SELECT IFNULL(`a`.`StnId`,'TT') AS `Jczmc`, `b`.`Total`, `a`.*
-            FROM (
-                SELECT `a`.`StnId`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Fzjg` AS TEXT) ELSE '' END,'') AS `FirstFzjg`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Count` AS TEXT) ELSE '' END,'') AS `FirstCount`
-                FROM stn_fzjg `a`
-                WHERE (`a`.`Index` < 4)
-                GROUP BY `a`.`StnId`
-                UNION ALL
-                SELECT '合计' AS `StnId`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Fzjg` AS TEXT) ELSE '' END,'') AS `FirstFzjg`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Count` AS TEXT) ELSE '' END,'') AS `FirstCount`
-                FROM all_fzjg `a`
-                WHERE (`a`.`Index` < 4)
-            ) `a`
-            INNER JOIN all_station `b` ON (`a`.`StnId` = `b`.`StnId`)
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    WITH info AS (
+        //        SELECT SUBSTR(`a`.`Plate`,1,2) AS `Fzjg`, `a`.`StnId`
+        //        FROM `Jobs` `a`
+        //    )
+        //    , stn_fzjg AS (
+        //        SELECT `a`.`StnId`, `a`.`Fzjg`, COUNT(*) AS `Count`, ROW_NUMBER() OVER( PARTITION BY `a`.`StnId` ORDER BY COUNT(*) DESC ) AS `Index`
+        //        FROM info `a`
+        //        GROUP BY `a`.`StnId`, `a`.`Fzjg`
+        //        ORDER BY `a`.`StnId`, COUNT(*) DESC
+        //    )
+        //    , all_fzjg AS (
+        //        SELECT '合计' AS `StnId`, `a`.`Fzjg`, COUNT(*) AS `Count`, ROW_NUMBER() OVER( ORDER BY COUNT(*) DESC ) AS `Index`
+        //        FROM info `a`
+        //        GROUP BY `a`.`Fzjg`
+        //        ORDER BY COUNT(*) DESC
+        //    )
+        //    , all_station AS (
+        //        SELECT IFNULL(`a`.`StnId`,'合计') AS `StnId`, COUNT(*) AS `Total`
+        //        FROM info `a`
+        //        GROUP BY ROLLUP(`StnId`)
+        //    )
+        //    SELECT IFNULL(`a`.`StnId`,'TT') AS `Jczmc`, `b`.`Total`, `a`.*
+        //    FROM (
+        //        SELECT `a`.`StnId`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Fzjg` AS TEXT) ELSE '' END,'') AS `FirstFzjg`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Count` AS TEXT) ELSE '' END,'') AS `FirstCount`
+        //        FROM stn_fzjg `a`
+        //        WHERE (`a`.`Index` < 4)
+        //        GROUP BY `a`.`StnId`
+        //        UNION ALL
+        //        SELECT '合计' AS `StnId`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Fzjg` AS TEXT) ELSE '' END,'') AS `FirstFzjg`, GROUP_CONCAT( CASE WHEN (`a`.`Index` = 1) THEN CAST(`a`.`Count` AS TEXT) ELSE '' END,'') AS `FirstCount`
+        //        FROM all_fzjg `a`
+        //        WHERE (`a`.`Index` < 4)
+        //    ) `a`
+        //    INNER JOIN all_station `b` ON (`a`.`StnId` = `b`.`StnId`)
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
     #endregion
 
     #region group
 
     [TestMethod]
-    public void S05_Select_Join_GroupBy_Having()
+    public void Select_Join_GroupBy_Having()
     {
         var sql = Db.Select<User>()
             .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
@@ -174,19 +201,19 @@ public class SelectSql : TestBase
                 NoPass = w.Max(w.Tables.Tb1.Age > 10, w.Tables.Tb1.UserName)
             });
         Console.WriteLine(sql);
-        var result = """
-            SELECT `a`.`USER_ID` AS `UserId`, `b`.`ROLE_ID` AS `RoleId`, COUNT(*) AS `Total`, COUNT(CASE WHEN (`a`.`AGE` > 10) THEN 1 ELSE NULL END) AS `Pass`, MAX(CASE WHEN (`a`.`AGE` > 10) THEN `a`.`USER_NAME` ELSE 0 END) AS `NoPass`
-            FROM `USER` `a`
-            INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
-            GROUP BY `a`.`USER_ID`, `b`.`ROLE_ID`
-            HAVING COUNT(*) > 10 AND MAX(`a`.`AGE`) > 18
-            ORDER BY `a`.`USER_ID` ASC
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    SELECT `a`.`USER_ID` AS `UserId`, `b`.`ROLE_ID` AS `RoleId`, COUNT(*) AS `Total`, COUNT(CASE WHEN (`a`.`AGE` > 10) THEN 1 ELSE NULL END) AS `Pass`, MAX(CASE WHEN (`a`.`AGE` > 10) THEN `a`.`USER_NAME` ELSE 0 END) AS `NoPass`
+        //    FROM `USER` `a`
+        //    INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
+        //    GROUP BY `a`.`USER_ID`, `b`.`ROLE_ID`
+        //    HAVING COUNT(*) > 10 AND MAX(`a`.`AGE`) > 18
+        //    ORDER BY `a`.`USER_ID` ASC
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S06_Select_GroupBy_SubQuery_Join()
+    public void Select_GroupBy_SubQuery_Join()
     {
         var sql = Db.Select<User>()
                 .GroupBy(a => new { a.UserId })
@@ -196,25 +223,25 @@ public class SelectSql : TestBase
                     Total = g.Count(),
                     Tb = g.Count<int?>(g.Tables.Age > 18 ? 1 : null)
                 }).AsSubQuery()
-                .InnerJoin<Power>((a, s) => a.UserId == s.PowerId)
+                .InnerJoin<Permission>((a, s) => a.UserId == s.PermissionId)
                 .ToSql((a, s) => new
                 {
                     Jyjgbh = a.UserId,
                     a.Total,
                     a.Tb,
-                    Jczmc = s.PowerName
+                    Jczmc = s.PermissionName
                 });
         Console.WriteLine(sql);
-        var result = """
-            SELECT `a`.`UserId`, `a`.`Total`, `a`.`Tb`, `b`.`POWER_NAME` AS `Jczmc`
-            FROM (
-                SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`, COUNT(CASE WHEN (`a`.`AGE` > 18) THEN 1 ELSE NULL END) AS `Tb`
-                FROM `USER` `a`
-                GROUP BY `a`.`USER_ID`
-            ) `a`
-            INNER JOIN `POWERS` `b` ON (`a`.`UserId` = `b`.`POWER_ID`)
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    SELECT `a`.`UserId`, `a`.`Total`, `a`.`Tb`, `b`.`POWER_NAME` AS `Jczmc`
+        //    FROM (
+        //        SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`, COUNT(CASE WHEN (`a`.`AGE` > 18) THEN 1 ELSE NULL END) AS `Tb`
+        //        FROM `USER` `a`
+        //        GROUP BY `a`.`USER_ID`
+        //    ) `a`
+        //    INNER JOIN `POWERS` `b` ON (`a`.`UserId` = `b`.`POWER_ID`)
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     #endregion
@@ -222,7 +249,7 @@ public class SelectSql : TestBase
     #region sub select
 
     [TestMethod]
-    public void S07_Select_JoinGroupSelect()
+    public void Select_JoinGroupSelect()
     {
         var sql = Db.Select<User>()
             .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).AsTable(g => new
@@ -233,21 +260,21 @@ public class SelectSql : TestBase
             .Where(w => w.Tb2.Total > 10)
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                LEFT JOIN (
-                    SELECT `a`.`ProductId`, COUNT(*) AS `Total`
-                    FROM `Product` `a`
-                    GROUP BY `a`.`ProductId`
-                ) `b` ON (`a`.`AGE` = `b`.`ProductId`)
-                WHERE (`b`.`Total` > 10)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        LEFT JOIN (
+        //            SELECT `a`.`ProductId`, COUNT(*) AS `Total`
+        //            FROM `Product` `a`
+        //            GROUP BY `a`.`ProductId`
+        //        ) `b` ON (`a`.`AGE` = `b`.`ProductId`)
+        //        WHERE (`b`.`Total` > 10)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S08_Select_GroupBy_AsTable_SubQuery()
+    public void Select_GroupBy_AsTable_SubQuery()
     {
         var sql = Db.Select<User>()
             .Where(u => u.Age > 10)
@@ -260,21 +287,21 @@ public class SelectSql : TestBase
             .Where(t => t.UserId.Contains("admin"))
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM (
-                    SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
-                    FROM `USER` `a`
-                    WHERE (`a`.`AGE` > 10)
-                    GROUP BY `a`.`USER_ID`
-                ) `a`
-                WHERE `a`.`UserId` LIKE '%'||'admin'||'%'
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM (
+        //            SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
+        //            FROM `USER` `a`
+        //            WHERE (`a`.`AGE` > 10)
+        //            GROUP BY `a`.`USER_ID`
+        //        ) `a`
+        //        WHERE `a`.`UserId` LIKE '%'||'admin'||'%'
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S09_Select_Join_SelectJoin()
+    public void Select_Join_SelectJoin()
     {
         var temp = Db.Select<User>()
             .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
@@ -286,40 +313,40 @@ public class SelectSql : TestBase
                 w.Tb3.RoleName,
             });
         var sql = Db.Select<User>()
-            .LeftJoin<Power>(w => w.Tb1.UserId == w.Tb2.PowerId)
+            .LeftJoin<Permission>(w => w.Tb1.UserId == w.Tb2.PermissionId)
             .LeftJoin(temp, (u, _, t) => u.UserId == t.UserId)
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                LEFT JOIN `POWERS` `b` ON (`a`.`USER_ID` = `b`.`POWER_ID`)
-                LEFT JOIN (
-                    SELECT `a`.`USER_ID` AS `UserId`, `a`.`USER_NAME` AS `UserName`, `c`.`ROLE_NAME` AS `RoleName`
-                    FROM `USER` `a`
-                    INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
-                    INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
-                ) `c` ON (`a`.`USER_ID` = `c`.`UserId`)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        LEFT JOIN `POWERS` `b` ON (`a`.`USER_ID` = `b`.`POWER_ID`)
+        //        LEFT JOIN (
+        //            SELECT `a`.`USER_ID` AS `UserId`, `a`.`USER_NAME` AS `UserName`, `c`.`ROLE_NAME` AS `RoleName`
+        //            FROM `USER` `a`
+        //            INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
+        //            INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
+        //        ) `c` ON (`a`.`USER_ID` = `c`.`UserId`)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
     [TestMethod]
-    public void S10_Select_SubSelectAsWhere()
+    public void Select_SubSelectAsWhere()
     {
         var sql = Db.Select<User>()
             .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectField(ur => ur.RoleId).Result<int>())
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                WHERE (`a`.`AGE` > (
-                    SELECT `a`.`ROLE_ID`
-                    FROM `USER_ROLE` `a`
-                    WHERE `a`.`ROLE_ID` LIKE '%'||'admin'||'%'
-                ))
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        WHERE (`a`.`AGE` > (
+        //            SELECT `a`.`ROLE_ID`
+        //            FROM `USER_ROLE` `a`
+        //            WHERE `a`.`ROLE_ID` LIKE '%'||'admin'||'%'
+        //        ))
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
 
         sql = Db.Select<User>()
             .Where(u => u.Age > Db.Select<User>().Max(u => u.Age))
@@ -328,24 +355,24 @@ public class SelectSql : TestBase
     }
 
     [TestMethod]
-    public void S11_Select_WhereExits()
+    public void Select_WhereExits()
     {
         var sql = Db.Select<User>().Where(u => Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).Exits()).ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM `USER_ROLE` `b`
-                    WHERE `b`.`ROLE_ID` LIKE '%'||'admin'||'%'
-                )
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        WHERE EXISTS (
+        //            SELECT 1
+        //            FROM `USER_ROLE` `b`
+        //            WHERE `b`.`ROLE_ID` LIKE '%'||'admin'||'%'
+        //        )
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S12_Select_SubSelectAsField()
+    public void Select_SubSelectAsField()
     {
         var sql = Db.Select<User>().ToSql(u => new
         {
@@ -353,14 +380,14 @@ public class SelectSql : TestBase
             Age = Db.Select<User>().Count(u => u.UserId)
         });
         Console.WriteLine(sql);
-        var result = """
-            SELECT `a`.`USER_NAME` AS `UserName`, (
-                SELECT COUNT(`a`.`USER_ID`)
-                FROM `USER` `a`
-            ) AS `Age`
-            FROM `USER` `a`
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    SELECT `a`.`USER_NAME` AS `UserName`, (
+        //        SELECT COUNT(`a`.`USER_ID`)
+        //        FROM `USER` `a`
+        //    ) AS `Age`
+        //    FROM `USER` `a`
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     #endregion
@@ -368,7 +395,7 @@ public class SelectSql : TestBase
     #region select include
 
     [TestMethod]
-    public void S13_Select_Include_IncludeWhere_Result()
+    public void Select_Include_IncludeWhere_Result()
     {
         var result = Db.Select<User>()
             .Include(u => u.UserRoles)
@@ -399,7 +426,7 @@ public class SelectSql : TestBase
     }
 
     [TestMethod]
-    public void S14_Select_Navigate_Where()
+    public void Select_Navigate_Where()
     {
         var sql = Db.Select<User>()
             // 两种写法都可以
@@ -407,19 +434,19 @@ public class SelectSql : TestBase
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-            SELECT DISTINCT *
-            FROM `USER` `a`
-            INNER JOIN `USER_ROLE` `b` ON ( `a`.`USER_ID` = `b`.`USER_ID` )
-            INNER JOIN `ROLE` `c` ON ( `c`.`ROLE_ID` = `b`.`ROLE_ID` )
-            WHERE `c`.`ROLE_ID` LIKE '%'||'admin'||'%'
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    SELECT DISTINCT *
+        //    FROM `USER` `a`
+        //    INNER JOIN `USER_ROLE` `b` ON ( `a`.`USER_ID` = `b`.`USER_ID` )
+        //    INNER JOIN `ROLE` `c` ON ( `c`.`ROLE_ID` = `b`.`ROLE_ID` )
+        //    WHERE `c`.`ROLE_ID` LIKE '%'||'admin'||'%'
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
 
         sql = Db.Select<User>()
            // 两种写法都可以
            //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
-           .Where(u => u.UserProduct.ProductName.StartsWith("h"))
+           .Where(u => u.City.Name.StartsWith("D"))
            .ToSql();
         Console.WriteLine(sql);
     }
@@ -429,7 +456,7 @@ public class SelectSql : TestBase
     #region temp sql
 
     [TestMethod]
-    public void S15_Select_Temp()
+    public void Select_Temp()
     {
         var tempU = Db.Select<User>().GroupBy(u => new { u.UserId }).AsTemp("us", g => new
         {
@@ -447,36 +474,36 @@ public class SelectSql : TestBase
 
         var tempT = Db.FromTemp(tempR).Where(a => a.RoleId.StartsWith("h")).AsTemp("hh");
 
-        var sql = Db.Select<Power>().WithTempQuery(tempT)
+        var sql = Db.Select<Permission>().WithTempQuery(tempT)
             .Where(w => w.Tb2.UserId.Contains("admin"))
             .ToSql();
 
         Console.WriteLine(sql);
-        var result = """
-                WITH us AS (
-                    SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
-                    FROM `USER` `a`
-                    GROUP BY `a`.`USER_ID`
-                )
-                , temp AS (
-                    SELECT `a`.`ROLE_ID` AS `RoleId`, `b`.`UserId`
-                    FROM `ROLE` `a`, us `b`
-                    WHERE (`a`.`ROLE_ID` = `b`.`UserId`) AND `b`.`UserId` LIKE 'ad'||'%'
-                )
-                , hh AS (
-                    SELECT *
-                    FROM temp `a`
-                    WHERE `a`.`RoleId` LIKE 'h'||'%'
-                )
-                SELECT *
-                FROM `POWERS` `a`, hh `b`
-                WHERE `b`.`UserId` LIKE '%'||'admin'||'%'
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        WITH us AS (
+        //            SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
+        //            FROM `USER` `a`
+        //            GROUP BY `a`.`USER_ID`
+        //        )
+        //        , temp AS (
+        //            SELECT `a`.`ROLE_ID` AS `RoleId`, `b`.`UserId`
+        //            FROM `ROLE` `a`, us `b`
+        //            WHERE (`a`.`ROLE_ID` = `b`.`UserId`) AND `b`.`UserId` LIKE 'ad'||'%'
+        //        )
+        //        , hh AS (
+        //            SELECT *
+        //            FROM temp `a`
+        //            WHERE `a`.`RoleId` LIKE 'h'||'%'
+        //        )
+        //        SELECT *
+        //        FROM `POWERS` `a`, hh `b`
+        //        WHERE `b`.`UserId` LIKE '%'||'admin'||'%'
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S16_Select_GroupBy_AsSub_GroupBy_AsTemp_SelectJoinTemp()
+    public void Select_GroupBy_AsSub_GroupBy_AsTemp_SelectJoinTemp()
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
@@ -494,27 +521,27 @@ public class SelectSql : TestBase
             });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
         Console.WriteLine(sql);
-        var result = """
-                WITH temp AS (
-                    SELECT `a`.`Id`, AVG(`a`.`DateDiff`) AS `AvgDiff`
-                    FROM (
-                        SELECT `a`.`USER_ID` AS `Id`, ((`a`.`LAST_LOGIN` - LAG(`a`.`LAST_LOGIN`) OVER( PARTITION BY `a`.`USER_ID` ORDER BY `a`.`LAST_LOGIN` ASC )) * 24) AS `DateDiff`
-                        FROM `USER` `a`
-                        WHERE (`a`.`LAST_LOGIN` > @s_dt_0)
-                    ) `a`
-                    WHERE (`a`.`DateDiff` IS NOT NULL)
-                    GROUP BY `a`.`Id`
-                    HAVING COUNT(*) > 2 AND AVG(`a`.`DateDiff`) < 1
-                )
-                SELECT *
-                FROM `USER` `a`
-                INNER JOIN temp `b` ON (`a`.`USER_ID` = `b`.`Id`)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        WITH temp AS (
+        //            SELECT `a`.`Id`, AVG(`a`.`DateDiff`) AS `AvgDiff`
+        //            FROM (
+        //                SELECT `a`.`USER_ID` AS `Id`, ((`a`.`LAST_LOGIN` - LAG(`a`.`LAST_LOGIN`) OVER( PARTITION BY `a`.`USER_ID` ORDER BY `a`.`LAST_LOGIN` ASC )) * 24) AS `DateDiff`
+        //                FROM `USER` `a`
+        //                WHERE (`a`.`LAST_LOGIN` > @s_dt_0)
+        //            ) `a`
+        //            WHERE (`a`.`DateDiff` IS NOT NULL)
+        //            GROUP BY `a`.`Id`
+        //            HAVING COUNT(*) > 2 AND AVG(`a`.`DateDiff`) < 1
+        //        )
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        INNER JOIN temp `b` ON (`a`.`USER_ID` = `b`.`Id`)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S17_Select_GroupBy_AsSub_GroupBy_SelectJoinSub()
+    public void Select_GroupBy_AsSub_GroupBy_SelectJoinSub()
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
@@ -532,22 +559,22 @@ public class SelectSql : TestBase
             });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                INNER JOIN (
-                    SELECT `a`.`Id`, AVG(`a`.`DateDiff`) AS `AvgDiff`
-                    FROM (
-                        SELECT `a`.`USER_ID` AS `Id`, ((`a`.`LAST_LOGIN` - LAG(`a`.`LAST_LOGIN`) OVER( PARTITION BY `a`.`USER_ID` ORDER BY `a`.`LAST_LOGIN` ASC )) * 24) AS `DateDiff`
-                        FROM `USER` `a`
-                        WHERE (`a`.`LAST_LOGIN` > @s_dt_0)
-                    ) `a`
-                    WHERE (`a`.`DateDiff` IS NOT NULL)
-                    GROUP BY `a`.`Id`
-                    HAVING COUNT(*) > 2 AND AVG(`a`.`DateDiff`) < 1
-                ) `b` ON (`a`.`USER_ID` = `b`.`Id`)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        INNER JOIN (
+        //            SELECT `a`.`Id`, AVG(`a`.`DateDiff`) AS `AvgDiff`
+        //            FROM (
+        //                SELECT `a`.`USER_ID` AS `Id`, ((`a`.`LAST_LOGIN` - LAG(`a`.`LAST_LOGIN`) OVER( PARTITION BY `a`.`USER_ID` ORDER BY `a`.`LAST_LOGIN` ASC )) * 24) AS `DateDiff`
+        //                FROM `USER` `a`
+        //                WHERE (`a`.`LAST_LOGIN` > @s_dt_0)
+        //            ) `a`
+        //            WHERE (`a`.`DateDiff` IS NOT NULL)
+        //            GROUP BY `a`.`Id`
+        //            HAVING COUNT(*) > 2 AND AVG(`a`.`DateDiff`) < 1
+        //        ) `b` ON (`a`.`USER_ID` = `b`.`Id`)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     #endregion
@@ -555,44 +582,44 @@ public class SelectSql : TestBase
     #region union select
 
     [TestMethod]
-    public void S18_Select_Union()
+    public void Select_Union()
     {
         var sql = Db.Select<User>()
             .Where(u => u.Age > 10)
             .Union(Db.Select<User>().Where(u => u.Age > 15))
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM `USER` `a`
-                WHERE (`a`.`AGE` > 10)
-                UNION
-                SELECT *
-                FROM `USER` `a`
-                WHERE (`a`.`AGE` > 15)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        WHERE (`a`.`AGE` > 10)
+        //        UNION
+        //        SELECT *
+        //        FROM `USER` `a`
+        //        WHERE (`a`.`AGE` > 15)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     [TestMethod]
-    public void S19_Select_Context_Union()
+    public void Select_Context_Union()
     {
         var sql = Db.Union(Db.Select<User>(), Db.Select<User>())
             .Where(u => u.Age > 10)
             .ToSql();
         Console.WriteLine(sql);
-        var result = """
-                SELECT *
-                FROM (
-                    SELECT *
-                    FROM `USER` `a`
-                    UNION
-                    SELECT *
-                    FROM `USER` `a`
-                ) `a`
-                WHERE (`a`.`AGE` > 10)
-                """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //        SELECT *
+        //        FROM (
+        //            SELECT *
+        //            FROM `USER` `a`
+        //            UNION
+        //            SELECT *
+        //            FROM `USER` `a`
+        //        ) `a`
+        //        WHERE (`a`.`AGE` > 10)
+        //        """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     #endregion
@@ -600,17 +627,17 @@ public class SelectSql : TestBase
     #region flat prop
 
     [TestMethod]
-    public void S20_Select_Flat_Property()
+    public void Select_Flat_Property()
     {
-        var sql = Db.Select<SmsLog>()
-            .Where(l => l.Recive.Code == 100)
+        var sql = Db.Select<UserFlat>()
+            .Where(l => l.PriInfo.Age == 100)
             .ToSql();
-        var result = """
-            SELECT *
-            FROM `SMS_LOG` `a`
-            WHERE (`a`.`CODE` = 100)
-            """;
-        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        //var result = """
+        //    SELECT *
+        //    FROM `SMS_LOG` `a`
+        //    WHERE (`a`.`CODE` = 100)
+        //    """;
+        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
     #endregion

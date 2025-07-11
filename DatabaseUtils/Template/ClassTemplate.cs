@@ -17,6 +17,7 @@ $@"/*
  * 时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}
  * 作者：yaoqinglin
  */
+#nullable disable
 using LightORM;
 namespace {{0}};
 

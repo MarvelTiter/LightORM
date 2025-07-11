@@ -1,18 +1,11 @@
-## How to use?
+﻿## How to use?
 
 ### configuration
 ```
 var path = Path.GetFullPath("../../../test.db");
 ExpSqlFactory.Configuration(option =>
 {
-    option.UseSqlite("DataSource=" + path);
-    option.SetWatcher(aop =>
-    {
-        aop.DbLog = (sql, p) =>
-        {
-            Console.WriteLine(sql);
-        };
-    }).InitializedContext<TestInitContext>();
+    option.UseSqlite(connectionString);
 });
 
 // get IExpressionContext instance
@@ -25,6 +18,6 @@ IExpressionContext context = ExpSqlFactory.GetContext();
 var path = Path.GetFullPath("../../../test.db");
 builder.Services.AddLightOrm(option =>
 {
-    option.UseSqlite("DataSource=" + path);
+    option.UseSqlite(connectionString);
 });
 ```

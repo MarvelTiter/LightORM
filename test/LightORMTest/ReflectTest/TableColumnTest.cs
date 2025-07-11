@@ -13,13 +13,13 @@ public class TableColumnTest : TestBase
     [TestMethod]
     public void FlatSetterTest()
     {
-        var ti = LightORM.Cache.TableContext.GetTableInfo(typeof(SmsLog));
-        var col = ti.Columns.First(c => c.PropertyName == nameof(SmsLog.Recive.Code));
-        var e = new SmsLog();
-        e.Recive.Code = 101;
+        var ti = LightORM.Cache.TableContext.GetTableInfo(typeof(UserFlat));
+        var col = ti.Columns.First(c => c.PropertyName == nameof(UserFlat.PriInfo.Age));
+        var e = new UserFlat();
+        e.PriInfo.Age = 101;
         var codeValue = col.GetValue(e);
         Assert.IsTrue(codeValue is int i && i == 101);
         col.SetValue(e, 201);
-        Assert.IsTrue(e.Recive.Code == 201);
+        Assert.IsTrue(e.PriInfo.Age == 201);
     }
 }
