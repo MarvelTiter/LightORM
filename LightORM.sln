@@ -29,6 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LightORM.Providers.SqlServe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\push_nuget.yml = .github\workflows\push_nuget.yml
 		doc\版本日志.md = doc\版本日志.md
 	EndProjectSection
 EndProject
