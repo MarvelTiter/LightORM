@@ -2,14 +2,11 @@
 
 namespace LightORMTest;
 
+/// <summary>
+/// 数据表上下文缓存
+/// </summary>
 [LightORMTableContext]
 internal partial class TestTableContext
 {
-    public void H(Type type)
-    {
-        if (type == typeof(int) || type.IsAssignableFrom(typeof(int)))
-        {
-
-        }
-    }
+    
 }

@@ -225,20 +225,6 @@ namespace LightORM.Implements
 
         public virtual void Max(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
-            //{
-            //    var sel = methodCall.GetExpSelectObject()!;
-
-            //    sel.HandleResult(methodCall.Arguments[0], "MAX({0})");
-
-            //    sel.SqlBuilder.Level = resolver.Level + 1;
-            //    sel.SqlBuilder.IsSubQuery = true;
-            //    resolver.Sql.AppendLine("(");
-            //    var sql = sel.SqlBuilder.ToSqlString();
-            //    resolver.Sql.Append(sql);
-            //    resolver.Sql.Append(')');
-            //    return;
-            //}
             if (HandleSubContext(resolver,methodCall, "MAX({0})"))
             {
                 return;
@@ -326,11 +312,6 @@ namespace LightORM.Implements
 
         public virtual void NullThen(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            //resolver.Sql.Append("IFNULL(");
-            //resolver.Visit(methodCall.Arguments[0]);
-            //resolver.Sql.Append(',');
-            //resolver.Visit(methodCall.Arguments[1]);
-            //resolver.Sql.Append(')');
             throw new NotSupportedException();
         }
 

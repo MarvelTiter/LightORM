@@ -9,14 +9,14 @@ public sealed class SqliteTableHandler(TableGenerateOption option) : BaseDatabas
     protected override string BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
-        DbColumn[] primaryKeys = [..table.Columns.Where(col => col.PrimaryKey)];
+        DbColumn[] primaryKeys = [.. table.Columns.Where(col => col.PrimaryKey)];
         string primaryKeyConstraint = "";
 
         if (primaryKeys.Length > 0)
         {
             primaryKeyConstraint =
 $@"
-,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+,CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
 (
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )";

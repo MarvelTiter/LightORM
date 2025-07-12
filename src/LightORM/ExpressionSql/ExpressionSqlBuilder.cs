@@ -41,7 +41,7 @@ internal class ExpressionSqlOptions
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
     public ConcurrentDictionary<string, DbHandlerRecord> DatabaseHandlers { get; }
     public ConcurrentDictionary<Type, IAdoInterceptor> TypedInterceptors { get; }
-
+    public TableGenerateOption TableGenOption { get; set; }
     static ExpressionSqlOptions()
     {
         Instance = new(() => new ExpressionSqlOptions());
@@ -53,6 +53,7 @@ internal class ExpressionSqlOptions
         CustomDatabases = [];
         DatabaseHandlers = [];
         TypedInterceptors = [];
+        TableGenOption = new TableGenerateOption();
     }
 
     public void SetConnectionPoolSize(int poolSize)
@@ -133,7 +134,11 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     {
         throw new NotImplementedException();
     }
-
+    public IExpressionContextSetup TableConfiguration(Action<TableGenerateOption> action)
+    {
+        action.Invoke(option.TableGenOption);
+        return this;
+    }
     public ExpressionSqlOptions Build(IServiceProvider? provider)
     {
         if (provider is not null)
@@ -155,4 +160,6 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
 
         return option;
     }
+
+    
 }

@@ -38,12 +38,12 @@ public abstract class BaseDatabaseHandler : IDatabaseTableHandler
 
     protected static string GetIndexName(DbTable info, DbIndex index, int i)
     {
-        return index.Name ?? $"{info.Name}_{string.Join("_", index.Columns)}_{i}";
+        return index.Name ?? $"IDX_{info.Name}_{string.Join("_", index.Columns)}_{i}";
     }
 
-    protected static string GetPrimaryKeyName(IEnumerable<DbColumn> pks)
+    protected static string GetPrimaryKeyName(string name, IEnumerable<DbColumn> pks)
     {
-        return $"PK_{string.Join("_", pks.Select(c => c.Name))}";
+        return $"PK_{name}_{string.Join("_", pks.Select(c => c.Name))}";
     }
 }
 

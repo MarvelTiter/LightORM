@@ -48,4 +48,9 @@ jobs:
       run: |
         dotnet build ./src/Providers/LightORM.Providers.Sqlite/LightORM.Providers.Sqlite.csproj -c Release
         dotnet pack ./src/Providers/LightORM.Providers.Sqlite/LightORM.Providers.Sqlite.csproj -c Release -o publish/Sqlite
-        dotnet nuget push 'publish/Sqlite/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate                
+        dotnet nuget push 'publish/Sqlite/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate       
+    - name: PostgreSQL Provider
+      run: |
+        dotnet build ./src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj -c Release
+        dotnet pack ./src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj -c Release -o publish/PostgreSQL
+        dotnet nuget push 'publish/PostgreSQL/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate 

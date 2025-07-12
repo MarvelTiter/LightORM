@@ -39,6 +39,47 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         return this;
     }
 
+    public string? CreateTableSql<T>()
+    {
+        var ado = Ado;
+        try
+        {
+            if (ado.Database.TableHandler is not null)
+            {
+                var handler = ado.Database.TableHandler.Invoke(option.TableGenOption);
+                var tableSql = handler.GenerateDbTable<T>();
+                return tableSql;
+            }
+            return null;
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<bool> CreateTableAsync<T>()
+    {
+        var ado = Ado;
+        try
+        {
+            if (ado.Database.TableHandler is not null)
+            {
+                var handler = ado.Database.TableHandler.Invoke(option.TableGenOption);
+                var tableSql = handler.GenerateDbTable<T>();
+                ado.BeginTransaction();
+                await ado.ExecuteNonQueryAsync(tableSql);
+                await ado.CommitTransactionAsync();
+                return true;
+            }
+            return false;
+        }
+        catch (Exception)
+        {
+            await ado.RollbackTransactionAsync();
+            return false;
+        }
+    }
 
     public IExpSelect Select(string tableName) => throw new NotImplementedException();//new SelectProvider0(tableName, Ado);
 

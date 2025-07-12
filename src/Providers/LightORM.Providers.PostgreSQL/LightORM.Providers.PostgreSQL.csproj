@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net462;net6.0;net8.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>MarvelTiter</Authors>
+		<Version>0.0.1</Version>
+		<Description>LightORM PostgresSQL扩展</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\Nuget.md">
+			<PackagePath>\</PackagePath>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+	
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="*" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+	  <PackageReference Include="Npgsql">
+	    <Version>9.0.3</Version>
+	  </PackageReference>
+	</ItemGroup>
+	
+	<ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+		<PackageReference Include="Npgsql" Version="8.0.3" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+		<PackageReference Include="Npgsql" Version="4.1.14" />
+	</ItemGroup>
+</Project>

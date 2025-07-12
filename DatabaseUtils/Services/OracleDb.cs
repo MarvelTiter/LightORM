@@ -4,6 +4,8 @@ using LightORM;
 using LightORM.Interfaces;
 using LightORM.Providers.Oracle;
 using LightORM.Utils;
+using System;
+using System.Data;
 using System.Text;
 
 namespace DatabaseUtils.Services
@@ -40,6 +42,128 @@ and a.column_name = b.column_name
         protected override IDatabaseProvider GetConnectInfo()
         {
             return OracleProvider.Create(ConnectionString);
+        }
+        /// <summary>
+        /// AI生成的代码, 解析Oracle数据类型到C#类型
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public override bool ParseDataType(TableColumn column, out string type)
+        {
+            var dbType = column.DataType;
+            var nullable = column.Nullable;
+            if (string.IsNullOrWhiteSpace(dbType))
+            {
+                type = "";
+                return false;
+            }
+
+            // 处理可能带长度的类型声明（如 VARCHAR2(50)）
+            var baseType = dbType.Split('(')[0].ToUpper().Trim();
+            var isNullable = nullable?.ToUpper() == "Y" || nullable?.ToUpper() == "YES";
+
+            switch (baseType)
+            {
+                // 字符串类型
+                case "VARCHAR2":
+                case "NVARCHAR2":
+                case "CHAR":
+                case "NCHAR":
+                case "LONG":
+                case "CLOB":
+                case "NCLOB":
+                case "ROWID":
+                case "UROWID":
+                    type = isNullable ? "string?" : "string"; // 字符串在C#中本身就是可空的
+                    return true;
+
+                // 数值类型
+                case "NUMBER":
+                    // Oracle NUMBER 类型需要特殊处理，可能映射到不同C#类型
+                    if (dbType.Contains("NUMBER(", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        // 尝试解析精度和小数位
+                        var parts = dbType.Split(['(', ',', ')']);
+                        if (parts.Length >= 2 && int.TryParse(parts[1], out var precision))
+                        {
+                            if (parts.Length >= 3 && int.TryParse(parts[2], out var scale))
+                            {
+                                // 有小数位的情况
+                                type = isNullable ? "decimal?" : "decimal";
+                                return true;
+                            }
+
+                            // 只有精度的情况
+                            if (precision <= 4)
+                                type = isNullable ? "short?" : "short";
+                            else if (precision <= 9)
+                                type = isNullable ? "int?" : "int";
+                            else if (precision <= 18)
+                                type = isNullable ? "long?" : "long";
+                            else
+                                type = isNullable ? "decimal?" : "decimal";
+                            return true;
+                        }
+                    }
+                    // 默认处理
+                    type = isNullable ? "decimal?" : "decimal";
+                    break;
+
+                // 整数类型（Oracle的特定整数类型）
+                case "BINARY_INTEGER":
+                case "PLS_INTEGER":
+                    type = isNullable ? "int?" : "int";
+                    break;
+
+                // 浮点类型
+                case "BINARY_FLOAT":
+                    type = isNullable ? "float?" : "float";
+                    break;
+                case "BINARY_DOUBLE":
+                case "FLOAT":
+                    type = isNullable ? "double?" : "double";
+                    break;
+
+                // 日期时间类型
+                case "DATE":
+                    type = isNullable ? "DateTime?" : "DateTime";
+                    break;
+                case "TIMESTAMP":
+                case "TIMESTAMP WITH TIME ZONE":
+                case "TIMESTAMP WITH LOCAL TIME ZONE":
+                    type = isNullable ? "DateTimeOffset?" : "DateTimeOffset";
+                    break;
+                case "INTERVAL YEAR TO MONTH":
+                case "INTERVAL DAY TO SECOND":
+                    type = isNullable ? "TimeSpan?" : "TimeSpan";
+                    break;
+
+                // 二进制类型
+                case "BLOB":
+                case "BFILE":
+                case "RAW":
+                case "LONG RAW":
+                    type = "byte[]";
+                    break;
+
+                // XML类型
+                case "XMLTYPE":
+                    type = isNullable ? "string?" : "string"; // 或 System.Xml.XmlDocument/XElement
+                    return true;
+
+                // 布尔类型（Oracle没有原生BOOLEAN，但有时用NUMBER(1)表示）
+                case "BOOLEAN": // 某些Oracle版本支持
+                    type = isNullable ? "bool?" : "bool";
+                    break;
+
+                // 不支持的类型
+                default:
+                    type = "";
+                    return false;
+            }
+
+            return true;
         }
     }
 }

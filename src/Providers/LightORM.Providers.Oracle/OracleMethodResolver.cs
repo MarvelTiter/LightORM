@@ -32,10 +32,8 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
         }
         else
         {
-            resolver.Sql.Append("CAST(");
+            resolver.Sql.Append("TO_CHAR(");
             resolver.Visit(methodCall.Object);
-            resolver.Sql.Append(" AS ");
-            resolver.Sql.Append("VARCHAR(255)");
             resolver.Sql.Append(')');
         }
     }

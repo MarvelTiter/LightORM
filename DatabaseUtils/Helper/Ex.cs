@@ -1,4 +1,5 @@
 ﻿using DatabaseUtils.Models;
+using DatabaseUtils.Services;
 using DatabaseUtils.Template;
 using System.IO;
 using System.Text;
@@ -19,13 +20,13 @@ namespace DatabaseUtils.Helper
             return self.Comments.Replace(Environment.NewLine, " ").Replace("\n", " ");
         }
 
-        public static string BuildContent(this DatabaseTable self, string prefix, string separator)
+        public static string BuildContent(this IDbOperator db, DatabaseTable table, string prefix, string separator)
         {
-            var columns = self.Columns;
+            var columns = table.Columns;
             var content = new StringBuilder();
             foreach (var item in columns)
             {
-                if (!item.ParseDataType(out var type))
+                if (!db.ParseDataType(item, out var type))
                 {
                     continue;
                 }
@@ -39,9 +40,9 @@ namespace DatabaseUtils.Helper
             return Parse(self.ColumnName, prefix, separator);
         }
 
-        public static bool ParseDataType(this TableColumn self, out string type)
+        public static bool ParseDataType(this IDbOperator db, TableColumn column, out string type)
         {
-            return TypeMap.Map(self.DataType, self.Nullable, out type);
+            return TypeMap.Map(column.DataType, column.Nullable, out type);
         }
 
         private static string Parse(string text, string prefix, string separator)

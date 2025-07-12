@@ -16,7 +16,7 @@ namespace DatabaseUtils.Helper
             var d = dbType.ToLower();
             if (d.Contains("char"))
             {
-                type = "string";
+                type = nullable == "YES" ? "string?" : "string";
             }
             else if (d.Contains("int") 
                 || d.Contains("bit") 

@@ -21,37 +21,18 @@ namespace DatabaseUtils
     {
         IEnumerable<DatabaseTable> Tables = [];
         IDbOperator? dbOperator = null;
-        Config Config = new Config();
         bool showSetting;
-        public static string? LastSelectedDb
-        {
-            get => Properties.Local.Default.LastSelectedDb;
-            set
-            {
-                Properties.Local.Default.LastSelectedDb = value;
-                Properties.Local.Default.Save();
-            }
-        }
-
-        public static string? Connectstring
-        {
-            get => Properties.Local.Default.Connectstring;
-            set
-            {
-                Properties.Local.Default.Connectstring = value;
-                Properties.Local.Default.Save();
-            } 
-        }
+       
         [Inject, NotNull] IExpressionContext? Context { get; set; }
 
         async Task Connect()
         {
-            if (LastSelectedDb == null || string.IsNullOrWhiteSpace(Connectstring))
+            if (string.IsNullOrEmpty(Config.LastSelectedDb) || string.IsNullOrWhiteSpace(Config.Connectstring))
             {
                 MessageBox.Show("数据库类型和连接字符串不能为空");
                 return;
             }
-            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(LastSelectedDb), Connectstring!);
+            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(Config.LastSelectedDb), Config.Connectstring);
             Tables = await dbOperator.GetTablesAsync();
         }
 
@@ -79,7 +60,7 @@ namespace DatabaseUtils
                 {
                     table.Columns = await dbOperator!.GetTableStructAsync(table.TableName);
                     string formatted = table.PascalName(prefix, separator);
-                    var content = table.BuildContent(prefix, separator);
+                    var content = dbOperator.BuildContent(table, prefix, separator);
                     var classcontent = string.Format(ClassTemplate.Class, Config.Namespace, table.TableName, formatted, content);
                     GeneratedTables.Add(new()
                     {
@@ -137,6 +118,11 @@ namespace DatabaseUtils
             {
                 table.IsSelected = newValue;
             }
+        }
+
+        private static void CopyToClipboard(DatabaseTable table)
+        {
+            Clipboard.SetText(table.GeneratedResult);
         }
     }
 }

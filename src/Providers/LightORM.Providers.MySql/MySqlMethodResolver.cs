@@ -24,17 +24,13 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("DATE_FORMAT(");
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(',');
-            if (methodCall.Arguments.Count > 0)
+            if (methodCall.Arguments.Count > 0
+                && methodCall.Arguments[0] is ConstantExpression ce
+                && ce.Value is string format)
             {
-                resolver.Visit(methodCall.Arguments[0]);
                 // yyyy-MM-dd HH:mm:ss
                 // %Y-%m-%d %H:%i:%s
-                resolver.Sql.Replace("yyyy", "%Y");
-                resolver.Sql.Replace("MM", "%m");
-                resolver.Sql.Replace("dd", "%d");
-                resolver.Sql.Replace("HH", "%H");
-                resolver.Sql.Replace("mm", "%i");
-                resolver.Sql.Replace("ss", "%s");
+                resolver.Sql.Append($"'{ConvertFormatString(format)}'");
             }
             else
             {
@@ -47,6 +43,16 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("CAST(");
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" AS CHAR)");
+        }
+        static string ConvertFormatString(string format)
+        {
+            return format
+                    .Replace("yyyy", "%Y")
+                    .Replace("MM", "%m")
+                    .Replace("dd", "%d")
+                    .Replace("HH", "%H")
+                    .Replace("mm", "%i")
+                    .Replace("ss", "%s");
         }
     }
 

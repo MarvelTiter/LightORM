@@ -31,7 +31,7 @@ public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseData
         {
             primaryKeyConstraint =
 $@"
-,CONSTRAINT {GetPrimaryKeyName(primaryKeys)} PRIMARY KEY
+,CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
 (
 {string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )";

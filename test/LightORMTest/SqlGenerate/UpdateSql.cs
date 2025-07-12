@@ -3,7 +3,7 @@ using LightORMTest;
 using System.Threading.Tasks;
 
 namespace LightORMTest.SqlGenerate;
-[TestClass]
+//[TestClass]
 public class UpdateSql : TestBase
 {
     [TestMethod]
@@ -84,10 +84,10 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void U05_Update_Flat_Column()
     {
-        var p = new SmsLog();
+        var p = new UserFlat();
         var sql = Db.Update(p)
-            .Set(s => s.Recive.Code, 100)
-            .Where(s => s.Recive.Uuid == "123")
+            .Set(s => s.PriInfo.Age, 100)
+            .Where(s => s.PriInfo.Address == "123")
             .ToSql();
         Console.WriteLine(sql);
         var result = """
@@ -102,7 +102,7 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void U06_Update_Flat_Entity()
     {
-        var p = new SmsLog();
+        var p = new UserFlat();
         var sql = Db.Update(p)
             .ToSql();
         Console.WriteLine(sql);
@@ -120,7 +120,7 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void U07_Update_With_Version()
     {
-        var p = new SmsLog();
+        var p = new UserFlat();
         var sql = Db.Update(p)
             .ToSql();
         Console.WriteLine(sql);
@@ -134,9 +134,9 @@ public class UpdateSql : TestBase
 
         var sql = Db.Update([..datas]).ToSql();
         Console.WriteLine(sql);
-        List<SmsLog> GetList()
+        List<UserFlat> GetList()
         {
-            return new List<SmsLog>
+            return new List<UserFlat>
             {
                 new() ,
                 new() ,

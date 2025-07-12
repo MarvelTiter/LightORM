@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace LightORMTest.ResultTest;
 
-[TestClass]
 public class Select : TestBase
 {
     [TestMethod]

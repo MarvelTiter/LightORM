@@ -30,7 +30,7 @@ public class TransactionTest : TestBase
         {
             RoleId = "TT001",
             RoleName = "测试",
-            Powers = pp.Select(p => new Power() { PowerId = p })
+            Powers = pp.Select(p => new Permission() { PermissionId = p })
         };
         try
         {
@@ -39,14 +39,14 @@ public class TransactionTest : TestBase
                 .Where(r => r.RoleId == role.RoleId)
                 .ExecuteAsync();
             var roleId = role.RoleId;
-            string[] powers = [.. role.Powers.Select(p => p.PowerId).Distinct()];
-            var d = await scoped.Delete<RolePower>().Where(r => r.RoleId == roleId).ExecuteAsync();
+            string[] powers = [.. role.Powers.Select(p => p.PermissionId).Distinct()];
+            var d = await scoped.Delete<RolePermission>().Where(r => r.RoleId == roleId).ExecuteAsync();
             var i = 0;
             
-            var ef = await scoped.Insert<RolePower>([..powers.Select(p => new RolePower()
+            var ef = await scoped.Insert<RolePermission>([..powers.Select(p => new RolePermission()
             {
                 RoleId = roleId,
-                PowerId = p
+                PermissionId = p
             })]).ExecuteAsync();
             i += ef;
             if (powers.Length == 3)
