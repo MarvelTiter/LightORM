@@ -22,17 +22,18 @@ namespace DatabaseUtils
         IEnumerable<DatabaseTable> Tables = [];
         IDbOperator? dbOperator = null;
         bool showSetting;
-       
+        private Config config = new Config();
         [Inject, NotNull] IExpressionContext? Context { get; set; }
 
         async Task Connect()
         {
-            if (string.IsNullOrEmpty(Config.LastSelectedDb) || string.IsNullOrWhiteSpace(Config.Connectstring))
+            if (string.IsNullOrEmpty(config.LastSelectedDb) || string.IsNullOrWhiteSpace(config.Connectstring))
             {
                 MessageBox.Show("数据库类型和连接字符串不能为空");
                 return;
             }
-            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(Config.LastSelectedDb), Config.Connectstring);
+
+            dbOperator = DbFactory.GetDbOperator(Context, new DbBaseType(config.LastSelectedDb), config.Connectstring);
             Tables = await dbOperator.GetTablesAsync();
         }
 
@@ -40,19 +41,21 @@ namespace DatabaseUtils
 
         async Task Build()
         {
-            if (string.IsNullOrEmpty(Config.Namespace))
+            if (string.IsNullOrEmpty(config.Namespace))
             {
                 MessageBox.Show("未设置命名空间!");
                 return;
             }
+
             var selected = Tables.Where(t => t.IsSelected);
             if (!selected.Any())
             {
                 MessageBox.Show("未选择表!");
                 return;
             }
-            var prefix = Config.Prefix ?? "";
-            var separator = Config.Separator ?? "";
+
+            var prefix = config.Prefix ?? "";
+            var separator = config.Separator ?? "";
             GeneratedTables.Clear();
             foreach (var table in selected)
             {
@@ -61,7 +64,7 @@ namespace DatabaseUtils
                     table.Columns = await dbOperator!.GetTableStructAsync(table.TableName);
                     string formatted = table.PascalName(prefix, separator);
                     var content = dbOperator.BuildContent(table, prefix, separator);
-                    var classcontent = string.Format(ClassTemplate.Class, Config.Namespace, table.TableName, formatted, content);
+                    var classcontent = string.Format(ClassTemplate.Class, config.Namespace, table.TableName, formatted, content);
                     GeneratedTables.Add(new()
                     {
                         TableName = table.TableName,
@@ -78,22 +81,25 @@ namespace DatabaseUtils
 
         async Task SaveToLocal()
         {
-            if (string.IsNullOrEmpty(Config.SavedPath))
+            if (string.IsNullOrEmpty(config.SavedPath))
             {
                 MessageBox.Show("保存路径为空!");
                 return;
             }
-            if (!Directory.Exists(Config.SavedPath))
+
+            if (!Directory.Exists(config.SavedPath))
             {
-                Directory.CreateDirectory(Config.SavedPath);
+                Directory.CreateDirectory(config.SavedPath);
             }
+
             foreach (var item in GeneratedTables)
             {
-                var path = Path.Combine(Config.SavedPath, $"{item.CsFileName}.cs");
+                var path = Path.Combine(config.SavedPath, $"{item.CsFileName}.cs");
                 if (File.Exists(path))
                 {
                     File.Delete(path);
                 }
+
                 await File.WriteAllTextAsync(path, item.GeneratedResult);
             }
         }
@@ -102,14 +108,12 @@ namespace DatabaseUtils
         {
             return Task.Run(() =>
             {
-
                 OpenFolderDialog dialog = new OpenFolderDialog();
                 if (dialog.ShowDialog() == true)
                 {
-                    Config.SavedPath = dialog.FolderName;
+                    config.SavedPath = dialog.FolderName;
                 }
             });
-
         }
 
         void AllHandle(bool newValue)

@@ -2,7 +2,7 @@
 {
     public class Config
     {
-        public static string? LastSelectedDb
+        public string? LastSelectedDb
         {
             get => Properties.Local.Default.LastSelectedDb;
             set
@@ -11,7 +11,8 @@
                 Properties.Local.Default.Save();
             }
         }
-        public static string? Connectstring
+
+        public string? Connectstring
         {
             get => Properties.Local.Default.Connectstring;
             set
@@ -20,7 +21,8 @@
                 Properties.Local.Default.Save();
             }
         }
-        public static string? Prefix
+
+        public string? Prefix
         {
             get => Properties.Local.Default.Prefix;
             set
@@ -29,26 +31,18 @@
                 Properties.Local.Default.Save();
             }
         }
-        public static string? Separator
+
+        public string? Separator
         {
-            get => Properties.Local.Default.Prefix ?? "_";
+            get => Properties.Local.Default.Separator ?? "_";
             set
             {
-                Properties.Local.Default.Prefix = value;
+                Properties.Local.Default.Separator = value;
                 Properties.Local.Default.Save();
             }
         }
 
-        public static string? Namespace
-        {
-            get => Properties.Local.Default.Namespace;
-            set
-            {
-                Properties.Local.Default.Namespace = value;
-                Properties.Local.Default.Save();
-            }
-        }
-        public static string SavedPath
+        public string? Namespace
         {
             get => Properties.Local.Default.Namespace;
             set
@@ -58,5 +52,14 @@
             }
         }
 
+        public string SavedPath
+        {
+            get => Properties.Local.Default.SavedPath;
+            set
+            {
+                Properties.Local.Default.SavedPath = value;
+                Properties.Local.Default.Save();
+            }
+        }
     }
 }

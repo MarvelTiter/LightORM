@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.PostgreS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.PostgreSQL", "test\LightORMTest.PostgreSQL\LightORMTest.PostgreSQL.csproj", "{875EE508-F578-017E-BBB0-3DD7006CA83D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.Sqlite", "test\LightORMTest.Sqlite\LightORMTest.Sqlite.csproj", "{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,10 @@ Global
 		{875EE508-F578-017E-BBB0-3DD7006CA83D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{875EE508-F578-017E-BBB0-3DD7006CA83D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{875EE508-F578-017E-BBB0-3DD7006CA83D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -130,6 +136,7 @@ Global
 		{C7DB0855-6C75-42B0-BAA0-2CB1B7583690} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
 		{A1DE2AA1-9936-D952-9D4F-5F15D14E30DB} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
 		{875EE508-F578-017E-BBB0-3DD7006CA83D} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
+		{CDA04A0C-2BB4-47E9-9A35-CD8FF300FA46} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E100B2EB-6CFD-4F8B-9966-2F4050785536}

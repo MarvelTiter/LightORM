@@ -3,12 +3,12 @@
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="@FlexGap.Small">
-            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@Config.LastSelectedDb" DropdownMatchSelectWidth="@false">
+            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@config.LastSelectedDb" DropdownMatchSelectWidth="@false">
                 <SimpleSelectOption Value="Mysql" Label="MySql"></SimpleSelectOption>
                 <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
                 <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
             </SimpleSelect>
-            <Input @bind-Value="@Config.Connectstring"></Input>
+            <Input @bind-Value="@config.Connectstring"></Input>
             <Button Type="@ButtonType.Primary" OnClick="@Connect">连接</Button>
             <Button Type="@ButtonType.Primary" OnClick="@Build">生成</Button>
             <Button OnClick="@(() => showSetting = true)">设置</Button>
@@ -55,7 +55,7 @@
 </section>
 
 <Modal @bind-Visible="@showSetting" Width="450">
-    <Form Model="Config" LabelColSpan="6">
+    <Form Model="@config" LabelColSpan="6">
         <FormItem Label="前缀">
             <Input @bind-Value="@context.Prefix"></Input>
         </FormItem>

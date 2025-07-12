@@ -1,16 +1,15 @@
-﻿
-
-namespace LightORMTest.SqlGenerate;
+﻿namespace LightORMTest.SqlGenerate;
 
 public class SelectSql : TestBase
 {
     #region select
+
     [TestMethod]
     public void Select_One_Table()
     {
         var sql = Db.Select<Product>()
-                .Where(p => p.ModifyTime > DateTime.Now)
-                .ToSql(p => new { p.ProductId, p.ProductName });
+            .Where(p => p.ModifyTime > DateTime.Now)
+            .ToSql(p => new { p.ProductId, p.ProductName });
         Console.WriteLine(sql);
         //var result = $"""
         //        SELECT `a`.`ProductId`, `a`.`ProductName`
@@ -18,13 +17,15 @@ public class SelectSql : TestBase
         //        WHERE (`a`.`ModifyTime` > @Now_0)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
-        var result = Select_One_Table_Result(); 
+        var result = Select_One_Table_Result();
         if (string.IsNullOrEmpty(result))
         {
             return;
         }
+
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
     public virtual string? Select_One_Table_Result()
     {
         return null;
@@ -51,8 +52,10 @@ public class SelectSql : TestBase
         {
             return;
         }
+
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
     public virtual string? Select_One_Table_And_Join_Two_Table_Result()
     {
         return null;
@@ -76,8 +79,10 @@ public class SelectSql : TestBase
         {
             return;
         }
+
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
     public virtual string? Select_Three_Table_Result()
     {
         return null;
@@ -180,6 +185,7 @@ public class SelectSql : TestBase
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
     #endregion
 
     #region group
@@ -216,21 +222,21 @@ public class SelectSql : TestBase
     public void Select_GroupBy_SubQuery_Join()
     {
         var sql = Db.Select<User>()
-                .GroupBy(a => new { a.UserId })
-                .AsTable(g => new
-                {
-                    g.Group.UserId,
-                    Total = g.Count(),
-                    Tb = g.Count<int?>(g.Tables.Age > 18 ? 1 : null)
-                }).AsSubQuery()
-                .InnerJoin<Permission>((a, s) => a.UserId == s.PermissionId)
-                .ToSql((a, s) => new
-                {
-                    Jyjgbh = a.UserId,
-                    a.Total,
-                    a.Tb,
-                    Jczmc = s.PermissionName
-                });
+            .GroupBy(a => new { a.UserId })
+            .AsTable(g => new
+            {
+                g.Group.UserId,
+                Total = g.Count(),
+                Tb = g.Count<int?>(g.Tables.Age > 18 ? 1 : null)
+            }).AsSubQuery()
+            .InnerJoin<Permission>((a, s) => a.UserId == s.PermissionId)
+            .ToSql((a, s) => new
+            {
+                Jyjgbh = a.UserId,
+                a.Total,
+                a.Tb,
+                Jczmc = s.PermissionName
+            });
         Console.WriteLine(sql);
         //var result = """
         //    SELECT `a`.`UserId`, `a`.`Total`, `a`.`Tb`, `b`.`POWER_NAME` AS `Jczmc`
@@ -330,6 +336,7 @@ public class SelectSql : TestBase
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
     [TestMethod]
     public void Select_SubSelectAsWhere()
     {
@@ -406,9 +413,9 @@ public class SelectSql : TestBase
         Assert.IsTrue(result.UserRoles.Count() == 2);
 
         result = Db.Select<User>()
-           .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Ad")))
-           .Where(u => u.UserId == "admin")
-           .ToList().FirstOrDefault();
+            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Ad")))
+            .Where(u => u.UserId == "admin")
+            .ToList().FirstOrDefault();
 
         Assert.IsFalse(result is null);
         Assert.IsFalse(result.UserRoles is null);
@@ -416,9 +423,9 @@ public class SelectSql : TestBase
         Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "Admin");
 
         result = Db.Select<User>()
-           .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Su")))
-           .Where(u => u.UserId == "admin")
-           .ToList().FirstOrDefault();
+            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Su")))
+            .Where(u => u.UserId == "admin")
+            .ToList().FirstOrDefault();
         Assert.IsFalse(result is null);
         Assert.IsFalse(result.UserRoles is null);
         Assert.IsTrue(result.UserRoles.Count() == 1);
@@ -444,10 +451,10 @@ public class SelectSql : TestBase
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
 
         sql = Db.Select<User>()
-           // 两种写法都可以
-           //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
-           .Where(u => u.City.Name.StartsWith("D"))
-           .ToSql();
+            // 两种写法都可以
+            //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
+            .Where(u => u.City.Name.StartsWith("D"))
+            .ToSql();
         Console.WriteLine(sql);
     }
 
@@ -507,18 +514,18 @@ public class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-        {
-            Id = u.UserId,
-            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-        }).AsSubQuery()
+            {
+                Id = u.UserId,
+                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+            }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTemp("temp", g =>
-            new
-            {
-                g.Group.Id,
-                AvgDiff = g.Avg(g.Tables.DateDiff)
-            });
+                new
+                {
+                    g.Group.Id,
+                    AvgDiff = g.Avg(g.Tables.DateDiff)
+                });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
         Console.WriteLine(sql);
         //var result = """
@@ -545,18 +552,18 @@ public class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-        {
-            Id = u.UserId,
-            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-        }).AsSubQuery()
+            {
+                Id = u.UserId,
+                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+            }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTable(g =>
-            new
-            {
-                g.Group.Id,
-                AvgDiff = g.Avg(g.Tables.DateDiff)
-            });
+                new
+                {
+                    g.Group.Id,
+                    AvgDiff = g.Avg(g.Tables.DateDiff)
+                });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
         Console.WriteLine(sql);
         //var result = """
