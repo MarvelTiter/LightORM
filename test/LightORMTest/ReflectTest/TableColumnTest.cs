@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace LightORMTest.ReflectTest;
 
-[TestClass]
 public class TableColumnTest : TestBase
 {
     [TestMethod]

@@ -30,25 +30,24 @@ public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseData
         if (primaryKeys.Count() > 0)
         {
             primaryKeyConstraint =
-$@"
-,CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
-(
-{string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
-)";
+$"""
+,{Environment.NewLine}    CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY({string.Join($", ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))})
+""";
         }
         #endregion
 
         #region Table
         string existsClause = Option.NotCreateIfExists ? $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{table.Name}')" : "";
-        sql.Append($@"
+        sql.Append(
+            $"""
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 {existsClause}
 CREATE TABLE {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(col => BuildColumn(col)))}
-{primaryKeyConstraint}
+    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(col)))}{primaryKeyConstraint}
 );
-");
+
+""");
         #endregion
 
         #region ColumnConment

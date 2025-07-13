@@ -17,11 +17,12 @@ public sealed class OracleTableHandler(TableGenerateOption option) : BaseDatabas
         var tableSpace = Option?.OracleTableSpace != null ? $"TABLESPACE {Option.OracleTableSpace}" : "";
 
         #region Table
-        sql.Append($@"
+        sql.Append($"""
 CREATE TABLE {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(BuildColumn))}
+    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
 ){tableSpace};
-");
+
+""");
         #endregion
 
         #region ColumnConment
@@ -45,7 +46,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
                 if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
                 table.Indexs = table.Indexs.Concat(new DbIndex[]
                 {
-                    new DbIndex(){ Columns = new string[]{p.Name }, DbIndexType= IndexType.Unique, Name =$"PK_{p.Name}" }
+                    new DbIndex(){ Columns = new string[]{p.Name }, DbIndexType= IndexType.Unique }
                 });
             }
         }
@@ -75,11 +76,12 @@ CREATE TABLE {DbEmphasis(table.Name)}(
         if (primaryKeys.Count() > 0)
         {
             sql.AppendLine(
-$@"
+$"""
 ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
 (
-{string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
-) USING INDEX {tableSpace};"
+    {string.Join($",{Environment.NewLine}    ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
+) USING INDEX {tableSpace};
+"""
 );
         }
         #endregion
@@ -112,7 +114,7 @@ ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.N
     protected override string BuildColumn(DbColumn column)
     {
         string dataType = ConvertToDbType(column);
-        if (dataType.Contains("CHAR"))
+        if (dataType.Contains("VARCHAR"))
         {
             dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
         }

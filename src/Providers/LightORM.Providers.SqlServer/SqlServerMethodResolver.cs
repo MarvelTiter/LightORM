@@ -26,16 +26,33 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
         if (isDatetime)
         {
             resolver.Sql.Append(',');
-            if (methodCall.Arguments.Count > 0)
+            int styleCode = 120; // 默认使用ODBC规范
+            if (methodCall.Arguments.Count > 0
+                && methodCall.Arguments[0] is ConstantExpression ce
+                && ce.Value is string format)
             {
-                resolver.Visit(methodCall.Arguments[0]);
-                resolver.Sql.Replace("yyyy-MM-dd HH:mm:ss", "120");
-                resolver.Sql.Replace("yyyy-MM-dd", "23");
+                // 映射常见格式字符串到SQL Server样式代码
+                styleCode = format switch
+                {
+                    // 日期时间格式
+                    "yyyy-MM-dd HH:mm:ss" => 120,  // ODBC规范
+                    "yyyy-MM-ddTHH:mm:ss" => 126,   // ISO8601
+                    "MM/dd/yyyy HH:mm:ss" => 22,    // U.S.格式
+                    // 纯日期格式
+                    "yyyy-MM-dd" => 23,
+                    "MM/dd/yyyy" => 101,            // U.S.
+                    "dd/MM/yyyy" => 103,            // 英国/法国
+                    "yyyyMMdd" => 112,              // ISO
+                    "dd MMM yyyy" => 106,           // 欧洲默认 - 26 Sep 2023
+                    // 纯时间格式
+                    "HH:mm:ss" => 114,
+                    "hh:mm:ss tt" => 0,             // 默认时间格式
+                    // 其他常见格式
+                    "MMMM dd, yyyy" => 107,         // 月份全名 - September 26, 2023
+                    _ => 120                        // 默认使用ODBC格式
+                };
             }
-            else
-            {
-                resolver.Sql.Append(120);
-            }
+            resolver.Sql.Append(styleCode);
         }
         else if (methodCall.Arguments.Count > 0)
         {

@@ -15,10 +15,12 @@ public sealed class PostgreSQLTableHandler(TableGenerateOption option) : BaseDat
         StringBuilder sql = new StringBuilder();
 
         #region Table
-        sql.Append($@"
-CREATE TABLE {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(BuildColumn))}
-)");
+        var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS" : "";
+        sql.Append($"""
+CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
+    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
+)
+""");
 
         // PostgreSQL 的表空间语法与 Oracle 不同
         if (!string.IsNullOrEmpty(Option.PostgreSQLTableSpace))

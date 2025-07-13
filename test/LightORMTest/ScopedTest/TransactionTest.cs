@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace LightORMTest.ScopedTest;
 
-[TestClass]
 public class TransactionTest : TestBase
 {
     [TestMethod]

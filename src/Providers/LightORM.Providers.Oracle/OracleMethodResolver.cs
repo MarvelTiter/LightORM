@@ -20,13 +20,15 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("TO_CHAR(");
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(',');
-            if (methodCall.Arguments.Count > 0)
+            if (methodCall.Arguments.Count > 0
+                && methodCall.Arguments[0] is ConstantExpression ce
+                && ce.Value is string format)
             {
-                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append($"'{ConvertFormatString(format)}'");
             }
             else
             {
-                resolver.Sql.Append("'yyyy-mm-dd hh24:mm:ss'");
+                resolver.Sql.Append("'YYYY-MM-DD HH24:MI:SS'");
             }
             resolver.Sql.Append(')');
         }
@@ -35,6 +37,19 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("TO_CHAR(");
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(')');
+        }
+        static string ConvertFormatString(string format)
+        {
+            return format
+                .Replace("yyyy", "YYYY")
+                .Replace("yy", "YY")
+                .Replace("MM", "MM")
+                .Replace("dd", "DD")
+                .Replace("HH", "HH24")
+                .Replace("mm", "MI")
+                .Replace("ss", "SS")
+                .Replace("fff", "MS")
+                .Replace("tt", "AM");
         }
     }
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)

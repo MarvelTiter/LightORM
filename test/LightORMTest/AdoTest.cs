@@ -2,7 +2,6 @@
 
 namespace LightORMTest;
 
-[TestClass]
 public class AdoTest : TestBase
 {
     [TestMethod]

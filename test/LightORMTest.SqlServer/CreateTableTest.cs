@@ -1,12 +1,12 @@
-﻿namespace LightORMTest.PostgreSQL;
+﻿namespace LightORMTest.SqlServer;
 
 [TestClass]
 public class CreateTableTest : LightORMTest.CreateTableTest
 {
-    public override DbBaseType DbType => DbBaseType.PostgreSQL;
+    public override DbBaseType DbType => DbBaseType.SqlServer;
     public override void Configura(IExpressionContextSetup option)
     {
-        option.UsePostgreSQL(ConnectString.Value);
+        option.UseSqlServer(LightORM.Providers.SqlServer.SqlServerVersion.V1, ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
 }

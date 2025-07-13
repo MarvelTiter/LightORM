@@ -1,12 +1,12 @@
-﻿namespace LightORMTest.PostgreSQL.SqlGenerate;
+﻿namespace LightORMTest.Oracle.SqlGenerate;
 
 [TestClass]
 public class SelectSql : LightORMTest.SqlGenerate.SelectSql
 {
-    public override DbBaseType DbType => DbBaseType.PostgreSQL;
+    public override DbBaseType DbType => DbBaseType.Oracle;
     public override void Configura(IExpressionContextSetup option)
     {
-        option.UsePostgreSQL(ConnectString.Value);
+        option.UseOracle(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
 }

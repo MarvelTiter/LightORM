@@ -1,12 +1,12 @@
-﻿namespace LightORMTest.PostgreSQL;
+﻿namespace LightORMTest.Oracle;
 
 [TestClass]
 public class DbMethodTest : LightORMTest.DbMethodTest
 {
-    public override DbBaseType DbType => DbBaseType.PostgreSQL;
+    public override DbBaseType DbType => DbBaseType.Oracle;
     public override void Configura(IExpressionContextSetup option)
     {
-        option.UsePostgreSQL(ConnectString.Value);
+        option.UseOracle(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
 }

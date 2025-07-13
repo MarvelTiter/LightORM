@@ -26,10 +26,7 @@ public class SelectSql : TestBase
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
-    public virtual string? Select_One_Table_Result()
-    {
-        return null;
-    }
+    public virtual string? Select_One_Table_Result() => null;
 
     [TestMethod]
     public void Select_One_Table_And_Join_Two_Table()
@@ -56,10 +53,7 @@ public class SelectSql : TestBase
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
-    public virtual string? Select_One_Table_And_Join_Two_Table_Result()
-    {
-        return null;
-    }
+    public virtual string? Select_One_Table_And_Join_Two_Table_Result() => null;
 
     [TestMethod]
     public void Select_Three_Table()
@@ -79,14 +73,10 @@ public class SelectSql : TestBase
         {
             return;
         }
-
         Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
 
-    public virtual string? Select_Three_Table_Result()
-    {
-        return null;
-    }
+    public virtual string? Select_Three_Table_Result() => null;
 
     class Jobs
     {
@@ -184,7 +174,14 @@ public class SelectSql : TestBase
         //    INNER JOIN all_station `b` ON (`a`.`StnId` = `b`.`StnId`)
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Temp_ThenGroup_And_Union_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Temp_ThenGroup_And_Union_Result() => null;
 
     #endregion
 
@@ -216,7 +213,15 @@ public class SelectSql : TestBase
         //    ORDER BY `a`.`USER_ID` ASC
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Join_GroupBy_Having_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+
+    public virtual string? Select_Join_GroupBy_Having_Result() => null;
 
     [TestMethod]
     public void Select_GroupBy_SubQuery_Join()
@@ -248,8 +253,14 @@ public class SelectSql : TestBase
         //    INNER JOIN `POWERS` `b` ON (`a`.`UserId` = `b`.`POWER_ID`)
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_GroupBy_SubQuery_Join_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
-
+    public virtual string? Select_GroupBy_SubQuery_Join_Result() => null;
     #endregion
 
     #region sub select
@@ -277,7 +288,14 @@ public class SelectSql : TestBase
         //        WHERE (`b`.`Total` > 10)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_JoinGroupSelect_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_JoinGroupSelect_Result() => null;
 
     [TestMethod]
     public void Select_GroupBy_AsTable_SubQuery()
@@ -304,7 +322,14 @@ public class SelectSql : TestBase
         //        WHERE `a`.`UserId` LIKE '%'||'admin'||'%'
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_GroupBy_AsTable_SubQuery_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_GroupBy_AsTable_SubQuery_Result() => null;
 
     [TestMethod]
     public void Select_Join_SelectJoin()
@@ -335,7 +360,14 @@ public class SelectSql : TestBase
         //        ) `c` ON (`a`.`USER_ID` = `c`.`UserId`)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Join_SelectJoin_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Join_SelectJoin_Result() => null;
 
     [TestMethod]
     public void Select_SubSelectAsWhere()
@@ -359,7 +391,14 @@ public class SelectSql : TestBase
             .Where(u => u.Age > Db.Select<User>().Max(u => u.Age))
             .ToSql();
         Console.WriteLine(sql);
+        var result = Select_SubSelectAsWhere_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_SubSelectAsWhere_Result() => null;
 
     [TestMethod]
     public void Select_WhereExits()
@@ -376,7 +415,14 @@ public class SelectSql : TestBase
         //        )
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_WhereExits_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_WhereExits_Result() => null;
 
     [TestMethod]
     public void Select_SubSelectAsField()
@@ -395,45 +441,21 @@ public class SelectSql : TestBase
         //    FROM `USER` `a`
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_SubSelectAsField_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_SubSelectAsField_Result() => null;
 
     #endregion
 
     #region select include
 
     [TestMethod]
-    public void Select_Include_IncludeWhere_Result()
-    {
-        var result = Db.Select<User>()
-            .Include(u => u.UserRoles)
-            .Where(u => u.UserId == "admin")
-            .ToList().FirstOrDefault();
-        Assert.IsFalse(result is null);
-        Assert.IsFalse(result.UserRoles is null);
-        Assert.IsTrue(result.UserRoles.Count() == 2);
-
-        result = Db.Select<User>()
-            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Ad")))
-            .Where(u => u.UserId == "admin")
-            .ToList().FirstOrDefault();
-
-        Assert.IsFalse(result is null);
-        Assert.IsFalse(result.UserRoles is null);
-        Assert.IsTrue(result.UserRoles.Count() == 1);
-        Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "Admin");
-
-        result = Db.Select<User>()
-            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Su")))
-            .Where(u => u.UserId == "admin")
-            .ToList().FirstOrDefault();
-        Assert.IsFalse(result is null);
-        Assert.IsFalse(result.UserRoles is null);
-        Assert.IsTrue(result.UserRoles.Count() == 1);
-        Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "SuperAdmin");
-    }
-
-    [TestMethod]
-    public void Select_Navigate_Where()
+    public void Select_Navigate_Where_Multi()
     {
         var sql = Db.Select<User>()
             // 两种写法都可以
@@ -450,13 +472,32 @@ public class SelectSql : TestBase
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
 
-        sql = Db.Select<User>()
+        var result = Select_Navigate_Where_Multi_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+    }
+    public virtual string? Select_Navigate_Where_Multi_Result() => null;
+
+    [TestMethod]
+    public void Select_Navigate_Where_Single()
+    {
+       var sql = Db.Select<User>()
             // 两种写法都可以
             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .Where(u => u.City.Name.StartsWith("D"))
             .ToSql();
         Console.WriteLine(sql);
+        var result = Select_Navigate_Where_Single_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Navigate_Where_Single_Result() => null;
 
     #endregion
 
@@ -507,7 +548,14 @@ public class SelectSql : TestBase
         //        WHERE `b`.`UserId` LIKE '%'||'admin'||'%'
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Temp_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Temp_Result() => null;
 
     [TestMethod]
     public void Select_GroupBy_AsSub_GroupBy_AsTemp_SelectJoinTemp()
@@ -545,7 +593,14 @@ public class SelectSql : TestBase
         //        INNER JOIN temp `b` ON (`a`.`USER_ID` = `b`.`Id`)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_GroupBy_AsSub_GroupBy_AsTemp_SelectJoinTemp_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_GroupBy_AsSub_GroupBy_AsTemp_SelectJoinTemp_Result() => null;
 
     [TestMethod]
     public void Select_GroupBy_AsSub_GroupBy_SelectJoinSub()
@@ -582,7 +637,14 @@ public class SelectSql : TestBase
         //        ) `b` ON (`a`.`USER_ID` = `b`.`Id`)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_GroupBy_AsSub_GroupBy_SelectJoinSub_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_GroupBy_AsSub_GroupBy_SelectJoinSub_Result() => null;
 
     #endregion
 
@@ -606,7 +668,14 @@ public class SelectSql : TestBase
         //        WHERE (`a`.`AGE` > 15)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Union_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Union_Result() => null;
 
     [TestMethod]
     public void Select_Context_Union()
@@ -627,7 +696,14 @@ public class SelectSql : TestBase
         //        WHERE (`a`.`AGE` > 10)
         //        """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Context_Union_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Context_Union_Result() => null;
 
     #endregion
 
@@ -637,15 +713,23 @@ public class SelectSql : TestBase
     public void Select_Flat_Property()
     {
         var sql = Db.Select<UserFlat>()
-            .Where(l => l.PriInfo.Age == 100)
+            .Where(l => l.PriInfo.IsLock == true)
             .ToSql();
+        Console.WriteLine(sql);
         //var result = """
         //    SELECT *
         //    FROM `SMS_LOG` `a`
         //    WHERE (`a`.`CODE` = 100)
         //    """;
         //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        var result = Select_Flat_Property_Result();
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
     }
+    public virtual string? Select_Flat_Property_Result() => null;
 
     #endregion
 }

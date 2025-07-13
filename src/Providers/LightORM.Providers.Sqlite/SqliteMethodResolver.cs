@@ -23,17 +23,20 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
         if (isDatetime)
         {
             resolver.Sql.Append("STRFTIME(");
-            if (methodCall.Arguments.Count > 0)
+            if (methodCall.Arguments.Count > 0
+                && methodCall.Arguments[0] is ConstantExpression ce
+                && ce.Value is string format)
             {
-                resolver.Visit(methodCall.Arguments[0]);
+
                 // yyyy-MM-dd HH:mm:ss
                 // %Y-%m-%d %H:%M:%S
-                resolver.Sql.Replace("yyyy", "%Y");
-                resolver.Sql.Replace("MM", "%m");
-                resolver.Sql.Replace("dd", "%d");
-                resolver.Sql.Replace("HH", "%H");
-                resolver.Sql.Replace("mm", "%M");
-                resolver.Sql.Replace("ss", "%S");
+                //resolver.Sql.Replace("yyyy", "%Y");
+                //resolver.Sql.Replace("MM", "%m");
+                //resolver.Sql.Replace("dd", "%d");
+                //resolver.Sql.Replace("HH", "%H");
+                //resolver.Sql.Replace("mm", "%M");
+                //resolver.Sql.Replace("ss", "%S");
+                resolver.Sql.Append($"'{ConvertFormatString(format)}'");
             }
             else
             {
@@ -52,6 +55,16 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
                 resolver.Visit(methodCall.Arguments[0]);
             }
             resolver.Sql.Append(" AS TEXT)");
+        }
+        static string ConvertFormatString(string format)
+        {
+            return format
+                    .Replace("yyyy", "%Y")
+                    .Replace("MM", "%m")
+                    .Replace("dd", "%d")
+                    .Replace("HH", "%H")
+                    .Replace("mm", "%I")
+                    .Replace("ss", "%S");
         }
     }
     public override void StartsWith(IExpressionResolver resolver, MethodCallExpression methodCall)
