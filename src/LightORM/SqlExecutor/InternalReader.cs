@@ -27,7 +27,10 @@ internal partial class SqlExecutor
             dataReader.Close();
             commandResult.Command.Parameters.Clear();
             commandResult.Command.Dispose();
-            pool.Return(commandResult.Connection);
+            if (commandResult.NeedToReturn)
+            {
+                pool.Return(commandResult.Connection);
+            }
         }
 #if NET6_0_OR_GREATER
         public override async Task CloseAsync()
@@ -35,7 +38,10 @@ internal partial class SqlExecutor
             await dataReader.CloseAsync();
             commandResult.Command.Parameters.Clear();
             commandResult.Command.Dispose();
-            pool.Return(commandResult.Connection);
+            if (commandResult.NeedToReturn)
+            {
+                pool.Return(commandResult.Connection);
+            }
         }
 #endif
         public override object this[int ordinal] => dataReader[ordinal];

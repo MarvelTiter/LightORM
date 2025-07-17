@@ -274,13 +274,13 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         {
             var conn = context.Transaction.Connection;
             context.Transaction.Dispose();
+            context.Transaction = null;
             if (conn is not null)
             {
                 conn.Close();
                 Pool.Return(conn);
             }
         }
-        CurrentTransactionContext.Value = null;
 
     }
 
@@ -1051,7 +1051,7 @@ file class StopwatchHelper
     {
 #if NET8_0_OR_GREATER
         return Stopwatch.GetElapsedTime(startingTimestamp);
-#else
+#else   
         var end = Stopwatch.GetTimestamp();
         var tickFrequency = (double)(10000 * 1000 / Stopwatch.Frequency);
         var tick = (end - startingTimestamp) * tickFrequency;

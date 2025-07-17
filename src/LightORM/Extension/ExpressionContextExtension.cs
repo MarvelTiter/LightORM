@@ -15,7 +15,7 @@ public static class ExpressionContextExtension
     public static int BulkCopy<T>(this ISqlExecutor ado, IEnumerable<T> datas)
     {
         var table = TableContext.GetTableInfo<T>();
-        var dt = new DataTable();
+        var dt = new DataTable(table.TableName);
         foreach (var col in table.Columns)
         {
             if (col.IsNotMapped) continue;

@@ -20,7 +20,7 @@ public sealed class OracleTableHandler(TableGenerateOption option) : BaseDatabas
         sql.Append($"""
 CREATE TABLE {DbEmphasis(table.Name)}(
     {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
-){tableSpace};
+){tableSpace}
 
 """);
         #endregion
@@ -65,7 +65,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
                 type = "BITMAP ";
             }
             string reverse = index.DbIndexType == IndexType.Reverse ? "REVERSE" : "";
-            sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames}){reverse};");
+            sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames}){reverse}");
             i++;
         }
 
@@ -80,7 +80,7 @@ $"""
 ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
 (
     {string.Join($",{Environment.NewLine}    ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
-) USING INDEX {tableSpace};
+)
 """
 );
         }
@@ -92,17 +92,18 @@ ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.N
             var increments = table.Columns.Where(col => col.AutoIncrement);
             foreach (var col in increments)
             {
+                var triName = AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper();
                 var autoIncrement = $"""
- CREATE SEQUENCE {AttachUserId($"SEQ_{table.Name}_{col.Name}").ToUpper()} START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999999999999 ORDER;
- CREATE OR REPLACE TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()}
-     BEFORE INSERT ON {table.Name.ToUpper()}
+ CREATE SEQUENCE {AttachUserId($"SEQ_{table.Name}_{col.Name}").ToUpper()} START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999999999999 ORDER
+ CREATE OR REPLACE TRIGGER {triName}
+     BEFORE INSERT ON {DbEmphasis(table.Name.ToUpper())}
      FOR EACH ROW
  BEGIN
-     IF :NEW.{col.Name.ToUpper()} IS NULL THEN
-         SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{col.Name.ToUpper()} FROM DUAL;
-     END IF;
- END;
- ALTER TRIGGER {AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper()} ENABLE;
+     IF :NEW.{DbEmphasis(col.Name.ToUpper())} IS NULL THEN
+         SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{DbEmphasis(col.Name.ToUpper())} FROM DUAL
+     END IF
+ END
+ ALTER TRIGGER {triName} ENABLE
  """;
                 sql.AppendLine(autoIncrement);
             }

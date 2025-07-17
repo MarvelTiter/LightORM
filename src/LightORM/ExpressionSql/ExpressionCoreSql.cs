@@ -1,5 +1,6 @@
-﻿using System.Threading;
-using LightORM.Providers;
+﻿using LightORM.Providers;
+using System;
+using System.Threading;
 namespace LightORM.ExpressionSql;
 
 internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpressionContext, IDisposable
@@ -39,18 +40,12 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         return this;
     }
 
-    public string? CreateTableSql<T>()
+    public string? CreateTableSql<T>(Action<TableGenerateOption>? action = null)
     {
         var ado = Ado;
         try
         {
-            if (ado.Database.TableHandler is not null)
-            {
-                var handler = ado.Database.TableHandler.Invoke(option.TableGenOption);
-                var tableSql = handler.GenerateDbTable<T>();
-                return tableSql;
-            }
-            return null;
+            return GenerateDbTable<T>(ado, option, action);
         }
         catch (Exception)
         {
@@ -58,21 +53,20 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         }
     }
 
-    public async Task<bool> CreateTableAsync<T>()
+    public async Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default)
     {
         var ado = Ado;
         try
         {
-            if (ado.Database.TableHandler is not null)
+            string? tableSql = GenerateDbTable<T>(ado, option, action);
+            if (tableSql is null || tableSql == string.Empty)
             {
-                var handler = ado.Database.TableHandler.Invoke(option.TableGenOption);
-                var tableSql = handler.GenerateDbTable<T>();
-                ado.BeginTransaction();
-                await ado.ExecuteNonQueryAsync(tableSql);
-                await ado.CommitTransactionAsync();
-                return true;
+                return false;
             }
-            return false;
+            ado.BeginTransaction();
+            await ado.ExecuteNonQueryAsync(tableSql, cancellationToken: cancellationToken);
+            await ado.CommitTransactionAsync();
+            return true;
         }
         catch (Exception)
         {
@@ -80,7 +74,22 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
             return false;
         }
     }
-
+    private static string? GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
+    {
+        if (ado.Database.TableHandler is not null)
+        {
+            var o = option.TableGenOption;
+            if (action != null)
+            {
+                o = (TableGenerateOption)o.Clone();
+                action(o);
+            }
+            var handler = ado.Database.TableHandler.Invoke(o);
+            var tableSql = handler.GenerateDbTable<T>();
+            return tableSql;
+        }
+        return null;
+    }
     public IExpSelect Select(string tableName) => throw new NotImplementedException();//new SelectProvider0(tableName, Ado);
 
 

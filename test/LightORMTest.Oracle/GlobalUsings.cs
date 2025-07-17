@@ -7,7 +7,10 @@ global using System.Text;
 global using System.Threading.Tasks;
 global using LightORM.Providers.Oracle.Extensions;
 
-public static class ConnectString
+namespace LightORMTest.Oracle
 {
-    public static string Value => $"DataSource={Path.GetFullPath("../../../../../test.db")}";
+    public static class ConnectString
+    {
+        public static string Value => "User Id=lightorm_test;Password=lightorm_test;Data Source=localhost:1521/XE;";
+    }
 }

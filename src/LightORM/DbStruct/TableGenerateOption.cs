@@ -1,6 +1,6 @@
 ﻿namespace LightORM;
 
-public class TableGenerateOption
+public class TableGenerateOption : ICloneable
 {
     public bool NotCreateIfExists { get; set; }
     public bool UseUnicodeString { get; set; } = true;
@@ -19,5 +19,20 @@ public class TableGenerateOption
     {
         get => UseUnicodeString ? defaultStringLength / 2 : defaultStringLength;
         set => defaultStringLength = value;
+    }
+
+    public object Clone()
+    {
+        return new TableGenerateOption()
+        {
+            NotCreateIfExists = NotCreateIfExists,
+            UseUnicodeString = UseUnicodeString,
+            SupportComment = SupportComment,
+            OracleOverVersion = OracleOverVersion,
+            OracleTableSpace = OracleTableSpace,
+            OracleUserId = OracleUserId,
+            PostgreSQLTableSpace = PostgreSQLTableSpace,
+            DefaultStringLength = DefaultStringLength,
+        };
     }
 }

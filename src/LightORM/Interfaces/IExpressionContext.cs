@@ -1,5 +1,6 @@
-﻿using System.Threading.Tasks;
-using LightORM.Interfaces.ExpSql;
+﻿using LightORM.Interfaces.ExpSql;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LightORM;
 
@@ -71,8 +72,8 @@ public interface IDbAction
     /// </summary>
     /// <returns></returns>
     IScopedExpressionContext CreateScoped();
-    string? CreateTableSql<T>();
-    Task<bool> CreateTableAsync<T>();
+    string? CreateTableSql<T>(Action<TableGenerateOption>? action = null);
+    Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
 
 }
 
