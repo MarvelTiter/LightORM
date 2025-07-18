@@ -1,5 +1,6 @@
 ﻿
 
+using LightORM.Implements;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
@@ -29,7 +30,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         this.WhereHandle(exp);
         return (this as TSelect)!;
     }
-    
+
 
     public TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp)
     {
@@ -165,8 +166,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public virtual T1? First()
     {
-        Expression<Func<T1, T1>> exp = t => t;
-        this.HandleResult(exp, null);
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            Expression<Func<T1, T1>> exp = t => t;
+            this.HandleResult(exp, null);
+        }
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return Executor.QuerySingle<T1>(sql, parameters);
@@ -174,8 +178,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public virtual IEnumerable<T1> ToList()
     {
-        Expression<Func<T1, T1>> exp = t => t;
-        this.HandleResult(exp, null);
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            Expression<Func<T1, T1>> exp = t => t;
+            this.HandleResult(exp, null);
+        }
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return Executor.Query<T1>(sql, parameters);
@@ -190,8 +197,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public virtual async Task<T1?> FirstAsync(CancellationToken cancellationToken = default)
     {
-        Expression<Func<T1, T1>> exp = t => t;
-        this.HandleResult(exp, null);
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            Expression<Func<T1, T1>> exp = t => t;
+            this.HandleResult(exp, null);
+        }
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QuerySingleAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
@@ -199,8 +209,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public virtual async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)
     {
-        Expression<Func<T1, T1>> exp = t => t;
-        this.HandleResult(exp, null);
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            Expression<Func<T1, T1>> exp = t => t;
+            this.HandleResult(exp, null);
+        }
         var sql = SqlBuilder.ToSqlString();
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QueryListAsync<T1>(sql, parameters, cancellationToken: cancellationToken);

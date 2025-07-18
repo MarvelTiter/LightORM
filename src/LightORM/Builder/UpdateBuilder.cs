@@ -160,21 +160,21 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 }
             }
         }
-        var versionColumns = MainTable.TableEntityInfo.Columns.Where(c => c.IsVersionColumn).ToList();
-        foreach (var item in versionColumns)
+        var versionColumn = MainTable.TableEntityInfo.Columns.Where(c => c.IsVersionColumn).FirstOrDefault();
+        if (versionColumn is not null)
         {
             if (TargetObject is not null)
             {
-                var version = item.GetValue(TargetObject);
+                var version = versionColumn.GetValue(TargetObject);
                 var newVersion = VersionPlus(version);
-                DbParameters.Add($"{item.PropertyName}_new", newVersion);
+                DbParameters.Add($"{versionColumn.PropertyName}_new", newVersion);
 #if NET462
-                if (!DbParameters.ContainsKey(item.PropertyName))
+                if (!DbParameters.ContainsKey(versionColumn.PropertyName))
                 {
-                    DbParameters.Add(item.PropertyName, version!);
+                    DbParameters.Add(versionColumn.PropertyName, version!);
                 }
 #else
-                DbParameters.TryAdd(item.PropertyName, version!);
+                DbParameters.TryAdd(versionColumn.PropertyName, version!);
 #endif
             }
         }
@@ -186,12 +186,15 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         {
             finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{AttachEmphasis(c.ColumnName)} = NULL"));
         }
-        if (versionColumns.Count > 0)
+        if (versionColumn is not null)
         {
-            finalUpdateCol = finalUpdateCol.Concat(versionColumns.Select(c => $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix($"{c.PropertyName}_new")}"));
-            var versonCondition = string.Join(" AND ", versionColumns.Where(c => !WhereMembers.Contains(c.PropertyName)).Select(c => $"({AttachEmphasis(c.ColumnName)} = {AttachPrefix($"{c.PropertyName}")})"));
-            if (!string.IsNullOrEmpty(versonCondition))
-                Where.Add(versonCondition);
+            finalUpdateCol = finalUpdateCol.Concat([$"{AttachEmphasis(versionColumn.ColumnName)} = {AttachPrefix($"{versionColumn.PropertyName}_new")}"]);
+            if (!WhereMembers.Contains(versionColumn.PropertyName))
+            {
+                var versonCondition = $"({AttachEmphasis(versionColumn.ColumnName)} = {AttachPrefix($"{versionColumn.PropertyName}")})";
+                if (!string.IsNullOrEmpty(versonCondition))
+                    Where.Add(versonCondition);
+            }
         }
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(MainTable, false));

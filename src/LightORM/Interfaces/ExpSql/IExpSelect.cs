@@ -95,12 +95,13 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1> Union(IExpSelect<T1> select);
     IExpSelect<T1> UnionAll(IExpSelect<T1> select);
     string ToSql(Expression<Func<T1, object>> exp);
-    int Insert<TInsertTable>();
-    Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default);
-    int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
-    Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default);
-    int Insert(string tableName, string[] columns);
-    Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default);
+    ISelectInsert<TInsertTable> Insert<TInsertTable>();
+    ISelectInsert<TInsertTable> Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp);
+    ISelectInsert<object> Insert(string tableName, string[] columns);
+
+    //Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default);
+    //Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default);
+    //Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default);
 
     #region Result
 
@@ -151,6 +152,12 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> where);
     #endregion
 
+}
+
+public interface ISelectInsert<T>: ISql
+{
+    int Execute();
+    Task<int> ExecuteAsync();
 }
 
 public interface IExpTemp

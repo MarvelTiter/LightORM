@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Implements;
 using LightORM.Interfaces.ExpSql;
 using System.Text;
 using System.Threading;
@@ -306,47 +307,56 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     #region Insert
 
-    public int Insert<TInsertTable>()
+    public ISelectInsert<TInsertTable> Insert<TInsertTable>()
     {
         return Insert<TInsertTable>(t => t!);
     }
 
-    public Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default)
-    {
-        return InsertAsync<TInsertTable>(t => t!, cancellationToken);
-    }
+    //public Task<int> InsertAsync<TInsertTable>(CancellationToken cancellationToken = default)
+    //{
+    //    return InsertAsync<TInsertTable>(t => t!, cancellationToken);
+    //}
 
-    public int Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
+    public ISelectInsert<TInsertTable> Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
     {
         var table = TableContext.GetTableInfo<TInsertTable>();
         var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
         HandleSelectInsert(table.TableName, result.SqlString!);
-        var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
+        //var sql = SqlBuilder.ToSqlString();
+        SqlBuilder.Expressions.Update(e =>
+        {
+            if (e.ResolveOptions == SqlResolveOptions.Select)
+            {
+                e.ResolveOptions = SqlResolveOptions.Select with { UseColumnAlias = false };
+            }
+        });
+        return new SelectInsertProvider<TInsertTable>(Executor, SqlBuilder);
+        //return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
     }
 
-    public Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default)
-    {
-        var table = TableContext.GetTableInfo<TInsertTable>();
-        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
-        HandleSelectInsert(table.TableName, result.SqlString!);
-        var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
-    }
+    //public Task<int> InsertAsync<TInsertTable>(Expression<Func<TInsertTable, object>> exp, CancellationToken cancellationToken = default)
+    //{
+    //    var table = TableContext.GetTableInfo<TInsertTable>();
+    //    var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
+    //    HandleSelectInsert(table.TableName, result.SqlString!);
+    //    var sql = SqlBuilder.ToSqlString();
+    //    return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
+    //}
 
-    public int Insert(string tableName, params string[] columns)
+    public ISelectInsert<object> Insert(string tableName, params string[] columns)
     {
         HandleSelectInsert(tableName, string.Join(", ", columns));
         var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
+        return new SelectInsertProvider<object>(Executor, SqlBuilder);
+        //return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
     }
 
-    public Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default)
-    {
-        HandleSelectInsert(tableName, string.Join(", ", columns));
-        var sql = SqlBuilder.ToSqlString();
-        return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
-    }
+    //public Task<int> InsertAsync(string tableName, string[] columns, CancellationToken cancellationToken = default)
+    //{
+    //    HandleSelectInsert(tableName, string.Join(", ", columns));
+    //    var sql = SqlBuilder.ToSqlString();
+    //    return Executor.ExecuteNonQueryAsync(sql, SqlBuilder.DbParameters, cancellationToken: cancellationToken);
+    //}
 
     void HandleSelectInsert(string tableName, string columns)
     {

@@ -104,6 +104,10 @@ internal abstract record SqlBuilder : ISqlBuilder
             long l => l + 1,
             double d => d + 1,
             float f => f + 1,
+            DateTime => DateTime.UtcNow,
+            DateTimeOffset => DateTimeOffset.UtcNow,
+            Guid => Guid.NewGuid(),
+            string s when Guid.TryParse(s, out _) => Guid.NewGuid().ToString(),
             _ => throw new NotSupportedException("不支持的Version列类型"),
         };
     }

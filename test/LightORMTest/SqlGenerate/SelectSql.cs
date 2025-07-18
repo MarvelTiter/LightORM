@@ -183,6 +183,21 @@ public class SelectSql : TestBase
     }
     public virtual string? Select_Temp_ThenGroup_And_Union_Result() => null;
 
+    [TestMethod]
+    public void Select_AsTable()
+    {
+        var sql = Db.Select<User>()
+            .SelectColumns(u => new { u.UserId, u.Password })
+            .ToSql();
+        var result = Select_AsTable_Result();
+        Console.WriteLine(sql);
+        if (string.IsNullOrEmpty(result))
+        {
+            return;
+        }
+        Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+    }
+    public virtual string? Select_AsTable_Result() => null;
     #endregion
 
     #region group
@@ -373,7 +388,7 @@ public class SelectSql : TestBase
     public void Select_SubSelectAsWhere()
     {
         var sql = Db.Select<User>()
-            .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectField(ur => ur.RoleId).Result<int>())
+            .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectColumns(ur => ur.RoleId).Result<int>())
             .ToSql();
         Console.WriteLine(sql);
         //var result = """
@@ -484,11 +499,11 @@ public class SelectSql : TestBase
     [TestMethod]
     public void Select_Navigate_Where_Single()
     {
-       var sql = Db.Select<User>()
-            // 两种写法都可以
-            //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
-            .Where(u => u.City.Name.StartsWith("D"))
-            .ToSql();
+        var sql = Db.Select<User>()
+             // 两种写法都可以
+             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
+             .Where(u => u.City.Name.StartsWith("D"))
+             .ToSql();
         Console.WriteLine(sql);
         var result = Select_Navigate_Where_Single_Result();
         if (string.IsNullOrEmpty(result))
@@ -562,10 +577,10 @@ public class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-            {
-                Id = u.UserId,
-                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-            }).AsSubQuery()
+        {
+            Id = u.UserId,
+            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+        }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTemp("temp", g =>
@@ -607,10 +622,10 @@ public class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-            {
-                Id = u.UserId,
-                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-            }).AsSubQuery()
+        {
+            Id = u.UserId,
+            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+        }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTable(g =>

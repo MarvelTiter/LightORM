@@ -57,4 +57,29 @@ public class InsertSql : TestBase
         //        """;
         //Assert.IsTrue(result == sql);
     }
+
+    [TestMethod]
+    public void Select_Then_Insert()
+    {
+        int hour = DateTime.Now.Hour;
+        User? u = new()
+        {
+            UserId = UID,
+            Age = hour,
+            LastLogin = DateTime.Now,
+        };
+        var sql = Db.Select<User>()
+            .Where(x => x.UserId == UID)
+            .SelectColumns(x => new { x.UserId, x.UserName })
+            .Insert<UserFlat>(u => new { u.UserId, u.UserName })
+            .ToSql();
+        Console.WriteLine(sql);
+        //var result = """
+        //        INSERT INTO `USER` 
+        //        (`USER_ID`, `AGE`, `LAST_LOGIN`, `IS_LOCK`)
+        //        VALUES
+        //        (@UserId, @Age, @LastLogin, @IsLock)
+        //        """;
+        //Assert.IsTrue(result == sql);
+    }
 }

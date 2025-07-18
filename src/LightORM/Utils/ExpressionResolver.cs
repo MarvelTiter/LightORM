@@ -116,9 +116,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (useAs)
             {
                 useAs = false;
-                return true;
+                return true && Options.UseColumnAlias;
             }
-            return useAs;
+            return useAs && Options.UseColumnAlias;
         }
         set => useAs = value;
     }
@@ -274,8 +274,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 }
                 else if (Options.SqlType == SqlPartial.Insert)
                 {
-                    var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
-                    Sql.Append($"{Database.AttachEmphasis(col.ColumnName)} = ");
+                    //var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
+                    //Sql.Append($"{Database.AttachEmphasis(col.ColumnName)} = ");
                     Visit(arg);
                 }
                 else
