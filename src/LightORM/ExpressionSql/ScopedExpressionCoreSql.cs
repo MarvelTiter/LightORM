@@ -31,7 +31,7 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
         foreach (var item in options.DatabaseProviders.Values)
         {
             var ctx = AsyncLocalTransactionContexts.GetOrAdd(item, new AsyncLocal<TransactionContext?>());
-            ctx.Value ??= new TransactionContext(null);
+            ctx.Value ??= new TransactionContext();
         }
 
     }

@@ -75,13 +75,13 @@ internal abstract class ObjectPool<T> : IDisposable
         // 快速路径尝试
         if (_fastItem == null && Interlocked.CompareExchange(ref _fastItem, item, null) == null)
         {
-            Debug.WriteLine("归还了连接-快速对象");
+            Debug.WriteLine("归还了对象-快速对象");
             return;
         }
         if (Interlocked.Increment(ref _numItems) <= _maxCapacity)
         {
             _items.Enqueue(new(item));
-            Debug.WriteLine("归还了连接-队列");
+            Debug.WriteLine("归还了对象-队列");
             return;
         }
         Interlocked.Decrement(ref _numItems);
@@ -97,7 +97,11 @@ internal abstract class ObjectPool<T> : IDisposable
             HealchCheck();
         }
     }
-    private T CreateNewConnection() => _createFunc();
+    private T CreateNewConnection()
+    {
+        Debug.WriteLine("创建了新的对象");
+        return _createFunc();
+    }
     protected virtual void HealchCheck()
     {
 

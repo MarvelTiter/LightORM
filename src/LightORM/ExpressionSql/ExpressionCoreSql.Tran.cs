@@ -1,6 +1,7 @@
 ﻿using LightORM.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -88,6 +89,7 @@ namespace LightORM.ExpressionSql
 
         public ISingleScopedExpressionContext CreateScoped(string key)
         {
+            Debug.WriteLine("CreateScoped");
             var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key).Clone();
             return new SingleScopedExpressionCoreSql(ado);
         }

@@ -1,7 +1,7 @@
-﻿using LightORM.DbEntity.Attributes;
+﻿global using static LightORM.AssemblyControl.DebugControl;
+using LightORM.DbEntity.Attributes;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
 [assembly: InternalsVisibleTo("InjectTest")]
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
@@ -20,3 +20,12 @@ using System.Runtime.InteropServices;
 [assembly: SelectExtension(ArgumentCount = 14)]
 [assembly: SelectExtension(ArgumentCount = 15)]
 [assembly: SelectExtension(ArgumentCount = 16)]
+
+namespace LightORM.AssemblyControl
+{
+    internal static class DebugControl
+    {
+        public static readonly bool ShowExpressionResolveDebugInfo = false;
+        public static readonly bool ShowSqlExecutorDebugInfo = false;
+    }
+}

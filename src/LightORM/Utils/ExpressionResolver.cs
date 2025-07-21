@@ -65,7 +65,6 @@ public interface IExpressionResolver
     ReadOnlyCollection<ParameterExpression>? Parameters { get; }
 
 }
-
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
@@ -127,7 +126,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     bool isVisitConvert;
     Expression? VisitLambda(LambdaExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
         bodyExpression = exp.Body;
         parametersExpression = exp.Parameters;
         //Context.Tables.Clear();
@@ -141,7 +140,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitBinary(BinaryExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
@@ -174,7 +173,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitConditional(ConditionalExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ConditionalExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: ConditionalExpression: {exp}");
         Sql.Append("CASE WHEN ");
         Visit(exp.Test);
         Sql.Append(" THEN ");
@@ -187,7 +186,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
         Members.Clear();
         if (exp.Method.Name.Equals("get_Item") && (exp.Method.DeclaringType?.FullName?.StartsWith("System.Collections.Generic") ?? false))
         {
@@ -214,7 +213,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitNewArray(NewArrayExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: NewArrayExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: NewArrayExpression: {exp}");
         for (int i = 0; i < exp.Expressions.Count; i++)
         {
             Visit(exp.Expressions[i]);
@@ -226,7 +225,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitNew(NewExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: NewExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: NewExpression: {exp}");
         for (int i = 0; i < exp.Arguments.Count; i++)
         {
             var member = exp.Members![i];
@@ -235,7 +234,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 && member is PropertyInfo prop
                 && prop.DeclaringType?.FullName?.StartsWith("LightORM.TypeSet") == true)
             {
-                //Debug.WriteLine("Visit TypeSet Property");
+                //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,"Visit TypeSet Property");
                 //TODO 这段if分支，应该是不需要了
                 Debug.Assert(false);
                 ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
@@ -252,7 +251,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                         if (parent is ParameterExpression p)
                         {
                             //创建匿名类型的来源映射
-                            //Debug.WriteLine($"创建匿名类型的来源映射: {p.Name}");
+                            //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,$"创建匿名类型的来源映射: {p.Name}");
                             Context.CreateAnonymousMap(exp.Type, p, member.Name, e.Member.Name);
                             //if (!p.Type.IsAnonymous())
                             //{
@@ -298,7 +297,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitUnary(UnaryExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: UnaryExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: UnaryExpression: {exp}");
         IsNot = exp.NodeType == ExpressionType.Not;
         isVisitConvert = exp.NodeType == ExpressionType.Convert;
         Visit(exp.Operand);
@@ -307,7 +306,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitParameter(ParameterExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ParameterExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: ParameterExpression: {exp}");
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = Context.GetTable(exp).Alias;
@@ -358,7 +357,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitMemberInit(MemberInitExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MemberInitExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MemberInitExpression: {exp}");
         for (int i = 0; i < exp.Bindings.Count; i++)
         {
             if (exp.Bindings[i].BindingType != MemberBindingType.Assignment)
@@ -387,7 +386,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitMember(MemberExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: MemberExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MemberExpression: {exp}");
         if (bodyExpression?.NodeType == ExpressionType.MemberAccess)
         {
             ResolvedMembers.Add(exp.Member.Name);
@@ -467,7 +466,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     Expression? VisitConstant(ConstantExpression exp)
     {
-        Debug.WriteLine($"{Options.SqlAction} {Options.SqlType}: ConstantExpression: {exp}");
+        Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: ConstantExpression: {exp}");
         var value = exp.Value;
         if (Members.Count > 0 && value != null)
         {

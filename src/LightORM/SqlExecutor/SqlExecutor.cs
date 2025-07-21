@@ -71,9 +71,10 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
     }
 
     // 事务上下文类
-    public class TransactionContext(DbTransaction? transaction)
+    public class TransactionContext
     {
-        public DbTransaction? Transaction { get; set; } = transaction;
+        public DbTransaction? Transaction { get; set; }
+        public DbConnection? Connection { get; set; }
         public int NestLevel { get; set; }
         public bool IsExternal { get; internal set; }
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -95,15 +96,18 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
 
         if (CurrentTransactionContext.Value != null)
             throw new InvalidOperationException("Already in a transaction context");
-
-        CurrentTransactionContext.Value = new TransactionContext(externalTransaction)
+        if (externalTransaction.Connection is null)
+            throw new InvalidOperationException("External transaction must have a valid connection");
+        CurrentTransactionContext.Value = new TransactionContext()
         {
-            IsExternal = true
+            IsExternal = true,
+            Transaction = externalTransaction,
+            Connection = externalTransaction.Connection,
         };
     }
     public void InitTransactionContext()
     {
-        CurrentTransactionContext.Value ??= new TransactionContext(null);
+        CurrentTransactionContext.Value ??= new TransactionContext();
     }
 
     public void InitTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
@@ -112,7 +116,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         {
             if (CurrentTransactionContext.Value?.Transaction is null)
             {
-                CurrentTransactionContext.Value ??= new TransactionContext(null);
+                CurrentTransactionContext.Value ??= new TransactionContext();
                 // 新事务
                 var conn = Pool.Get();
                 if (conn.State != ConnectionState.Open)
@@ -123,6 +127,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
                     ? conn.BeginTransaction()
                     : conn.BeginTransaction(isolationLevel);
                 CurrentTransactionContext.Value.Transaction = transaction;
+                CurrentTransactionContext.Value.Connection = conn;
             }
         }
         catch (Exception ex)
@@ -136,7 +141,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             }
             throw;
         }
-        Debug.WriteLine($"InitTransaction： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
+        Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"InitTransaction： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
     }
 
     public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
@@ -146,7 +151,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             if (CurrentTransactionContext.Value?.Transaction is null)
             {
                 // 新事务
-                CurrentTransactionContext.Value ??= new TransactionContext(null);
+                CurrentTransactionContext.Value ??= new TransactionContext();
 
                 var conn = Pool.Get();
                 if (conn.State != ConnectionState.Open)
@@ -157,6 +162,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
                     ? conn.BeginTransaction()
                     : conn.BeginTransaction(isolationLevel);
                 CurrentTransactionContext.Value.Transaction = transaction;
+                CurrentTransactionContext.Value.Connection = conn;
             }
             else
             {
@@ -182,7 +188,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             }
             throw;
         }
-        Debug.WriteLine($"BeginTran： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
+        Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"BeginTran： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
     }
     public void CommitTransaction()
     {
@@ -206,7 +212,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         if (context.NestLevel > 0)
         {
             // 嵌套事务只减少计数器
-            Debug.WriteLine($"CommitTran： {context.Id} -> {context.NestLevel}");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"CommitTran： {context.Id} -> {context.NestLevel}");
             context.NestLevel--;
             return;
         }
@@ -215,7 +221,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         try
         {
             context.Transaction.Commit();
-            Debug.WriteLine($"CommitTran： {context.Id} -> finished");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"CommitTran： {context.Id} -> finished");
         }
         finally
         {
@@ -244,7 +250,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         if (context.NestLevel > 0)
         {
             context.NestLevel--;
-            Debug.WriteLine($"RollbackTran： {context.Id} -> {context.NestLevel}");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTran： {context.Id} -> {context.NestLevel}");
 #if NET6_0_OR_GREATER
             if (context.Transaction.SupportsSavepoints)
             {
@@ -256,32 +262,12 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         try
         {
             context.Transaction.Rollback();
-            Debug.WriteLine($"RollbackTran： {context.Id} -> finished");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTran： {context.Id} -> finished");
         }
         finally
         {
             DisposeTransactionContext();
         }
-    }
-
-    private void DisposeTransactionContext()
-    {
-        var context = CurrentTransactionContext.Value;
-        if (context == null) return;
-
-        // 内部事务创建的事务上下文
-        if (!context.IsExternal && context.Transaction is not null)
-        {
-            var conn = context.Transaction.Connection;
-            context.Transaction.Dispose();
-            context.Transaction = null;
-            if (conn is not null)
-            {
-                conn.Close();
-                Pool.Return(conn);
-            }
-        }
-
     }
 
 #if NET6_0_OR_GREATER
@@ -292,7 +278,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             if (CurrentTransactionContext.Value?.Transaction is null)
             {
                 // 新事务
-                CurrentTransactionContext.Value ??= new(null!);
+                CurrentTransactionContext.Value ??= new();
                 var conn = Pool.Get();
                 if (conn.State != ConnectionState.Open)
                 {
@@ -303,6 +289,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
                     : await conn.BeginTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
 
                 CurrentTransactionContext.Value.Transaction = transaction;
+                CurrentTransactionContext.Value.Connection = conn;
             }
             else
             {
@@ -326,7 +313,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             }
             throw;
         }
-        Debug.WriteLine($"BeginTranAsync： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
+        Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"BeginTranAsync： {CurrentTransactionContext.Value?.Id} -> {CurrentTransactionContext.Value?.NestLevel}");
     }
 
     public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
@@ -351,7 +338,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         if (context.NestLevel > 0)
         {
             // 嵌套事务只减少计数器
-            Debug.WriteLine($"CommitTranAsync： {context.Id} -> {context.NestLevel}");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"CommitTranAsync： {context.Id} -> {context.NestLevel}");
             context.NestLevel--;
             return;
         }
@@ -360,7 +347,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         try
         {
             await context.Transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            Debug.WriteLine($"CommitTranAsync： {context.Id} -> finished");
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"CommitTranAsync： {context.Id} -> finished");
         }
         finally
         {
@@ -391,7 +378,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         {
             if (context.NestLevel > 0)
             {
-                Debug.WriteLine($"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
+                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
                 context.NestLevel--;
                 if (context.Transaction.SupportsSavepoints)
                 {
@@ -401,7 +388,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             else
             {
                 await context.Transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                Debug.WriteLine($"RollbackTranAsync： {context.Id} -> finished");
+                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> finished");
             }
         }
         finally
@@ -430,6 +417,25 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
     }
 
 #endif
+    private void DisposeTransactionContext()
+    {
+        var context = CurrentTransactionContext.Value;
+        if (context == null) return;
+
+        // 内部事务创建的事务上下文
+        if (!context.IsExternal && context.Transaction is not null)
+        {
+            var conn = context.Connection;
+            if (conn is not null)
+            {
+                conn.Close();
+                Pool.Return(conn);
+            }
+            context.Transaction.Dispose();
+            context.Transaction = null;
+            context.Connection = null;
+        }
+    }
 
     private void DisposeCommand(CommandResult result)
     {
@@ -541,7 +547,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             var action = DbParameterReader.GetDbParameterReader(conn.ConnectionString, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
-        return new(command, conn, needToReturn,false);
+        return new(command, conn, needToReturn, false);
     }
 
     public int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
@@ -1030,7 +1036,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         {
             if (disposing)
             {
-                Debug.WriteLine("SqlExecutor disposing.........");
+                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, "SqlExecutor disposing.........");
                 //DisposeTransactionContext(disposing);
             }
             disposedValue = true;
