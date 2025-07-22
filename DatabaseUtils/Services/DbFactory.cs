@@ -11,6 +11,7 @@ namespace DatabaseUtils.Services
                 "Oracle" => new OracleDb(context, connectionString),
                 "SqlServer" => new SqlServerDb(context, connectionString),
                 "MySql" => new MySqlDb(context, connectionString),
+                "PostgreSQL" => new PostgreSqlDb(context, connectionString),
                 _ => throw new NotSupportedException(),
             };
         }

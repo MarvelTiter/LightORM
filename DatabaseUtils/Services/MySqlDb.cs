@@ -39,7 +39,11 @@ SELECT
 A.COLUMN_NAME ColumnName,
 A.DATA_TYPE DataType,
 A.IS_Nullable Nullable,
-A.COLUMN_COMMENT Comments
+A.COLUMN_COMMENT Comments,
+A.COLUMN_DEFAULT DefaultValue,
+IF(COLUMN_KEY = 'PRI', 'YES', 'NO') IsPrimaryKey,
+A.CHARACTER_MAXIMUM_LENGTH Length,
+IF(EXTRA = 'auto_increment', 'YES', 'NO') IsIdentity
 FROM INFORMATION_SCHEMA.COLUMNS A
 WHERE A.TABLE_SCHEMA='{database}'
 AND A.TABLE_NAME = '{table}'

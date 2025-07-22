@@ -9,5 +9,5 @@ global using LightORM.Providers.SqlServer.Extensions;
 
 public static class ConnectString
 {
-    public static string Value => $"DataSource={Path.GetFullPath("../../../../../test.db")}";
+    public static string Value => $"Server=localhost;Database=TestDb;User ID=sa;Password=Ybeluoek123!@#;TrustServerCertificate=True;";
 }

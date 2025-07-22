@@ -25,15 +25,36 @@ namespace DatabaseUtils.Services
         public async Task<IList<TableColumn>> GetTableStructAsync(string table)
         {
             string sql = $@"
-SELECT b.comments as Comments, 
-a.column_name as ColumnName, 
-a.data_type || '(' || a.data_length || ')' as DataType, 
-a.data_length as Length, 
-a.nullable as Nullable
-FROM user_tab_columns a, user_col_comments b
-WHERE a.TABLE_NAME = '{table}'
-and b.table_name = '{table}'
-and a.column_name = b.column_name
+SELECT 
+    tc.column_name AS ""ColumnName"",
+    tc.data_type AS ""DataType"",
+    CASE 
+        WHEN tc.data_type IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') 
+        THEN TO_CHAR(tc.char_length)
+        WHEN tc.data_type = 'NUMBER' AND tc.data_precision IS NOT NULL 
+        THEN TO_CHAR(tc.data_precision) || 
+             CASE WHEN tc.data_scale > 0 THEN ',' || TO_CHAR(tc.data_scale) ELSE '' END
+        ELSE TO_CHAR(tc.data_length)
+    END AS ""Length"",
+    CASE WHEN tc.nullable = 'Y' THEN 'YES' ELSE 'NO' END AS ""Nullable"",
+    NVL(tc.data_default,'') AS ""DefaultValue"",
+    CASE WHEN (SELECT '1' 
+     FROM user_cons_columns cc
+     JOIN user_constraints c ON cc.constraint_name = c.constraint_name
+     WHERE c.constraint_type = 'P'
+     AND cc.table_name = tc.table_name
+     AND cc.column_name = tc.column_name
+     AND ROWNUM = 1) = '1' THEN 'YES' ELSE 'NO' END AS ""IsPrimaryKey"",
+    NVL(cc.comments, '') AS ""Comments""
+FROM 
+    user_tab_columns tc
+LEFT JOIN 
+    user_col_comments cc ON tc.table_name = cc.table_name 
+    AND tc.column_name = cc.column_name
+WHERE 
+    tc.table_name = UPPER('{table}')  -- 替换为您的表名
+ORDER BY 
+    tc.column_id
 ";
             return await context.Use(GetConnectInfo()).Ado.QueryListAsync<TableColumn>(sql.ToString(), null);
         }

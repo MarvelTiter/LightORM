@@ -30,7 +30,8 @@ namespace DatabaseUtils.Helper
                 {
                     continue;
                 }
-                content.AppendLine(string.Format(ClassTemplate.Property, item.ParseCommentSingleLine(), item.ColumnName, type, item.PascalName(prefix, separator)));
+                var lightAttribute = CreateLightColumnAttribute(item, type);
+                content.AppendLine(string.Format(ClassTemplate.Property, item.ParseCommentSingleLine(), lightAttribute, type, item.PascalName(prefix, separator)));
             }
             return content.ToString();
         }
@@ -38,6 +39,38 @@ namespace DatabaseUtils.Helper
         public static string PascalName(this TableColumn self, string prefix, string separator)
         {
             return Parse(self.ColumnName, prefix, separator);
+        }
+
+        public static string CreateLightColumnAttribute(TableColumn column, string csharpType)
+        {
+            //[LightColumn(Name = ""{1}"")]
+            var properties = new StringBuilder($"Name = \"{column.ColumnName}\"");
+            if (column.IsPrimaryKey == "YES")
+            {
+                properties.Append(", PrimaryKey = true");
+            }
+            if (column.IsIdentity == "YES")
+            {
+                properties.Append(", AutoIncrement = true");
+            }
+            if (column.Nullable == "NO")
+            {
+                properties.Append(", NotNull = true");
+            }
+            if (!string.IsNullOrWhiteSpace(column.Length) && csharpType.StartsWith("string"))
+            {
+                properties.Append($", Length = {column.Length}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(column.Comments))
+            {
+                properties.Append($", Comment = \"{column.Comments}\"");
+            }
+            if (!string.IsNullOrWhiteSpace(column.DefaultValue))
+            {
+                properties.Append($", Default = \"{column.DefaultValue}\"");
+            }
+            return $"[LightColumn({properties})]";
         }
 
         public static bool ParseDataType(this IDbOperator db, TableColumn column, out string type)

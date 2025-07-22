@@ -29,14 +29,14 @@ SELECT
 --表说明 =case when a.colorder = 1 then isnull(f.value,'') else '' end, 
 --字段序号 = a.colorder, 
 ColumnName = a.name, 
---标识 =case when COLUMNPROPERTY(a.id, a.name,'IsIdentity')= 1 then '√'else '' end, 
---主键 =case when exists(SELECT 1 FROM sysobjects where xtype = 'PK' and name in ( 
---SELECT name FROM sysindexes WHERE indid in( 
---SELECT indid FROM sysindexkeys WHERE id = a.id AND colid = a.colid 
---  ))) then '√' else '' end, 
+IsIdentity =case when COLUMNPROPERTY(a.id, a.name,'IsIdentity')= 1 then 'YES' else 'NO' end, 
+IsPrimaryKey =case when exists(SELECT 1 FROM sysobjects where xtype = 'PK' and name in ( 
+SELECT name FROM sysindexes WHERE indid in( 
+SELECT indid FROM sysindexkeys WHERE id = a.id AND colid = a.colid 
+  ))) then 'YES' else 'NO' end, 
 DataType = b.name, 
 --占用字节数 = a.length, 
---长度 = COLUMNPROPERTY(a.id, a.name, 'PRECISION'), 
+Length = COLUMNPROPERTY(a.id, a.name, 'PRECISION'), 
 --小数位数 = isnull(COLUMNPROPERTY(a.id, a.name, 'Scale'), 0), 
 Nullable =case when a.isnullable = 1 then 'YES'else 'NO' end, 
 --默认值 = isnull(e.text, ''), 

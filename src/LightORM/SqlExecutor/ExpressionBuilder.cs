@@ -9,10 +9,13 @@ using System.Reflection;
 
 namespace LightORM.SqlExecutor;
 
+
+
 internal class ExpressionBuilder
 {
 
     private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToBytes), BindingFlags.NonPublic | BindingFlags.Static)!;
+  
 
     private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte", [typeof(int)])!;
     private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16", [typeof(int)])!;
@@ -30,16 +33,21 @@ internal class ExpressionBuilder
     private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull", [typeof(int)])!;
     private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue", [typeof(int)])!;
 
+
+    private static readonly MethodInfo DataRecord_GetUInt16 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt16), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly MethodInfo DataRecord_GetUInt = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly MethodInfo DataRecord_GetUInt64 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt64), BindingFlags.NonPublic | BindingFlags.Static)!;
+
     readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37)
     {
         [typeof(byte)] = DataRecord_GetByte,
         [typeof(sbyte)] = DataRecord_GetByte,
         [typeof(short)] = DataRecord_GetInt16,
-        [typeof(ushort)] = DataRecord_GetInt16,
+        [typeof(ushort)] = DataRecord_GetUInt16,
         [typeof(int)] = DataRecord_GetInt32,
-        [typeof(uint)] = DataRecord_GetInt32,
+        [typeof(uint)] = DataRecord_GetUInt,
         [typeof(long)] = DataRecord_GetInt64,
-        [typeof(ulong)] = DataRecord_GetInt64,
+        [typeof(ulong)] = DataRecord_GetUInt64,
         [typeof(float)] = DataRecord_GetFloat,
         [typeof(double)] = DataRecord_GetDouble,
         [typeof(decimal)] = DataRecord_GetDecimal,
@@ -60,6 +68,28 @@ internal class ExpressionBuilder
         Reader.GetBytes(Column, 0, Buffer, 0, Buffer.Length);
         return Buffer;
     }
+
+    private static ushort RecordFieldToUInt16(IDataRecord Reader, int Column)
+    {
+        var value = Reader.GetInt16(Column);
+        return value >= 0 ? (ushort)value : throw new OverflowException("Negative value cannot be converted to ushort");
+
+    }
+
+    private static uint RecordFieldToUInt(IDataRecord Reader, int Column)
+    {
+        var value = Reader.GetInt32(Column);
+        return value >= 0 ? (uint)value : throw new OverflowException("Negative value cannot be converted to uint");
+
+    }
+
+    private static ulong RecordFieldToUInt64(IDataRecord Reader, int Column)
+    {
+        var value = Reader.GetInt64(Column);
+        return value >= 0 ? (ulong)value : throw new OverflowException("Negative value cannot be converted to ulong");
+
+    }
+
     public static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
     {
         var type = typeof(T);
@@ -321,14 +351,27 @@ internal class ExpressionBuilder
         Expression RecordFieldExpression;
         if (ReferenceEquals(RecordFieldType, typeof(byte[])))
         {
-            RecordFieldExpression = Expression.Call(GetValueMethod, new Expression[] { recordInstanceExp, Expression.Constant(Ordinal, typeof(int)) });
+            RecordFieldExpression = Expression.Call(GetValueMethod, [recordInstanceExp, Expression.Constant(Ordinal, typeof(int))]);
+        }
+        else if (IsUnsignType(RecordFieldType))
+        {
+            RecordFieldExpression = Expression.Call(
+                null,
+                GetValueMethod,
+                [recordInstanceExp, Expression.Constant(Ordinal, typeof(int))]
+            );
         }
         else
         {
             RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, Expression.Constant(Ordinal, typeof(int)));
         }
         return RecordFieldExpression;
+        static bool IsUnsignType(Type type)
+        {
+            return type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong);
+        }
     }
+
 
     private static MethodCallExpression GetNullCheckExpression(ParameterExpression RecordInstance, int Ordinal)
     {
@@ -349,11 +392,11 @@ internal class ExpressionBuilder
         }
         else if (ReferenceEquals(TargetType, typeof(string)))
         {
-            TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes));
+            TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
         }
         else if (ReferenceEquals(TargetType, typeof(bool)))
         {
-            MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", new[] { SourceType });
+            MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", [SourceType])!;
             TargetExpression = Expression.Call(ToBooleanMethod, SourceExpression);
         }
         else if (ReferenceEquals(SourceType, typeof(byte[])))
@@ -369,14 +412,14 @@ internal class ExpressionBuilder
 
     private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType)
     {
-        Expression TargetExpression = default;
+        Expression TargetExpression;
         if (ReferenceEquals(targetType, typeof(byte[])))
         {
             TargetExpression = sourceExpression;
         }
         else if (ReferenceEquals(targetType, typeof(MemoryStream)))
         {
-            ConstructorInfo ConstructorInfo = targetType.GetConstructor(new[] { typeof(byte[]) });
+            ConstructorInfo ConstructorInfo = targetType.GetConstructor([typeof(byte[])])!;
             TargetExpression = Expression.New(ConstructorInfo, sourceExpression);
         }
         else
@@ -397,7 +440,7 @@ internal class ExpressionBuilder
         }
         else
         {
-            Expression ParseExpression = default;
+            Expression ParseExpression;
             switch (UnderlyingType.FullName)
             {
                 case "System.Byte":
@@ -434,34 +477,34 @@ internal class ExpressionBuilder
         }
         Expression GetGenericParseExpression(Expression sourceExpression, Type type)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string) });
-            MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression });
+            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string)])!;
+            MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression]);
             return CallExpression;
         }
         Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string), typeof(DateTimeFormatInfo) });
+            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.DateTimeFormat, typeof(DateTimeFormatInfo));
-            MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression, ProviderExpression });
+            MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
         }
 
         MethodCallExpression GetEnumParseExpression(Expression sourceExpression, Type type)
         {
             //Get the MethodInfo for parsing an Enum
-            MethodInfo EnumParseMethod = typeof(Enum).GetMethod("Parse", new[] { typeof(Type), typeof(string), typeof(bool) });
+            MethodInfo EnumParseMethod = typeof(Enum).GetMethod("Parse", [typeof(Type), typeof(string), typeof(bool)])!;
             ConstantExpression TargetMemberTypeExpression = Expression.Constant(type);
             ConstantExpression IgnoreCase = Expression.Constant(true, typeof(bool));
             //Create an expression the calls the Parse method
-            MethodCallExpression CallExpression = Expression.Call(EnumParseMethod, new[] { TargetMemberTypeExpression, sourceExpression, IgnoreCase });
+            MethodCallExpression CallExpression = Expression.Call(EnumParseMethod, [TargetMemberTypeExpression, sourceExpression, IgnoreCase]);
             return CallExpression;
         }
 
         MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", new[] { typeof(string), typeof(NumberFormatInfo) });
+            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
-            MethodCallExpression CallExpression = Expression.Call(ParseMetod, new[] { sourceExpression, ProviderExpression });
+            MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
         }
     }

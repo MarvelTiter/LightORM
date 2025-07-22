@@ -13,7 +13,11 @@ public sealed class MySqlTableHandler(TableGenerateOption option) : BaseDatabase
     protected override string BuildColumn(DbColumn column)
     {
         string dataType = ConvertToDbType(column);
-        string notNull = column.NotNull ? "NOT NULL" : "NULL";
+        if (dataType.Contains("VARCHAR"))
+        {
+            dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
+        }
+        string notNull = column.NotNull || column.AutoIncrement || column.PrimaryKey ? "NOT NULL" : "NULL";
         string identity = column.AutoIncrement ? $"AUTO_INCREMENT" : "";
         string commentClause = !string.IsNullOrEmpty(column.Comment) && Option.SupportComment ? $"COMMENT '{column.Comment}'" : "";
         string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
@@ -29,19 +33,14 @@ public sealed class MySqlTableHandler(TableGenerateOption option) : BaseDatabase
         if (primaryKeys.Count() > 0)
         {
             primaryKeyConstraint =
-$@"
-,CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
-(
-{string.Join($",{Environment.NewLine}", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
-)";
+$@",{Environment.NewLine}    CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY({string.Join(", ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))})";
         }
 
         var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
         sql.AppendLine(@$"
 CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
-{string.Join($",{Environment.NewLine}", table.Columns.Select(col => BuildColumn(col)))}
-{primaryKeyConstraint}
-);
+    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(col)))}{primaryKeyConstraint}
+)
 ");
         int i = 1;
         foreach (DbIndex index in table.Indexs)
@@ -72,20 +71,20 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
         }
         return typeFullName switch
         {
-            "System.Boolean" => "Bit",
-            "System.Byte" => "TinyInt",
-            "System.Int16" => "SmallInt",
-            "System.Int32" => "Int",
-            "System.Int64" => "BigInt",
-            "System.Single" => "Float",
-            "System.Double" => "Double",
-            "System.Decimal" => "Numeric",
-            "System.DateTime" => "DateTime",
-            "System.DateTimeOffset" => "DateTimeOffset",
-            "System.Guid" => "Guid",
-            "System.Byte[]" => "Binary",
-            "System.Object" => "Variant",
-            _ => Option.UseUnicodeString ? "NVarChar" : "VarChar",
+            "System.Boolean" => "BIT",
+            "System.Byte" => "TINYINT",
+            "System.Int16" => "SMALLINT",
+            "System.Int32" => "INT",
+            "System.Int64" => "BIGINT",
+            "System.Single" => "FLOAT",
+            "System.Double" => "DOUBLE",
+            "System.Decimal" => "NUMERIC",
+            "System.DateTime" => "DATETIME",
+            "System.DateTimeOffset" => "DATETIMEOFFSET",
+            "System.Guid" => "GUID",
+            "System.Byte[]" => "BINARY",
+            "System.Object" => "VARIANT",
+            _ =>  "VARCHAR",
         };
     }
 

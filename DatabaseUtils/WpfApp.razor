@@ -4,9 +4,10 @@
     <header>
         <Flex Gap="@FlexGap.Small">
             <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@config.LastSelectedDb" DropdownMatchSelectWidth="@false">
-                <SimpleSelectOption Value="Mysql" Label="MySql"></SimpleSelectOption>
-                <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
+                <SimpleSelectOption Value="PostgreSQL" Label="PostgreSQL"></SimpleSelectOption>
                 <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
+                <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
+                <SimpleSelectOption Value="MySql" Label="MySql"></SimpleSelectOption>
             </SimpleSelect>
             <Input @bind-Value="@config.Connectstring"></Input>
             <Button Type="@ButtonType.Primary" OnClick="@Connect">连接</Button>
