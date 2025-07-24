@@ -41,10 +41,13 @@ public record SqlResolveOptions(SqlAction SqlAction, SqlPartial SqlType)
         || SqlType == SqlPartial.Join
         || SqlType == SqlPartial.Having);
     public bool Parameterized { get; set; } = true;
-    public int ParameterIndex { get; set; }
-    //public SqlAction SqlAction { get; set; }
-    //public SqlPartial SqlType { get; private set; }
-    //public DbBaseType DbType { get; set; }
+    /// <summary>
+    /// 表达式的分部索引
+    /// <para>
+    /// 比如一个查询一共收集了N个表达式，<see cref="ParameterPartialIndex"/>就是这些表达式的索引，主要用于保证参数名称的唯一性
+    /// </para>
+    /// </summary>
+    public int ParameterPartialIndex { get; set; }
 
 
     public static SqlResolveOptions Select { get; } = new SqlResolveOptions(SqlAction.Select, SqlPartial.Select);

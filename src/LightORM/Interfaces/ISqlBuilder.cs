@@ -1,4 +1,5 @@
 ﻿using LightORM.ExpressionSql;
+using LightORM.Implements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace LightORM.Interfaces
         /// <summary>
         /// 表达式
         /// </summary>
-        internal IExpressionInfo Expressions { get; }
+        internal ExpressionInfoProvider Expressions { get; }
         /// <summary>
         /// SELECT 或者 JOIN 的表
         /// </summary>

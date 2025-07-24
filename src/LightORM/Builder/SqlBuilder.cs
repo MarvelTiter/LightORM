@@ -17,7 +17,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
 
-    public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
+    public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
     public List<TableInfo> SelectedTables { get; set; } = [];
     public int SelectedTableCount => SelectedTables.Count;
@@ -25,11 +25,13 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
+    public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
     private readonly Lazy<ICustomDatabase> dbHelperLazy;
     public ICustomDatabase DbHelper => dbHelperLazy.Value;
     public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
-    public int DbParameterStartIndex { get; set; }
+    //public int DbParameterStartIndex { get; set; }
+    public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
     public void TryAddParameters(string sql, object? value)
     {
@@ -42,7 +44,22 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     }
     protected ResolveContext? ResolveCtx { get; set; }
-    protected void ResolveExpressions()
+    protected void HandleSqlParameters(StringBuilder sql)
+    {
+        foreach (var item in DbParameterInfos)
+        {
+            if (item.Value is null)
+            {
+
+            }
+            else
+            {
+                sql.Replace(item.Name, DbHelper.AttachPrefix(item.Name));
+                DbParameters.Add(item.Name, item.Value);
+            }
+        }
+    }
+    protected void ResolveExpressions(bool useCache = false)
     {
         if (Expressions.Completed)
         {
@@ -50,21 +67,30 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
         ResolveCtx = new ResolveContext(DbHelper);
         BeforeResolveExpressions(ResolveCtx);
+        bool isHitCache = Expressions.TryHitCache(AllTables(), out _);
+        var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
-            item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
-            var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
-            DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
-            item.Completed = true;
-            if (!string.IsNullOrEmpty(item.Template))
+            item.ResolveOptions!.ParameterPartialIndex = index;
+            if (!isHitCache || !useCache)
             {
-                result.SqlString = string.Format(item.Template, result.SqlString);
+                var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
+                item.Completed = true;
+                if (!string.IsNullOrEmpty(item.Template))
+                {
+                    result.SqlString = string.Format(item.Template, result.SqlString);
+                }
+                HandleResult(item, result);
+                DbParameterInfos.AddRange(result.DbParameters ?? []);
             }
-
-            HandleResult(item, result);
-
-            DbParameters.TryAddDictionary(result.DbParameters);
+            else
+            {
+                var parameters = ExpressionValueExtract.Default.Extract(item.Expression, item.ResolveOptions, ResolveCtx);
+                //DbParameters.TryAddDictionary(result.DbParameters);
+                DbParameterInfos.AddRange(parameters);
+            }
+            index++;
         }
     }
 

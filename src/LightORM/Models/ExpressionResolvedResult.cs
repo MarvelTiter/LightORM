@@ -9,7 +9,8 @@ namespace LightORM.Models;
 internal class ExpressionResolvedResult
 {
     public string? SqlString { get; set; }
-    public Dictionary<string,object>? DbParameters { get; set; }
+    //public Dictionary<string,object>? DbParameters { get; set; }
+    public List<DbParameterInfo>? DbParameters { get; set; }
     public List<string>? Members { get; set; }
     //public List<TableInfo>? UsedTables { get; set; }
     public bool UseNavigate { get; set; }

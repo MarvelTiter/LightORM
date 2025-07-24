@@ -62,7 +62,7 @@ namespace LightORM.Builder
         //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         //}
 
-        public IEnumerable<TableInfo> AllTables()
+        public override IEnumerable<TableInfo> AllTables()
         {
             foreach (var item in SelectedTables)
             {
@@ -72,6 +72,7 @@ namespace LightORM.Builder
             {
                 yield return item.EntityInfo!;
             }
+            //return [.. SelectedTables, .. Joins.Select(j => j.EntityInfo!)];
         }
 
 
@@ -240,121 +241,136 @@ namespace LightORM.Builder
         public override string ToSqlString()
         {
             //SubQuery?.ResolveExpressions();
-            ResolveExpressions();
-            StringBuilder sb = new();
-            if (InsertInfo.HasValue)
+            ResolveExpressions(true);
+            if (Expressions.TryHitCache(AllTables(), out var sql))
             {
-                sb.AppendLine($"INSERT INTO {AttachEmphasis(InsertInfo.Value.TableName)}");
-                sb.AppendLine($"({InsertInfo.Value.InsertColumns})");
-            }
-
-            if (TempViews.Count > 0)
-            {
-                sb.Append("WITH");
-                foreach (var item in TempViews)
+                StringBuilder sb = new(sql);
+                HandleSqlParameters(sb);
+                if (Level == 0)
                 {
-                    sb.Append(item.ToSqlString());
-                    sb.Append(',');
-                    DbParameters.TryAddDictionary(item.DbParameters);
+                    return sb.Trim();
                 }
-                sb.RemoveLast(1);
-            }
-            if (IsTemp)
-            {
-                Level += 1;
-                sb.AppendLine($" {TempName} AS (");
-            }
-
-            if (GroupBy.Count > 0)
-            {
-                var groupby = string.Join(",", GroupBy);
-                if (SelectValue == "*")
-                {
-                    SelectValue = groupby;
-                }
-            }
-            var dist = IsDistinct ? "DISTINCT " : "";
-            sb.AppendLine($"{Indent.Value}SELECT {dist}{SelectValue}");
-
-            if (SubQuery == null)
-            {
-                sb.AppendLine($"{Indent.Value}FROM {BuildFromString()}");
+                return sb.ToString();
             }
             else
             {
-                SubQuery.Level = Level + 1;
-                sb.AppendLine($"{Indent.Value}FROM (");
-                sb.Append(SubQuery.ToSqlString());
-                sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias)}");
-                DbParameters.TryAddDictionary(SubQuery.DbParameters);
-            }
-
-            foreach (var item in Joins)
-            {
-                if (item.IsSubQuery)
+                StringBuilder sb = new();
+                if (InsertInfo.HasValue)
                 {
-                    item.SubQuery!.Level = Level + 1;
-                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} (");
-                    sb.Append(item.SubQuery.ToSqlString());
-                    sb.AppendLine($"{Indent.Value}) {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
-                    DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
+                    sb.AppendLine($"INSERT INTO {AttachEmphasis(InsertInfo.Value.TableName)}");
+                    sb.AppendLine($"({InsertInfo.Value.InsertColumns})");
+                }
+
+                if (TempViews.Count > 0)
+                {
+                    sb.Append("WITH");
+                    foreach (var item in TempViews)
+                    {
+                        sb.Append(item.ToSqlString());
+                        sb.Append(',');
+                        DbParameters.TryAddDictionary(item.DbParameters);
+                    }
+                    sb.RemoveLast(1);
+                }
+                if (IsTemp)
+                {
+                    Level += 1;
+                    sb.AppendLine($" {TempName} AS (");
+                }
+
+                if (GroupBy.Count > 0)
+                {
+                    var groupby = string.Join(",", GroupBy);
+                    if (SelectValue == "*")
+                    {
+                        SelectValue = groupby;
+                    }
+                }
+                var dist = IsDistinct ? "DISTINCT " : "";
+                sb.AppendLine($"{Indent.Value}SELECT {dist}{SelectValue}");
+
+                if (SubQuery == null)
+                {
+                    sb.AppendLine($"{Indent.Value}FROM {BuildFromString()}");
                 }
                 else
                 {
-                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(item.EntityInfo!)} ON {item.Where}");
+                    SubQuery.Level = Level + 1;
+                    sb.AppendLine($"{Indent.Value}FROM (");
+                    sb.Append(SubQuery.ToSqlString());
+                    sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias)}");
+                    DbParameters.TryAddDictionary(SubQuery.DbParameters);
                 }
-            }
 
-            if (Where.Count > 0)
-            {
-                sb.AppendLine($"{Indent.Value}WHERE {string.Join($" AND ", Where)}");
-            }
-            if (GroupBy.Count > 0)
-            {
-                if (IsRollup)
+                foreach (var item in Joins)
                 {
-                    sb.AppendLine($"{Indent.Value}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})");
+                    if (item.IsSubQuery)
+                    {
+                        item.SubQuery!.Level = Level + 1;
+                        sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} (");
+                        sb.Append(item.SubQuery.ToSqlString());
+                        sb.AppendLine($"{Indent.Value}) {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                        DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
+                    }
+                    else
+                    {
+                        sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(item.EntityInfo!)} ON {item.Where}");
+                    }
                 }
-                else
-                {
-                    sb.AppendLine($"{Indent.Value}GROUP BY {string.Join(", ", GroupBy)}");
-                }
-            }
-            if (Having.Count > 0)
-            {
-                sb.AppendLine($"{Indent.Value}HAVING {string.Join(", ", Having)}");
-            }
-            if (OrderBy.Count > 0)
-            {
-                sb.AppendLine($"{Indent.Value}ORDER BY {string.Join(", ", OrderBy)} {AdditionalValue}");
-            }
-            if (PageIndex * PageSize > 0)
-            {
-                DbHelper.Paging(this, sb);
-            }
 
-            if (IsTemp)
-            {
-                sb.AppendLine(")");
-            }
-
-            // union
-            if (Unions.Count > 0)
-            {
-                foreach (var item in Unions)
+                if (Where.Count > 0)
                 {
-                    item.SqlBuilder.Level = Level;
-                    var union = item.IsAll ? "UNION ALL" : "UNION";
-                    sb.AppendLine($"{Indent.Value}{union}");
-                    sb.Append(item.SqlBuilder.ToSqlString());
-                    DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                    sb.AppendLine($"{Indent.Value}WHERE {string.Join($" AND ", Where)}");
                 }
+                if (GroupBy.Count > 0)
+                {
+                    if (IsRollup)
+                    {
+                        sb.AppendLine($"{Indent.Value}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"{Indent.Value}GROUP BY {string.Join(", ", GroupBy)}");
+                    }
+                }
+                if (Having.Count > 0)
+                {
+                    sb.AppendLine($"{Indent.Value}HAVING {string.Join(", ", Having)}");
+                }
+                if (OrderBy.Count > 0)
+                {
+                    sb.AppendLine($"{Indent.Value}ORDER BY {string.Join(", ", OrderBy)} {AdditionalValue}");
+                }
+                if (PageIndex * PageSize > 0)
+                {
+                    DbHelper.Paging(this, sb);
+                }
+
+                if (IsTemp)
+                {
+                    sb.AppendLine(")");
+                }
+
+                // union
+                if (Unions.Count > 0)
+                {
+                    foreach (var item in Unions)
+                    {
+                        item.SqlBuilder.Level = Level;
+                        var union = item.IsAll ? "UNION ALL" : "UNION";
+                        sb.AppendLine($"{Indent.Value}{union}");
+                        sb.Append(item.SqlBuilder.ToSqlString());
+                        DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                    }
+                }
+                Expressions.CacheResult(AllTables(), sb.ToString());
+                HandleSqlParameters(sb);
+                if (Level == 0)
+                {
+                    return sb.Trim();
+                }
+                return sb.ToString();
             }
-            if (Level == 0)
-            {
-                return sb.Trim();
-            }
-            return sb.ToString();
         }
     }
 }
