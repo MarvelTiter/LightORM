@@ -47,19 +47,19 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     TSelect Distinct();
     IExpTemp<T1> AsTemp(string name);
 
-    #region 使用原生sql
-    /// <summary>
-    /// 共享参数
-    /// </summary>
-    /// <param name="parameters"></param>
-    /// <returns></returns>
-    TSelect WithParameters(object parameters);
-    TSelect Where(string sql, object? parameters = null);
-    TSelect WhereIf(bool condition, string sql, object? parameters = null);
-    TSelect GroupBy(string sql, object? parameters = null);
-    TSelect Having(string sql, object? parameters = null);
-    TSelect OrderBy(string sql, object? parameters = null);
-    #endregion
+    //#region 使用原生sql
+    ///// <summary>
+    ///// 共享参数
+    ///// </summary>
+    ///// <param name="parameters"></param>
+    ///// <returns></returns>
+    //TSelect WithParameters(object parameters);
+    //TSelect Where(string sql, object? parameters = null);
+    //TSelect WhereIf(bool condition, string sql, object? parameters = null);
+    //TSelect GroupBy(string sql, object? parameters = null);
+    //TSelect Having(string sql, object? parameters = null);
+    //TSelect OrderBy(string sql, object? parameters = null);
+    //#endregion
 }
 
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>

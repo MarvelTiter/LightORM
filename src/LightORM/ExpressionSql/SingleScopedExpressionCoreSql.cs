@@ -9,7 +9,7 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
         Ado = sqlExecutor;
         Ado.InitTransactionContext();
     }
-    public override ISqlExecutor Ado { get; } 
+    public override ISqlExecutor Ado { get; }
 
     public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified) => Ado.BeginTransaction(isolationLevel);
 

@@ -62,7 +62,7 @@ namespace LightORM.Builder
         //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
         //}
 
-        public IEnumerable<TableInfo> AllTables()
+        public override IEnumerable<TableInfo> AllTables()
         {
             foreach (var item in SelectedTables)
             {
@@ -72,6 +72,7 @@ namespace LightORM.Builder
             {
                 yield return item.EntityInfo!;
             }
+            //return [.. SelectedTables, .. Joins.Select(j => j.EntityInfo!)];
         }
 
 
@@ -109,7 +110,9 @@ namespace LightORM.Builder
                             Expression = newWhereExpression,
                         };
                         var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
-                        HandleResult(ee, eeResult);
+                        Where.Add(eeResult.SqlString!);
+                        if (eeResult.DbParameters?.Count > 0)
+                            DbParameterInfos.AddRange(eeResult.DbParameters);
                     }
                 }
                 else
@@ -241,6 +244,7 @@ namespace LightORM.Builder
         {
             //SubQuery?.ResolveExpressions();
             ResolveExpressions();
+
             StringBuilder sb = new();
             if (InsertInfo.HasValue)
             {
@@ -350,11 +354,13 @@ namespace LightORM.Builder
                     DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
                 }
             }
+            HandleSqlParameters(sb);
             if (Level == 0)
             {
                 return sb.Trim();
             }
             return sb.ToString();
+
         }
     }
 }

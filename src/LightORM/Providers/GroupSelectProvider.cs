@@ -53,11 +53,11 @@ namespace LightORM.Providers
             SqlBuilder.IsRollup = true;
             return this;
         }
-        public IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
-        {
-            // TODO 没想好怎么写
-            return this;
-        }
+        //public IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        //{
+        //    // TODO 没想好怎么写
+        //    return this;
+        //}
         public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatTypeSet.Default.Flat(exp);
@@ -116,6 +116,17 @@ namespace LightORM.Providers
 
         public string ToSql() => SqlBuilder.ToSqlString();
 
-        
+        public string ToSqlWithParameters()
+        {
+            var sql = SqlBuilder.ToSqlString();
+            StringBuilder sb = new(sql);
+            sb.AppendLine();
+            sb.AppendLine("参数列表: ");
+            foreach (var item in SqlBuilder.DbParameters)
+            {
+                sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            return sb.ToString();
+        }
     }
 }

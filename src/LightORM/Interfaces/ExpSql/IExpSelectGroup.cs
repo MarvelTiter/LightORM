@@ -19,7 +19,7 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     /// <returns></returns>
     IExpSelect<TTable> AsTable<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp, string? alias = null);
     IExpSelectGroup<TGroup, TTables> Rollup();
-    IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
+    //IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
     string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
 }

@@ -111,10 +111,11 @@ public class SelectSql : TestBase
                 Count = g.Count(),
                 Index = WinFn.RowNumber().OrderByDesc(g.Count()).Value()
             });
-        var allStation = Db.FromTemp(info).GroupBy("ROLLUP(`StnId`)")
+        var allStation = Db.FromTemp(info).GroupBy(t => new { t.StnId })
+            .Rollup()
             .AsTemp("all_station", g => new
             {
-                StnId = SqlFn.NullThen(g.StnId, "合计"),
+                StnId = SqlFn.NullThen(g.Group.StnId, "合计"),
                 Total = SqlFn.Count()
             });
         var sql = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
@@ -589,7 +590,7 @@ public class SelectSql : TestBase
                     g.Group.Id,
                     AvgDiff = g.Avg(g.Tables.DateDiff)
                 });
-        var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
+        var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //        WITH temp AS (
@@ -634,7 +635,7 @@ public class SelectSql : TestBase
                     g.Group.Id,
                     AvgDiff = g.Avg(g.Tables.DateDiff)
                 });
-        var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSql();
+        var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //        SELECT *
@@ -747,4 +748,46 @@ public class SelectSql : TestBase
     public virtual string? Select_Flat_Property_Result() => null;
 
     #endregion
+
+
+    [TestMethod]
+    public void TestNullValue()
+    {
+        int? age = null;
+        var sql = Db.Select<User>()
+            .Where(u => u.Age != age)
+            .ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestBooleanValue()
+    {
+        bool islock = false;
+        var sql = Db.Select<User>()
+            .Where(u => u.IsLock == islock)
+            .ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestArrayAccess()
+    {
+        int[] arr = [10];
+        var sql = Db.Select<User>()
+            .Where(u => u.Age == arr[0])
+            .ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestArrayContain()
+    {
+        int?[] arr = [10, 11];
+        var select = Db.Select<User>()
+            .Where(u => arr.Contains(u.Age));
+        var sql = select.ToSql();
+        var ps = select.SqlBuilder.DbParameters;
+        Console.WriteLine(sql);
+    }
 }

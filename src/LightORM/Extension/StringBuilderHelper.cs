@@ -66,4 +66,59 @@ public static class StringBuilderHelper
         }
         return stringBuilder.ToString(s, e - s + 1);
     }
+
+    public static int IndexOf(this StringBuilder stringBuilder
+        , string content
+        , int startIndex = 0
+        , int count = -1)
+    {
+        if (stringBuilder == null) throw new ArgumentNullException(nameof(stringBuilder));
+        if (content == null) throw new ArgumentNullException(nameof(content));
+
+        int sbLength = stringBuilder.Length;
+        int valueLength = content.Length;
+
+        // 参数验证
+        if (startIndex < 0 || startIndex > sbLength)
+            throw new ArgumentOutOfRangeException(nameof(startIndex));
+
+        if (count < 0)
+            count = sbLength - startIndex;
+
+        if (count < 0 || startIndex > sbLength - count)
+            throw new ArgumentOutOfRangeException(nameof(count));
+
+        if (valueLength == 0)
+            return startIndex; // 空字符串总是匹配
+
+        if (valueLength > count)
+            return -1;
+
+        int endIndex = startIndex + count - valueLength;
+
+        char firstChar = content[0];
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            // 使用StringBuilder的索引器访问字符
+            if (stringBuilder[i] != firstChar)
+                continue;
+
+            // 检查剩余字符
+            bool match = true;
+            for (int j = 1; j < valueLength; j++)
+            {
+                if (stringBuilder[i + j] != content[j])
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+                return i;
+        }
+
+        return -1;
+    }
 }

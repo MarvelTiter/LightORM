@@ -2,6 +2,7 @@
 using LightORM.Extension;
 using LightORM.Implements;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Text;
 
@@ -17,7 +18,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     public static string N { get; } = Environment.NewLine;
     public DbBaseType DbType { get; set; }
 
-    public IExpressionInfo Expressions { get; } = new ExpressionInfoProvider();
+    public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
     public List<TableInfo> SelectedTables { get; set; } = [];
     public int SelectedTableCount => SelectedTables.Count;
@@ -25,11 +26,13 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
+    public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
     private readonly Lazy<ICustomDatabase> dbHelperLazy;
     public ICustomDatabase DbHelper => dbHelperLazy.Value;
     public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
     public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
-    public int DbParameterStartIndex { get; set; }
+    //public int DbParameterStartIndex { get; set; }
+    public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
     public void TryAddParameters(string sql, object? value)
     {
@@ -42,6 +45,58 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     }
     protected ResolveContext? ResolveCtx { get; set; }
+    protected void HandleSqlParameters(StringBuilder sql)
+    {
+        //var useParameterized = ExpressionSqlOptions.Instance.Value.UseParameterized;
+        foreach (var item in DbParameterInfos)
+        {
+            if (item.Type == ExpValueType.Null || item.Value is null)
+            {
+                var parameterIndex = sql.IndexOf(item.Name);
+
+                if (sql[parameterIndex - 2] == '=')
+                {
+                    //equal
+                    sql.Replace($"= {item.Name}", "IS NULL");
+                }
+                else if (sql[parameterIndex - 3] == '<' && sql[parameterIndex - 2] == '>')
+                {
+                    //not equal
+                    sql.Replace($"<> {item.Name}", "IS NOT NULL");
+                }
+                continue;
+            }
+            if (item.Type == ExpValueType.Boolean)
+            {
+                sql.Replace(item.Name, DbHelper.HandleBooleanValue((bool)item.Value));
+            }
+            else if (item.Type == ExpValueType.BooleanReverse)
+            {
+                sql.Replace(item.Name, DbHelper.HandleBooleanValue(!(bool)item.Value));
+            }
+            else if (item.Type == ExpValueType.Collection)
+            {
+                if (item.Value is IEnumerable ema)
+                {
+                    List<string> values = [];
+                    int arrIndex = 0;
+                    foreach (var e in ema)
+                    {
+                        var pn = $"{item.Name}_{arrIndex}";
+                        DbParameters.Add(pn, e);
+                        values.Add(DbHelper.AttachPrefix(pn));
+                        arrIndex++;
+                    }
+                    sql.Replace(item.Name, string.Join(", ", values));
+                }
+            }
+            else
+            {
+                sql.Replace(item.Name, DbHelper.AttachPrefix(item.Name));
+                DbParameters.Add(item.Name, item.Value);
+            }
+        }
+    }
     protected void ResolveExpressions()
     {
         if (Expressions.Completed)
@@ -50,21 +105,20 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
         ResolveCtx = new ResolveContext(DbHelper);
         BeforeResolveExpressions(ResolveCtx);
+        var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
-            item.ResolveOptions!.ParameterIndex = DbParameterStartIndex;
+            item.ResolveOptions!.ParameterPartialIndex = index;
             var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
-            DbParameterStartIndex = item.ResolveOptions!.ParameterIndex;
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
             {
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
-
             HandleResult(item, result);
-
-            DbParameters.TryAddDictionary(result.DbParameters);
+            DbParameterInfos.AddRange(result.DbParameters ?? []);
+            index++;
         }
     }
 

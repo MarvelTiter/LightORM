@@ -27,16 +27,16 @@ internal static class ExpressionExtensions
         };
     }
 
-    public static string OperatorParser(this ExpressionType expressionNodeType, bool useIs)
+    public static string OperatorParser(this ExpressionType expressionNodeType)
     {
         return expressionNodeType switch
         {
             ExpressionType.And or
             ExpressionType.AndAlso => " AND ",
-            ExpressionType.Equal => useIs ? " IS " : " = ",
+            ExpressionType.Equal => " = ",
             ExpressionType.GreaterThan => " > ",
             ExpressionType.GreaterThanOrEqual => " >= ",
-            ExpressionType.NotEqual => useIs ? " IS NOT " : " <> ",
+            ExpressionType.NotEqual => " <> ",
             ExpressionType.Or or
             ExpressionType.OrElse => " OR ",
             ExpressionType.LessThan => " < ",
@@ -57,7 +57,7 @@ public interface IExpressionResolver
     int Level { get; }
     Dictionary<string, Expression?>? ExpStores { get; set; }
     StringBuilder Sql { get; }
-    Dictionary<string, object> DbParameters { get; }
+    //Dictionary<string, object> DbParameters { get; }
     SqlResolveOptions Options { get; }
     Expression? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
@@ -65,15 +65,15 @@ public interface IExpressionResolver
     ReadOnlyCollection<ParameterExpression>? Parameters { get; }
 
 }
+
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
     public ResolveContext Context { get; } = context;
-    public Dictionary<string, object> DbParameters { get; set; } = [];
+    public List<DbParameterInfo> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
-    //public List<TableInfo> UsedTables { get; set; } = [];
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
@@ -107,6 +107,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     }
     Expression? bodyExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
+    int parameterPositionIndex = 0;
     bool useAs;
     bool UseAs
     {
@@ -146,8 +147,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var index = Convert.ToInt32(Expression.Lambda(exp.Right).Compile().DynamicInvoke());
             var array = Expression.Lambda(exp.Left).Compile().DynamicInvoke() as Array;
-            var parameterName = AddDbParameter("Const", array!.GetValue(index)!);
-            Sql.Append(parameterName);
+            var arrayValue = array!.GetValue(index);
+            //var parameterName = AddDbParameter("Const", );
+            //Sql.Append(parameterName);
+            var pname = FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
+            Sql.Append(pname);
+            DbParameters.Add(new(pname, arrayValue, ExpValueType.Other));
             return null;
         }
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
@@ -156,12 +161,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
 
         Visit(exp.Left);
-        var insertIndex = Sql.Length;
+        var op = exp.NodeType.OperatorParser();
+        Sql.Append(op);
         Visit(exp.Right);
-        var endIndex = Sql.Length;
-        var useIs = endIndex - insertIndex == 4 && Sql.ToString(insertIndex, 4) == "NULL";
-        var op = exp.NodeType.OperatorParser(useIs);
-        Sql.Insert(insertIndex, op);
 
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
@@ -468,10 +470,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: ConstantExpression: {exp}");
         var value = exp.Value;
-        if (Members.Count > 0 && value != null)
+        if (Members.Count > 0)
         {
-            value = GetValue(Members, value, out var name);
-            VariableValue(value, name);
+            //value = GetValue(Members, value, out var name);
+            //VariableValue(value, name);
+            var v = GetValue(Members, value, out var propNames);
+            var pn = FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
+            Sql.Append(pn);
+            VariableValue(v, pn);
         }
         else
         {
@@ -483,42 +489,27 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             if (v == null)
             {
-                Sql.Append("NULL");
-                return;
+                DbParameters.Add(new(bn, null, ExpValueType.Null));
             }
-
-            if (v is IEnumerable enumerable && v is not string)
+            else if (v is IEnumerable && v is not string)
             {
-                var names = new List<string>();
-                int i = 0;
-                foreach (var item in enumerable)
-                {
-                    var n = $"{bn}_{i}";
-                    var parameterName = AddDbParameter(n, item);
-                    names.Add(parameterName);
-                    i++;
-                }
-                Sql.Append(string.Join(", ", names));
+                DbParameters.Add(new(bn, v, ExpValueType.Collection));
             }
-            else
+            else if (v is bool)
             {
-                if (v is bool b)
+                if (IsNot)
                 {
-                    if (IsNot)
-                    {
-                        Sql.Append(Database.HandleBooleanValue(!b));
-                        IsNot = false;
-                    }
-                    else
-                    {
-                        Sql.Append(Database.HandleBooleanValue(b));
-                    }
+                    DbParameters.Add(new(bn, v, ExpValueType.BooleanReverse));
+                    IsNot = false;
                 }
                 else
                 {
-                    var parameterName = AddDbParameter(bn, value);
-                    Sql.Append(parameterName);
+                    DbParameters.Add(new(bn, v, ExpValueType.Boolean));
                 }
+            }
+            else
+            {
+                DbParameters.Add(new(bn, v, ExpValueType.Other));
             }
         }
 
@@ -566,17 +557,24 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
     }
 
-    private string AddDbParameter(string name, object v)
+    //private string AddDbParameter(string name, object v)
+    //{
+    //    if (v is string s && !Options.Parameterized)
+    //    {
+    //        return $"'{s}'";
+    //    }
+    //    // TODO 非参数化模式
+    //    var parameterName = $"{Context.ParameterPrefix}{name}_{Options.ParameterPartialIndex}";
+    //    DbParameters.Add(parameterName, v);
+    //    Options.ParameterPartialIndex++;
+    //    return Database.AttachPrefix(parameterName);
+    //}
+
+    public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? option, string name, ref int index)
     {
-        if (v is string s && !Options.Parameterized)
-        {
-            return $"'{s}'";
-        }
-        // TODO 非参数化模式
-        var parameterName = $"{Context.ParameterPrefix}{name}_{Options.ParameterIndex}";
-        DbParameters.Add(parameterName, v);
-        Options.ParameterIndex++;
-        return Database.AttachPrefix(parameterName);
+        var p = $"{context?.ParameterPrefix}{name}_{option?.ParameterPartialIndex}_{index}";
+        index += 1;
+        return p;
     }
 
     /// <summary>
@@ -586,7 +584,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     /// <param name="compilerVar">编译器变量值</param>
     /// <param name="memberName">成员名称</param>
     /// <returns></returns>
-    public static object GetValue(Stack<MemberInfo> memberInfos, object compilerVar, out string memberName)
+    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar, out string memberName)
     {
         var names = new List<string>();
         while (memberInfos.Count > 0)
@@ -606,24 +604,44 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     /// <summary>
     /// 获取值
     /// </summary>
+    /// <param name="memberInfos">成员信息</param>
+    /// <returns></returns>
+    public static string GetValueName(Stack<MemberInfo> memberInfos)
+    {
+        var names = new List<string>();
+        while (memberInfos.Count > 0)
+        {
+            var item = memberInfos.Pop();
+            if (!item.Name.StartsWith("CS$<>8__locals"))
+            {
+                names.Add(item.Name);
+            }
+
+        }
+        return string.Join("_", names);
+    }
+
+    /// <summary>
+    /// 获取值
+    /// </summary>
     /// <param name="memberInfo">成员信息</param>
     /// <param name="obj">对象</param>
     /// <returns></returns>
-    public static object GetValue(MemberInfo memberInfo, object obj)
+    public static object? GetValue(MemberInfo memberInfo, object? obj)
     {
         if (obj == null)
         {
-            return null!;
+            return null;
         }
         if (memberInfo.MemberType == MemberTypes.Property)
         {
             var propertyInfo = memberInfo as PropertyInfo;
-            return propertyInfo!.GetValue(obj)!;
+            return propertyInfo!.GetValue(obj);
         }
         else if (memberInfo.MemberType == MemberTypes.Field)
         {
             var fieldInfo = memberInfo as FieldInfo;
-            return fieldInfo!.GetValue(obj)!;
+            return fieldInfo!.GetValue(obj);
         }
         return new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.");
     }
