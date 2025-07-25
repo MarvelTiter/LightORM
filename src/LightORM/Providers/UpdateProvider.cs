@@ -2,6 +2,7 @@
 using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -215,6 +216,18 @@ namespace LightORM.Providers
         }
         public string ToSql() => SqlBuilder.ToSqlString();
 
+        public string ToSqlWithParameters()
+        {
+            var sql = SqlBuilder.ToSqlString();
+            StringBuilder sb = new(sql);
+            sb.AppendLine();
+            sb.AppendLine("参数列表: ");
+            foreach (var item in SqlBuilder.DbParameters)
+            {
+                sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            return sb.ToString();
+        }
 
     }
 }

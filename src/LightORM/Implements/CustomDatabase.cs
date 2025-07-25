@@ -23,7 +23,7 @@ public abstract class CustomDatabase : ICustomDatabase
 
     public virtual string HandleBooleanValue(bool value)
     {
-        return value ? " 1" : " 0";
+        return value ? "1" : "0";
     }
 
     public virtual string DeleteTemplate => throw new NotImplementedException();

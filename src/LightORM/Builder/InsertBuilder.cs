@@ -64,6 +64,7 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 values.Add($"({string.Join(", ", rowValues)})");
             }
             sb.AppendLine($"{string.Join($", {N}", values)}");
+            HandleSqlParameters(sb);
             item.Sql = sb.ToString();
         }
         batchDone = true;
@@ -115,7 +116,7 @@ internal record InsertBuilder<T>(DbBaseType type) : SqlBuilder(type)
             sb.Append(';');
             sb.Append(DbHelper.ReturnIdentitySql());
         }
-
+        HandleSqlParameters(sb);
         return sb.Trim();
     }
 }

@@ -30,5 +30,18 @@ namespace LightORM.Providers.Select
         }
 
         public string ToSql() => builder.ToSqlString();
+
+        public string ToSqlWithParameters()
+        {
+            var sql = builder.ToSqlString();
+            StringBuilder sb = new(sql);
+            sb.AppendLine();
+            sb.AppendLine("参数列表: ");
+            foreach (var item in builder.DbParameters)
+            {
+                sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            return sb.ToString();
+        }
     }
 }

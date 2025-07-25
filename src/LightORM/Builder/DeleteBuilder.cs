@@ -71,6 +71,8 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                             };
                             var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
                             navSqlBuilder.Where.Add(eeResult.SqlString!);
+                            if (eeResult.DbParameters?.Count > 0)
+                                DbParameterInfos.AddRange(eeResult.DbParameters);
                         }
                     }
                     else
@@ -103,7 +105,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                             }
                         }
                     }
-                    
+
                     Where.Add($"{AttachEmphasis(mainCol.ColumnName)} IN ({N}{navSqlBuilder.ToSqlString()})");
                 }
             }
@@ -138,6 +140,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
             var autoWhere = string.Join(" OR ", autoWhereList);
             Where.Add(autoWhere);
             sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+            HandleSqlParameters(sb);
             batch.Sql = sb.ToString();
         }
         batchDone = true;
@@ -184,6 +187,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
             {
                 sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
             }
+            HandleSqlParameters(sql);
             return sql.Trim();
         }
     }

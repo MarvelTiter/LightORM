@@ -1,6 +1,7 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
 using LightORM.Interfaces.ExpSql;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -126,4 +127,17 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     }
 
     public string ToSql() => SqlBuilder.ToSqlString();
+
+    public string ToSqlWithParameters()
+    {
+        var sql = SqlBuilder.ToSqlString();
+        StringBuilder sb = new(sql);
+        sb.AppendLine();
+        sb.AppendLine("参数列表: ");
+        foreach (var item in SqlBuilder.DbParameters)
+        {
+            sb.AppendLine($"{item.Key} - {item.Value}");
+        }
+        return sb.ToString();
+    }
 }

@@ -28,23 +28,25 @@ public class DeleteSql : TestBase
     public void Delete_Force()
     {
 
-        var sql = Db.Delete<UserFlat>(true, true)
-            .ToSql();
+        var sql = Db.Delete<UserFlat>()
+            .FullDelete(true)
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
     }
 
     [TestMethod]
     public void Delete_Exits()
     {
-
+        var name = "admin";
+        var age = 10;
         var sql = Db.Delete<User>()
-            .Where(s => s.UserRoles.Where(ur => ur.RoleName.StartsWith("admin")).Any())
-            .ToSql();
+            .Where(s => s.UserRoles.Where(ur => ur.RoleName.StartsWith(name)).Any())
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
 
         sql = Db.Delete<UserRole>()
-           .Where(ur => ur.User.Age > 10)
-           .ToSql();
+           .Where(ur => ur.User.Age > age)
+           .ToSqlWithParameters();
         Console.WriteLine(sql);
 
     }

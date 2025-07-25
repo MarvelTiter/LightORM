@@ -1,6 +1,7 @@
 ﻿
 
 using LightORM.Implements;
+using System.Text;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
@@ -40,6 +41,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
+
     //public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
     //{
     //    this.WhereHandle(exp);
@@ -51,43 +53,43 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     //    return (this as TSelect)!;
     //}
 
-    public TSelect WithParameters(object parameters)
-    {
-        return (this as TSelect)!;
-    }
+    //public TSelect WithParameters(object parameters)
+    //{
+    //    return (this as TSelect)!;
+    //}
 
-    public TSelect Where(string sql, object? parameters = null)
-    {
-        SqlBuilder.Where.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
-        return (this as TSelect)!;
-    }
+    //public TSelect Where(string sql, object? parameters = null)
+    //{
+    //    SqlBuilder.Where.Add(sql);
+    //    SqlBuilder.TryAddParameters(sql, parameters);
+    //    return (this as TSelect)!;
+    //}
 
-    public TSelect WhereIf(bool condition, string sql, object? parameters = null)
-    {
-        if (condition)
-        {
-            return Where(sql, parameters);
-        }
-        return (this as TSelect)!;
-    }
-    public TSelect GroupBy(string sql, object? parameters = null)
-    {
-        SqlBuilder.GroupBy.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
-        return (this as TSelect)!;
-    }
-    public TSelect Having(string sql, object? parameters = null)
-    {
-        //SqlBuilder
-        return (this as TSelect)!;
-    }
-    public TSelect OrderBy(string sql, object? parameters = null)
-    {
-        SqlBuilder.OrderBy.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
-        return (this as TSelect)!;
-    }
+    //public TSelect WhereIf(bool condition, string sql, object? parameters = null)
+    //{
+    //    if (condition)
+    //    {
+    //        return Where(sql, parameters);
+    //    }
+    //    return (this as TSelect)!;
+    //}
+    //public TSelect GroupBy(string sql, object? parameters = null)
+    //{
+    //    SqlBuilder.GroupBy.Add(sql);
+    //    SqlBuilder.TryAddParameters(sql, parameters);
+    //    return (this as TSelect)!;
+    //}
+    //public TSelect Having(string sql, object? parameters = null)
+    //{
+    //    //SqlBuilder
+    //    return (this as TSelect)!;
+    //}
+    //public TSelect OrderBy(string sql, object? parameters = null)
+    //{
+    //    SqlBuilder.OrderBy.Add(sql);
+    //    SqlBuilder.TryAddParameters(sql, parameters);
+    //    return (this as TSelect)!;
+    //}
 
     #endregion
 
@@ -108,11 +110,11 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect RollUp()
-    {
-        SqlBuilder.IsRollup = true;
-        return (this as TSelect)!;
-    }
+    //public TSelect RollUp()
+    //{
+    //    SqlBuilder.IsRollup = true;
+    //    return (this as TSelect)!;
+    //}
 
     public TSelect Distinct()
     {
@@ -290,4 +292,16 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public string ToSql() => SqlBuilder.ToSqlString();
 
+    public string ToSqlWithParameters()
+    {
+        var sql = SqlBuilder.ToSqlString();
+        StringBuilder sb = new(sql);
+        sb.AppendLine();
+        sb.AppendLine("参数列表: ");
+        foreach (var item in SqlBuilder.DbParameters)
+        {
+            sb.AppendLine($"{item.Key} - {item.Value}");
+        }
+        return sb.ToString();
+    }
 }

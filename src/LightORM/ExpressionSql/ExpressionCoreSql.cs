@@ -65,12 +65,12 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
             }
             ado.BeginTransaction();
             await ado.ExecuteNonQueryAsync(tableSql, cancellationToken: cancellationToken);
-            await ado.CommitTransactionAsync();
+            await ado.CommitTransactionAsync(cancellationToken);
             return true;
         }
         catch (Exception)
         {
-            await ado.RollbackTransactionAsync();
+            await ado.RollbackTransactionAsync(cancellationToken);
             return false;
         }
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpInsert<T>
+public interface IExpInsert<T> : ISql
 {
     //IExpInsert<T> AppendData(T item);
     //IExpInsert<T> AppendData(IEnumerable<T> items);
@@ -16,5 +16,4 @@ public interface IExpInsert<T>
     //IExpInsert<T> NoParameter();
     IExpInsert<T> ReturnIdentity();
     Task<int> ExecuteAsync(CancellationToken cancellationToken = default);
-    string ToSql();
 }

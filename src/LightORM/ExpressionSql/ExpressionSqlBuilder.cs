@@ -35,6 +35,7 @@ internal class ExpressionSqlOptions
     private int poolSize = Environment.ProcessorCount * 4;
     public int PoolSize => poolSize;
     public static Lazy<ExpressionSqlOptions> Instance { get; }
+    public bool UseParameterized { get; set; } = true;
     public IServiceProvider? Services { get; set; }
     public ICollection<IAdoInterceptor> Interceptors => TypedInterceptors.Values;
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
@@ -100,6 +101,12 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     private readonly List<Type> interceptorTypes = [];
 
     public WeakReference<IServiceCollection>? WeakServices { get; set; }
+
+    public IExpressionContextSetup SetUseParameterized(bool use)
+    {
+        option.UseParameterized = use;
+        return this;
+    }
 
     public IExpressionContextSetup SetConnectionPoolSize(int poolSize)
     {

@@ -114,7 +114,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
             }
 
             sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
-
+            HandleSqlParameters(sb);
             batch.Sql = sb.ToString();
         }
         batchDone = true;
@@ -122,12 +122,12 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
 
     public override string ToSqlString()
     {
+        ResolveExpressions();
         if (IsBatchUpdate)
         {
             CreateUpdateBatchSql();
             return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
-        ResolveExpressions();
         if (Where.Count == 0)
         {
             var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
@@ -201,7 +201,7 @@ internal record UpdateBuilder<T>(DbBaseType type) : SqlBuilder(type)
         sb.AppendLine(" SET");
         sb.AppendLine(string.Join($",{N}", finalUpdateCol));
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
-
+        HandleSqlParameters(sb);
         return sb.Trim();
     }
 }

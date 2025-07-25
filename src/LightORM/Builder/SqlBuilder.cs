@@ -2,6 +2,7 @@
 using LightORM.Extension;
 using LightORM.Implements;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Text;
 
@@ -46,11 +47,48 @@ internal abstract record SqlBuilder : ISqlBuilder
     protected ResolveContext? ResolveCtx { get; set; }
     protected void HandleSqlParameters(StringBuilder sql)
     {
+        //var useParameterized = ExpressionSqlOptions.Instance.Value.UseParameterized;
         foreach (var item in DbParameterInfos)
         {
-            if (item.Value is null)
+            if (item.Type == ExpValueType.Null || item.Value is null)
             {
+                var parameterIndex = sql.IndexOf(item.Name);
 
+                if (sql[parameterIndex - 2] == '=')
+                {
+                    //equal
+                    sql.Replace($"= {item.Name}", "IS NULL");
+                }
+                else if (sql[parameterIndex - 3] == '<' && sql[parameterIndex - 2] == '>')
+                {
+                    //not equal
+                    sql.Replace($"<> {item.Name}", "IS NOT NULL");
+                }
+                continue;
+            }
+            if (item.Type == ExpValueType.Boolean)
+            {
+                sql.Replace(item.Name, DbHelper.HandleBooleanValue((bool)item.Value));
+            }
+            else if (item.Type == ExpValueType.BooleanReverse)
+            {
+                sql.Replace(item.Name, DbHelper.HandleBooleanValue(!(bool)item.Value));
+            }
+            else if (item.Type == ExpValueType.Collection)
+            {
+                if (item.Value is IEnumerable ema)
+                {
+                    List<string> values = [];
+                    int arrIndex = 0;
+                    foreach (var e in ema)
+                    {
+                        var pn = $"{item.Name}_{arrIndex}";
+                        DbParameters.Add(pn, e);
+                        values.Add(DbHelper.AttachPrefix(pn));
+                        arrIndex++;
+                    }
+                    sql.Replace(item.Name, string.Join(", ", values));
+                }
             }
             else
             {
@@ -59,7 +97,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
         }
     }
-    protected void ResolveExpressions(bool useCache = false)
+    protected void ResolveExpressions()
     {
         if (Expressions.Completed)
         {
@@ -67,29 +105,19 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
         ResolveCtx = new ResolveContext(DbHelper);
         BeforeResolveExpressions(ResolveCtx);
-        bool isHitCache = Expressions.TryHitCache(AllTables(), out _);
         var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
             item.ResolveOptions!.ParameterPartialIndex = index;
-            if (!isHitCache || !useCache)
+            var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
+            item.Completed = true;
+            if (!string.IsNullOrEmpty(item.Template))
             {
-                var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
-                item.Completed = true;
-                if (!string.IsNullOrEmpty(item.Template))
-                {
-                    result.SqlString = string.Format(item.Template, result.SqlString);
-                }
-                HandleResult(item, result);
-                DbParameterInfos.AddRange(result.DbParameters ?? []);
+                result.SqlString = string.Format(item.Template, result.SqlString);
             }
-            else
-            {
-                var parameters = ExpressionValueExtract.Default.Extract(item.Expression, item.ResolveOptions, ResolveCtx);
-                //DbParameters.TryAddDictionary(result.DbParameters);
-                DbParameterInfos.AddRange(parameters);
-            }
+            HandleResult(item, result);
+            DbParameterInfos.AddRange(result.DbParameters ?? []);
             index++;
         }
     }

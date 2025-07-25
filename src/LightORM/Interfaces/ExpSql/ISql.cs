@@ -5,6 +5,7 @@ namespace LightORM.Interfaces.ExpSql;
 public interface ISql
 {
     string ToSql();
+    string ToSqlWithParameters();
 }
 public interface ISql<TPart, T> : ISql
 {

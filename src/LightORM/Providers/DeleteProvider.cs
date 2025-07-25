@@ -14,8 +14,8 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder<T> sqlBuilder;
-        public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
-        public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
+        //public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
+        //public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
@@ -52,6 +52,18 @@ namespace LightORM.Providers
         {
             return sqlBuilder.ToSqlString();
         }
+        public string ToSqlWithParameters()
+        {
+            var sql = sqlBuilder.ToSqlString();
+            StringBuilder sb = new(sql);
+            sb.AppendLine();
+            sb.AppendLine("参数列表: ");
+            foreach (var item in sqlBuilder.DbParameters)
+            {
+                sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            return sb.ToString();
+        }
 
         public IExpDelete<T> Where(Expression<Func<T, bool>> exp)
         {
@@ -69,6 +81,13 @@ namespace LightORM.Providers
             {
                 return Where(exp);
             }
+            return this;
+        }
+
+        public IExpDelete<T> FullDelete(bool truncate = false)
+        {
+            sqlBuilder.ForceDelete = true;
+            sqlBuilder.Truncate = truncate;
             return this;
         }
     }
