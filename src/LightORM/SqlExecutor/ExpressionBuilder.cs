@@ -1,5 +1,6 @@
 ﻿using LightORM.Cache;
 using LightORM.Extension;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -9,13 +10,11 @@ using System.Reflection;
 
 namespace LightORM.SqlExecutor;
 
-
-
 internal class ExpressionBuilder
 {
 
     private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToBytes), BindingFlags.NonPublic | BindingFlags.Static)!;
-  
+
 
     private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte", [typeof(int)])!;
     private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16", [typeof(int)])!;
@@ -90,6 +89,8 @@ internal class ExpressionBuilder
 
     }
 
+    private static readonly ConcurrentDictionary<string, Func<IDataReader, object>> cacheFuncs = [];
+
     public static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
     {
         var type = typeof(T);
@@ -97,15 +98,17 @@ internal class ExpressionBuilder
         var columns = reader.GetSchemaTable()!.Select(col =>
           {
               var columnAllowDbNull = col["AllowDBNull"];
-              var nullable = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
+              var nullable = columnAllowDbNull != DBNull.Value && columnAllowDbNull != null && Convert.ToBoolean(columnAllowDbNull);
               return $"{col["ColumnName"]}_{col["ColumnName"]}_{nullable}";
           });
 
         var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}_{string.Join("&", columns)}";
-        return StaticCache<Func<IDataReader, object>>.GetOrAdd(cacheKey, () =>
+        if (!cacheFuncs.TryGetValue(cacheKey, out var func))
         {
-            return BuildFunc<T>(reader, CultureInfo.CurrentCulture);
-        });
+            func = BuildFunc<T>(reader, CultureInfo.CurrentCulture);
+            cacheFuncs.TryAdd(cacheKey, func);
+        }
+        return func;
     }
 
     /// <summary>

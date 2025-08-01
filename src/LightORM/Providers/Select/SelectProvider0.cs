@@ -122,6 +122,12 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
+    public TSelect Parameterized(bool use = true)
+    {
+        SqlBuilder.IsParameterized = use;
+        return (this as TSelect)!;
+    }
+
     #endregion
 
     #region ToResult

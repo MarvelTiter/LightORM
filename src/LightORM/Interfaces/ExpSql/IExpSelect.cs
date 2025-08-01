@@ -46,7 +46,7 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     //TSelect RollUp();
     TSelect Distinct();
     IExpTemp<T1> AsTemp(string name);
-
+    TSelect Parameterized(bool use = true);
     //#region 使用原生sql
     ///// <summary>
     ///// 共享参数

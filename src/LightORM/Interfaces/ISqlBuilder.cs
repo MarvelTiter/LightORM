@@ -31,7 +31,10 @@ namespace LightORM.Interfaces
         /// 参数信息
         /// </summary>
         Dictionary<string, object> DbParameters { get; }
-        
+        /// <summary>
+        /// 是否参数化
+        /// </summary>
+        internal bool? IsParameterized { get; set; }
         /// <summary>
         /// 到Sql字符串
         /// </summary>

@@ -27,6 +27,8 @@ internal abstract record SqlBuilder : ISqlBuilder
     public object? TargetObject { get; set; }
     public List<string> Members { get; set; } = [];
     public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
+    public bool? IsParameterized { get; set; } = true;
+
     private readonly Lazy<ICustomDatabase> dbHelperLazy;
     public ICustomDatabase DbHelper => dbHelperLazy.Value;
     public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
@@ -47,7 +49,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     protected ResolveContext? ResolveCtx { get; set; }
     protected void HandleSqlParameters(StringBuilder sql)
     {
-        //var useParameterized = ExpressionSqlOptions.Instance.Value.UseParameterized;
+        var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
         foreach (var item in DbParameterInfos)
         {
             if (item.Type == ExpValueType.Null || item.Value is null)

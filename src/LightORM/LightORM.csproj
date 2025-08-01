@@ -14,13 +14,13 @@
 		<IncludeSymbols>False</IncludeSymbols>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
-	<Import Project="Versions.props"/>
+	<Import Project="Versions.props" />
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' != 'net4.5'">
+	<ItemGroup>
 		<!-- Package the generator in the analyzer directory of the nuget package -->
 		<None Include="..\LightOrmTableContextGenerator\bin\$(Configuration)\netstandard2.0\LightOrmTableContextGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 		<ProjectReference Include="..\LightOrmExtensionGenerator\LightOrmExtensionGenerator.csproj" Pack="false">

@@ -1,6 +1,7 @@
 ﻿using LightORM.ExpressionSql;
 using LightORM.Extension;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -18,12 +19,16 @@ internal class AbstractTableType
 
     public Type Type { get; }
 }
-internal static class TableContext
+internal static partial class TableContext
 {
     internal static ITableContext? StaticContext { get; set; }
+    private static readonly ConcurrentDictionary<ITableColumnInfo, Action<object, object?>> reflectSetValueCaches = new(TableColumnCompare.Default);
+    private static readonly ConcurrentDictionary<ITableColumnInfo, Func<object, object?>> reflectGetValueCaches = new(TableColumnCompare.Default);
+    private static readonly ConcurrentDictionary<Type, TableEntity> reflectTables = [];
+    private static readonly ConcurrentDictionary<Type, AbstractTableType> abstractTypeRels = [];
+
     public static ITableEntityInfo GetTableInfo<T>()
     {
-
         return GetTableInfo(typeof(T));
     }
     public static void SetValue(ITableColumnInfo col, object target, object? value)
@@ -36,8 +41,8 @@ internal static class TableContext
         }
         else
         {
-            var key = $"{type.FullName}_{col.PropertyName}_Setter";
-            var reflectAction = StaticCache<Action<object, object?>>.GetOrAdd(key, () =>
+            //var key = $"{type.FullName}_{col.PropertyName}_Setter";
+            var reflectAction = reflectSetValueCaches.GetOrAdd(col, static col =>
             {
                 if (col.IsAggregatedProperty && col.AggregateType is not null)
                 {
@@ -64,8 +69,8 @@ internal static class TableContext
         }
         else
         {
-            var key = $"{type.FullName}_{col.PropertyName}_Getter";
-            var reflectAction = StaticCache<Func<object, object?>>.GetOrAdd(key, () =>
+            //var key = $"{type.FullName}_{col.PropertyName}_Getter";
+            var reflectAction = reflectGetValueCaches.GetOrAdd(col,static col =>
             {
                 if (col.IsAggregatedProperty && col.AggregateType is not null)
                 {
@@ -102,21 +107,21 @@ internal static class TableContext
 
         if (realType.IsAbstract || realType.IsInterface)
         {
-            realType = StaticCache<AbstractTableType>.GetOrAdd(cacheKey, () =>
+            realType = abstractTypeRels.GetOrAdd(type, static t =>
             {
-                var rt = StaticCache<TableEntity>.Values.Where(x => type.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
+                var rt = reflectTables.Values.Where(x => t.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
                 if (rt is null) LightOrmException.Throw("无法解析的表");
                 return new AbstractTableType(rt!);
             }).Type;
             return GetTableInfo(realType);
         }
 
-        if (realType.HasAttribute<LightFlatAttribute>())
-        {
+        //if (realType.HasAttribute<LightFlatAttribute>())
+        //{
 
-        }
+        //}
 
-        var entityInfoCache = StaticCache<TableEntity>.GetOrAdd(cacheKey, () =>
+        var entityInfoCache = reflectTables.GetOrAdd(type, static type =>
         {
             var entityInfo = new TableEntity(type);
             var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
@@ -140,14 +145,14 @@ internal static class TableContext
 
             var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
             entityInfo.Columns = [.. propertyColumnInfos];
-            if (entityInfo.IsAnonymousType)
-            {
-                entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
-            }
-            else
-            {
-                entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
-            }
+            //if (entityInfo.IsAnonymousType)
+            //{
+            //    entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
+            //}
+            //else
+            //{
+            //    entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
+            //}
             return entityInfo;
         });
         // 拷贝

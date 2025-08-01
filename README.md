@@ -41,7 +41,7 @@
 dotnet add package MT.LightORM --version *
 ```
 
-Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` )
+Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` | `PostgreSQL`)
 
 ```
 dotnet add package LightORM.Providers.Sqlite --version *

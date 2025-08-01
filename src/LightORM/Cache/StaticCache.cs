@@ -6,14 +6,11 @@ using System.Text;
 
 namespace LightORM.Cache
 {
+    [Obsolete("不需要了",true)]
     internal static class StaticCache<T>
     {
-        private readonly static ConcurrentDictionary<string, T> caches;
-        static StaticCache()
-        {
-            caches = new();
-        }
-
+        private readonly static ConcurrentDictionary<string, T> caches = [];
+        
         public static T GetOrAdd(string key, Func<string, T> func)
         {
             return caches.GetOrAdd(key, func);

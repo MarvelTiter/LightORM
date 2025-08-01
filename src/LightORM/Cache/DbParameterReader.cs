@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
 using System.Reflection;
@@ -9,6 +10,8 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
+    private static readonly ConcurrentDictionary<string, Action<DbCommand, object>> cacheReaders = [];
+    private static readonly ConcurrentDictionary<string, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
     public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText, Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
@@ -16,7 +19,7 @@ internal static class DbParameterReader
             return ReadDictionary;
         }
         Certificate cer = new(connectionString, commandText, paramaterType);
-        return StaticCache<Action<DbCommand, object>>.GetOrAdd($"DbParameterReader_{cer}", () =>
+        return cacheReaders.GetOrAdd($"DbParameterReader_{cer}", _ =>
         {
             return (cmd, obj) =>
             {
@@ -39,7 +42,7 @@ internal static class DbParameterReader
         }
         var type = value.GetType();
         var key = $"{sql}_{type.FullName}";
-        var func = StaticCache<Func<object, Dictionary<string, object>>>.GetOrAdd(key, () =>
+        var func = readObjectToDicCache.GetOrAdd(key, _ =>
         {
             return CreateReadToDictionary(sql, type);
         });
