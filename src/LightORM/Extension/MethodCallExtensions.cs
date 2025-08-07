@@ -24,6 +24,11 @@ public static class MethodCallExtensions
         return methodCall?.Method?.DeclaringType?.Name?.StartsWith("IExpSelectGrouping") == true;
     }
 
+    public static bool IsLinqExtension(this MethodCallExpression methodCall)
+    {
+        return methodCall?.Method?.DeclaringType == typeof(Enumerable);
+    }
+
     public static IExpSelect? GetExpSelectObject(this MethodCallExpression? methodCall, ReadOnlyCollection<ParameterExpression>? parameters = null)
     {
         Expression? obj = methodCall?.Object;

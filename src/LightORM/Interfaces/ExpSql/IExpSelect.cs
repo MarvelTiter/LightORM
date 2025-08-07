@@ -36,6 +36,8 @@ public interface IExpSelect0<TSelect, T1> : IExpSelect where TSelect : IExpSelec
     Task<double> AvgAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
     Task<bool> AnyAsync(CancellationToken cancellationToken = default);
     TSelect Paging(int pageIndex, int pageSize);
+    TSelect Skip(int count);
+    TSelect Take(int count);
     TMember? Max<TMember>(Expression<Func<T1, TMember>> exp);
     TMember? Min<TMember>(Expression<Func<T1, TMember>> exp);
     double Sum(Expression<Func<T1, object>> exp);

@@ -7,7 +7,7 @@ namespace LightORM;
 public interface IExpressionContext : IDbAction
 {
     string Id { get; }
-
+    internal ExpressionSqlOptions Options { get; }
     /// <summary>
     /// 与<see cref="IExpSelect{T1}.Union(IExpSelect{T1})"/>不同的是，当Union个数大于1时，该方法会嵌套为子查询
     /// </summary>

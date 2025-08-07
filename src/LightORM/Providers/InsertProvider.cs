@@ -10,28 +10,29 @@ namespace LightORM.Providers;
 internal sealed class InsertProvider<T> : IExpInsert<T>
 {
     private readonly ISqlExecutor executor;
-    InsertBuilder<T> SqlBuilder;
+    private readonly InsertBuilder<T> sqlBuilder;
+    private ICustomDatabase Database => executor.Database.CustomDatabase;
     public InsertProvider(ISqlExecutor executor, T? entity)
     {
         this.executor = executor;
-        SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
-        SqlBuilder.TargetObject = entity;
+        sqlBuilder = new InsertBuilder<T>();
+        sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+        sqlBuilder.TargetObject = entity;
     }
 
     public InsertProvider(ISqlExecutor executor, IEnumerable<T> entities)
     {
         this.executor = executor;
-        SqlBuilder = new InsertBuilder<T>(this.executor.Database.DbBaseType);
-        SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
-        SqlBuilder.TargetObjects = entities;
-        SqlBuilder.IsBatchInsert = true;
+        sqlBuilder = new InsertBuilder<T>();
+        sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+        sqlBuilder.TargetObjects = entities;
+        sqlBuilder.IsBatchInsert = true;
     }
 
     public int Execute()
     {
-        var sql = SqlBuilder.ToSqlString();
-        if (SqlBuilder.IsBatchInsert)
+        var sql = sqlBuilder.ToSqlString(Database);
+        if (sqlBuilder.IsBatchInsert)
         {
             var usingTransaction = executor.DbTransaction != null;
             try
@@ -39,7 +40,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                 var effectRows = 0;
                 if (usingTransaction)
                     executor.BeginTransaction();
-                foreach (var item in SqlBuilder.BatchInfos!)
+                foreach (var item in sqlBuilder.BatchInfos!)
                 {
                     effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                 }
@@ -57,15 +58,15 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         }
         else
         {
-            var dbParameters = SqlBuilder.DbParameters;
+            var dbParameters = sqlBuilder.DbParameters;
             return executor.ExecuteNonQuery(sql, dbParameters);
         }
     }
 
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var sql = SqlBuilder.ToSqlString();
-        if (SqlBuilder.IsBatchInsert)
+        var sql = sqlBuilder.ToSqlString(Database);
+        if (sqlBuilder.IsBatchInsert)
         {
             var usingTransaction = executor.DbTransaction != null;
             try
@@ -73,7 +74,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                 var effectRows = 0;
                 if (usingTransaction)
                     await executor.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-                foreach (var item in SqlBuilder.BatchInfos!)
+                foreach (var item in sqlBuilder.BatchInfos!)
                 {
                     effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
@@ -90,14 +91,14 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         }
         else
         {
-            var parameters = SqlBuilder.DbParameters;
+            var parameters = sqlBuilder.DbParameters;
             return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 
     public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
     {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        sqlBuilder.Expressions.Add(new ExpressionInfo()
         {
             Expression = columns,
             ResolveOptions = SqlResolveOptions.InsertIgnore,
@@ -112,13 +113,13 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
 
     public IExpInsert<T> ReturnIdentity()
     {
-        SqlBuilder.IsReturnIdentity = true;
+        sqlBuilder.IsReturnIdentity = true;
         return this;
     }
 
     public IExpInsert<T> SetColumns(Expression<Func<T, object>> columns)
     {
-        SqlBuilder.Expressions.Add(new ExpressionInfo()
+        sqlBuilder.Expressions.Add(new ExpressionInfo()
         {
             Expression = columns,
             ResolveOptions = SqlResolveOptions.Insert,
@@ -126,15 +127,15 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         return this;
     }
 
-    public string ToSql() => SqlBuilder.ToSqlString();
+    public string ToSql() => sqlBuilder.ToSqlString(Database);
 
     public string ToSqlWithParameters()
     {
-        var sql = SqlBuilder.ToSqlString();
+        var sql = sqlBuilder.ToSqlString(Database);
         StringBuilder sb = new(sql);
         sb.AppendLine();
         sb.AppendLine("参数列表: ");
-        foreach (var item in SqlBuilder.DbParameters)
+        foreach (var item in sqlBuilder.DbParameters)
         {
             sb.AppendLine($"{item.Key} - {item.Value}");
         }

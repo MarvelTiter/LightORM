@@ -26,16 +26,18 @@ internal static class SelectHandleExtensions
     }
     internal static IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(this IExpSelect select, Expression? exp)
     {
-        if (exp is LambdaExpression lambda && lambda.Body is not NewExpression)
+        if (exp is LambdaExpression keySelector)
         {
-            LightOrmException.Throw("GroupBy请返回匿名类型，否则无法再后续操作中解析属性来源");
+            select.SqlBuilder.Expressions.Add(new ExpressionInfo()
+            {
+                ResolveOptions = SqlResolveOptions.Group,
+                Expression = exp
+            });
+            return new GroupSelectProvider<TGroup, TTables>(select.Executor, select.SqlBuilder, keySelector);
         }
-        select.SqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            ResolveOptions = SqlResolveOptions.Group,
-            Expression = exp
-        });
-        return new GroupSelectProvider<TGroup, TTables>(select.Executor, select.SqlBuilder);
+        //LightOrmException.Throw("GroupBy请返回NewExpression，否则无法在后续操作中解析属性来源");
+        throw new LightOrmException("表达式类型不是LambdaExpression");
+
     }
     internal static void HandleTempQuery(this IExpSelect select, params IExpTemp[] temps)
     {
@@ -144,7 +146,7 @@ internal static class SelectHandleExtensions
     internal static SelectProvider1<TTemp> HandleSubQuery<TTemp>(this IExpSelect select, string? alias = null)
     {
         select.SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder(select.SqlBuilder.DbType);
+        var builder = new SelectBuilder();
         var table = TableInfo.Create<TTemp>();
         if (alias != null)
         {

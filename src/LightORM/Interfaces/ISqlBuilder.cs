@@ -9,10 +9,10 @@ namespace LightORM.Interfaces
 {
     public interface ISqlBuilder
     {
-        /// <summary>
-        /// 数据库类型
-        /// </summary>
-        DbBaseType DbType { get; set; }
+        ///// <summary>
+        ///// 数据库类型
+        ///// </summary>
+        //DbBaseType DbType { get; set; }
         /// <summary>
         /// 表达式
         /// </summary>
@@ -39,13 +39,15 @@ namespace LightORM.Interfaces
         /// 到Sql字符串
         /// </summary>
         /// <returns></returns>
-        string ToSqlString();
+        string ToSqlString(ICustomDatabase database);
     }
 
     public interface ISelectSqlBuilder : ISqlBuilder
     {
-        int PageIndex { get; set; }
-        int PageSize { get; set; }
+        //int PageIndex { get; set; }
+        //int PageSize { get; set; }
+        int Skip {  get; set; }
+        int Take { get; set; }
         object? AdditionalValue { get; set; }
         List<string> GroupBy { get; set; }
         List<string> OrderBy { get; set; }

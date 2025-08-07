@@ -7,7 +7,6 @@ namespace LightORM;
 
 internal class ResolveContext
 {
-    private readonly ConcurrentDictionary<string, AnonymousMapInfo> anonymousMap = new();
 
     private readonly List<ITableEntityInfo> selectedTables = [];
     private readonly Dictionary<string, TableInfo> lambdaParameterInfos = [];
@@ -98,44 +97,46 @@ internal class ResolveContext
         throw new LightOrmException("解析ParameterExpression出错");
     }
 
-    public void CreateAnonymousMap(Type anonymousType, ParameterExpression paramExp, string anonymousName, string originName)
-    {
-        var originType = paramExp.Type;
-        var oldKey = $"{originType.GUID}_{originName}";
-        var newKey = $"{anonymousType.GUID}_{anonymousName}";
-        var newInfo = new AnonymousMapInfo(originType, originName, paramExp);
-        System.Diagnostics.Debug.WriteLine($"Create Map {anonymousType.Name}_{anonymousName}");
-        System.Diagnostics.Debug.WriteLine($"From {originType.Name}_{originName}");
-        if (anonymousMap.TryGetValue(oldKey, out var info))
-        {
-            newInfo.Parent = info;
-            //anonymousMap.Remove(oldKey);
-        }
-        anonymousMap.TryAdd(newKey, newInfo);
-    }
-    public bool TryGetAnonymousInfo(ParameterExpression? paramExp, string anonymousName, out AnonymousMapInfo? member)
-    {
-        var anonymousType = paramExp?.Type;
-        if (anonymousType is null)
-        {
-            member = null;
-            return false;
-        }
-        var key = $"{anonymousType.GUID}_{anonymousName}";
-        anonymousMap.TryGetValue(key, out member);
-        if (member == null)
-        {
-            //LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
-            return false;
-        }
-        return true;
-    }
+    //private readonly ConcurrentDictionary<string, AnonymousMapInfo> anonymousMap = new();
 
-    public class AnonymousMapInfo(Type map, string name, ParameterExpression pExp)
-    {
-        public AnonymousMapInfo? Parent { get; set; }
-        public Type MapType { get; } = map;
-        public ParameterExpression ParameterExp { get; } = pExp;
-        public string Name { get; } = name;
-    }
+    //public void CreateAnonymousMap(Type anonymousType, ParameterExpression paramExp, string anonymousName, string originName)
+    //{
+    //    var originType = paramExp.Type;
+    //    var oldKey = $"{originType.GUID}_{originName}";
+    //    var newKey = $"{anonymousType.GUID}_{anonymousName}";
+    //    var newInfo = new AnonymousMapInfo(originType, originName, paramExp);
+    //    System.Diagnostics.Debug.WriteLine($"Create Map {anonymousType.Name}_{anonymousName}");
+    //    System.Diagnostics.Debug.WriteLine($"From {originType.Name}_{originName}");
+    //    if (anonymousMap.TryGetValue(oldKey, out var info))
+    //    {
+    //        newInfo.Parent = info;
+    //        //anonymousMap.Remove(oldKey);
+    //    }
+    //    anonymousMap.TryAdd(newKey, newInfo);
+    //}
+    //public bool TryGetAnonymousInfo(ParameterExpression? paramExp, string anonymousName, out AnonymousMapInfo? member)
+    //{
+    //    var anonymousType = paramExp?.Type;
+    //    if (anonymousType is null)
+    //    {
+    //        member = null;
+    //        return false;
+    //    }
+    //    var key = $"{anonymousType.GUID}_{anonymousName}";
+    //    anonymousMap.TryGetValue(key, out member);
+    //    if (member == null)
+    //    {
+    //        //LightOrmException.Throw($"获取匿名类型映射错误, 不存在该类型的映射`{anonymousType.FullName}.{anonymousName}`");
+    //        return false;
+    //    }
+    //    return true;
+    //}
+
+    //public class AnonymousMapInfo(Type map, string name, ParameterExpression pExp)
+    //{
+    //    public AnonymousMapInfo? Parent { get; set; }
+    //    public Type MapType { get; } = map;
+    //    public ParameterExpression ParameterExp { get; } = pExp;
+    //    public string Name { get; } = name;
+    //}
 }

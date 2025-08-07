@@ -9,7 +9,7 @@ namespace LightORM.Interfaces;
 
 public interface IDatabaseTableHandler
 {
-    string GenerateDbTable<T>();
+    IEnumerable<string> GenerateDbTable<T>();
     void SaveDbTableStruct();
     //string ConvertToDbType(DbColumn type);
 }

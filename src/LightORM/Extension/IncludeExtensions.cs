@@ -4,7 +4,6 @@ namespace LightORM;
 
 public static class IncludeExtensions
 {
-
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
         //var option = SqlResolveOptions.Select;
@@ -37,7 +36,7 @@ public static class IncludeExtensions
             ParentTable = include.SqlBuilder.MainTable,
             IncludeWhereExpression = includeWhereExpression
         };
-        include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext(include.Executor.Database.DbBaseType);
+        include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext();
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder);
     }

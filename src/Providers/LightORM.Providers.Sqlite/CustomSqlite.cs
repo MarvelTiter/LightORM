@@ -11,7 +11,7 @@ public sealed class CustomSqlite() : CustomDatabase(new SqliteMethodResolver())
     public override string Emphasis => "``";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
     {
-        sql.AppendLine($"LIMIT {(builder.PageIndex - 1) * builder.PageSize}, {builder.PageSize}");
+        sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
     }
     public override string ReturnIdentitySql() => "SELECT LAST_INSERT_ROWID()";
 }

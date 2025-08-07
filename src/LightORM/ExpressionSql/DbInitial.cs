@@ -32,7 +32,10 @@ public class DbInitial : IDbInitial
         {
             tableHandler ??= handler.Invoke(tableOption);
             var sql = tableHandler.GenerateDbTable<T>();
-            executor.ExecuteNonQuery(sql);
+            foreach (var s in sql)
+            {
+                executor.ExecuteNonQuery(s);
+            }
             if (datas?.Length > 0)
             {
                 var insert = new InsertProvider<T>(executor, datas);

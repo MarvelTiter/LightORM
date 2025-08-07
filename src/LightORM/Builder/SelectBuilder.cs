@@ -3,6 +3,7 @@ using LightORM.ExpressionSql;
 using LightORM.Extension;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,15 +24,17 @@ namespace LightORM.Builder
 
     internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
-        public SelectBuilder(DbBaseType dbType) : base(dbType)
+        public SelectBuilder() 
         {
-            DbType = dbType;
-            IncludeContext = new IncludeContext(dbType);
+            //DbType = dbType;
+            IncludeContext = new IncludeContext();
             Indent = new Lazy<string>(() => new string(' ', 4 * Level));
         }
         public string Id { get; } = $"{Guid.NewGuid():N}";
         public int PageIndex { get; set; }
         public int PageSize { get; set; }
+        public int Skip { get; set; }
+        public int Take { get; set; }
         private Lazy<string> Indent { get; }
         public List<SelectBuilder> TempViews { get; } = [];
         public SelectBuilder? SubQuery { get; set; }
@@ -89,14 +92,14 @@ namespace LightORM.Builder
                 context.SetParamPrefix("s");
             }
         }
-        protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
+        protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
             {
                 if (result.UseNavigate)
                 {
                     if (result.NavigateDeep == 0) result.NavigateDeep = 1;
-                    ScanNavigate(result, MainTable);
+                    ScanNavigate(database, result, MainTable);
                     IsDistinct = true;
                     if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
                         && l!.Parameters[0].Type == Joins.LastOrDefault()?.EntityInfo?.Type)
@@ -158,7 +161,7 @@ namespace LightORM.Builder
             }
         }
 
-        private void ScanNavigate(ExpressionResolvedResult result, TableInfo mainTableInfo)
+        private void ScanNavigate(ICustomDatabase database, ExpressionResolvedResult result, TableInfo mainTableInfo)
         {
             foreach (var navColumn in mainTableInfo.GetNavigateColumns())
             {
@@ -181,7 +184,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = mapTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
+                        Where = $"( {database.AttachEmphasis(mainTableInfo.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                     });
 
                     subCol = mapTable.GetColumnInfo(targetNav.SubName!);
@@ -190,7 +193,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = targetTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
+                        Where = $"( {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                     });
                 }
                 else
@@ -201,7 +204,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = targetTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {AttachEmphasis(mainTableInfo.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} )"
+                        Where = $"( {database.AttachEmphasis(mainTableInfo.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                     });
                     var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
                     if (n is not null)
@@ -209,7 +212,7 @@ namespace LightORM.Builder
                         var c = targetTable.GetColumn(n);
                         if (c is not null)
                         {
-                            var where = $"{AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(c.ColumnName)}{result.SqlString}";
+                            var where = $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
                             Where.Add(where);
                         }
                     }
@@ -217,7 +220,7 @@ namespace LightORM.Builder
 
                 if (result.NavigateDeep > 1)
                 {
-                    ScanNavigate(result, targetTable);
+                    ScanNavigate(database, result, targetTable);
                     result.NavigateDeep--;
                 }
             }
@@ -231,24 +234,24 @@ namespace LightORM.Builder
         //    }
         //}
 
-        private string BuildFromString()
+        private string BuildFromString(ICustomDatabase database)
         {
             if (SelectedTables.Count == 1)
             {
-                return GetTableName(MainTable);
+                return GetTableName(database, MainTable);
             }
-            return string.Join(", ", SelectedTables.Select(t => GetTableName(t)));
+            return string.Join(", ", SelectedTables.Select(t => GetTableName(database, t)));
         }
 
-        public override string ToSqlString()
+        public override string ToSqlString(ICustomDatabase database)
         {
             //SubQuery?.ResolveExpressions();
-            ResolveExpressions();
+            ResolveExpressions(database);
 
             StringBuilder sb = new();
             if (InsertInfo.HasValue)
             {
-                sb.AppendLine($"INSERT INTO {AttachEmphasis(InsertInfo.Value.TableName)}");
+                sb.AppendLine($"INSERT INTO {database.AttachEmphasis(InsertInfo.Value.TableName)}");
                 sb.AppendLine($"({InsertInfo.Value.InsertColumns})");
             }
 
@@ -257,7 +260,7 @@ namespace LightORM.Builder
                 sb.Append("WITH");
                 foreach (var item in TempViews)
                 {
-                    sb.Append(item.ToSqlString());
+                    sb.Append(item.ToSqlString(database));
                     sb.Append(',');
                     DbParameters.TryAddDictionary(item.DbParameters);
                 }
@@ -282,14 +285,14 @@ namespace LightORM.Builder
 
             if (SubQuery == null)
             {
-                sb.AppendLine($"{Indent.Value}FROM {BuildFromString()}");
+                sb.AppendLine($"{Indent.Value}FROM {BuildFromString(database)}");
             }
             else
             {
                 SubQuery.Level = Level + 1;
                 sb.AppendLine($"{Indent.Value}FROM (");
-                sb.Append(SubQuery.ToSqlString());
-                sb.AppendLine($"{Indent.Value}) {AttachEmphasis(MainTable.Alias)}");
+                sb.Append(SubQuery.ToSqlString(database));
+                sb.AppendLine($"{Indent.Value}) {database.AttachEmphasis(MainTable.Alias)}");
                 DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
@@ -299,13 +302,13 @@ namespace LightORM.Builder
                 {
                     item.SubQuery!.Level = Level + 1;
                     sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} (");
-                    sb.Append(item.SubQuery.ToSqlString());
-                    sb.AppendLine($"{Indent.Value}) {AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                    sb.Append(item.SubQuery.ToSqlString(database));
+                    sb.AppendLine($"{Indent.Value}) {database.AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
                     DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
                 }
                 else
                 {
-                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(item.EntityInfo!)} ON {item.Where}");
+                    sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} {GetTableName(database, item.EntityInfo!)} ON {item.Where}");
                 }
             }
 
@@ -332,9 +335,10 @@ namespace LightORM.Builder
             {
                 sb.AppendLine($"{Indent.Value}ORDER BY {string.Join(", ", OrderBy)} {AdditionalValue}");
             }
-            if (PageIndex * PageSize > 0)
+            if (Take > 0)
             {
-                DbHelper.Paging(this, sb);
+                if (Skip < 0) Skip = 0;
+                database.Paging(this, sb);
             }
 
             if (IsTemp)
@@ -350,11 +354,11 @@ namespace LightORM.Builder
                     item.SqlBuilder.Level = Level;
                     var union = item.IsAll ? "UNION ALL" : "UNION";
                     sb.AppendLine($"{Indent.Value}{union}");
-                    sb.Append(item.SqlBuilder.ToSqlString());
+                    sb.Append(item.SqlBuilder.ToSqlString(database));
                     DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
                 }
             }
-            HandleSqlParameters(sb);
+            HandleSqlParameters(sb, database);
             if (Level == 0)
             {
                 return sb.Trim();

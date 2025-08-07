@@ -36,6 +36,7 @@ internal class ExpressionBuilder
     private static readonly MethodInfo DataRecord_GetUInt16 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt16), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo DataRecord_GetUInt = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo DataRecord_GetUInt64 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt64), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly MethodInfo CustomStringParseToBoolean = typeof(ExpressionBuilder).GetMethod(nameof(CustomStringToBoolean), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37)
     {
@@ -87,6 +88,11 @@ internal class ExpressionBuilder
         var value = Reader.GetInt64(Column);
         return value >= 0 ? (ulong)value : throw new OverflowException("Negative value cannot be converted to ulong");
 
+    }
+
+    private static string CustomStringToBoolean(string valueString)
+    {
+        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? "True" : "False";
     }
 
     private static readonly ConcurrentDictionary<string, Func<IDataReader, object>> cacheFuncs = [];
@@ -322,7 +328,7 @@ internal class ExpressionBuilder
     {
         Type RecordFieldType = reader.GetFieldType(Ordinal);
         var columnAllowDbNull = SchemaTable.Rows[Ordinal]["AllowDBNull"];
-        bool AllowDBNull = columnAllowDbNull == DBNull.Value || columnAllowDbNull == null ? false : Convert.ToBoolean(columnAllowDbNull);
+        bool AllowDBNull = (columnAllowDbNull == DBNull.Value || columnAllowDbNull == null) || Convert.ToBoolean(columnAllowDbNull);
         Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
         Expression ConvertedRecordFieldExpression = GetConversionExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
         MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
@@ -462,6 +468,8 @@ internal class ExpressionBuilder
                     ParseExpression = GetDateTimeParseExpression(SourceExpression, UnderlyingType, Culture);
                     break;
                 case "System.Boolean":
+                    ParseExpression = TryParseStringToBoolean(SourceExpression, UnderlyingType);
+                    break;
                 case "System.Char":
                     ParseExpression = GetGenericParseExpression(SourceExpression, UnderlyingType);
                     break;
@@ -509,6 +517,11 @@ internal class ExpressionBuilder
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
+        }
+        Expression TryParseStringToBoolean(Expression sourceExpression, Type type)
+        {
+            var valueExpression = Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
+            return GetGenericParseExpression(valueExpression, type);
         }
     }
 

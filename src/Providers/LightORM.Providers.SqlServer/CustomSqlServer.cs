@@ -14,8 +14,8 @@ public sealed class CustomSqlServer(SqlServerVersion version) : CustomDatabase(n
     {
         if (Version == SqlServerVersion.Over2012)
         {
-            sql.AppendLine($"OFFSET {(builder.PageIndex - 1) * builder.PageSize} ROWS");
-            sql.AppendLine($"FETCH NEXT {builder.PageSize} ROWS ONLY");
+            sql.AppendLine($"OFFSET {builder.Skip} ROWS");
+            sql.AppendLine($"FETCH NEXT {builder.Take} ROWS ONLY");
         }
         else
         {
@@ -33,13 +33,13 @@ public sealed class CustomSqlServer(SqlServerVersion version) : CustomDatabase(n
                 orderByType = (builder.AdditionalValue == null ? "" : $" {builder.AdditionalValue}");
             }
             sql.Insert(6, " TOP (100) PERCENT");
-            sql.Insert(0, $" SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM ({Environment.NewLine} ");
+            sql.Insert(0, $"SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM (\n");
             sql.AppendLine("  ) Sub");
             // 子查询筛选 ROWNO
-            sql.Insert(0, $" SELECT * FROM ({Environment.NewLine} ");
-            sql.AppendLine("  ) Paging");
-            sql.AppendLine($" WHERE Paging.ROWNO > {(builder.PageIndex - 1) * builder.PageSize}");
-            sql.Append($" AND Paging.ROWNO <= {builder.PageIndex * builder.PageSize}");
+            sql.Insert(0, "SELECT * FROM (\n");
+            sql.AppendLine(") Paging");
+            sql.AppendLine($"WHERE Paging.ROWNO > {builder.Skip}");
+            sql.Append($"AND Paging.ROWNO <= {builder.Skip + builder.Take}");
         }
     }
 

@@ -8,7 +8,7 @@ public sealed class SqliteTableHandler(TableGenerateOption option) : BaseDatabas
 {
     private readonly ThreadLocal<bool> useAutoIncrement = new ThreadLocal<bool>(() => false);
 
-    protected override string BuildSql(DbTable table)
+    protected override IEnumerable<string> BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         DbColumn[] primaryKeys = [.. table.Columns.Where(col => col.PrimaryKey)];
@@ -43,7 +43,7 @@ public sealed class SqliteTableHandler(TableGenerateOption option) : BaseDatabas
             i++;
         }
 
-        return sql.ToString();
+        yield return sql.ToString();
     }
 
     protected override string BuildColumn(DbColumn column)

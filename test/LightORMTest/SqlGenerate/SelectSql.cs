@@ -584,11 +584,11 @@ public class SelectSql : TestBase
         }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
-            .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTemp("temp", g =>
+            .Having(g => g.Count() > 2 && g.Average(g.Tables.DateDiff) < 1).AsTemp("temp", g =>
                 new
                 {
                     g.Group.Id,
-                    AvgDiff = g.Avg(g.Tables.DateDiff)
+                    AvgDiff = g.Average(g.Tables.DateDiff)
                 });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSqlWithParameters();
         Console.WriteLine(sql);
@@ -629,11 +629,11 @@ public class SelectSql : TestBase
         }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
-            .Having(g => g.Count() > 2 && g.Avg(g.Tables.DateDiff) < 1).AsTable(g =>
+            .Having(g => g.Count() > 2 && g.Average(g.Tables.DateDiff) < 1).AsTable(g =>
                 new
                 {
                     g.Group.Id,
-                    AvgDiff = g.Avg(g.Tables.DateDiff)
+                    AvgDiff = g.Average(g.Tables.DateDiff)
                 });
         var sql = Db.Select<User>().InnerJoin(temp, (u, t) => u.UserId == t.Id).ToSqlWithParameters();
         Console.WriteLine(sql);
@@ -788,6 +788,33 @@ public class SelectSql : TestBase
             .Where(u => arr.Contains(u.Age));
         var sql = select.ToSql();
         var ps = select.SqlBuilder.DbParameters;
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestGroupBy()
+    {
+        var sql = Db.Select<User>()
+            .InnerJoin<Product>((u, p) => u.UserId == p.ProductCode)
+            .GroupBy(u => new { u.Tb1.Age })
+            .ToSql(g => new
+            {
+                g.Group.Age,
+                Count = g.Count()
+            });
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestPaging()
+    {
+        var skip = 10;
+        var take = 10;
+        var sql = Db.Select<User>()
+            .InnerJoin<Product>((u, p) => u.UserId == p.ProductCode)
+            .Skip(skip)
+            .Take(take)
+            .ToSql();
         Console.WriteLine(sql);
     }
 }

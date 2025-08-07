@@ -1,6 +1,7 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Extension;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,13 +14,13 @@ public abstract class BaseDatabaseHandler : IDatabaseTableHandler
     protected abstract string ConvertToDbType(DbColumn type);
     protected abstract string BuildColumn(DbColumn column);
     protected abstract string DbEmphasis(string name);
-    protected abstract string BuildSql(DbTable table);
+    protected abstract IEnumerable<string> BuildSql(DbTable table);
     protected TableGenerateOption Option { get; }
     public BaseDatabaseHandler(TableGenerateOption option)
     {
         Option = option;
     }
-    public string GenerateDbTable<T>()
+    public IEnumerable<string> GenerateDbTable<T>()
     {
         try
         {

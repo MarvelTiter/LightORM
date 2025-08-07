@@ -1,4 +1,5 @@
 ﻿using LightORM.ExpressionSql;
+using LightORM.Repository;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -21,7 +22,7 @@ public static class IocExtension
             var option = builder.Build(provider);
             return option;
         });
-       
+        services.AddScoped(typeof(ILightOrmRepository<>), typeof(DefaultRepository<>));
         services.AddScoped<IExpressionContext, ExpressionCoreSql>();
         return services;
     }

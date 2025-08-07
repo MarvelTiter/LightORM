@@ -10,13 +10,13 @@ namespace LightORM.Builder;
 
 internal abstract record SqlBuilder : ISqlBuilder
 {
-    protected SqlBuilder(DbBaseType type)
-    {
-        DbType = type;
-        dbHelperLazy = new Lazy<ICustomDatabase>(() => DbType.GetDbCustom());
-    }
+    //protected SqlBuilder(DbBaseType type)
+    //{
+    //    DbType = type;
+    //    dbHelperLazy = new Lazy<ICustomDatabase>(() => DbType.GetDbCustom());
+    //}
     public static string N { get; } = Environment.NewLine;
-    public DbBaseType DbType { get; set; }
+    //public DbBaseType DbType { get; set; }
 
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
@@ -29,10 +29,12 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
     public bool? IsParameterized { get; set; } = true;
 
-    private readonly Lazy<ICustomDatabase> dbHelperLazy;
-    public ICustomDatabase DbHelper => dbHelperLazy.Value;
-    public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
-    public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
+    //private readonly Lazy<ICustomDatabase> dbHelperLazy;
+    //public ICustomDatabase DbHelper => dbHelperLazy.Value;
+
+    //public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
+    //public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
+
     //public int DbParameterStartIndex { get; set; }
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
@@ -47,7 +49,8 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     }
     protected ResolveContext? ResolveCtx { get; set; }
-    protected void HandleSqlParameters(StringBuilder sql)
+
+    protected void HandleSqlParameters(StringBuilder sql, ICustomDatabase database)
     {
         var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
         foreach (var item in DbParameterInfos)
@@ -70,11 +73,11 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
             if (item.Type == ExpValueType.Boolean)
             {
-                sql.Replace(item.Name, DbHelper.HandleBooleanValue((bool)item.Value));
+                sql.Replace(item.Name, database.HandleBooleanValue((bool)item.Value));
             }
             else if (item.Type == ExpValueType.BooleanReverse)
             {
-                sql.Replace(item.Name, DbHelper.HandleBooleanValue(!(bool)item.Value));
+                sql.Replace(item.Name, database.HandleBooleanValue(!(bool)item.Value));
             }
             else if (item.Type == ExpValueType.Collection)
             {
@@ -86,7 +89,7 @@ internal abstract record SqlBuilder : ISqlBuilder
                     {
                         var pn = $"{item.Name}_{arrIndex}";
                         DbParameters.Add(pn, e);
-                        values.Add(DbHelper.AttachPrefix(pn));
+                        values.Add(database.AttachPrefix(pn));
                         arrIndex++;
                     }
                     sql.Replace(item.Name, string.Join(", ", values));
@@ -94,18 +97,18 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
             else
             {
-                sql.Replace(item.Name, DbHelper.AttachPrefix(item.Name));
+                sql.Replace(item.Name, database.AttachPrefix(item.Name));
                 DbParameters.Add(item.Name, item.Value);
             }
         }
     }
-    protected void ResolveExpressions()
+    protected void ResolveExpressions(ICustomDatabase database)
     {
         if (Expressions.Completed)
         {
             return;
         }
-        ResolveCtx = new ResolveContext(DbHelper);
+        ResolveCtx = new ResolveContext(database);
         BeforeResolveExpressions(ResolveCtx);
         var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
@@ -118,19 +121,22 @@ internal abstract record SqlBuilder : ISqlBuilder
             {
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
-            HandleResult(item, result);
+            HandleResult(database, item, result);
             DbParameterInfos.AddRange(result.DbParameters ?? []);
             index++;
         }
     }
+    protected abstract void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result);
 
-    public string GetTableName(TableInfo ti, bool useAlias = true, bool useEmphasis = true)
+    public abstract string ToSqlString(ICustomDatabase database);
+
+    public static string GetTableName(ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {
-        return $"{NpTableName(ti.TableEntityInfo)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {AttachEmphasis(ti.Alias)}" : "")}";
+        return $"{NpTableName(database, ti.TableEntityInfo)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {database.AttachEmphasis(ti.Alias)}" : "")}";
     }
 
     //TODO Oracle?
-    protected string NpTableName(ITableEntityInfo table)
+    protected static string NpTableName(ICustomDatabase database, ITableEntityInfo table)
     {
         if (table.IsTempTable)
         {
@@ -139,18 +145,14 @@ internal abstract record SqlBuilder : ISqlBuilder
         var tablename = table.TableName;
         if (!tablename.Contains('.'))
         {
-            return AttachEmphasis(tablename);
+            return database.AttachEmphasis(tablename);
         }
         else
         {
             var prs = tablename.Split('.');
-            return string.Join(".", prs.Select(AttachEmphasis));
+            return string.Join(".", prs.Select(database.AttachEmphasis));
         }
     }
-
-    protected abstract void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result);
-
-    public abstract string ToSqlString();
 
     protected static object VersionPlus(object? oldVersion)
     {

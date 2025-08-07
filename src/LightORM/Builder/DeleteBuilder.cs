@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
-internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
+internal record DeleteBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = [];
@@ -13,7 +13,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
     public bool ForceDelete { get; set; }
     public bool Truncate { get; set; }
     public List<BatchSqlInfo>? BatchInfos { get; set; }
-    protected override void HandleResult(ExpressionInfo expInfo, ExpressionResolvedResult result)
+    protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
         {
@@ -26,16 +26,18 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                     {
                         continue;
                     }
-                    var navSqlBuilder = new SelectBuilder(DbType);
-                    navSqlBuilder.IsSubQuery = true;
-                    navSqlBuilder.Level = 1;
+                    var navSqlBuilder = new SelectBuilder
+                    {
+                        IsSubQuery = true,
+                        Level = 1
+                    };
                     navSqlBuilder.SelectedTables.Add(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);
                     var targetType = navInfo.NavigateType;
                     var targetTable = TableInfo.Create(targetType, navSqlBuilder.NextTableIndex);
 
-                    navSqlBuilder.SelectValue = $"{AttachEmphasis(MainTable.Alias)}.{AttachEmphasis(mainCol.ColumnName)}";
+                    navSqlBuilder.SelectValue = $"{database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)}";
                     if (navInfo.MappingType != null)
                     {
                         var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
@@ -47,7 +49,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                         {
                             EntityInfo = mapTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {AttachEmphasis(MainTable.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
+                            Where = $"( {database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
 
                         subCol = mapTable.GetColumnInfo(targetNav.SubName!);
@@ -56,7 +58,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                         {
                             EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} = {AttachEmphasis(mapTable.Alias)}.{AttachEmphasis(subCol.ColumnName)} )"
+                            Where = $"( {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
                         if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
                         && l!.Parameters[0].Type == navSqlBuilder.Joins.LastOrDefault()?.EntityInfo?.Type)
@@ -83,7 +85,7 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                         {
                             EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {AttachEmphasis(MainTable.Alias)}.{AttachEmphasis(mainCol.ColumnName)} = {AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(targetCol.ColumnName)} )"
+                            Where = $"( {database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                         });
                         var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
                         if (n is not null)
@@ -95,18 +97,18 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                                 var indexOfLeft = result.SqlString?.IndexOf('(');
                                 if (indexOfLeft > -1)
                                 {
-                                    mainColWhere = result.SqlString!.Insert(indexOfLeft.Value + 1, $"{AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(c.ColumnName)}");
+                                    mainColWhere = result.SqlString!.Insert(indexOfLeft.Value + 1, $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}");
                                 }
                                 else
                                 {
-                                    mainColWhere = $"{AttachEmphasis(targetTable.Alias)}.{AttachEmphasis(c.ColumnName)}{result.SqlString}";
+                                    mainColWhere = $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
                                 }
                                 navSqlBuilder.Where.Add(mainColWhere);
                             }
                         }
                     }
 
-                    Where.Add($"{AttachEmphasis(mainCol.ColumnName)} IN ({N}{navSqlBuilder.ToSqlString()})");
+                    Where.Add($"{database.AttachEmphasis(mainCol.ColumnName)} IN ({N}{navSqlBuilder.ToSqlString(database)})");
                 }
             }
             else
@@ -115,18 +117,18 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
             }
         }
     }
-    private void CreateBatchDeleteSql()
+    private void CreateBatchDeleteSql(ICustomDatabase database)
     {
         if (batchDone)
         {
             return;
         }
-        ResolveExpressions();
+        ResolveExpressions(database);
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
 
         BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var delete = $"DELETE FROM {GetTableName(MainTable, false)}";
+        var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
         foreach (var batch in BatchInfos)
         {
             StringBuilder sb = new();
@@ -140,29 +142,29 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
             var autoWhere = string.Join(" OR ", autoWhereList);
             Where.Add(autoWhere);
             sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
-            HandleSqlParameters(sb);
+            HandleSqlParameters(sb, database);
             batch.Sql = sb.ToString();
         }
         batchDone = true;
     }
-    public override string ToSqlString()
+    public override string ToSqlString(ICustomDatabase database)
     {
         //TODO 处理批量删除
         if (IsBatchDelete)
         {
-            CreateBatchDeleteSql();
+            CreateBatchDeleteSql(database);
             return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
-        ResolveExpressions();
+        ResolveExpressions(database);
         if (ForceDelete)
         {
             if (Truncate)
             {
-                return $"TRUNCATE TABLE {GetTableName(MainTable, false)}";
+                return $"TRUNCATE TABLE {GetTableName(database, MainTable, false)}";
             }
             else
             {
-                return $"DELETE FROM {GetTableName(MainTable, false)}";
+                return $"DELETE FROM {GetTableName(database, MainTable, false)}";
             }
         }
         else
@@ -176,18 +178,18 @@ internal record DeleteBuilder<T>(DbBaseType type) : SqlBuilder(type)
                 var wheres = primary.Select(c =>
                  {
                      DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
-                     return $"{AttachEmphasis(c.ColumnName)} = {AttachPrefix(c.ColumnName)}";
+                     return $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.ColumnName)}";
                  });
                 Where.AddRange(wheres);
             }
             StringBuilder sql;
             sql = new("DELETE FROM ");
-            sql.AppendLine(GetTableName(MainTable, false));
+            sql.AppendLine(GetTableName(database, MainTable, false));
             if (Where.Count > 0)
             {
                 sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
             }
-            HandleSqlParameters(sql);
+            HandleSqlParameters(sql, database);
             return sql.Trim();
         }
     }

@@ -19,6 +19,7 @@ public class TestBase
 {
     public IExpressionContext Db { get;  }
     internal ResolveContext ResolveCtx { get; set; }
+    protected IServiceProvider Services { get; }
     public ITableContext TableContext { get; } = new TestTableContext();
     [NotNull]
     public virtual DbBaseType? DbType { get; }
@@ -31,9 +32,9 @@ public class TestBase
             option.UseInterceptor<LightOrmAop>();
         });
 
-        var provider = services.BuildServiceProvider();
+        Services = services.BuildServiceProvider();
 
-        Db = provider.GetRequiredService<IExpressionContext>();
+        Db = Services.GetRequiredService<IExpressionContext>();
 
         ResolveCtx = ResolveContext.Create(DbType);
     }
@@ -60,7 +61,8 @@ public class LightOrmAop : AdoInterceptorBase
     public override void OnException(SqlExecuteExceptionContext context)
     {
         Debug.WriteLine($"{context.TraceId}:{context.Exception.Message}");
-        context.IsHandled = true;
+        Debug.WriteLine(context.Sql);
+        Debug.WriteLine("=====================================");
     }
 
     public override void OnPrepareCommand(SqlExecuteContext context)
