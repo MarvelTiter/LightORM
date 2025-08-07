@@ -10,7 +10,7 @@ namespace LightORM.Providers.PostgreSQL;
 
 public sealed class PostgreSQLTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-    protected override string BuildSql(DbTable table)
+    protected override IEnumerable<string> BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -80,7 +80,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(item.Name)
 
         #endregion
 
-        return sql.ToString();
+        yield return sql.ToString();
     }
 
     protected override string BuildColumn(DbColumn column)

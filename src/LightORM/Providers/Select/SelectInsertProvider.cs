@@ -11,7 +11,7 @@ namespace LightORM.Providers.Select
     {
         private readonly ISqlExecutor executor;
         private readonly SelectBuilder builder;
-
+        private ICustomDatabase Database => executor.Database.CustomDatabase;
         public SelectInsertProvider(ISqlExecutor executor, SelectBuilder builder)
         {
             this.executor = executor;
@@ -19,21 +19,21 @@ namespace LightORM.Providers.Select
         }
         public int Execute()
         {
-            var sql = builder.ToSqlString();
+            var sql = builder.ToSqlString(Database);
             return executor.ExecuteNonQuery(sql, builder.DbParameters);
         }
 
         public Task<int> ExecuteAsync()
         {
-            var sql = builder.ToSqlString();
+            var sql = builder.ToSqlString(Database);
             return executor.ExecuteNonQueryAsync(sql, builder.DbParameters);
         }
 
-        public string ToSql() => builder.ToSqlString();
+        public string ToSql() => builder.ToSqlString(Database);
 
         public string ToSqlWithParameters()
         {
-            var sql = builder.ToSqlString();
+            var sql = builder.ToSqlString(Database);
             StringBuilder sb = new(sql);
             sb.AppendLine();
             sb.AppendLine("参数列表: ");

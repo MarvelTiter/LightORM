@@ -2,10 +2,13 @@
 
 public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 {
+    internal LambdaExpression KeySelector { get; }
     IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp);
     IExpSelectGroup<TGroup, TTables> OrderBy(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpSelectGroup<TGroup, TTables> OrderByDesc(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpSelectGroup<TGroup, TTables> Paging(int pageIndex, int pageSize);
+    IExpSelectGroup<TGroup, TTables> Skip(int count);
+    IExpSelectGroup<TGroup, TTables> Take(int count);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
     Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
@@ -71,21 +74,21 @@ public interface IExpSelectGrouping<TGroup, TTables>
     double Sum<TColumn>(bool exp, TColumn column);
     /// <summary>
     /// <para>AVG(val)</para>
-    /// 等价于<see cref="SqlFn.Avg{T}(T)"/>
+    /// 等价于<see cref="SqlFn.Average{T}(T)"/>
     /// </summary>
     /// <typeparam name="TColumn"></typeparam>
     /// <param name="column"></param>
     /// <returns></returns>
-    double Avg<TColumn>(TColumn column);
+    double Average<TColumn>(TColumn column);
     /// <summary>
     /// <para>AVG(CASE WHEN exp THEN val ELSE 0 END)</para>
-    /// 等价于<see cref="SqlFn.Avg{T}(bool, T)"/>
+    /// 等价于<see cref="SqlFn.Average{T}(bool, T)"/>
     /// </summary>
     /// <typeparam name="TColumn"></typeparam>
     /// <param name="exp"></param>
     /// <param name="column"></param>
     /// <returns></returns>
-    double Avg<TColumn>(bool exp, TColumn column);
+    double Average<TColumn>(bool exp, TColumn column);
     TColumn Max<TColumn>(TColumn column);
     TColumn Max<TColumn>(bool exp, TColumn column);
     TColumn Min<TColumn>(TColumn column);

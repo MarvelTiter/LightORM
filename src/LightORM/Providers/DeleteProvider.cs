@@ -14,12 +14,13 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder<T> sqlBuilder;
+        private ICustomDatabase Database => executor.Database.CustomDatabase;
         //public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
         //public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            sqlBuilder = new DeleteBuilder<T>(this.executor.Database.DbBaseType);
+            sqlBuilder = new DeleteBuilder<T>();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
@@ -27,7 +28,7 @@ namespace LightORM.Providers
         public DeleteProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
             this.executor = executor;
-            sqlBuilder = new DeleteBuilder<T>(this.executor.Database.DbBaseType);
+            sqlBuilder = new DeleteBuilder<T>();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObjects = entities;
             sqlBuilder.IsBatchDelete = true;
@@ -36,25 +37,22 @@ namespace LightORM.Providers
 
         public int Execute()
         {
-            var sql = sqlBuilder.ToSqlString();
+            var sql = sqlBuilder.ToSqlString(Database);
             var dbParameters = sqlBuilder.DbParameters;
             return executor.ExecuteNonQuery(sql, dbParameters);
         }
 
         public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var sql = sqlBuilder.ToSqlString();
+            var sql = sqlBuilder.ToSqlString(Database);
             var dbParameters = sqlBuilder.DbParameters;
             return executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
         }
 
-        public string ToSql()
-        {
-            return sqlBuilder.ToSqlString();
-        }
+        public string ToSql() => sqlBuilder.ToSqlString(Database);
         public string ToSqlWithParameters()
         {
-            var sql = sqlBuilder.ToSqlString();
+            var sql = sqlBuilder.ToSqlString(Database);
             StringBuilder sb = new(sql);
             sb.AppendLine();
             sb.AppendLine("参数列表: ");

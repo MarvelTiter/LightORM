@@ -15,7 +15,7 @@ namespace LightORM.ExpressionSql
         {
             // 确保Use之后，拿到的ISqlExecutor是对应的
             switchSign.Wait();
-            executorProvider.UseCustomExecutor(() => new SqlExecutor.SqlExecutor(db, option.PoolSize,new AdoInterceptor(option.Interceptors)));
+            executorProvider.UseCustomExecutor(() => new SqlExecutor.SqlExecutor(db, Options.PoolSize,new AdoInterceptor(Options.Interceptors)));
             return this;
         }
         //public void BeginTranAll()
@@ -96,7 +96,7 @@ namespace LightORM.ExpressionSql
 
         public IScopedExpressionContext CreateScoped()
         {
-            return new ScopedExpressionCoreSql(option);
+            return new ScopedExpressionCoreSql(Options);
         }
 
         //public void CommitTran(string key = ConstString.Main)

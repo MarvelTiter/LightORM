@@ -11,6 +11,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public SelectBuilder SqlBuilder { get; set; } = default!;
     public ISqlExecutor Executor { get; }
     public DbBaseType DbType => Executor.Database.DbBaseType;
+    public ICustomDatabase Database => Executor.Database.CustomDatabase;
     public bool IsSubQuery { get; set; }
     protected ExpressionInfo? SelectExpression;
     public SelectProvider0(ISqlExecutor executor, SelectBuilder? builder = null)
@@ -179,7 +180,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Expression<Func<T1, T1>> exp = t => t;
             this.HandleResult(exp, null);
         }
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return Executor.QuerySingle<T1>(sql, parameters);
     }
@@ -191,14 +192,14 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Expression<Func<T1, T1>> exp = t => t;
             this.HandleResult(exp, null);
         }
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return Executor.Query<T1>(sql, parameters);
     }
 
     public DataTable ToDataTable()
     {
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return Executor.ExecuteDataTable(sql, parameters);
     }
@@ -210,7 +211,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Expression<Func<T1, T1>> exp = t => t;
             this.HandleResult(exp, null);
         }
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QuerySingleAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
@@ -222,7 +223,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
             Expression<Func<T1, T1>> exp = t => t;
             this.HandleResult(exp, null);
         }
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return await Executor.QueryListAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
@@ -231,14 +232,14 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     {
         Expression<Func<T1, T1>> exp = t => t;
         this.HandleResult(exp, null);
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
     }
 
     public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
     {
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
@@ -291,16 +292,30 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public TSelect Paging(int pageIndex, int pageSize)
     {
-        SqlBuilder.PageIndex = pageIndex;
-        SqlBuilder.PageSize = pageSize;
+        //SqlBuilder.PageIndex = pageIndex;
+        //SqlBuilder.PageSize = pageSize;
+        SqlBuilder.Skip = (pageIndex -1) * pageSize;
+        SqlBuilder.Take = pageSize;
         return (this as TSelect)!;
     }
 
-    public string ToSql() => SqlBuilder.ToSqlString();
+    public TSelect Skip(int count)
+    {
+        SqlBuilder.Skip = count;
+        return (this as TSelect)!;
+    }
+
+    public TSelect Take(int count)
+    {
+        SqlBuilder.Take = count;
+        return (this as TSelect)!;
+    }
+
+    public string ToSql() => SqlBuilder.ToSqlString(Database);
 
     public string ToSqlWithParameters()
     {
-        var sql = SqlBuilder.ToSqlString();
+        var sql = SqlBuilder.ToSqlString(Database);
         StringBuilder sb = new(sql);
         sb.AppendLine();
         sb.AppendLine("参数列表: ");

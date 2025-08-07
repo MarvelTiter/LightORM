@@ -10,19 +10,18 @@ namespace LightORM.Providers.Oracle;
 
 public sealed class OracleTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
 {
-    protected override string BuildSql(DbTable table)
+    protected override IEnumerable<string> BuildSql(DbTable table)
     {
-        StringBuilder sql = new StringBuilder();
-
         var tableSpace = Option?.OracleTableSpace != null ? $"TABLESPACE {Option.OracleTableSpace}" : "";
 
         #region Table
-        sql.Append($"""
+        yield return $"""
 CREATE TABLE {DbEmphasis(table.Name)}(
     {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
 ){tableSpace}
 
-""");
+""";
+
         #endregion
 
         #region ColumnConment
@@ -32,7 +31,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
 
             foreach (var com in comments)
             {
-                sql.AppendLine($"COMMENT ON COLUMN {AttachUserId(table.Name)}.{DbEmphasis(com.Name)} IS '{com.Comment}';");
+                yield return $"COMMENT ON COLUMN {AttachUserId(table.Name)}.{DbEmphasis(com.Name)} IS '{com.Comment}'";
             }
         }
         #endregion
@@ -44,10 +43,10 @@ CREATE TABLE {DbEmphasis(table.Name)}(
             foreach (var p in pks)
             {
                 if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
-                table.Indexs = table.Indexs.Concat(new DbIndex[]
-                {
-                    new DbIndex(){ Columns = new string[]{p.Name }, DbIndexType= IndexType.Unique }
-                });
+                table.Indexs = table.Indexs.Concat(
+                [
+                    new(){ Columns = new string[]{p.Name }, DbIndexType= IndexType.Unique }
+                ]);
             }
         }
 
@@ -65,7 +64,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
                 type = "BITMAP ";
             }
             string reverse = index.DbIndexType == IndexType.Reverse ? "REVERSE" : "";
-            sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames}){reverse}");
+            yield return $"CREATE {type}INDEX {DbEmphasis(CheckIdxLength(table, index, i))} ON {DbEmphasis(table.Name)}({columnNames}){reverse}";
             i++;
         }
 
@@ -73,16 +72,16 @@ CREATE TABLE {DbEmphasis(table.Name)}(
 
         #region PrimaryKey
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
-        if (primaryKeys.Count() > 0)
+        if (primaryKeys.Any())
         {
-            sql.AppendLine(
+            yield return
 $"""
-ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY
+ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {CheckPkLength(table.Name, primaryKeys)} PRIMARY KEY
 (
     {string.Join($",{Environment.NewLine}    ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
 )
 """
-);
+;
         }
         #endregion
 
@@ -93,23 +92,52 @@ ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {GetPrimaryKeyName(table.N
             foreach (var col in increments)
             {
                 var triName = AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper();
-                var autoIncrement = $"""
- CREATE SEQUENCE {AttachUserId($"SEQ_{table.Name}_{col.Name}").ToUpper()} START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 999999999999999 ORDER
+                var seqName = $"SEQ_{table.Name}_{col.Name}".ToUpper();
+                yield return $"""
+CREATE SEQUENCE {AttachUserId(seqName)} START WITH 1 INCREMENT BY 1MINVALUE 1 MAXVALUE 999999999999999 ORDER
+""";
+                yield return $"""
  CREATE OR REPLACE TRIGGER {triName}
      BEFORE INSERT ON {DbEmphasis(table.Name.ToUpper())}
      FOR EACH ROW
  BEGIN
      IF :NEW.{DbEmphasis(col.Name.ToUpper())} IS NULL THEN
-         SELECT SEQ_{table.Name.ToUpper()}_{col.Name.ToUpper()}.NEXTVAL INTO :NEW.{DbEmphasis(col.Name.ToUpper())} FROM DUAL
-     END IF
- END
- ALTER TRIGGER {triName} ENABLE
+         SELECT {DbEmphasis(seqName)}.NEXTVAL INTO :NEW.{DbEmphasis(col.Name.ToUpper())} FROM DUAL;
+     END IF;
+ END;
  """;
-                sql.AppendLine(autoIncrement);
+
+                yield return $"ALTER TRIGGER {triName} ENABLE";
             }
         }
 
-        return sql.ToString();
+    }
+
+    private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
+    {
+        var originKey = GetPrimaryKeyName(name, pks);
+        if (originKey.Length < 30)
+        {
+            return originKey;
+        }
+        var over = originKey.Length - 30;
+        var parts = pks.Count() + 1;
+        var splitCount = (over / parts) + 1;
+        return $"PK_{name.Substring(splitCount)}_{string.Join("_", pks.Select(c => c.Name.Substring(splitCount)))}";
+    }
+
+    private static string CheckIdxLength(DbTable info, DbIndex index, int i)
+    {
+        var originKey = GetIndexName(info, index, i);
+        if (originKey.Length < 30)
+        {
+            return originKey;
+        }
+        
+        var over = originKey.Length - 30;
+        var parts = index.Columns.Count() + 1;
+        var splitCount = (over / parts) + 1;
+        return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
     protected override string BuildColumn(DbColumn column)

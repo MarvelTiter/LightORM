@@ -245,25 +245,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             }
             else
             {
-                if (Options.SqlType == SqlPartial.GroupBy)
-                {
-                    if (arg.NodeType == ExpressionType.MemberAccess && arg is MemberExpression e)
-                    {
-                        var parent = e.Expression;
-                        if (parent is ParameterExpression p)
-                        {
-                            //创建匿名类型的来源映射
-                            //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,$"创建匿名类型的来源映射: {p.Name}");
-                            Context.CreateAnonymousMap(exp.Type, p, member.Name, e.Member.Name);
-                            //if (!p.Type.IsAnonymous())
-                            //{
-                            // member 是从 p.Type中来的
-                            //}
-                            //else { }
-                        }
-                        //else if (parent is MemberExpression m) { }
-                    }
-                }
                 ResolvedMembers.Add(exp.Members[i].Name);
                 if (Options.SqlType == SqlPartial.Select)
                 {
@@ -403,13 +384,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
             var paramExp = exp.Expression as ParameterExpression;
             var pType = paramExp?.Type;
-            if (pType.IsAnonymous() == true)
-            {
-                if (Context.TryGetAnonymousInfo(paramExp, exp.Member.Name, out var i))
-                {
-                    paramExp = i!.ParameterExp;
-                }
-            }
+            //if (pType.IsAnonymous() == true)
+            //{
+            //    if (Context.TryGetAnonymousInfo(paramExp, exp.Member.Name, out var i))
+            //    {
+            //        paramExp = i!.ParameterExp;
+            //    }
+            //}
+            //else if (pType?.Name.StartsWith("IExpSelectGrouping") == true)
+            //{
+
+            //}
             //var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
             var table = Context.GetTable(paramExp!);

@@ -5,7 +5,7 @@ namespace LightORM.ExpressionSql;
 
 internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpressionContext, IDisposable
 {
-    private readonly ExpressionSqlOptions option;
+    public ExpressionSqlOptions Options { get; }
     internal SqlExecutorProvider executorProvider;
     public string Id { get; } = $"{Guid.NewGuid():N}";
     private readonly SemaphoreSlim switchSign = new(1, 1);
@@ -27,7 +27,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
 #endif
         executorProvider = new SqlExecutorProvider(option);
-        this.option = option;
+        Options = option;
     }
 
     private string? dbKey = null;
@@ -45,7 +45,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         var ado = Ado;
         try
         {
-            return GenerateDbTable<T>(ado, option, action);
+            return string.Join(Environment.NewLine, GenerateDbTable<T>(ado, Options, action));
         }
         catch (Exception)
         {
@@ -58,13 +58,16 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         var ado = Ado;
         try
         {
-            string? tableSql = GenerateDbTable<T>(ado, option, action);
-            if (tableSql is null || tableSql == string.Empty)
+            var sqls = GenerateDbTable<T>(ado, Options, action);
+            if (!sqls.Any())
             {
                 return false;
             }
             ado.BeginTransaction();
-            await ado.ExecuteNonQueryAsync(tableSql, cancellationToken: cancellationToken);
+            foreach (var s in sqls)
+            {
+                await ado.ExecuteNonQueryAsync(s, cancellationToken: cancellationToken);
+            }
             await ado.CommitTransactionAsync(cancellationToken);
             return true;
         }
@@ -74,7 +77,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
             return false;
         }
     }
-    private static string? GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
+    private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
     {
         if (ado.Database.TableHandler is not null)
         {
@@ -88,7 +91,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
             var tableSql = handler.GenerateDbTable<T>();
             return tableSql;
         }
-        return null;
+        return [];
     }
     public IExpSelect Select(string tableName) => throw new NotImplementedException();//new SelectProvider0(tableName, Ado);
 

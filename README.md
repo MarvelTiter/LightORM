@@ -28,8 +28,10 @@
 - [删除](#删除)
 - [Ado对象](#ado对象)
 - [事务](#事务)
+- [仓储模式和Linq](#仓储模式和Linq)
 - [待办](#待办)
 - [复杂查询示例(Oracle)](#复杂查询示例oracle)
+- [更新日志](./doc/版本日志.md)
 
 # 简介
 
@@ -46,8 +48,6 @@ Provider ( `Sqlite` | `MySql` | `Oracle` | `SqlServer` | `PostgreSQL`)
 ```
 dotnet add package LightORM.Providers.Sqlite --version *
 ```
-
-[更新日志](./doc/版本日志.md)
 
 # 注册和配置
 
@@ -440,7 +440,23 @@ await scoped.SwitchDatabase("v").Select<UserRole>().ToListAsync();
 await scoped.CommitTransactionAsync("v");
 ```
 
-# 待办
+# 仓储模式和Linq
+
+## 接口`ILightOrmRepository<User>`
+
+提供对单个表的增删改查的直接操作
+
+## Linq支持
+
+```csharp
+var usrRepo = Services.GetRequiredService<ILightOrmRepository<User>>();
+var proRepo = Services.GetRequiredService<ILightOrmRepository<Product>>();
+var list = from u in usrRepo.Table
+           join p in proRepo.Table on u.UserId equals p.ProductCode
+           group u by u.Age into g
+           select new { g.Key, Count = g.Average(u => u.Age) };
+
+```
 
 # 复杂查询示例(Oracle)
 

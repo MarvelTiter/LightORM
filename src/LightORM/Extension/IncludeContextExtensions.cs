@@ -30,9 +30,10 @@ namespace LightORM.Extension
 
             static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
             {
-                SelectBuilder includeBuilder = BuildIncludeSqlBuilder(context.DbType, item, include);
+                var database = executor.Database.CustomDatabase;
+                SelectBuilder includeBuilder = BuildIncludeSqlBuilder(database, item, include);
                 var selectedType = include.NavigateInfo!.NavigateType;
-                string sql = includeBuilder.ToSqlString();
+                string sql = includeBuilder.ToSqlString(database);
                 var param = includeBuilder.DbParameters;
                 var typedQuery = QueryMethod.MakeGenericMethod(selectedType);
                 var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
@@ -55,16 +56,16 @@ namespace LightORM.Extension
             }
         }
 
-        public static SelectBuilder BuildIncludeSqlBuilder(DbBaseType dbBaseType, object item, IncludeInfo include)
+        public static SelectBuilder BuildIncludeSqlBuilder(ICustomDatabase database, object item, IncludeInfo include)
         {
             //var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
-            var includeBuilder = BuildSql(dbBaseType, include, item);
+            var includeBuilder = BuildSql(database, include, item);
             return includeBuilder;
         }
 
-        private static SelectBuilder BuildSql(DbBaseType dbBaseType, IncludeInfo include, object item)
+        private static SelectBuilder BuildSql(ICustomDatabase database, IncludeInfo include, object item)
         {
-            SelectBuilder selectSql = new(dbBaseType);
+            SelectBuilder selectSql = new();
             var selectedType = include.NavigateInfo!.NavigateType;
             selectSql.SelectedTables.Add(TableInfo.Create(selectedType));
             //selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
@@ -81,7 +82,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = mapTable,
                     JoinType = TableLinkType.InnerJoin,
-                    Where = $"( {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(mainCol.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {database.AttachEmphasis(selectSql.MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
@@ -89,7 +90,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = TableLinkType.InnerJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(mapTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {database.AttachEmphasis(parentTable.Alias)}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }
             else
@@ -100,7 +101,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = ExpressionSql.TableLinkType.InnerJoin,
-                    Where = $"( {selectSql.AttachEmphasis(parentTable.Alias)}.{selectSql.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.AttachEmphasis(selectSql.MainTable.Alias)}.{selectSql.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {database.AttachEmphasis(parentTable.Alias)}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {database.AttachEmphasis(selectSql.MainTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }
             ParameterExpression[] all = [.. selectSql.AllTables().Select(t => Expression.Parameter(t.Type))];

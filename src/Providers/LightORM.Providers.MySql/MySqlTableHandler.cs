@@ -24,7 +24,7 @@ public sealed class MySqlTableHandler(TableGenerateOption option) : BaseDatabase
         return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
     }
 
-    protected override string BuildSql(DbTable table)
+    protected override IEnumerable<string> BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
@@ -55,7 +55,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
             i++;
         }
 
-        return sql.ToString();
+        yield return sql.ToString();
     }
 
     protected override string ConvertToDbType(DbColumn type)
@@ -84,7 +84,7 @@ CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
             "System.Guid" => "GUID",
             "System.Byte[]" => "BINARY",
             "System.Object" => "VARIANT",
-            _ =>  "VARCHAR",
+            _ => "VARCHAR",
         };
     }
 

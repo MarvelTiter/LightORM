@@ -20,9 +20,9 @@ internal class CustomPostgreSQL() : CustomDatabase(new PostgreSQLMethodResolver(
         // PostgreSQL 使用 LIMIT 和 OFFSET 进行分页
         sql.AppendLine();
         sql.Append(" LIMIT ");
-        sql.Append(builder.PageSize);
+        sql.Append(builder.Take);
         sql.Append(" OFFSET ");
-        sql.Append((builder.PageIndex - 1) * builder.PageSize);
+        sql.Append(builder.Skip);
     }
 
     public override string HandleBooleanValue(bool value)

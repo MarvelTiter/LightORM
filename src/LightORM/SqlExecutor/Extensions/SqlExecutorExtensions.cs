@@ -293,7 +293,7 @@ public static partial class SqlExecutorExtensions
 #endif
         }
     }
-    private static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
+    internal static Func<IDataReader, object> BuildDeserializer<T>(this DbDataReader reader)
     {
 
         if (typeof(T) == typeof(object) || typeof(T) == typeof(MapperRow))

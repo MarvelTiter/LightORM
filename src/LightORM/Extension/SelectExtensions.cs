@@ -39,7 +39,7 @@ public static partial class SelectExtensions
     public static DataTable ToDataTable<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
@@ -47,7 +47,7 @@ public static partial class SelectExtensions
     public static Task<DataTable> ToDataTableAsync<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
@@ -131,7 +131,7 @@ public static partial class SelectExtensions
     public static DataTable ToDataTable<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
@@ -139,7 +139,7 @@ public static partial class SelectExtensions
     public static Task<DataTable> ToDataTableAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }
@@ -207,7 +207,7 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
@@ -216,7 +216,7 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var sql = select.SqlBuilder.ToSqlString();
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTableAsync(sql, parameters);
     }

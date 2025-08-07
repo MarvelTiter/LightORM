@@ -11,29 +11,29 @@ namespace LightORM.Providers
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
         private readonly ISqlExecutor executor;
-        private readonly UpdateBuilder<T> SqlBuilder;
-
+        private readonly UpdateBuilder<T> sqlBuilder;
+        private ICustomDatabase Database => executor.Database.CustomDatabase;
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
-            SqlBuilder.TargetObject = entity;
+            sqlBuilder = new UpdateBuilder<T>();
+            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.TargetObject = entity;
         }
 
         public UpdateProvider(ISqlExecutor executor, IEnumerable<T> entities)
         {
             this.executor = executor;
-            SqlBuilder = new UpdateBuilder<T>(this.executor.Database.DbBaseType);
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
-            SqlBuilder.IsBatchUpdate = true;
-            SqlBuilder.TargetObjects = entities;
+            sqlBuilder = new UpdateBuilder<T>();
+            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.IsBatchUpdate = true;
+            sqlBuilder.TargetObjects = entities;
         }
 
         public int Execute()
         {
-            var sql = SqlBuilder.ToSqlString();
-            if (SqlBuilder.IsBatchUpdate)
+            var sql = sqlBuilder.ToSqlString(Database);
+            if (sqlBuilder.IsBatchUpdate)
             {
                 var usingTransaction = executor.DbTransaction != null;
                 try
@@ -43,7 +43,7 @@ namespace LightORM.Providers
                     {
                         executor.BeginTransaction();
                     }
-                    foreach (var item in SqlBuilder.BatchInfos!)
+                    foreach (var item in sqlBuilder.BatchInfos!)
                     {
                         effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                     }
@@ -65,15 +65,15 @@ namespace LightORM.Providers
             }
             else
             {
-                var dbParameters = SqlBuilder.DbParameters;
+                var dbParameters = sqlBuilder.DbParameters;
                 return executor.ExecuteNonQuery(sql, dbParameters);
             }
         }
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var sql = SqlBuilder.ToSqlString();
-            if (SqlBuilder.IsBatchUpdate)
+            var sql = sqlBuilder.ToSqlString(Database);
+            if (sqlBuilder.IsBatchUpdate)
             {
                 var usingTransaction = executor.DbTransaction == null;
                 try
@@ -83,7 +83,7 @@ namespace LightORM.Providers
                     {
                         await executor.BeginTransactionAsync(cancellationToken: cancellationToken);
                     }
-                    foreach (var item in SqlBuilder.BatchInfos!)
+                    foreach (var item in sqlBuilder.BatchInfos!)
                     {
                         effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
                     }
@@ -105,7 +105,7 @@ namespace LightORM.Providers
             }
             else
             {
-                var dbParameters = SqlBuilder.DbParameters;
+                var dbParameters = sqlBuilder.DbParameters;
                 return await executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
             }
         }
@@ -115,7 +115,7 @@ namespace LightORM.Providers
             //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
             //var member = result.Members!.First();
             //SqlBuilder.SetNullMembers.Add(member);
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
                 ResolveOptions = SqlResolveOptions.Update,
@@ -148,7 +148,7 @@ namespace LightORM.Providers
             //    SqlBuilder.DbParameters.Add(member, value!);
             //}
 
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
                 ResolveOptions = SqlResolveOptions.Update,
@@ -169,7 +169,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
         {
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = columns,
                 ResolveOptions = SqlResolveOptions.Update,
@@ -178,7 +178,7 @@ namespace LightORM.Providers
         }
         public IExpUpdate<T> UpdateColumns(Expression<Func<T, object>> columns)
         {
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = columns,
                 ResolveOptions = SqlResolveOptions.Update,
@@ -188,7 +188,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
         {
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = columns,
                 ResolveOptions = SqlResolveOptions.UpdateIgnore
@@ -198,7 +198,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Where(Expression<Func<T, bool>> exp)
         {
-            SqlBuilder.Expressions.Add(new ExpressionInfo()
+            sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
                 ResolveOptions = SqlResolveOptions.UpdateWhere
@@ -214,15 +214,15 @@ namespace LightORM.Providers
             }
             return this;
         }
-        public string ToSql() => SqlBuilder.ToSqlString();
+        public string ToSql() => sqlBuilder.ToSqlString(Database);
 
         public string ToSqlWithParameters()
         {
-            var sql = SqlBuilder.ToSqlString();
+            var sql = sqlBuilder.ToSqlString(Database);
             StringBuilder sb = new(sql);
             sb.AppendLine();
             sb.AppendLine("参数列表: ");
-            foreach (var item in SqlBuilder.DbParameters)
+            foreach (var item in sqlBuilder.DbParameters)
             {
                 sb.AppendLine($"{item.Key} - {item.Value}");
             }

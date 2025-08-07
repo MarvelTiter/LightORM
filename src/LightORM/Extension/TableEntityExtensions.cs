@@ -33,6 +33,11 @@ internal static class TableEntityExtensions
         return ti.Columns.Where(c => c.IsNavigate && predicate(c));
     }
 
+    public static IEnumerable<ITableColumnInfo> GetPrimaryKeyColumns(this ITableEntityInfo ti)
+    {
+        return ti.Columns.Where(c => c.IsPrimaryKey);
+    }
+    
     //public static ITableColumnInfo GetColumnInfo(this ITableEntityInfo ti, string name)
     //{
     //    return ti.Columns.First(c => c.PropertyName == name);

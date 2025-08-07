@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Collections.ObjectModel;
 
 namespace LightORM.Implements
 {
@@ -52,7 +53,7 @@ namespace LightORM.Implements
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString();
+                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 resolver.Sql.Append(sql);
                 resolver.Sql.Append(')');
             }
@@ -70,7 +71,7 @@ namespace LightORM.Implements
                 sel.SqlBuilder.IsSubQuery = true;
                 sel.SqlBuilder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
-                var sql = sel.SqlBuilder.ToSqlString();
+                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 resolver.Sql.Append(sql);
                 resolver.Sql.Append(')');
             }
@@ -89,24 +90,38 @@ namespace LightORM.Implements
 
         public virtual void Count(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
-            {
-                var sel = methodCall.GetExpSelectObject()!;
-                if (methodCall.Arguments.Count == 0)
-                {
-                    sel.HandleResult(null, "COUNT(*)");
-                }
-                else
-                {
-                    sel.HandleResult(methodCall.Arguments[0], "COUNT({0})");
-                }
+            //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            //{
+            //    var sel = methodCall.GetExpSelectObject()!;
+            //    if (methodCall.Arguments.Count == 0)
+            //    {
+            //        sel.HandleResult(null, "COUNT(*)");
+            //    }
+            //    else
+            //    {
+            //        sel.HandleResult(methodCall.Arguments[0], "COUNT({0})");
+            //    }
 
-                sel.SqlBuilder.Level = resolver.Level + 1;
-                sel.SqlBuilder.IsSubQuery = true;
-                resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString();
-                resolver.Sql.Append(sql);
-                resolver.Sql.Append(')');
+            //    sel.SqlBuilder.Level = resolver.Level + 1;
+            //    sel.SqlBuilder.IsSubQuery = true;
+            //    resolver.Sql.AppendLine("(");
+            //    var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+            //    resolver.Sql.Append(sql);
+            //    resolver.Sql.Append(')');
+            //    return;
+            //}
+            var template = methodCall.Arguments.Count == 0 ? "COUNT(*)" : "COUNT({0})";
+            if (HandleSubContext(resolver, methodCall, template, static (sel, args, template) => sel.HandleResult(args.Count == 0 ? null : args[0], template)))
+            {
+                return;
+            }
+            else if (methodCall.IsLinqExtension())
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    throw new LightOrmException("语法错误: 在Linq中使用聚合函数时，不支持参数");
+                }
+                resolver.Sql.Append("COUNT(*)");
                 return;
             }
 
@@ -150,7 +165,7 @@ namespace LightORM.Implements
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString();
+                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 resolver.Sql.Append(sql);
                 resolver.Sql.AppendLine(")");
                 return;
@@ -185,6 +200,16 @@ namespace LightORM.Implements
             {
                 return;
             }
+            else if (methodCall.IsLinqExtension())
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("SUM(");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(')');
+                }
+                return;
+            }
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("SUM(CASE WHEN ");
@@ -201,10 +226,20 @@ namespace LightORM.Implements
             }
         }
 
-        public virtual void Avg(IExpressionResolver resolver, MethodCallExpression methodCall)
+        public virtual void Average(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             if (HandleSubContext(resolver, methodCall, "AVG({0})"))
             {
+                return;
+            }
+            else if (methodCall.IsLinqExtension())
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("AVG(");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(')');
+                }
                 return;
             }
             if (methodCall.Arguments.Count > 1)
@@ -225,8 +260,18 @@ namespace LightORM.Implements
 
         public virtual void Max(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            if (HandleSubContext(resolver,methodCall, "MAX({0})"))
+            if (HandleSubContext(resolver, methodCall, "MAX({0})"))
             {
+                return;
+            }
+            else if (methodCall.IsLinqExtension())
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("MAX(");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(')');
+                }
                 return;
             }
             if (methodCall.Arguments.Count > 1)
@@ -249,6 +294,16 @@ namespace LightORM.Implements
         {
             if (HandleSubContext(resolver, methodCall, "MIN({0})"))
             {
+                return;
+            }
+            else if (methodCall.IsLinqExtension())
+            {
+                if (methodCall.Arguments.Count > 1)
+                {
+                    resolver.Sql.Append("MIN(");
+                    resolver.Visit(methodCall.Arguments[1]);
+                    resolver.Sql.Append(')');
+                }
                 return;
             }
             if (methodCall.Arguments.Count > 1)
@@ -524,24 +579,46 @@ namespace LightORM.Implements
 
         #endregion
 
-
-        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template)
+        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<IExpSelect, ReadOnlyCollection<Expression>, string> action)
         {
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
                 var sel = methodCall.GetExpSelectObject()!;
 
-                sel.HandleResult(methodCall.Arguments[0], template);
+                //sel.HandleResult(methodCall.Arguments[0], template);
+                action(sel, methodCall.Arguments, template);
 
                 sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString();
+                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 resolver.Sql.Append(sql);
                 resolver.Sql.Append(')');
                 return true;
             }
             return false;
+        }
+        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template)
+        {
+            //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            //{
+            //    var sel = methodCall.GetExpSelectObject()!;
+
+            //    sel.HandleResult(methodCall.Arguments[0], template);
+
+            //    sel.SqlBuilder.Level = resolver.Level + 1;
+            //    sel.SqlBuilder.IsSubQuery = true;
+            //    resolver.Sql.AppendLine("(");
+            //    var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+            //    resolver.Sql.Append(sql);
+            //    resolver.Sql.Append(')');
+            //    return true;
+            //}
+            //return false;
+            return HandleSubContext(resolver, methodCall, template, static (sel, args, template) =>
+            {
+                sel.HandleResult(args[0], template);
+            });
         }
     }
 }

@@ -138,7 +138,7 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder(DbType);
+            SqlBuilder = new SelectBuilder();
 {{string.Join("\n", selecteds)}}
         }
     }

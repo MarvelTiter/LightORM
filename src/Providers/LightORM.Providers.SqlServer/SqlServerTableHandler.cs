@@ -20,7 +20,7 @@ public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseData
         return $"{dataType}{identity}{notNull}";
     }
 
-    protected override string BuildSql(DbTable table)
+    protected override IEnumerable<string> BuildSql(DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -85,7 +85,7 @@ CREATE TABLE {DbEmphasis(table.Name)}(
 
         #endregion
 
-        return sql.ToString();
+        yield return sql.ToString();
     }
 
     private object CheckDefaultValue(DbColumn column)

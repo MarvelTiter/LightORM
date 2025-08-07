@@ -17,7 +17,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder(DbType);
+            SqlBuilder = new SelectBuilder();
             //SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
         }
@@ -346,7 +346,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public ISelectInsert<object> Insert(string tableName, params string[] columns)
     {
         HandleSelectInsert(tableName, string.Join(", ", columns));
-        var sql = SqlBuilder.ToSqlString();
+        //var sql = SqlBuilder.ToSqlString();
         return new SelectInsertProvider<object>(Executor, SqlBuilder);
         //return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);
     }
