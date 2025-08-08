@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using LightORM.DbStruct;
-using LightORM.ExpressionSql;
+﻿using System.Data.Common;
 
 namespace LightORM;
 

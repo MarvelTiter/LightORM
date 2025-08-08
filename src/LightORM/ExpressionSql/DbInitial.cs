@@ -1,10 +1,4 @@
-﻿using LightORM.Cache;
-using LightORM.DbStruct;
-using LightORM.Interfaces;
-using LightORM.Providers;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
+﻿using LightORM.Providers;
 
 namespace LightORM.ExpressionSql;
 

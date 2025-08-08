@@ -1,4 +1,4 @@
-﻿namespace LightORM.ExpressionSql;
+﻿namespace LightORM.Models;
 
 internal static class TableLinkTypeEx
 {

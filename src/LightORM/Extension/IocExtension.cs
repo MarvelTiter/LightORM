@@ -1,7 +1,5 @@
-﻿using LightORM.ExpressionSql;
-using LightORM.Repository;
+﻿using LightORM.Repository;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace LightORM;
 public static class IocExtension

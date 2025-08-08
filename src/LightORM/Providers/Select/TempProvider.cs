@@ -1,11 +1,4 @@
-﻿using LightORM.Interfaces.ExpSql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Providers.Select
+﻿namespace LightORM.Providers.Select
 {
     internal class TempProvider<TTemp> : IExpTemp<TTemp>
     {

@@ -1,8 +1,4 @@
-﻿using LightORM.Builder;
-using System.Data;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 #pragma warning disable CS0419
 namespace LightORM.Interfaces.ExpSql;
 

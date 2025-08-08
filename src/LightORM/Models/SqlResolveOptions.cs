@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LightORM;
+﻿namespace LightORM;
 
 public enum SqlAction
 {

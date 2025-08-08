@@ -1,22 +1,13 @@
-﻿using LightORM.Builder;
-using LightORM.Extension;
+﻿using LightORM.Extension;
 using LightORM.Implements;
-using System;
 using System.Collections;
-using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
 
 internal abstract record SqlBuilder : ISqlBuilder
 {
-    //protected SqlBuilder(DbBaseType type)
-    //{
-    //    DbType = type;
-    //    dbHelperLazy = new Lazy<ICustomDatabase>(() => DbType.GetDbCustom());
-    //}
     public static string N { get; } = Environment.NewLine;
-    //public DbBaseType DbType { get; set; }
 
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
@@ -28,14 +19,6 @@ internal abstract record SqlBuilder : ISqlBuilder
     public List<string> Members { get; set; } = [];
     public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
     public bool? IsParameterized { get; set; } = true;
-
-    //private readonly Lazy<ICustomDatabase> dbHelperLazy;
-    //public ICustomDatabase DbHelper => dbHelperLazy.Value;
-
-    //public string AttachPrefix(string content) => DbHelper.AttachPrefix(content);
-    //public string AttachEmphasis(string content) => DbHelper.AttachEmphasis(content);
-
-    //public int DbParameterStartIndex { get; set; }
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
     public void TryAddParameters(string sql, object? value)
@@ -52,7 +35,8 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     protected void HandleSqlParameters(StringBuilder sql, ICustomDatabase database)
     {
-        var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
+        //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
+        // TODO 非参数化查询
         foreach (var item in DbParameterInfos)
         {
             if (item.Type == ExpValueType.Null || item.Value is null)
@@ -169,4 +153,50 @@ internal abstract record SqlBuilder : ISqlBuilder
             _ => throw new NotSupportedException("不支持的Version列类型"),
         };
     }
+
+    ///// <summary>
+    ///// 过滤SQL值以防止注入
+    ///// </summary>
+    //private static string SanitizeSqlValue(object value)
+    //{
+    //    if (value == null) return "NULL";
+
+    //    switch (value)
+    //    {
+    //        case string s:
+    //            // 转义单引号并包裹在引号中
+    //            return "'" + s.Replace("'", "''") + "'";
+
+    //        case DateTime dt:
+    //            // 日期时间格式化
+    //            return "'" + dt.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'";
+
+    //        case DateTimeOffset dto:
+    //            return "'" + dto.ToString("yyyy-MM-dd HH:mm:ss.fff zzz") + "'";
+
+    //        case Guid guid:
+    //            return "'" + guid.ToString() + "'";
+
+    //        case byte[] bytes:
+    //            // 二进制数据转为十六进制字符串
+    //            return "0x" + BitConverter.ToString(bytes).Replace("-", "");
+
+    //        case IFormattable formattable:
+    //            // 数字类型直接ToString
+    //            return formattable.ToString(null, CultureInfo.InvariantCulture);
+
+    //        case IEnumerable enumerable when value is not string:
+    //            // 处理集合类型
+    //            var items = new List<string>();
+    //            foreach (var item in enumerable)
+    //            {
+    //                items.Add(SanitizeSqlValue(item));
+    //            }
+    //            return "(" + string.Join(", ", items) + ")";
+
+    //        default:
+    //            // 其他类型直接ToString并转义
+    //            return "'" + value.ToString().Replace("'", "''") + "'";
+    //    }
+    //}
 }

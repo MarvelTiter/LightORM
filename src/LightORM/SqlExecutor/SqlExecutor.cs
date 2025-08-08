@@ -1,14 +1,9 @@
 ﻿using System.ComponentModel;
-using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Reflection.Emit;
 using System.Reflection;
-using System.Threading.Tasks;
-using LightORM.Cache;
 using System.Threading;
 using System.Collections.Concurrent;
-using LightORM.Models;
 namespace LightORM.SqlExecutor;
 
 internal partial class SqlExecutor : ISqlExecutor, IDisposable

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Models;
+﻿namespace LightORM.Models;
 internal class Certificate
 {
     public Certificate(string conn, string commandText, Type parameterType)

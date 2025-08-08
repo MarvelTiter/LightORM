@@ -49,8 +49,7 @@ public class LightOrmAop : AdoInterceptorBase
 {
     public override void AfterExecute(SqlExecuteContext context)
     {
-        //Debug.WriteLine($"{context.TraceId} 语句:{Environment.NewLine}{context.Sql}");
-        //Debug.WriteLine($"{context.TraceId} 耗时:{context.Elapsed}");
+        Debug.WriteLine($"{context.TraceId} {Environment.NewLine}{context.Sql} {Environment.NewLine}耗时:{context.Elapsed}");
     }
 
     public override void BeforeExecute(SqlExecuteContext context)

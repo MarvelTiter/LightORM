@@ -1,5 +1,4 @@
 ﻿using LightORM.DbStruct;
-using System.Linq;
 
 namespace LightORM.Extension;
 

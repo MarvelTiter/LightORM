@@ -1,6 +1,4 @@
 ﻿using LightORM.Extension;
-using System.Drawing;
-using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;

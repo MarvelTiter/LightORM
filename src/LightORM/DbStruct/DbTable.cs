@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace LightORM.DbStruct;
+﻿namespace LightORM.DbStruct;
 
 public struct DbTable
 {

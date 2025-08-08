@@ -1,9 +1,4 @@
-﻿using LightORM.ExpressionSql;
-using LightORM.Implements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using LightORM.Implements;
 
 namespace LightORM.Interfaces
 {

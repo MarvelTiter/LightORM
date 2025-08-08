@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace LightORM.Interfaces;
+﻿namespace LightORM.Interfaces;
 
 public interface ITableColumnInfo
 {

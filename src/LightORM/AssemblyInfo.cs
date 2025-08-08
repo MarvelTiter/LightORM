@@ -1,7 +1,6 @@
 ﻿global using static LightORM.AssemblyControl.DebugControl;
 using LightORM.DbEntity.Attributes;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("InjectTest")]
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
@@ -26,6 +25,6 @@ namespace LightORM.AssemblyControl
     internal static class DebugControl
     {
         public static readonly bool ShowExpressionResolveDebugInfo = false;
-        public static readonly bool ShowSqlExecutorDebugInfo = false;
+        public static readonly bool ShowSqlExecutorDebugInfo = true;
     }
 }

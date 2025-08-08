@@ -51,34 +51,34 @@ namespace LightOrmExtensionGenerator
             string join = count < 16 ? $$"""
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
-                        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.InnerJoin);
+                        this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
-                        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.LeftJoin);
+                        this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
-                        this.JoinHandle<TJoin>(exp, ExpressionSql.TableLinkType.RightJoin);
+                        this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
-                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+                        this.JoinHandle<TJoin>(where, TableLinkType.InnerJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
-                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+                        this.JoinHandle<TJoin>(where, TableLinkType.LeftJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
-                        this.JoinHandle<TJoin>(where, ExpressionSql.TableLinkType.RightJoin, subQuery);
+                        this.JoinHandle<TJoin>(where, TableLinkType.RightJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                 """ : "";
@@ -88,39 +88,39 @@ namespace LightOrmExtensionGenerator
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.InnerJoin, subQuery);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.LeftJoin, subQuery);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
-                        this.JoinHandle<TJoin>(flatExp, ExpressionSql.TableLinkType.RightJoin, subQuery);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                 """ : "";

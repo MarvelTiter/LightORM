@@ -1,8 +1,5 @@
 ﻿using System.Data.Common;
-using System.Threading;
-using System.Collections.Concurrent;
 using System.Diagnostics;
-using static LightORM.SqlExecutor.ConnectionPool;
 namespace LightORM.SqlExecutor;
 internal class ConnectionPool(Func<DbConnection> func, int maxCapacity) : ObjectPool<DbConnection>(func,maxCapacity)
 {

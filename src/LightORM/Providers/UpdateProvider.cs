@@ -1,10 +1,6 @@
-﻿using LightORM.Builder;
-using LightORM.Extension;
-using LightORM.Interfaces.ExpSql;
-using System.Linq;
+﻿using LightORM.Extension;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers
 {

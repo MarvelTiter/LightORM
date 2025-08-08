@@ -100,7 +100,7 @@ namespace LightORM.Extension
                 selectSql.Joins.Add(new JoinInfo
                 {
                     EntityInfo = parentTable,
-                    JoinType = ExpressionSql.TableLinkType.InnerJoin,
+                    JoinType = TableLinkType.InnerJoin,
                     Where = $"( {database.AttachEmphasis(parentTable.Alias)}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {database.AttachEmphasis(selectSql.MainTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }

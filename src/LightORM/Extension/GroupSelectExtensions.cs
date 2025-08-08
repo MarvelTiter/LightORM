@@ -1,6 +1,4 @@
-﻿using System.CodeDom.Compiler;
-
-namespace LightORM;
+﻿namespace LightORM;
 
 public static class GroupSelectExtensions
 {

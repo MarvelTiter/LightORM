@@ -1,6 +1,4 @@
 ﻿using LightORM.Extension;
-using System;
-using System.Linq;
 using System.Text;
 
 namespace LightORM.Builder;
@@ -179,16 +177,26 @@ internal record UpdateBuilder<T> : SqlBuilder
             }
         }
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
-        IEnumerable<string>? finalUpdateCol = customCols.Select(c => $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)}");
 
-        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName)).ToArray();
-        if (setNullCol.Length > 0)
+        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName));
+        
+        StringBuilder sb = new("UPDATE ");
+        sb.Append(GetTableName(database, MainTable, false));
+        sb.AppendLine(" SET");
+        foreach (var c in customCols)
         {
-            finalUpdateCol = finalUpdateCol.Concat(setNullCol.Select(c => $"{database.AttachEmphasis(c.ColumnName)} = NULL"));
+            // 处理一般列
+            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)}");
+        }
+        foreach (var c in setNullCol)
+        {
+            // 处理显式设置为Null值的列
+            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = NULL");
         }
         if (versionColumn is not null)
         {
-            finalUpdateCol = finalUpdateCol.Concat([$"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")}"]);
+            // 处理版本列
+            sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")}");
             if (!WhereMembers.Contains(versionColumn.PropertyName))
             {
                 var versonCondition = $"({database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}")})";
@@ -196,10 +204,6 @@ internal record UpdateBuilder<T> : SqlBuilder
                     Where.Add(versonCondition);
             }
         }
-        StringBuilder sb = new("UPDATE ");
-        sb.Append(GetTableName(database, MainTable, false));
-        sb.AppendLine(" SET");
-        sb.AppendLine(string.Join($",{N}", finalUpdateCol));
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
         HandleSqlParameters(sb, database);
         return sb.Trim();

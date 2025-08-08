@@ -1,5 +1,4 @@
 ﻿using LightORM.Extension;
-using LightORM.Providers.Select;
 
 namespace LightORM;
 

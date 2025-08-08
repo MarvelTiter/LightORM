@@ -1,28 +1,17 @@
-﻿using LightORM.Providers;
-using System;
-using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Threading;
 namespace LightORM.ExpressionSql;
 
-internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpressionContext, IDisposable
+internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : ExpressionCoreSqlBase, IExpressionContext
 {
-    public ExpressionSqlOptions Options { get; }
-    internal SqlExecutorProvider executorProvider;
+    public ExpressionSqlOptions Options { get; } = option;
+    internal SqlExecutorProvider executorProvider = new(option);
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public override ISqlExecutor Ado => executorProvider.GetSqlExecutor(Options.DefaultDbKey);
-    public ExpressionCoreSql(ExpressionSqlOptions option)
-    {
-#if DEBUG
-        Console.WriteLine($"创建ExpressionCoreSql：{DateTime.Now}");
-#endif
-        executorProvider = new SqlExecutorProvider(option);
-        Options = option;
-    }
 
     public ITransientExpressionContext SwitchDatabase(string key)
     {
         var ado = executorProvider.GetSqlExecutor(key);
-        return ExpressionCoreSqlWithKey.Create(key, ado);
+        return TransientExpressionCoreSql.Create(key, ado);
     }
 
     public string? CreateTableSql<T>(Action<TableGenerateOption>? action = null)
@@ -89,9 +78,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         {
             if (disposing)
             {
-#if DEBUG
-                Console.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
-#endif
+                System.Diagnostics.Debug.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
                 executorProvider.Dispose();
             }
 
@@ -103,37 +90,4 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-}
-
-
-internal sealed class ExpressionCoreSqlWithKey(string key, ISqlExecutor ado) : ExpressionCoreSqlBase, ITransientExpressionContext
-{
-    private static readonly ConcurrentDictionary<string, WeakReference<ExpressionCoreSqlWithKey>> weakCache =
-        new();
-    private readonly ISqlExecutor ado = ado;
-    public override ISqlExecutor Ado => ado;
-    public string Key { get; } = key;
-    public static ExpressionCoreSqlWithKey Create(string key, ISqlExecutor executor)
-    {
-        // 尝试从缓存获取
-        if (weakCache.TryGetValue(key, out var weakRef))
-        {
-            if (weakRef.TryGetTarget(out var cachedInstance))
-            {
-                return cachedInstance;
-            }
-            //else
-            //{
-            //    var newInstance = new ExpressionCoreSqlWithKey(executor);
-            //    weakRef.SetTarget(newInstance);
-            //    return newInstance;
-            //}
-        }
-
-        // 创建新实例并缓存
-        var newInstance = new ExpressionCoreSqlWithKey(key, executor);
-        weakCache[key] = new WeakReference<ExpressionCoreSqlWithKey>(newInstance);
-        return newInstance;
-    }
-
 }

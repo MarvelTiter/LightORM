@@ -10,11 +10,9 @@ global using LightORM.Utils;
 global using System;
 global using System.Collections.Generic;
 global using System.Data;
-global using System.Diagnostics.CodeAnalysis;
 global using System.Linq;
 global using System.Linq.Expressions;
 global using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 
 namespace System.Runtime.CompilerServices
 {

@@ -10,7 +10,7 @@ public class UpdateSql : TestBase
     public void UpdateEntity()
     {
         var p = new Product();
-        var sql = Db.Update(p).ToSql();
+        var sql = Db.Update(p).ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //    UPDATE `Product` SET
@@ -124,7 +124,7 @@ public class UpdateSql : TestBase
         var sql = Db.Update(p)
             .ToSql();
         Console.WriteLine(sql);
-        
+
     }
 
     [TestMethod]
@@ -132,7 +132,7 @@ public class UpdateSql : TestBase
     {
         var datas = GetList();
 
-        var sql = Db.Update([..datas]).ToSql();
+        var sql = Db.Update([.. datas]).ToSql();
         Console.WriteLine(sql);
         List<UserFlat> GetList()
         {

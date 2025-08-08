@@ -11,7 +11,7 @@ public class UserFlat
     public string UserName { get; set; }
     [LightColumn(Name = "PASSWORD")]
     public string Password { get; set; }
-    
+
     [LightColumn(Name = "SIGN")]
     public string Sign { get; set; }
     [LightColumn(Name = "LAST_LOGIN")]

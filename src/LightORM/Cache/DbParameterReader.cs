@@ -1,10 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
-using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Xml;
 
 namespace LightORM.Cache;
 

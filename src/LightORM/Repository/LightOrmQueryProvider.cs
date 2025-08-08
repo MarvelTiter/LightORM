@@ -1,6 +1,4 @@
 ﻿using LightORM.Extension;
-using System.Data.Common;
-using System.Linq.Expressions;
 
 namespace LightORM.Repository;
 internal class LightOrmQueryProvider : IQueryProvider

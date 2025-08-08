@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
 namespace LightORM.Interfaces.ExpSql;
 
 public interface ISql
