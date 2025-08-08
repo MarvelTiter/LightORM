@@ -23,6 +23,7 @@ namespace DatabaseUtils
         IDbOperator? dbOperator = null;
         bool showSetting;
         private Config config = new Config();
+        private string? dbKey;
         [Inject, NotNull] IExpressionContext? Context { get; set; }
 
         async Task Connect()
@@ -64,7 +65,7 @@ namespace DatabaseUtils
                     table.Columns = await dbOperator!.GetTableStructAsync(table.TableName);
                     string formatted = table.PascalName(prefix, separator);
                     var content = dbOperator.BuildContent(table, prefix, separator);
-                    var classcontent = string.Format(ClassTemplate.Class, config.Namespace, table.TableName, formatted, content);
+                    var classcontent = string.IsNullOrEmpty(dbKey) ? string.Format(ClassTemplate.Class, config.Namespace, table.TableName, formatted, content) : string.Format(ClassTemplate.ClassWithDatabaseKey, config.Namespace, table.TableName, formatted, content, dbKey);
                     GeneratedTables.Add(new()
                     {
                         TableName = table.TableName,

@@ -17,11 +17,28 @@ $@"/*
  * 时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}
  * 作者：yaoqinglin
  */
-#nullable disable
 using LightORM;
 namespace {{0}};
 
 [LightTable(Name = ""{{1}}"")]
+public class {{2}}
+{{{{
+    {{3}}
+}}}}
+";
+        /// <summary>
+        /// 参数顺序 命名空间 -> 表名 -> 类名 -> 内容 - > 数据库键
+        /// </summary>
+        public static string ClassWithDatabaseKey =>
+$@"/*
+ * 该文件由代码生成
+ * 时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}
+ * 作者：yaoqinglin
+ */
+using LightORM;
+namespace {{0}};
+
+[LightTable(Name = ""{{1}}"", DatabaseKey = ""{{4}}"")]
 public class {{2}}
 {{{{
     {{3}}

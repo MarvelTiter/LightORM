@@ -57,10 +57,10 @@ namespace DatabaseUtils.Helper
             {
                 properties.Append(", NotNull = true");
             }
-            if (!string.IsNullOrWhiteSpace(column.Length) && csharpType.StartsWith("string"))
-            {
-                properties.Append($", Length = {column.Length}");
-            }
+            //if (!string.IsNullOrWhiteSpace(column.Length) && csharpType.StartsWith("string"))
+            //{
+            //    properties.Append($", Length = {column.Length}");
+            //}
 
             if (!string.IsNullOrWhiteSpace(column.Comments))
             {

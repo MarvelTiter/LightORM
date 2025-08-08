@@ -22,6 +22,9 @@
                 数据库列表
                 <Checkbox OnChange="AllHandle">全选</Checkbox>
             </div>
+            <div style="padding:10px;height:50px;line-height:30px;">
+                <Input @bind-Value="@dbKey" AllowClear Placeholder="DatabaseKey"></Input>
+            </div>
             <Card Style="height:calc(100% - 50px);overflow-y:auto;width:fit-content;min-width:200px;">
                 <ChildContent>
                     <AntList DataSource="@Tables">
