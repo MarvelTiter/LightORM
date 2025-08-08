@@ -34,6 +34,19 @@ internal class ExpressionSqlOptions
 {
     private int poolSize = Environment.ProcessorCount * 4;
     public int PoolSize => poolSize;
+    private string? defaultDbKey;
+    public string DefaultDbKey
+    {
+        get
+        {
+            var d = defaultDbKey?? ConstString.Main;
+            if (!DatabaseProviders.ContainsKey(d))
+            {
+                throw new KeyNotFoundException($"数据库 '{d}' 未注册. 使用'SetDefault'设置默认值.");
+            }
+            return d;
+        }
+    }
     public static Lazy<ExpressionSqlOptions> Instance { get; }
     public bool UseParameterized { get; set; } = true;
     public IServiceProvider? Services { get; set; }
@@ -86,6 +99,11 @@ internal class ExpressionSqlOptions
         TableContext.StaticContext = context;
     }
 
+    public void SetDefaultDatabase(string key)
+    {
+        defaultDbKey = key;
+    }
+
     public void AddInterceptor(Type interceptorType, IAdoInterceptor? interceptor)
     {
         if (!TypedInterceptors.TryGetValue(interceptorType, out _) && interceptor is not null)
@@ -101,7 +119,11 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     private readonly List<Type> interceptorTypes = [];
 
     public WeakReference<IServiceCollection>? WeakServices { get; set; }
-
+    public IExpressionContextSetup SetDefault(string key)
+    {
+        option.SetDefaultDatabase(key);
+        return this;
+    }
     public IExpressionContextSetup SetUseParameterized(bool use)
     {
         option.UseParameterized = use;

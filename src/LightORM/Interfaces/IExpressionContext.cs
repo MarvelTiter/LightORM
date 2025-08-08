@@ -4,6 +4,22 @@ using System.Threading.Tasks;
 
 namespace LightORM;
 
+public interface ITransientExpressionContext
+{
+    internal string Key { get; }
+    IExpSelect<T> Select<T>();
+    //IExpInsert<T> Insert<T>(T entity);
+    IExpInsert<T> Insert<T>(params T[] entities);
+    IExpUpdate<T> Update<T>();
+    //IExpUpdate<T> Update<T>(T entity);
+    IExpUpdate<T> Update<T>(params T[] entities);
+    IExpDelete<T> Delete<T>();
+    //IExpDelete<T> Delete<T>(bool force, bool truncate = false);
+    //IExpDelete<T> Delete<T>(T entity);
+    IExpDelete<T> Delete<T>(params T[] entities);
+    ISqlExecutor Ado { get; }
+}
+
 public interface IExpressionContext : IDbAction
 {
     string Id { get; }
@@ -39,34 +55,14 @@ public interface IExpressionContext : IDbAction
 
 public interface IDbAction
 {
-
-    //void BeginTranAll();
-    //Task BeginTranAllAsync();
-    //void CommitTranAll();
-    //Task CommitTranAllAsync();
-    //void RollbackTranAll();
-    //Task RollbackTranAllAsync();
-
-    //void BeginTran(string key = ConstString.Main);
-    //Task BeginTranAsync(string key = ConstString.Main);
-    //void CommitTran(string key = ConstString.Main);
-    //Task CommitTranAsync(string key = ConstString.Main);
-    //void RollbackTran(string key = ConstString.Main);
-    //Task RollbackTranAsync(string key = ConstString.Main);
-    IExpressionContext Use(IDatabaseProvider db);
-    IExpressionContext SwitchDatabase(string key);
+    ISingleScopedExpressionContext Use(IDatabaseProvider db);
+    ITransientExpressionContext SwitchDatabase(string key);
     /// <summary>
     /// 创建指定数据库的单元操作对象，支持事务
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
     ISingleScopedExpressionContext CreateScoped(string key);
-    ///// <summary>
-    ///// 创建指定数据库的单元操作对象，开启事务
-    ///// </summary>
-    ///// <param name="key"></param>
-    ///// <returns></returns>
-    //Task<ISingleScopedExpressionContext> CreateScopedAsync(string key = ConstString.Main);
     /// <summary>
     /// 创建单元操作对象，支持事务
     /// </summary>
@@ -76,6 +72,7 @@ public interface IDbAction
     Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
 
 }
+
 
 /// <summary>
 /// UnitOfWork, 该对象的所有操作，支持事务
@@ -107,6 +104,7 @@ public interface IScopedExpressionContext : IDisposable// IExpressionSql<IScoped
     void RollbackAllTransaction();
     Task RollbackAllTransactionAsync();
 }
+
 /// <summary>
 /// 只能对单个数据库操作
 /// </summary>

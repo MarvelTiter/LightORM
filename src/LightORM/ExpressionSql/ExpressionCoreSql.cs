@@ -1,5 +1,6 @@
 ﻿using LightORM.Providers;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 namespace LightORM.ExpressionSql;
 
@@ -8,19 +9,7 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
     public ExpressionSqlOptions Options { get; }
     internal SqlExecutorProvider executorProvider;
     public string Id { get; } = $"{Guid.NewGuid():N}";
-    private readonly SemaphoreSlim switchSign = new(1, 1);
-    //public override ISqlExecutor Ado => executorProvider.GetSqlExecutor(CurrentKey, UseTrans);
-    public override ISqlExecutor Ado
-    {
-        get
-        {
-            dbKey ??= ConstString.Main;
-            var ado = executorProvider.GetSqlExecutor(dbKey);
-            dbKey = null;
-            if (switchSign.CurrentCount == 0) switchSign.Release();
-            return ado;
-        }
-    }
+    public override ISqlExecutor Ado => executorProvider.GetSqlExecutor(Options.DefaultDbKey);
     public ExpressionCoreSql(ExpressionSqlOptions option)
     {
 #if DEBUG
@@ -30,14 +19,10 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         Options = option;
     }
 
-    private string? dbKey = null;
-
-    public IExpressionContext SwitchDatabase(string key)
+    public ITransientExpressionContext SwitchDatabase(string key)
     {
-        // 确保切换key之后，Provider拿到的ISqlExecutor是对应的
-        switchSign.Wait();
-        dbKey = key;
-        return this;
+        var ado = executorProvider.GetSqlExecutor(key);
+        return ExpressionCoreSqlWithKey.Create(key, ado);
     }
 
     public string? CreateTableSql<T>(Action<TableGenerateOption>? action = null)
@@ -118,4 +103,37 @@ internal sealed partial class ExpressionCoreSql : ExpressionCoreSqlBase, IExpres
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+}
+
+
+internal sealed class ExpressionCoreSqlWithKey(string key, ISqlExecutor ado) : ExpressionCoreSqlBase, ITransientExpressionContext
+{
+    private static readonly ConcurrentDictionary<string, WeakReference<ExpressionCoreSqlWithKey>> weakCache =
+        new();
+    private readonly ISqlExecutor ado = ado;
+    public override ISqlExecutor Ado => ado;
+    public string Key { get; } = key;
+    public static ExpressionCoreSqlWithKey Create(string key, ISqlExecutor executor)
+    {
+        // 尝试从缓存获取
+        if (weakCache.TryGetValue(key, out var weakRef))
+        {
+            if (weakRef.TryGetTarget(out var cachedInstance))
+            {
+                return cachedInstance;
+            }
+            //else
+            //{
+            //    var newInstance = new ExpressionCoreSqlWithKey(executor);
+            //    weakRef.SetTarget(newInstance);
+            //    return newInstance;
+            //}
+        }
+
+        // 创建新实例并缓存
+        var newInstance = new ExpressionCoreSqlWithKey(key, executor);
+        weakCache[key] = new WeakReference<ExpressionCoreSqlWithKey>(newInstance);
+        return newInstance;
+    }
+
 }

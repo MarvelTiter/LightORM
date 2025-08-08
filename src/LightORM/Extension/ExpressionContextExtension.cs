@@ -46,59 +46,42 @@ public static class ExpressionContextExtension
         return ado.Database.BulkCopy(dataTable);
     }
 
-    private static void SwitchDb<T>(this IExpressionContext context)
+    private static ITransientExpressionContext GetAttrDbKey<T>(this IExpressionContext context)
     {
         var table = TableContext.GetTableInfo<T>();
-        if (table.TargetDatabase != null)
+        if (table.TargetDatabase is null)
         {
-            context.SwitchDatabase(table.TargetDatabase);
+            throw new LightOrmException("实体上没有设置DatabaseKey，无法自动切换数据库");
         }
+        return context.SwitchDatabase(table.TargetDatabase);
     }
 
     public static IExpSelect<T> SelectWithAttr<T>(this IExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Select<T>();
-    }
+        => context.GetAttrDbKey<T>().Select<T>();
+
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Insert<T>(entity);
-    }
+        => context.GetAttrDbKey<T>().Insert<T>(entity);
+
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, params T[] entities)
-    {
-        context.SwitchDb<T>();
-        return context.Insert<T>(entities);
-    }
+        => context.GetAttrDbKey<T>().Insert<T>(entities);
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>();
-    }
+        => context.GetAttrDbKey<T>().Update<T>();
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>(entity);
-    }
+     => context.GetAttrDbKey<T>().Update<T>(entity);
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, params T[] entities)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>(entities);
-    }
+        => context.GetAttrDbKey<T>().Update<T>(entities);
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Delete<T>();
-    }
+        => context.GetAttrDbKey<T>().Delete<T>();
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Delete<T>(entity);
-    }
+        => context.GetAttrDbKey<T>().Delete<T>(entity);
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, params T[] entities)
-    {
-        throw new NotImplementedException();
-    }
+        => context.GetAttrDbKey<T>().Delete<T>(entities);
 
     public static ISingleScopedExpressionContext CreateMainDbScoped(this IExpressionContext context)
     {
@@ -148,58 +131,42 @@ public static class ExpressionContextExtension
 
 public static class ScopedExpressionContextExtensions
 {
-    private static void SwitchDb<T>(this IScopedExpressionContext context)
+    private static IScopedExpressionContext SwitchDb<T>(this IScopedExpressionContext context)
     {
         var table = TableContext.GetTableInfo<T>();
         if (table.TargetDatabase != null)
         {
-            context.SwitchDatabase(table.TargetDatabase);
+            return context.SwitchDatabase(table.TargetDatabase);
         }
+        throw new LightOrmException("实体上没有设置DatabaseKey，无法自动切换数据库");
     }
 
     public static IExpSelect<T> SelectWithAttr<T>(this IScopedExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Select<T>();
-    }
+        => context.SwitchDb<T>().Select<T>();
+
     public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Insert<T>(entity);
-    }
+        => context.SwitchDb<T>().Insert<T>(entity);
+
+
     public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-    {
-        context.SwitchDb<T>();
-        return context.Insert<T>(entities);
-    }
+        => context.SwitchDb<T>().Insert<T>(entities);
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>();
-    }
+        => context.SwitchDb<T>().Update<T>();
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>(entity);
-    }
+        => context.SwitchDb<T>().Update<T>(entity);
+
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-    {
-        context.SwitchDb<T>();
-        return context.Update<T>(entities);
-    }
+        => context.SwitchDb<T>().Update<T>(entities);
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context)
-    {
-        context.SwitchDb<T>();
-        return context.Delete<T>();
-    }
+        => context.SwitchDb<T>().Delete<T>();
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, T entity)
-    {
-        context.SwitchDb<T>();
-        return context.Delete<T>(entity);
-    }
+        => context.SwitchDb<T>().Delete<T>(entity);
+
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-    {
-        throw new NotImplementedException();
-    }
+        => context.SwitchDb<T>().Delete<T>(entities);
 }
 

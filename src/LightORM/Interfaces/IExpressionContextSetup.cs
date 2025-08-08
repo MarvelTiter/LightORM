@@ -4,6 +4,7 @@ namespace LightORM.Interfaces;
 
 public interface IExpressionContextSetup
 {
+    IExpressionContextSetup SetDefault(string key);
     IExpressionContextSetup SetUseParameterized(bool use);
     IExpressionContextSetup SetConnectionPoolSize(int poolSize);
     IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider);
