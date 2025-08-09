@@ -182,21 +182,21 @@ internal record UpdateBuilder<T> : SqlBuilder
         
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(database, MainTable, false));
-        sb.AppendLine(" SET");
+        sb.AppendLine(" SET   ");
         foreach (var c in customCols)
         {
             // 处理一般列
-            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)}");
+            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)},");
         }
         foreach (var c in setNullCol)
         {
             // 处理显式设置为Null值的列
-            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = NULL");
+            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = NULL,");
         }
         if (versionColumn is not null)
         {
             // 处理版本列
-            sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")}");
+            sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")},");
             if (!WhereMembers.Contains(versionColumn.PropertyName))
             {
                 var versonCondition = $"({database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}")})";
@@ -204,6 +204,8 @@ internal record UpdateBuilder<T> : SqlBuilder
                     Where.Add(versonCondition);
             }
         }
+        sb.RemoveLast(N.Length + 1);
+        sb.AppendLine();
         sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
         HandleSqlParameters(sb, database);
         return sb.Trim();
