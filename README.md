@@ -511,8 +511,9 @@ var info = Db.Select<Jobs>().AsTemp("info", j => new
     Fzjg = j.Plate!.Substring(1, 2),
     j.StnId
 });
-// 从info表中，按StnId和Fzjg分组并且按Count(*)排序后，选择StnId，Fzjg，Count(*)，RowNumer，作为temp表，并命名为stn_fzjg，表数据为每个StnId中，按Fzjg数据量进行排序并标记为Index
-var stnFzjg = Db.FromTemp(info).GroupBy(a => new { a.StnId, a.Fzjg })
+// 从info表中，按StnId和Fzjg分组并且按Count(*)排序后，选择StnId，Fzjg，Count(*)，RowNumer，作为temp表，并命名stn_fzjg，表数据为每个StnId中，按Fzjg数据量进行排序并标记为Index
+var stnFzjg = Db.FromTemp(info)
+    .GroupBy(a => new { a.StnId, a.Fzjg })
     .OrderByDesc(a => new { a.Group.StnId, i = a.Count() })
     .AsTemp("stn_fzjg", g => new
     {
@@ -521,7 +522,7 @@ var stnFzjg = Db.FromTemp(info).GroupBy(a => new { a.StnId, a.Fzjg })
         Count = g.Count(),
         Index = WinFn.RowNumber().PartitionBy(g.Tables.StnId).OrderByDesc(g.Count()).Value()
     });
-// 从info表中，按Fzjg分组并且按Count(*)排序后，选择StnId，Fzjg，Count(*)，RowNumer，作为temp表，并命名为all_fzjg，表数据为所有Fzjg中，按每个Fzjg的数据量进行排序并标记为Index
+// 从info表中，按Fzjg分组并且按Count(*)排序后，选择StnId，Fzjg，Count(*)，RowNumer，作为temp表，并命名all_fzjg，表数据为所有Fzjg中，按每个Fzjg的数据量进行排序并标记为Index
 var allFzjg = Db.FromTemp(info).GroupBy(a => new { a.Fzjg })
     .OrderByDesc(a => a.Count())
     .AsTemp("all_fzjg", g => new
@@ -532,75 +533,76 @@ var allFzjg = Db.FromTemp(info).GroupBy(a => new { a.Fzjg })
         Index = WinFn.RowNumber().OrderByDesc(g.Count()).Value()
     });
 // 从info表中，按StnId进行Group By Rollup ，选择StnId和分组数据量，作为temp表，并命名为all_station
-var allStation = Db.FromTemp(info).GroupBy("ROLLUP(\"StnId\")")
+var allStation = Db.FromTemp(info).GroupBy(t => new { t.StnId })
+    .Rollup()
     .AsTemp("all_station", g => new
     {
-        StnId = SqlFn.Nvl(g.StnId, "合计"),
+        StnId = SqlFn.NullThen(g.Group.StnId, "合计"),
         Total = SqlFn.Count()
     });
-/**
-1. 从stn_fzjg中，筛选出所有前3的Fzjg数量，然后按StnId分组，选择StnId，组内第一Fzjg作为FirstFzjg，组内第一的Count作为FirstCount
-2. 从all_fzjg中，筛选出所有前3的Fzjg数量，选择'合计'作为StnId，第一Fzjg作为FirstFzjg，第一的Count作为FirstCount
-3. 将1和2的结果Union ALl
-4. 转为子查询，inner join all_station
-5. select结果列
+/*
+ * 1. 从stn_fzjg中，筛选出所有前3的Fzjg数量，然后按StnId分组，选择StnId，组内第一Fzjg作为FirstFzjg，组内第一Count作为FirstCount
+ * 2. 从all_fzjg中，筛选出所有前3的Fzjg数量，选择'合计'作为StnId，第一Fzjg作为FirstFzjg，第一的Count作FirstCount
+ * 3. 将1和2的结果Union ALl
+ * 4. 转为子查询，inner join all_station
+ * 5. select结果列
  */
-var result = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
+var sql = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
     .GroupBy(t => new { t.StnId })
     .AsTable(g => new
     {
         StnId = g.Group.StnId!,
-        FirstFzjg = g.Join(g.Tables.Index == 1 ? g.Tables.Fzjg.ToString() : "").Separator("").OrderBy(g.Tables.StnId).Value(),
-        FirstCount = g.Join(g.Tables.Index == 1 ? g.Tables.Count.ToString() : "").Separator("").OrderBy(g.Tables.StnId).Value()
+        FirstFzjg = g.Join(g.Tables.Index == 1 ? g.Tables.Fzjg.ToString() : "").Separator("").OrderB(g.Tables.StnId).Value(),
+        FirstCount = g.Join(g.Tables.Index == 1 ? g.Tables.Count.ToString() : "").Separator("").OrderB(g.Tables.StnId).Value()
     }).UnionAll(Db.FromTemp(allFzjg).Where(t => t.Index < 4).AsTable(g => new
     {
         StnId = "合计",
-        FirstFzjg = SqlFn.Join(g.Index == 1 ? g.Fzjg.ToString() : "").Separator("").OrderBy(g.StnId).Value(),
-        FirstCount = SqlFn.Join(g.Index == 1 ? g.Count.ToString() : "").Separator("").OrderBy(g.StnId).Value()
+        FirstFzjg = SqlFn.Join(g.Index == 1 ? g.Fzjg.ToString() : "").Separator("").OrderB(g.StnId).Value(),
+        FirstCount = SqlFn.Join(g.Index == 1 ? g.Count.ToString() : "").Separator("").OrderB(g.StnId).Value()
     })).AsSubQuery()
     .InnerJoin(allStation, (t, a) => t.StnId == a.StnId)
     .ToSql((t, a) => new
     {
-        Jczmc = SqlFn.Nvl(t.StnId,"TT"),
+        Jczmc = SqlFn.NullThen(t.StnId, "TT"),
         a.Total,
         t
     });
-Console.WriteLine(result);
+Console.WriteLine(sql);
 ```
 
 ```sql
-WITH info AS (
-    SELECT SUBSTR("r0"."Plate",1,2) AS "Fzjg", "r0"."StnId"
-    FROM "Jobs" "r0"
+    WITH info AS (
+    SELECT SUBSTR("a"."Plate",1,2) AS "Fzjg", "a"."StnId"
+    FROM "Jobs" "a"
 )
-,stn_fzjg AS (
-    SELECT "t1"."StnId", "t1"."Fzjg", COUNT(*) AS "Count", ROW_NUMBER() OVER( PARTITION BY "t1"."StnId" ORDER BY COUNT(*) DESC ) AS "Index"
-    FROM info "t1"
-    GROUP BY "t1"."StnId", "t1"."Fzjg"
-    ORDER BY "t1"."StnId", COUNT(*) DESC
+, stn_fzjg AS (
+    SELECT "a"."StnId", "a"."Fzjg", COUNT(*) AS "Count", ROW_NUMBER() OVER( PARTITION BY "a"."StnId" ORDER BY COUNT(*) DESC ) AS "Index"
+    FROM info "a"
+    GROUP BY "a"."StnId", "a"."Fzjg"
+    ORDER BY "a"."StnId", COUNT(*) DESC
 )
-,all_fzjg AS (
-    SELECT '合计' AS "StnId", "t1"."Fzjg", COUNT(*) AS "Count", ROW_NUMBER() OVER( ORDER BY COUNT(*) DESC ) AS "Index"
-    FROM info "t1"
-    GROUP BY "t1"."Fzjg"
+, all_fzjg AS (
+    SELECT '合计' AS "StnId", "a"."Fzjg", COUNT(*) AS "Count", ROW_NUMBER() OVER( ORDER BY COUNT(*) DESC ) AS "Index"
+    FROM info "a"
+    GROUP BY "a"."Fzjg"
     ORDER BY COUNT(*) DESC
 )
-,all_station AS (
-    SELECT NVL("t1"."StnId",'合计') AS "StnId", COUNT(*) AS "Total"
-    FROM info "t1"
-    GROUP BY ROLLUP(StnId)
+, all_station AS (
+    SELECT NVL("a"."StnId",'合计') AS "StnId", COUNT(*) AS "Total"
+    FROM info "a"
+    GROUP BY ROLLUP ("a"."StnId")
 )
-SELECT NVL("t4"."StnId",'TT') AS "Jczmc", "t3"."Total", "t4".*
+SELECT NVL("a"."StnId",'TT') AS "Jczmc", "b"."Total", "a".*
 FROM (
-    SELECT "t2"."StnId", LISTAGG( CASE WHEN ("t2"."Index" = 1) THEN CAST("t2"."Fzjg" AS VARCHAR(255)) ELSE '' END, '') WITHIN GROUP (ORDER BY "t2"."StnId" ASC) AS "FirstFzjg", LISTAGG( CASE WHEN ("t2"."Index" = 1) THEN CAST("t2"."Count" AS VARCHAR(255)) ELSE '' END, '') WITHIN GROUP (ORDER BY "t2"."StnId" ASC) AS "FirstCount"
-    FROM stn_fzjg "t2"
-    WHERE ("t2"."Index" < 4)
-    GROUP BY "t2"."StnId"
+    SELECT "a"."StnId", LISTAGG( CASE WHEN ("a"."Index" = 1) THEN TO_CHAR("a"."Fzjg") ELSE '' END, '') WITHIN GROUP (ORDER BY "a"."StnId" ASC) AS "FirstFzjg", LISTAGG( CASE WHEN ("a"."Index" = 1) THEN TO_CHAR("a"."Count") ELSE '' END, '') WITHIN GROUP (ORDER BY "a"."StnId" ASC) AS "FirstCount"
+    FROM stn_fzjg "a"
+    WHERE ("a"."Index" < 4)
+    GROUP BY "a"."StnId"
     UNION ALL
-    SELECT '合计' AS "StnId", LISTAGG( CASE WHEN ("t2"."Index" = 1) THEN CAST("t2"."Fzjg" AS VARCHAR(255)) ELSE '' END, '') WITHIN GROUP (ORDER BY "t2"."StnId" ASC) AS "FirstFzjg", LISTAGG( CASE WHEN ("t2"."Index" = 1) THEN CAST("t2"."Count" AS VARCHAR(255)) ELSE '' END, '') WITHIN GROUP (ORDER BY "t2"."StnId" ASC) AS "FirstCount"
-    FROM all_fzjg "t2"
-    WHERE ("t2"."Index" < 4)
-) "t4"
-INNER JOIN all_station "t3" ON ("t4"."StnId" = "t3"."StnId")
+    SELECT '合计' AS "StnId", LISTAGG( CASE WHEN ("a"."Index" = 1) THEN TO_CHAR("a"."Fzjg") ELSE '' END, '') WITHIN GROUP (ORDER BY "a"."StnId" ASC) AS "FirstFzjg", LISTAGG( CASE WHEN ("a"."Index" = 1) THEN TO_CHAR("a"."Count") ELSE '' END, '') WITHIN GROUP (ORDER BY "a"."StnId" ASC) AS "FirstCount"
+    FROM all_fzjg "a"
+    WHERE ("a"."Index" < 4)
+) "a"
+INNER JOIN all_station "b" ON ("a"."StnId" = "b"."StnId")
 ```
 
