@@ -35,7 +35,7 @@
 
 # 简介
 
-无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。使用`Expression`动态构建类型映射。[更新日志](./doc/版本日志.md)
+无任何依赖项的轻量级的Orm工具，只负责解析`Expression`，然后拼接成Sql语句。使用`Expression`动态构建类型映射。
 
 主体
 
@@ -106,9 +106,9 @@ Db.Select<Product>()
 ```
 
 ```sql
-SELECT `a1`.`ProductId`, `a1`.`ProductName`
-FROM `Product` `a1`
-WHERE ( `a1`.`ModifyTime` > @Now_0 )
+SELECT "a"."PRODUCT_ID" AS "ProductId", "a"."PRODUCT_NAME" AS "ProductName"
+FROM "PRODUCTS" "a"
+WHERE ("a"."MODIFY_TIME" > @Now_0_0)
 ```
 
 ## Join查询
@@ -122,39 +122,39 @@ Db.Select<User>()
 ```
 
 ```sql
-SELECT `a5`.*
-FROM `USER` `a5`
-INNER JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
-INNER JOIN `ROLE` `a2` ON ( `a6`.`ROLE_ID` = `a2`.`ROLE_ID` )
-WHERE ( `a5`.`USER_ID` = @Const_0 )
+SELECT "a".*
+FROM "USER" "a"
+INNER JOIN "USER_ROLE" "b" ON ("a"."USER_ID" = "b"."USER_ID")
+INNER JOIN "ROLE" "c" ON ("b"."ROLE_ID" = "c"."ROLE_ID")
+WHERE ("a"."USER_ID" = 'admin')
 ```
 
 ## 多表查询
 
 ```csharp
-Db.Select<Power, RolePower, Role>()
-    .Distinct()
-    .Where(w => w.Tb1.PowerId == w.Tb2.PowerId && w.Tb2.RoleId == w.Tb3RoleId)
-    .ToSql(w => new { w.Tb1 });
+Db.Select<Permission, RolePermission, Role>()
+   .Distinct()
+   .Where(w => w.Tb1.PermissionId == w.Tb2.PermissionId && w.Tb2.RoleId == w.Tb3.RoleId)
+   .ToSql(w => new { w.Tb1 });
 ```
 
 ```sql
-SELECT DISTINCT `a0`.*
-FROM `POWERS` `a0`, `ROLE_POWER` `a3`, `ROLE` `a2`
-WHERE ( ( `a0`.`POWER_ID` = `a3`.`POWER_ID` ) AND ( `a3`.`ROLE_ID` = `a2`.`ROLE_ID` ) )
+SELECT DISTINCT "a".*
+FROM "PERMISSIONS" "a", "ROLE_PERMISSION" "b", "ROLE" "c"
+WHERE (("a"."PERMISSION_ID" = "b"."POWER_ID") AND ("b"."ROLE_ID" = "c"."ROLE_ID"))
 ```
 
 ## 子查询
 
 ```csharp
-Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
-    {
-        u.UserId
-    }).AsTable(u => new
+Db.Select<User>()
+    .Where(u => u.Age > 10)
+    .GroupBy(u => u.UserId )
+    .AsTable(u => new
     {
         u.Group.UserId,
         Total = u.Count()
-    }).AsSubQuery("temp")
+    }).AsSubQuery()
     .Where(t => t.UserId.Contains("admin"))
     .ToSql();
 ```
@@ -162,12 +162,12 @@ Db.Select<User>().Where(u => u.Age > 10).GroupBy(u => new
 ```sql
 SELECT *
 FROM (
-    SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
-    FROM `USER` `a5`
-    WHERE (`a5`.`AGE` > 10)
-    GROUP BY `a5`.`USER_ID`
-) `temp`
-WHERE `temp`.`UserId` LIKE '%'||'admin'||'%'
+    SELECT "a"."USER_ID" AS "UserId", COUNT(*) AS "Total"
+    FROM "USER" "a"
+    WHERE ("a"."AGE" > 10)
+    GROUP BY "a"."USER_ID"
+) "a"
+WHERE "a"."UserId" LIKE '%' || 'admin'|| '%'
 ```
 
 ## Join 子查询
@@ -185,52 +185,58 @@ Db.Select<User>()
 
 ```sql
 SELECT *
-FROM `USER` `a5`
+FROM "USER" "a"
 LEFT JOIN (
-    SELECT `a1`.`ProductId`, COUNT(*) AS `Total`
-    FROM `Product` `a1`
-    GROUP BY `a1`.`ProductId`
-) `temp0` ON ( `a5`.`AGE` = `temp0`.`ProductId` )
-WHERE ( `temp0`.`Total` > 10 )
+    SELECT "a"."PRODUCT_ID" AS "ProductId", COUNT(*) AS "Total"
+    FROM "PRODUCTS" "a"
+    GROUP BY "a"."PRODUCT_ID"
+) "b" ON ("a"."AGE" = "b"."ProductId")
+WHERE ("b"."Total" > 10)
 ```
 
 ## With (tempName) AS (...) 查询
 
 ```csharp
-var tempU = Db.Select<User>().GroupBy(u => new { u.UserId }).ToSelect(g => new
-{
-    g.Group.UserId,
-    Total = g.Count()
-}).AsTemp("us");
-
+var tempU = Db.Select<User>().GroupBy(u => new { u.UserId }).AsTemp("us", g => new
+    {
+        g.Group.UserId,
+        Total = g.Count()
+    });
 var tempR = Db.Select<Role>().WithTempQuery(tempU)
     .Where((r, u) => r.RoleId == u.UserId)
-    .Where(w=> w.Tb2.UserId.StartsWith("ad"))
-    .AsTemp("temp",w=>new
+    .Where(w => w.Tb2.UserId.StartsWith("ad"))
+    .AsTemp("temp", w => new
     {
         w.Tb1.RoleId,
         w.Tb2.UserId,
     });
 
-var sql = Db.Select<Power>().WithTempQuery(tempU, tempR)
-    .Where(w => w.Tb2.Total > 10 || w.Tb3.UserId.Contains("admin"))
+var tempT = Db.FromTemp(tempR).Where(a => a.RoleId.StartsWith("h")).AsTemp("hh");
+
+var sql = Db.Select<Permission>().WithTempQuery(tempT)
+    .Where(w => w.Tb2.UserId.Contains("admin"))
     .ToSql();
 ```
 
 ```sql
 WITH us AS (
-    SELECT `a5`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
-    FROM `USER` `a5`
-    GROUP BY `a5`.`USER_ID`
+    SELECT "a"."USER_ID" AS "UserId", COUNT(*) AS "Total"
+    FROM "USER" "a"
+    GROUP BY "a"."USER_ID"
 )
-,temp AS (
-    SELECT `a2`.`ROLE_ID` AS `RoleId`, `temp0`.`UserId`
-    FROM `ROLE` `a2`, `us` `temp0`
-    WHERE ( `a2`.`ROLE_ID` = `temp0`.`UserId` ) AND `temp0`.`UserId` LIKE @temp_Const_0||'%'
+, temp AS (
+    SELECT "a"."ROLE_ID" AS "RoleId", "b"."UserId"
+    FROM "ROLE" "a", us "b"
+    WHERE ("a"."ROLE_ID" = "b"."UserId") AND "b"."UserId" LIKE 'ad'||'%'
+)
+, hh AS (
+    SELECT *
+    FROM temp "a"
+    WHERE "a"."RoleId" LIKE 'h'||'%'
 )
 SELECT *
-FROM `POWERS` `a0`, `us` `temp0`, `temp` `temp1`
-WHERE ( ( `temp0`.`Total` > 10 ) OR `temp1`.`UserId` LIKE '%'||@Const_0||'%' )
+FROM "PERMISSIONS" "a", hh "b"
+WHERE "b"."UserId" LIKE '%' || 'admin'|| '%'
 ```
 
 ## Include查询
@@ -238,17 +244,23 @@ WHERE ( ( `temp0`.`Total` > 10 ) OR `temp1`.`UserId` LIKE '%'||@Const_0||'%' )
 需要配置导航关系
 
 ```csharp
-Db.Select<User>()
-    .Where(u => u.UserRoles.When(r => r.RoleId.StartsWith("ad")))
+// 写法1，使用自定义扩展方法WhereIf
+var sql = Db.Select<User>()
+    .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
+    .ToSql();
+
+// 写法2，使用Any()
+var sql = Db.Select<User>()
+    .Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
     .ToSql();
 ```
 
 ```sql
 SELECT DISTINCT *
-FROM `USER` `a5`
-LEFT JOIN `USER_ROLE` `a6` ON ( `a5`.`USER_ID` = `a6`.`USER_ID` )
-LEFT JOIN `ROLE` `a2` ON ( `a2`.`ROLE_ID` = `a6`.`ROLE_ID` )
-WHERE `a2`.`ROLE_ID` LIKE @Const_0||'%'
+FROM "USER" "a"
+INNER JOIN "USER_ROLE" "b" ON ( "a"."USER_ID" = "b"."USER_ID" )
+INNER JOIN "ROLE" "c" ON ( "c"."ROLE_ID" = "b"."ROLE_ID" )
+WHERE "c"."ROLE_ID" LIKE '%' || 'admin'|| '%'
 ```
 
 ## Union 查询
@@ -256,21 +268,20 @@ WHERE `a2`.`ROLE_ID` LIKE @Const_0||'%'
 ### 已有查询Union新的查询
 
 ```csharp
-Db.Select<User>().Union(Db.Select<User>())
+Db.Select<User>()
     .Where(u => u.Age > 10)
+    .Union(Db.Select<User>().Where(u => u.Age > 15))
     .ToSql();
 ```
 
 ```sql
 SELECT *
-FROM (
-    SELECT *
-    FROM `USER` `a5`
-    UNION
-    SELECT *
-    FROM `USER` `a5`
-) `a5`
-WHERE ( `a5`.`AGE` > 10 )
+FROM "USER" "a"
+WHERE ("a"."AGE" > 10)
+UNION
+SELECT *
+FROM "USER" "a"
+WHERE ("a"."AGE" > 15)
 ```
 
 ### 使用`IExpressionContext.Union`
@@ -285,12 +296,12 @@ Db.Union(Db.Select<User>(), Db.Select<User>())
 SELECT *
 FROM (
     SELECT *
-    FROM `USER` `a5`
+    FROM "USER" "a"
     UNION
     SELECT *
-    FROM `USER` `a5`
-) `a5`
-WHERE ( `a5`.`AGE` > 10 )
+    FROM "USER" "a"
+) "a"
+WHERE ("a"."AGE" > 10)
 ```
 
 ## 数据库函数
@@ -308,6 +319,26 @@ Join(在分组数据中拼接字符串，不同数据库，调用的函数不同
 ### 开窗函数(窗口函数)
 
 RowNumber、Lag、Rank
+
+支持对导航属性的解析（仅支持1对1的导航属性
+
+```csharp
+Db.Select<User>()
+    .ToSql(u => new
+    {
+        RowNo = WinFn.RowNumber().PartitionBy(u.City.Name).OrderBy(u.Id).Value(),
+        u.UserId,
+        u.UserName,
+        u.Password
+    });
+
+```
+
+```sql
+SELECT ROW_NUMBER() OVER( PARTITION BY "b"."Name" ORDER BY "a"."ID" ASC ) AS "RowNo", "a"."USER_ID" AS"UserId", "a"."USER_NAME" AS "UserName", "a"."PASSWORD" AS "Password"
+FROM "USER" "a"
+INNER JOIN "City" "b" ON ( "a"."ID" = "b"."Id" )
+```
 
 # 更新
 

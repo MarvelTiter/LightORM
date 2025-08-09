@@ -17,7 +17,7 @@ namespace LightORM.Builder
 
     internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
-        public SelectBuilder() 
+        public SelectBuilder()
         {
             //DbType = dbType;
             IncludeContext = new IncludeContext();
@@ -122,18 +122,25 @@ namespace LightORM.Builder
                 if (joinInfo != null)
                 {
                     joinInfo.Where = result.SqlString!;
-                    //if (expInfo.AdditionalParameter is int i && i > 0)
-                    //{
-                    //    if (i > SelectedTables.Count - 1)
-                    //    {
-                    //        LightOrmException.Throw($"当前Select的表的数量是{SelectedTables.Count}, 已超出可以Join的数量");
-                    //    }
-                    //    joinInfo.EntityInfo = SelectedTables[i];
-                    //}
                 }
             }
             else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
             {
+                if (result.UseNavigate)
+                {
+                    ScanNavigate(database, result, MainTable);
+                    foreach (var item in result.WindowFnPartials ?? [])
+                    {
+                        if (item.Expression is MemberExpression m)
+                        {
+                            List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
+                            var p = ps.First(p => p.Type == m.Expression?.Type);
+                            var lambda = Expression.Lambda(Expression.Property(p, m.Member.Name), ps);
+                            var rr = lambda.Resolve(expInfo.ResolveOptions, ResolveCtx!);
+                            result.SqlString = result.SqlString?.Replace(item.Idenfity, rr.SqlString);
+                        }
+                    }
+                }
                 if (!string.IsNullOrWhiteSpace(result.SqlString))
                 {
                     SelectValue = result.SqlString!;
@@ -218,14 +225,6 @@ namespace LightORM.Builder
                 }
             }
         }
-
-        //void TryJoin(ITableEntityInfo joined)
-        //{
-        //    if (Joins.Any(j => j.EntityInfo?.Type == joined.Type) || MainTable.Type == joined.Type)
-        //    {
-        //        joined.Alias = (joined.Alias!.Replace('a', 'j'));
-        //    }
-        //}
 
         private string BuildFromString(ICustomDatabase database)
         {

@@ -499,6 +499,13 @@ namespace LightORM.Implements
         {
             resolver.Sql.Append("LAG(");
             resolver.Visit(methodCall.Arguments[0]);
+            if (resolver.UseNavigate)
+            {
+                resolver.WindowFnPartials ??= [];
+                var partial = new WindowFnSpecification(methodCall.Arguments[0]);
+                resolver.WindowFnPartials.Add(partial);
+                resolver.Sql.Append(partial.Idenfity);
+            }
             resolver.Sql.Append(") OVER(");
         }
 
@@ -512,6 +519,13 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" PARTITION BY ");
             resolver.Visit(methodCall.Arguments[0]);
+            if (resolver.UseNavigate)
+            {
+                resolver.WindowFnPartials ??= [];
+                var partial = new WindowFnSpecification(methodCall.Arguments[0]);
+                resolver.WindowFnPartials.Add(partial);
+                resolver.Sql.Append(partial.Idenfity);
+            }
         }
 
         public virtual void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -519,6 +533,13 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" ORDER BY ");
             resolver.Visit(methodCall.Arguments[0]);
+            if (resolver.UseNavigate)
+            {
+                resolver.WindowFnPartials ??= [];
+                var partial = new WindowFnSpecification(methodCall.Arguments[0]);
+                resolver.WindowFnPartials.Add(partial);
+                resolver.Sql.Append(partial.Idenfity);
+            }
             resolver.Sql.Append(" ASC");
         }
 
@@ -527,6 +548,13 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Object);
             resolver.Sql.Append(" ORDER BY ");
             resolver.Visit(methodCall.Arguments[0]);
+            if (resolver.UseNavigate)
+            {
+                resolver.WindowFnPartials ??= [];
+                var partial = new WindowFnSpecification(methodCall.Arguments[0]);
+                resolver.WindowFnPartials.Add(partial);
+                resolver.Sql.Append(partial.Idenfity);
+            }
             resolver.Sql.Append(" DESC");
         }
 

@@ -5,7 +5,7 @@
 		<Authors>MarvelTiter</Authors>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
-		<Description>表达式树（ExpressionTree）构建Sql</Description>
+		<Description>a simple, lightweight, and easy-to-use Object-Relational Mapping/ORM toolkit</Description>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<RepositoryUrl>https://github.com/MarvelTiter/LightORM.git</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/MarvelTiter/LightORM</PackageProjectUrl>

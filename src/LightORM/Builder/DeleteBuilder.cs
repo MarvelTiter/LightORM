@@ -85,7 +85,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                             JoinType = TableLinkType.InnerJoin,
                             Where = $"( {database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                         });
-                        var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
+                        var n = result.MemberOfNavigateMember;
                         if (n is not null)
                         {
                             var c = targetTable.GetColumn(n);

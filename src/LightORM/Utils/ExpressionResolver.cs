@@ -17,10 +17,11 @@ internal static class ExpressionExtensions
             SqlString = resolve.Sql.ToString(),
             DbParameters = resolve.DbParameters,
             Members = resolve.ResolvedMembers,
-            //UsedTables = resolve.UsedTables,
+            MemberOfNavigateMember = resolve.MemberOfNavigateMember,
             UseNavigate = resolve.UseNavigate,
             NavigateDeep = resolve.NavigateDeep,
             NavigateMembers = resolve.NavigateMembers,
+            WindowFnPartials = resolve.WindowFnPartials,
             NavigateWhereExpression = resolve.NavigateWhereExpression
         };
     }
@@ -55,13 +56,19 @@ public interface IExpressionResolver
     int Level { get; }
     Dictionary<string, Expression?>? ExpStores { get; set; }
     StringBuilder Sql { get; }
-    //Dictionary<string, object> DbParameters { get; }
+    bool UseNavigate { get; set; }
+    public List<WindowFnSpecification>? WindowFnPartials { get; set; }
     SqlResolveOptions Options { get; }
     Expression? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
     Expression? Body { get; }
     ReadOnlyCollection<ParameterExpression>? Parameters { get; }
+}
 
+public readonly struct WindowFnSpecification(Expression expression)
+{
+    public string Idenfity { get; } = $"{Guid.NewGuid():N}";
+    public Expression Expression { get; } = expression;
 }
 
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
@@ -72,6 +79,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public StringBuilder Sql { get; set; } = new StringBuilder();
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
+    public List<WindowFnSpecification>? WindowFnPartials { get; set; }
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
@@ -79,7 +87,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
     public Expression? NavigateWhereExpression { get; set; }
-
+    public string? MemberOfNavigateMember { get; set; }
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
@@ -405,7 +413,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 {
                     if (Members.Count > 0)
                     {
-                        ResolvedMembers.Add(Members.Pop().Name);
+                        //ResolvedMembers.Add(Members.Pop().Name);
+                        MemberOfNavigateMember = Members.Pop().Name;
                     }
                     Members.Clear();
                 }

@@ -479,6 +479,12 @@ public class SelectSql : TestBase
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
             .ToSql();
         Console.WriteLine(sql);
+
+        var sql2 = Db.Select<User>()
+            // 两种写法都可以
+            .Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
+            .ToSql();
+        Assert.IsTrue(sql == sql2);
         //var result = """
         //    SELECT DISTINCT *
         //    FROM `USER` `a`
@@ -815,6 +821,20 @@ public class SelectSql : TestBase
             .Skip(skip)
             .Take(take)
             .ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestRowNumberWindowFunc()
+    {
+        var sql = Db.Select<User>()
+            .ToSql(u => new
+            {
+                RowNo = WinFn.RowNumber().PartitionBy(u.City.Name).OrderBy(u.Id).Value(),
+                u.UserId,
+                u.UserName,
+                u.Password
+            });
         Console.WriteLine(sql);
     }
 }

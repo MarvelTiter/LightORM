@@ -15,7 +15,7 @@ namespace DatabaseUtils
         {
             InitializeComponent();
             this.hostApplicationLifetime = hostApplicationLifetime;
-            webview.HostPage = "index.html";
+            webview.HostPage = "wwwroot/index.html";
             webview.Services = provider;
             var root = new Microsoft.AspNetCore.Components.WebView.Wpf.RootComponent();
             root.Selector = "#app";
