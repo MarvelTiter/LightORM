@@ -9,7 +9,18 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void UpdateEntity()
     {
-        var p = new Product();
+        var p = new User()
+        {
+            Id = 1,
+            UserId = "test01",
+            UserName = "Test",
+            Age = 19,
+            IsLock = true,
+            LastLogin = DateTime.Now,
+            ModifyTime = DateTime.Now,
+            Password = "Test",
+            Sign = "Sign",
+        };
         var sql = Db.Update(p).ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """

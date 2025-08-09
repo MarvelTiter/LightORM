@@ -145,7 +145,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         {
             var autoUpdateCols = MainTable.TableEntityInfo.Columns
                .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated && !c.IsVersionColumn && !c.IsIgnoreUpdate).ToList();
+               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated && !c.IsVersionColumn && !c.IsIgnoreUpdate && !c.AutoIncrement);
             //参数处理
             foreach (var item in autoUpdateCols)
             {
