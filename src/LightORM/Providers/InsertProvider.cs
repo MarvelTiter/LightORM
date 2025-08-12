@@ -26,6 +26,13 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         sqlBuilder.IsBatchInsert = true;
     }
 
+    public void SetTargetObject(T? entity)
+    {
+        sqlBuilder.TargetObject = entity;
+        sqlBuilder.DbParameters.Clear();
+        sqlBuilder.IsBatchInsert = false;
+    }
+
     public int Execute()
     {
         var sql = sqlBuilder.ToSqlString(Database);

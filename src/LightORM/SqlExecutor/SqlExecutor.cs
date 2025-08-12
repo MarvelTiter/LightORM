@@ -6,7 +6,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 namespace LightORM.SqlExecutor;
 
-internal partial class SqlExecutor : ISqlExecutor, IDisposable
+internal partial class SqlExecutor : ISqlExecutor
 {
     // 事务上下文管理
     internal static readonly ConcurrentDictionary<IDatabaseProvider, AsyncLocal<TransactionContext?>> AsyncLocalTransactionContexts = new();
@@ -369,22 +369,20 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
             }
             throw ex;
         }
+        if (context.NestLevel > 0)
+        {
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
+            context.NestLevel--;
+            if (context.Transaction.SupportsSavepoints)
+            {
+                await context.Transaction.RollbackAsync($"savePoint{context.NestLevel}", cancellationToken).ConfigureAwait(false);
+            }
+            return;
+        }
         try
         {
-            if (context.NestLevel > 0)
-            {
-                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
-                context.NestLevel--;
-                if (context.Transaction.SupportsSavepoints)
-                {
-                    await context.Transaction.RollbackAsync($"savePoint{context.NestLevel}", cancellationToken).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                await context.Transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> finished");
-            }
+            await context.Transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> finished");
         }
         finally
         {
@@ -440,14 +438,6 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         {
             Pool.Return(result.Connection);
         }
-    }
-
-    private readonly struct CommandResult(DbCommand command, DbConnection connection, bool needToReturn, bool @break)
-    {
-        public DbCommand Command { get; } = command;
-        public DbConnection Connection { get; } = connection;
-        public bool NeedToReturn { get; } = needToReturn;
-        public bool Break { get; } = @break;
     }
 
     private CommandResult PrepareCommand(CommandType commandType, SqlExecuteContext et)
@@ -938,7 +928,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         return ds;
     }
 
-    private static T? ChangeType<T>(object value)
+    internal static T? ChangeType<T>(object value)
     {
         var conversionType = typeof(T);
         if (value == null)
@@ -963,7 +953,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
     }
 
     private static Dictionary<Type, Action<DbCommand>> commandInitCache = new Dictionary<Type, Action<DbCommand>>();
-    private static Action<DbCommand>? GetInit(Type commandType)
+    internal static Action<DbCommand>? GetInit(Type commandType)
     {
         if (commandType == null)
         {
@@ -1008,7 +998,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
         return value;
     }
 
-    private static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+    internal static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
     {
         PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
         if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
@@ -1045,7 +1035,7 @@ internal partial class SqlExecutor : ISqlExecutor, IDisposable
     }
 }
 
-file class StopwatchHelper
+internal class StopwatchHelper
 {
     public static long GetTimestamp() => Stopwatch.GetTimestamp();
     public static TimeSpan GetElapsedTime(long startingTimestamp)

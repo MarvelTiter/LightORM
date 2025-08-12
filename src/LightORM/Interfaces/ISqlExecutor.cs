@@ -31,7 +31,7 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     //public DbConnection GetConnection();
     internal string Id { get; }
     void UseExternalTransaction(DbTransaction externalTransaction);
-    
+
     /// <summary>
     /// 开启事务
     /// </summary>

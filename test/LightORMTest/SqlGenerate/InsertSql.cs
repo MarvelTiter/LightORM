@@ -82,4 +82,28 @@ public class InsertSql : TestBase
         //        """;
         //Assert.IsTrue(result == sql);
     }
+
+    [TestMethod]
+    public void InsertRange()
+    {
+        var scoped = Db.CreateMainDbScoped();
+        try
+        {
+            scoped.BeginTransaction();
+            scoped.Delete<User>().FullDelete(true).Execute();
+            //Db.Insert<User>().InsertEach([new User { UserId = "TEST_USER1", Age = 20, LastLogin = DateTime.Now },
+            //    new User { UserId = "TEST_USER2", Age = 25, LastLogin = DateTime.Now }
+            //]);
+            scoped.Insert([
+                new User { UserId = "TEST_USER1", Age = 20, LastLogin = DateTime.Now },
+                new User { UserId = "TEST_USER2", Age = 25, LastLogin = DateTime.Now }
+            ]).Execute();
+            scoped.CommitTransaction();
+        }
+        catch (Exception)
+        {
+            scoped.RollbackTransaction();
+            throw;
+        }
+    }
 }
