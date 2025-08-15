@@ -92,6 +92,10 @@ internal record InsertBuilder<T> : SqlBuilder
             .ToArray();
         StringBuilder columns = new();
         StringBuilder values = new();
+        if (insertColumns.Length == 0)
+        {
+            throw new LightOrmException("需要插入的列数为0");
+        }
         foreach (var item in insertColumns)
         {
             columns.Append(database.AttachEmphasis(item.ColumnName));
@@ -120,11 +124,6 @@ internal record InsertBuilder<T> : SqlBuilder
         sb.Append('(');
         sb.Append(values);
         sb.AppendLine(")");
-
-        //sb.AppendFormat("INSERT INTO {0} \n({1}) \nVALUES \n({2})"
-        //    , GetTableName(MainTable, false)
-        //    , string.Join(", ", insertColumns.Select(c => AttachEmphasis(c.ColumnName)))
-        //    , string.Join(", ", insertColumns.Select(c => AttachPrefix(c.PropertyName))));
 
         if (IsReturnIdentity)
         {

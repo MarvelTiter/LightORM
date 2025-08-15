@@ -128,7 +128,7 @@ ORDER BY
                         }
                     }
                     // 默认处理
-                    type = isNullable ? "decimal?" : "decimal";
+                    type = isNullable ? "int?" : "int";
                     break;
 
                 // 整数类型（Oracle的特定整数类型）

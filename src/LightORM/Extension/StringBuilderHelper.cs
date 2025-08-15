@@ -23,7 +23,10 @@ public static class StringBuilderHelper
 
     public static void RemoveLast(this StringBuilder stringBuilder, int length)
     {
-        stringBuilder.Remove(stringBuilder.Length - length, length);
+        var startIndex = stringBuilder.Length - length;
+        if (startIndex < 0)
+            return;
+        stringBuilder.Remove(startIndex, length);
     }
 
     public static string Trim(this StringBuilder stringBuilder, params char[] chars)
