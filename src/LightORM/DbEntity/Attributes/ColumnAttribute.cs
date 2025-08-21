@@ -56,7 +56,7 @@ public class LightColumnAttribute : Attribute
     /// <summary>
     /// 数据长度
     /// </summary>
-    public int? Length { get; set; }
+    public int Length { get; set; }
     /// <summary>
     /// 默认值
     /// </summary>

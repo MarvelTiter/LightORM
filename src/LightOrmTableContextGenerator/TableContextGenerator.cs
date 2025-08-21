@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace LightOrmTableContextGenerator;
 
@@ -22,20 +23,9 @@ public class TableContextGenerator : IIncrementalGenerator
             , static (node, _) => node is ClassDeclarationSyntax
             , (ctx, _) => ctx);
 
-        //context.RegisterSourceOutput(context.AdditionalTextsProvider.Collect(), static (context, additionals) =>
-        //{
-
-        //});
-
         context.RegisterSourceOutput(source, static (context, source) =>
         {
             var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
-            //if (ctxSymbol.HasInterface(ContextInterfaceFullName) == false)
-            //{
-            //    context.ReportDiagnostic(DiagnosticDefinitions.TCG00001(source.TargetNode.GetLocation()));
-            //    return;
-            //}
-
             var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
             int i = 0;
             List<INamedTypeSymbol> flatTypes = [];
@@ -51,149 +41,11 @@ public class TableContextGenerator : IIncrementalGenerator
                 }
             }
 
-            var file = CreateAggregationContextClass(ctxSymbol, allTableType);
+            var file = TableContextGeneratorHelpers.CreateAggregationContextClass(ctxSymbol, allTableType);
             if (file != null)
                 context.AddSource(file);
         });
 
-    }
-
-    private static CodeFile? CreateAggregationContextClass(INamedTypeSymbol target, INamedTypeSymbol[] items)
-    {
-        List<Node> members = [
-FieldBuilder.Default
-            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::LightORM.Interfaces.ITableEntityInfo>")
-            .FieldName("tableInfos"),
-           FieldBuilder.Default
-            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>")
-            .FieldName("table_sets"),
-            FieldBuilder.Default
-            .MemberType("global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>")
-            .FieldName("table_gets"),
-];
-        List<Statement> dicInits = [
-            "tableInfos = new global::System.Collections.Generic.Dictionary<global::System.Type, global::LightORM.Interfaces.ITableEntityInfo>()",
-            "table_sets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()",
-            "table_gets = new global::System.Collections.Generic.Dictionary<global::System.Type, global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>>()"
-            ];
-        foreach (var item in items)
-        {
-            dicInits.Add($"tableInfos.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)})");
-            dicInits.Add($"table_sets.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)}TableInfo.SetValue)");
-            dicInits.Add($"table_gets.Add(typeof({item.ToDisplayString()}), {item.FormatClassName(true)}TableInfo.GetValue)");
-        }
-
-        var ctor = ConstructorBuilder.Default.MethodName(target.MetadataName)
-            .AddBody(
-            [.. dicInits]
-            );
-        members.Add(ctor);
-
-        foreach (var item in items)
-        {
-            members.Add(PropertyBuilder.Default
-                .Modifiers("public static")
-                .PropertyName(item.FormatClassName(true))
-                .MemberType($"{item.FormatClassName(true)}TableInfo")
-                .Readonly()
-                .InitializeWith($"new {item.FormatClassName(true)}TableInfo()")
-                );
-            //members.Add(MethodBuilder.Default
-            //    .Modifiers("public static")
-            //    .ReturnType("global::LightORM.Interfaces.ITableEntityInfo")
-            //    .MethodName(item.FormatClassName(true))
-            //    .Lambda($"new {item.FormatClassName(true)}TableInfo()"));
-        }
-        #region GetTableInfoMethod
-        {
-            List<Statement> methodStatements = [];
-            //foreach (var item in items)
-            //{
-            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
-            //    getTableInfoMethodStatements.Add(ifs);
-            //}
-            var dicCheck = IfStatement.Default.If("tableInfos.TryGetValue(type, out var ti)").AddStatement("return ti");
-
-            var notFound = IfStatement.Default.If("type.IsAbstract || type.IsInterface")
-                .AddStatement(ForeachStatement.Default.Foreach("var kvp in tableInfos").AddStatements(
-                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value")));
-            methodStatements.Add(dicCheck);
-            methodStatements.Add(notFound);
-            methodStatements.Add("return null");
-
-            var method = MethodBuilder.Default.ReturnType("global::LightORM.Interfaces.ITableEntityInfo?")
-                .MethodName("GetTableInfo")
-                .AddParameter("Type type")
-                .AddBody([.. methodStatements]);
-
-            members.Add(method);
-        }
-
-        #endregion
-
-        #region GetSetMethod
-
-        {
-            List<Statement> methodStatements = [];
-            //foreach (var item in items)
-            //{
-            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
-            //    getTableInfoMethodStatements.Add(ifs);
-            //}
-            var dicCheck = IfStatement.Default.If("table_sets.TryGetValue(type, out var factory)").AddStatement("return factory");
-
-            var notFound = ForeachStatement.Default.Foreach("var kvp in table_sets").AddStatements(
-                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value"));
-            methodStatements.Add(dicCheck);
-            methodStatements.Add(notFound);
-            methodStatements.Add("return null");
-
-            var method = MethodBuilder.Default.ReturnType("global::System.Action<global::LightORM.Interfaces.ITableColumnInfo, object, object?>?")
-                .MethodName("GetSetMethod")
-                .AddParameter("Type type")
-                .AddBody([.. methodStatements]);
-
-            members.Add(method);
-        }
-
-        #endregion
-
-        #region GetGetMethod
-
-        {
-            List<Statement> methodStatements = [];
-            //foreach (var item in items)
-            //{
-            //    var ifs = IfStatement.Default.If($"type == typeof({item.ToDisplayString()}) || type.IsAssignableFrom(typeof({item.ToDisplayString()}))").AddStatement($"return {item.FormatClassName(true)}");
-            //    getTableInfoMethodStatements.Add(ifs);
-            //}
-            var dicCheck = IfStatement.Default.If("table_gets.TryGetValue(type, out var factory)").AddStatement("return factory");
-
-            var notFound = ForeachStatement.Default.Foreach("var kvp in table_gets").AddStatements(
-                IfStatement.Default.If("kvp.Key.IsAssignableFrom(type)").AddStatement("return kvp.Value"));
-            methodStatements.Add(dicCheck);
-            methodStatements.Add(notFound);
-            methodStatements.Add("return null");
-
-            var method = MethodBuilder.Default.ReturnType("global::System.Func<global::LightORM.Interfaces.ITableColumnInfo, object, object?>?")
-                .MethodName("GetGetMethod")
-                .AddParameter("Type type")
-                .AddBody([.. methodStatements]);
-
-            members.Add(method);
-        }
-
-        #endregion
-
-        var ctxClass = ClassBuilder.Default.ClassName(target.FormatClassName())
-            .Modifiers("partial")
-            .Interface(ContextInterfaceFullName)
-            .AddMembers([.. members])
-            .AddGeneratedCodeAttribute(typeof(TableContextGenerator));
-
-        var s = ctxClass.ToString();
-
-        return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString()).AddMembers(ctxClass)).AddUsings("using LightORM.GeneratedTableContext;");
     }
 
     private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index, List<INamedTypeSymbol> flatTypes)
@@ -210,7 +62,7 @@ FieldBuilder.Default
             // public string TableName => CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常");
             PropertyBuilder.Default.MemberType("string").PropertyName("TableName").Lambda("""CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常")"""),
             // public string? Alias { get; set; } = "a1";
-            PropertyBuilder.Default.MemberType("string?").PropertyName("Alias").InitializeWith($"\"a{index}\""),
+            //PropertyBuilder.Default.MemberType("string?").PropertyName("Alias").InitializeWith($"\"a{index}\""),
             // public bool IsAnonymousType => false;
             PropertyBuilder.Default.MemberType("bool").PropertyName("IsAnonymousType").InitializeWith("false"),
             PropertyBuilder.Default.MemberType("bool").PropertyName("IsTempTable").InitializeWith("false")
@@ -220,13 +72,13 @@ FieldBuilder.Default
         var customNameProperty = PropertyBuilder.Default.MemberType("string?").PropertyName("CustomName");
         if (lightTable.GetNamedValue("Name", out var customName))
         {
-            customNameProperty = customNameProperty.InitializeWith($"\"{customName}\"");
+            customNameProperty.InitializeWith($"\"{customName}\"");
         }
         else
         {
             if (componentTable.GetNamedValue("Name", out customName))
             {
-                customNameProperty = customNameProperty.InitializeWith($"\"{customName}\"");
+                customNameProperty.InitializeWith($"\"{customName}\"");
             }
         }
 
@@ -254,28 +106,116 @@ FieldBuilder.Default
             .Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
             .Cast<IPropertySymbol>().ToArray();
 
+        // Func<IDataReader, object>? DataReaderDeserializer { get; }
+        MethodBuilder staticDeserializerMethod = CreateDeserializeMethod(target, columns);
+        var deserializer = PropertyBuilder.Default
+            .PropertyName("DataReaderDeserializer")
+            .MemberType($"global::System.Func<global::System.Data.IDataReader, {target.ToDisplayString()}>?")
+            .Lambda(staticDeserializerMethod.Name!);
+
+        members.Add(CreateInitColumnInfoMethod(target, columns));
+        members.Add(deserializer);
+        members.Add(staticDeserializerMethod);
         // GetValue   object? GetValue(ColumnInfo col, object target);
         members.Add(CreateGetValueMethod(target, columns));
         // SetValue   void SetValue(ColumnInfo col, object target, object? value)
         members.Add(CreateSetValueMethod(target, columns));
-
-        members.Add(CreateInitColumnInfoMethod(target, columns));
+        // static global::LightORM.Interfaces.ITableColumnInfo[] CollectColumnInfo()
 
         var r = ClassBuilder.Default.MakeRecord().ClassName($"{target.FormatClassName(true)}TableInfo")
             .Interface("global::LightORM.Interfaces.ITableEntityInfo")
+            .Interface($"global::LightORM.Interfaces.ITableEntityInfo<{target.ToDisplayString()}>")
             .AddGeneratedCodeAttribute(typeof(TableContextGenerator))
             .AddMembers([.. members]);
-
-        //var s = r.ToString();
 
         return CodeFile.New($"{target.FormatFileName()}.TableInfo.g.cs")
             .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
     }
 
+    private static MethodBuilder CreateDeserializeMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
+    {
+        //var initInstance = $"var p = {target.New()}";
+        //var forStatement = ForStatement.Default.For("int i = 0; i < reader.FieldCount; i++");
+        //var dbnullCheck = IfStatement.Default.If("reader.IsDBNull(i)")
+        //    .AddStatement("continue");
+        //forStatement.AddStatements(dbnullCheck);
+        //forStatement.AddStatements("string columnName = reader.GetName(i)");
+        //var switchSet = SwitchStatement.Default
+        //    .Switch("columnName");
+
+        //foreach (var column in columns)
+        //{
+        //    if (column.IsReadOnly || column.SetMethod?.IsInitOnly == true)
+        //        continue;
+        //    if (column.Type.TypeKind == TypeKind.Class
+        //        && column.Type.SpecialType == SpecialType.None
+        //        && column.HasAttribute(LightFlatAttributeFullName))
+        //    {
+        //        var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
+        //        foreach (var flat in flatProps)
+        //        {
+        //            switchSet.AddBreakCase($"\"{flat.Name}\"",
+        //                //$"p.{column.Name}.{flat.Name}",
+        //                IfStatement.Default.If($"p.{column.Name} is null")
+        //                .AddStatement($"p.{column.Name} = {column.Type.New()};"),
+        //                $"p.{column.Name}.{flat.Name} = {GetValueExpression("reader", flat, "i")}"
+        //                );
+        //        }
+        //    }
+        //    else
+        //    {
+        //        switchSet.AddBreakCase($"\"{column.Name}\"", $"p.{column.Name} = {GetValueExpression("reader", column, "i")}");
+        //    }
+        //}
+        //switchSet.AddDefaultCase("throw new global::LightORM.LightOrmException()");
+        //forStatement.AddStatements(switchSet);
+        return MethodBuilder.Default
+            .MethodName($"Deserialize{target.MetadataName}FromDbDataReader")
+            .Modifiers("public static")
+            .AddParameter("global::System.Data.IDataReader reader")
+            .ReturnType(target.ToDisplayString())
+            .AddBody("throw new NotImplementedException()");
+        
+        //static string GetValueExpression(string instanceName, IPropertySymbol property, string indexVar)
+        //{
+        //    if (property.Type.TypeKind == TypeKind.Array
+        //        && property.Type is IArrayTypeSymbol array
+        //        && array.ElementType.SpecialType == SpecialType.System_Byte)
+        //    {
+        //        // 处理 byte[] 类型
+        //        return $"global::LightORM.Utils.DataRecordFieldHandleHelper.RecordFieldToBytes({instanceName}, {indexVar})";
+        //    }
+        //    else if (IsUnsignType(property.Type))
+        //    {
+        //        if (typeMapMethod.TryGetValue(property.Type.SpecialType, out var method))
+        //        {
+        //            return $"{method}({instanceName}, {indexVar})";
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (typeMapMethod.TryGetValue(property.Type.SpecialType, out var method))
+        //        {
+        //            return $"{instanceName}.{method}({indexVar})";
+        //        }
+        //    }
+        //    return "";
+        //}
+        //static bool IsUnsignType(ITypeSymbol type)
+        //{
+        //    return type.SpecialType switch
+        //    {
+        //        SpecialType.System_SByte => true,
+        //        SpecialType.System_UInt16 => true,
+        //        SpecialType.System_UInt32 => true,
+        //        SpecialType.System_UInt64 => true,
+        //        _ => false
+        //    };
+        //}
+    }
+
     private static MethodBuilder CreateInitColumnInfoMethod(INamedTypeSymbol owner, IPropertySymbol[] columns)
     {
-        //var columns = target.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>().ToArray();
-
         List<Statement> bodies = [];
         var i = 0;
         var tableType = $"typeof({owner.ToDisplayString()})";
@@ -396,8 +336,7 @@ FieldBuilder.Default
                 }
                 else
                 {
-                    var mappingType = nav.GetNamedValue("ManyToMany") as INamedTypeSymbol;
-                    var mpt = mappingType == null ? "null" : $"typeof({mappingType.ToDisplayString()})";
+                    var mpt = nav.GetNamedValue("ManyToMany") is not INamedTypeSymbol mappingType ? "null" : $"typeof({mappingType.ToDisplayString()})";
                     var mn = GetAttributeValueOrNull(nav, "MainName", true);
                     var sn = GetAttributeValueOrNull(nav, "SubName", true);
                     navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), {mpt}, {mn}, {sn}, {multi})";
@@ -513,4 +452,24 @@ FieldBuilder.Default
 
         return method;
     }
+
+    readonly static Dictionary<SpecialType, string> typeMapMethod = new(37)
+    {
+        [SpecialType.System_Byte] = "GetByte",
+        [SpecialType.System_SByte] = "GetByte",
+        [SpecialType.System_Int16] = "GetInt16",
+        [SpecialType.System_UInt16] = "global::LightORM.Utils.DataRecordFieldHandleHelper.RecordFieldToUInt16",
+        [SpecialType.System_Int32] = "GetInt32",
+        [SpecialType.System_UInt32] = "global::LightORM.Utils.DataRecordFieldHandleHelper.RecordFieldToUInt32",
+        [SpecialType.System_Int64] = "GetInt64",
+        [SpecialType.System_UInt64] = "global::LightORM.Utils.DataRecordFieldHandleHelper.RecordFieldToUInt64",
+        [SpecialType.System_Single] = "GetFloat",
+        [SpecialType.System_Double] = "GetDouble",
+        [SpecialType.System_Decimal] = "GetDecimal",
+        [SpecialType.System_Boolean] = "GetBoolean",
+        [SpecialType.System_String] = "GetString",
+        [SpecialType.System_Char] = "GetChar",
+        [SpecialType.System_DateTime] = "GetDateTime",
+        [SpecialType.System_Array] = ""
+    };
 }

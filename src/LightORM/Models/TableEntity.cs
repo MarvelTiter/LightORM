@@ -22,13 +22,4 @@ internal record TableEntity : ITableEntityInfo
     public string? Description { get; set; }
     public ITableColumnInfo[] Columns { get; set; } = [];
 
-    public object? GetValue(ITableColumnInfo col, object target)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetValue(ITableColumnInfo col, object target, object? value)
-    {
-        throw new NotImplementedException();
-    }
 }

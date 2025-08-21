@@ -19,7 +19,7 @@ public class UpdateSql : TestBase
             LastLogin = DateTime.Now,
             ModifyTime = DateTime.Now,
             Password = "Test",
-            Sign = "Sign",
+            Sign = SignType.Svip,
         };
         var sql = Db.Update(p).ToSqlWithParameters();
         Console.WriteLine(sql);
