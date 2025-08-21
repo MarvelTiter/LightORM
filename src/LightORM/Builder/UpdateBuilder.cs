@@ -69,7 +69,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(CheckMembers)
-                   .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated).ToArray();
+                   .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.AutoIncrement && !c.IsIgnoreUpdate).ToArray();
 
         BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
         var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";

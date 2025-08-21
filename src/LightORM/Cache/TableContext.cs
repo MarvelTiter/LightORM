@@ -65,7 +65,7 @@ internal static partial class TableContext
         else
         {
             //var key = $"{type.FullName}_{col.PropertyName}_Getter";
-            var reflectAction = reflectGetValueCaches.GetOrAdd(col,static col =>
+            var reflectAction = reflectGetValueCaches.GetOrAdd(col, static col =>
             {
                 if (col.IsAggregatedProperty && col.AggregateType is not null)
                 {
@@ -82,6 +82,17 @@ internal static partial class TableContext
             return reflectAction.Invoke(target);
         }
     }
+
+    //public static ITableEntityInfo<T> GetGenericTableInfo<T>()
+    //{
+    //    if (StaticContext is null)
+    //    {
+    //        throw new LightOrmException("未设置TableContext");
+    //    }
+    //    var table = StaticContext.GetTableInfo(typeof(T)) as ITableEntityInfo<T>;
+    //    return table ?? throw new LightOrmException("获取泛型ITableEntityInfo失败");
+    //}
+
     public static ITableEntityInfo GetTableInfo(Type type)
     {
         if (StaticContext != null)

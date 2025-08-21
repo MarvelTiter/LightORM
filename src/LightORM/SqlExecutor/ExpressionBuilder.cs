@@ -4,114 +4,47 @@ using System.Data.Common;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-
+using System.Text;
 namespace LightORM.SqlExecutor;
 
-internal class ExpressionBuilder
+internal partial class ExpressionBuilder
 {
+    private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
 
-    private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToBytes), BindingFlags.NonPublic | BindingFlags.Static)!;
-
-
-    private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt32 = typeof(IDataRecord).GetMethod("GetInt32", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt64 = typeof(IDataRecord).GetMethod("GetInt64", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetFloat = typeof(IDataRecord).GetMethod("GetFloat", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDouble = typeof(IDataRecord).GetMethod("GetDouble", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDecimal = typeof(IDataRecord).GetMethod("GetDecimal", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetBoolean = typeof(IDataRecord).GetMethod("GetBoolean", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetString = typeof(IDataRecord).GetMethod("GetString", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetChar = typeof(IDataRecord).GetMethod("GetChar", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetGuid = typeof(IDataRecord).GetMethod("GetGuid", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDateTime = typeof(IDataRecord).GetMethod("GetDateTime", [typeof(int)])!;
-
-    private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue", [typeof(int)])!;
-
-
-    private static readonly MethodInfo DataRecord_GetUInt16 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt16), BindingFlags.NonPublic | BindingFlags.Static)!;
-    private static readonly MethodInfo DataRecord_GetUInt = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt), BindingFlags.NonPublic | BindingFlags.Static)!;
-    private static readonly MethodInfo DataRecord_GetUInt64 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt64), BindingFlags.NonPublic | BindingFlags.Static)!;
-    private static readonly MethodInfo CustomStringParseToBoolean = typeof(ExpressionBuilder).GetMethod(nameof(CustomStringToBoolean), BindingFlags.NonPublic | BindingFlags.Static)!;
-
-    readonly static Dictionary<Type, MethodInfo> typeMapMethod = new Dictionary<Type, MethodInfo>(37)
-    {
-        [typeof(byte)] = DataRecord_GetByte,
-        [typeof(sbyte)] = DataRecord_GetByte,
-        [typeof(short)] = DataRecord_GetInt16,
-        [typeof(ushort)] = DataRecord_GetUInt16,
-        [typeof(int)] = DataRecord_GetInt32,
-        [typeof(uint)] = DataRecord_GetUInt,
-        [typeof(long)] = DataRecord_GetInt64,
-        [typeof(ulong)] = DataRecord_GetUInt64,
-        [typeof(float)] = DataRecord_GetFloat,
-        [typeof(double)] = DataRecord_GetDouble,
-        [typeof(decimal)] = DataRecord_GetDecimal,
-        [typeof(bool)] = DataRecord_GetBoolean,
-        [typeof(string)] = DataRecord_GetString,
-        [typeof(char)] = DataRecord_GetChar,
-        [typeof(Guid)] = DataRecord_GetGuid,
-        [typeof(DateTime)] = DataRecord_GetDateTime,
-        [typeof(byte[])] = Helper_GetBytes
-    };
-    private static byte[] RecordFieldToBytes(IDataRecord Reader, int Column)
-    {
-        long BlobSize = Reader.GetBytes(Column, 0, null, 0, 0);
-        if (BlobSize > int.MaxValue)
-            throw new ArgumentOutOfRangeException("MemoryStream cannot be larger than " + int.MaxValue);
-
-        byte[] Buffer = new byte[Convert.ToInt32(BlobSize - 1) + 1];
-        Reader.GetBytes(Column, 0, Buffer, 0, Buffer.Length);
-        return Buffer;
-    }
-
-    private static ushort RecordFieldToUInt16(IDataRecord Reader, int Column)
-    {
-        var value = Reader.GetInt16(Column);
-        return value >= 0 ? (ushort)value : throw new OverflowException("Negative value cannot be converted to ushort");
-
-    }
-
-    private static uint RecordFieldToUInt(IDataRecord Reader, int Column)
-    {
-        var value = Reader.GetInt32(Column);
-        return value >= 0 ? (uint)value : throw new OverflowException("Negative value cannot be converted to uint");
-
-    }
-
-    private static ulong RecordFieldToUInt64(IDataRecord Reader, int Column)
-    {
-        var value = Reader.GetInt64(Column);
-        return value >= 0 ? (ulong)value : throw new OverflowException("Negative value cannot be converted to ulong");
-
-    }
-
-    private static string CustomStringToBoolean(string valueString)
-    {
-        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? "True" : "False";
-    }
-
-    private static readonly ConcurrentDictionary<string, Func<IDataReader, object>> cacheFuncs = [];
-
-    public static Func<IDataReader, object> BuildDeserializer<T>(DbDataReader reader)
+    public static Func<IDataReader, T> BuildDeserializer<T>(DbDataReader reader)
     {
         var type = typeof(T);
 
-        var columns = reader.GetSchemaTable()!.Select(col =>
-          {
-              var columnAllowDbNull = col["AllowDBNull"];
-              var nullable = columnAllowDbNull != DBNull.Value && columnAllowDbNull != null && Convert.ToBoolean(columnAllowDbNull);
-              return $"{col["ColumnName"]}_{col["ColumnName"]}_{nullable}";
-          });
+        var cacheKey = GenerateCacheKey(type, reader);
 
-        var cacheKey = $"{nameof(BuildDeserializer)}_{type.GUID}_{string.Join("&", columns)}";
-        if (!cacheFuncs.TryGetValue(cacheKey, out var func))
+        if (!dynamicDelegates.TryGetValue(cacheKey, out var @delegate))
         {
-            func = BuildFunc<T>(reader, CultureInfo.CurrentCulture);
-            cacheFuncs.TryAdd(cacheKey, func);
+            @delegate = BuildFunc<T>(reader, CultureInfo.CurrentCulture);
+            dynamicDelegates.TryAdd(cacheKey, @delegate);
         }
-        return func;
+
+        return (Func<IDataReader, T>)@delegate;
+
+        static string GenerateCacheKey(Type type, DbDataReader reader)
+        {
+            var schemaTable = reader.GetSchemaTable();
+            if (schemaTable == null)
+                return $"{type.FullName}_null_schema";
+
+            var builder = new StringBuilder(256);
+            builder.Append(type.FullName); // 使用 FullName 而不是 GUID
+
+            foreach (DataRow row in schemaTable.Rows)
+            {
+                builder.Append('|')
+                       .Append(row["ColumnName"])       // 列名
+                       .Append(':')
+                       .Append(row["DataType"]?.ToString() ?? "null") // 数据类型
+                       .Append(':')
+                       .Append(row["AllowDBNull"]); // 是否可空
+            }
+            return builder.ToString();
+        }
     }
 
     /// <summary>
@@ -129,7 +62,7 @@ internal class ExpressionBuilder
     /// <param name="reader"></param>
     /// <param name="Culture"></param>
     /// <returns></returns>
-    private static Func<IDataReader, object> BuildFunc<Target>(IDataReader reader, CultureInfo Culture)
+    private static Func<IDataReader, Target> BuildFunc<Target>(DbDataReader reader, CultureInfo Culture)
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
@@ -140,7 +73,7 @@ internal class ExpressionBuilder
         if (TargetType.FullName?.StartsWith("System.Tuple`") ?? false)
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
-            if (Constructors.Count() != 1)
+            if (Constructors.Length != 1)
                 LightOrmException.Throw("Tuple must have one Constructor");
             var Constructor = Constructors[0];
 
@@ -200,7 +133,7 @@ internal class ExpressionBuilder
             Expression CreateAnonymous()
             {
                 var props = TargetType.GetProperties();
-                List<Expression> Expressions = new List<Expression>();
+                List<Expression> Expressions = [];
                 void work()
                 {
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
@@ -305,7 +238,8 @@ internal class ExpressionBuilder
 
         }
         //Compile as Delegate
-        var lambdaExp = Expression.Lambda<Func<IDataReader, object>>(Body, recordInstanceExp);
+        var lambdaExp = Expression.Lambda<Func<IDataReader, Target>>(Body, recordInstanceExp);
+        System.Diagnostics.Debug.WriteLine(lambdaExp);
         return lambdaExp.Compile();
     }
 
@@ -316,7 +250,7 @@ internal class ExpressionBuilder
     }
 
     private static Expression GetTargetValueExpression(
-        IDataReader reader,
+        DbDataReader reader,
         CultureInfo Culture,
         ParameterExpression recordInstanceExp,
         DataTable SchemaTable,
@@ -324,8 +258,7 @@ internal class ExpressionBuilder
         Type TargetMemberType)
     {
         Type RecordFieldType = reader.GetFieldType(Ordinal);
-        var columnAllowDbNull = SchemaTable.Rows[Ordinal]["AllowDBNull"];
-        bool AllowDBNull = (columnAllowDbNull == DBNull.Value || columnAllowDbNull == null) || Convert.ToBoolean(columnAllowDbNull);
+        bool AllowDBNull = IsColumnNullable(SchemaTable, Ordinal);
         Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
         Expression ConvertedRecordFieldExpression = GetConversionExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
         MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
@@ -345,6 +278,14 @@ internal class ExpressionBuilder
             TargetValueExpression = ConvertedRecordFieldExpression;
         }
         return TargetValueExpression;
+
+        static bool IsColumnNullable(DataTable schemaTable, int ordinal)
+        {
+            var allowDbNull = schemaTable.Rows[ordinal]["AllowDBNull"];
+            return allowDbNull == DBNull.Value ||
+                   allowDbNull == null ||
+                   Convert.ToBoolean(allowDbNull);
+        }
     }
 
     private static Expression GetRecordFieldExpression(ParameterExpression recordInstanceExp, int Ordinal, Type RecordFieldType)
@@ -362,7 +303,6 @@ internal class ExpressionBuilder
         else if (IsUnsignType(RecordFieldType))
         {
             RecordFieldExpression = Expression.Call(
-                null,
                 GetValueMethod,
                 [recordInstanceExp, Expression.Constant(Ordinal, typeof(int))]
             );
@@ -388,24 +328,24 @@ internal class ExpressionBuilder
     private static Expression GetConversionExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture)
     {
         Expression TargetExpression;
-        if (ReferenceEquals(TargetType, SourceType))
+        if (TargetType == SourceType)
         {
             TargetExpression = SourceExpression;
         }
-        else if (ReferenceEquals(SourceType, typeof(string)))
+        else if (SourceType == typeof(string))
         {
             TargetExpression = GetParseExpression(SourceExpression, TargetType, Culture);
         }
-        else if (ReferenceEquals(TargetType, typeof(string)))
+        else if (TargetType == typeof(string))
         {
             TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
         }
-        else if (ReferenceEquals(TargetType, typeof(bool)))
+        else if (TargetType == typeof(bool))
         {
             MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", [SourceType])!;
             TargetExpression = Expression.Call(ToBooleanMethod, SourceExpression);
         }
-        else if (ReferenceEquals(SourceType, typeof(byte[])))
+        else if (SourceType == typeof(byte[]))
         {
             TargetExpression = GetArrayHandlerExpression(SourceExpression, TargetType);
         }
@@ -419,11 +359,11 @@ internal class ExpressionBuilder
     private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType)
     {
         Expression TargetExpression;
-        if (ReferenceEquals(targetType, typeof(byte[])))
+        if (targetType == typeof(byte[]))
         {
             TargetExpression = sourceExpression;
         }
-        else if (ReferenceEquals(targetType, typeof(MemoryStream)))
+        else if (targetType == typeof(MemoryStream))
         {
             ConstructorInfo ConstructorInfo = targetType.GetConstructor([typeof(byte[])])!;
             TargetExpression = Expression.New(ConstructorInfo, sourceExpression);
@@ -434,7 +374,6 @@ internal class ExpressionBuilder
         }
         return TargetExpression;
     }
-
     private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture)
     {
         Type UnderlyingType = GetUnderlyingType(TargetType);
@@ -442,7 +381,7 @@ internal class ExpressionBuilder
         {
             MethodCallExpression ParsedEnumExpression = GetEnumParseExpression(SourceExpression, UnderlyingType);
             //Enum.Parse returns an object that needs to be unboxed
-            return Expression.Unbox(ParsedEnumExpression, TargetType);
+            return Expression.Convert(ParsedEnumExpression, TargetType);
         }
         else
         {
@@ -500,11 +439,11 @@ internal class ExpressionBuilder
         MethodCallExpression GetEnumParseExpression(Expression sourceExpression, Type type)
         {
             //Get the MethodInfo for parsing an Enum
-            MethodInfo EnumParseMethod = typeof(Enum).GetMethod("Parse", [typeof(Type), typeof(string), typeof(bool)])!;
+            //MethodInfo EnumParseMethod = typeof(Enum).GetMethod("Parse", [typeof(Type), typeof(string), typeof(bool)])!;
             ConstantExpression TargetMemberTypeExpression = Expression.Constant(type);
             ConstantExpression IgnoreCase = Expression.Constant(true, typeof(bool));
             //Create an expression the calls the Parse method
-            MethodCallExpression CallExpression = Expression.Call(EnumParseMethod, [TargetMemberTypeExpression, sourceExpression, IgnoreCase]);
+            MethodCallExpression CallExpression = Expression.Call(enumParseMethod, [TargetMemberTypeExpression, sourceExpression, IgnoreCase]);
             return CallExpression;
         }
 
@@ -527,8 +466,10 @@ internal class ExpressionBuilder
         return Nullable.GetUnderlyingType(targetType) ?? targetType;
     }
 }
-public static class Ex
+
+file static class Ex
 {
+    readonly static HashSet<Type> ElementaryTypes = LoadElementaryTypes();
     /// <summary>
     /// 检查是否为基础类型
     /// </summary>
@@ -538,11 +479,10 @@ public static class Ex
     {
         return ElementaryTypes.Contains(t);
     }
-    readonly static HashSet<Type> ElementaryTypes = LoadElementaryTypes();
     private static HashSet<Type> LoadElementaryTypes()
     {
-        HashSet<Type> TypeSet = new HashSet<Type>()
-        {
+        HashSet<Type> TypeSet =
+        [
                 typeof(string),
                 typeof(byte),
                 typeof(byte[]),
@@ -575,7 +515,7 @@ public static class Ex
                 typeof(Guid?),
                 typeof(bool?),
                 typeof(TimeSpan?)
-            };
+            ];
         return TypeSet;
     }
 }

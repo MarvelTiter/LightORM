@@ -4,81 +4,6 @@ using System.Threading;
 
 namespace LightORM;
 
-//public static partial class SqlExecutorExtensions
-//{
-//    /// <summary>
-//    /// 开启事务-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    /// <param name="isolationLevel"></param>
-//    public static void BeginTran(this ISqlExecutor executor, string savePoint, IsolationLevel isolationLevel = IsolationLevel.Unspecified)
-//    {
-//        var context = currentTransactionContext.Value ?? throw new InvalidOperationException("No active transaction to begin savepoint");
-//        // 嵌套事务
-//        context.NestLevel++;
-//#if NET6_0_OR_GREATER
-//        if (context.Transaction.SupportsSavepoints)
-//        {
-//            context.Transaction.Save($"savePoint{context.NestLevel}");
-//        }
-//#endif
-//    }
-//    /// <summary>
-//    /// 提交事务-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    public static void CommitTran(this ISqlExecutor executor, string savePoint)
-//    {
-
-//    }
-
-//    /// <summary>
-//    /// 回滚事务-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    public static void RollbackTran(this ISqlExecutor executor, string savePoint)
-//    {
-
-//    }
-//    /// <summary>
-//    /// 开启事务异步-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    /// <param name="isolationLevel"></param>
-//    /// <param name="cancellationToken"></param>
-//    /// <returns></returns>
-//    public static Task BeginTranAsync(this ISqlExecutor executor, string savePoint, IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
-//    {
-
-//    }
-//    /// <summary>
-//    /// 提交事务异步-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    /// <param name="cancellationToken"></param>
-//    /// <returns></returns>
-//    public static Task CommitTranAsync(this ISqlExecutor executor, string savePoint, CancellationToken cancellationToken = default)
-//    {
-
-//    }
-//    /// <summary>
-//    /// 回滚事务异步-savePoint
-//    /// </summary>
-//    /// <param name="executor"></param>
-//    /// <param name="savePoint"></param>
-//    /// <param name="cancellationToken"></param>
-//    /// <returns></returns>
-//    public static Task RollbackTranAsync(this ISqlExecutor executor, string savePoint, CancellationToken cancellationToken = default)
-//    {
-
-//    }
-//}
-
 public static partial class SqlExecutorExtensions
 {
     //public static DbConnection GetConnection(this ISqlExecutor executor)
@@ -104,7 +29,7 @@ public static partial class SqlExecutorExtensions
             var des = BuildDeserializer<T>(reader);
             while (reader.Read())
             {
-                yield return (T)des.Invoke(reader);
+                yield return des.Invoke(reader);
             }
         }
         finally
@@ -118,7 +43,24 @@ public static partial class SqlExecutorExtensions
         , DbTransaction? trans = null
         , CommandType commandType = CommandType.Text)
     {
-        return Query<MapperRow>(self, sql, param, trans, commandType);
+        DbDataReader? reader = null;
+        try
+        {
+            if (trans != null)
+            {
+                self.UseExternalTransaction(trans);
+            }
+            reader = self.ExecuteReader(sql, param, commandType);
+            var des = DynamicDeserializer(reader);
+            while (reader.Read())
+            {
+                yield return des.Invoke(reader);
+            }
+        }
+        finally
+        {
+            reader?.Close();
+        }
     }
     public static T? QuerySingle<T>(this ISqlExecutor self
         , string sql
@@ -138,7 +80,7 @@ public static partial class SqlExecutorExtensions
             T? result = default;
             if (reader.Read())
             {
-                result = (T)des.Invoke(reader);
+                result = des.Invoke(reader);
             }
             return result;
         }
@@ -171,7 +113,7 @@ public static partial class SqlExecutorExtensions
                 {
                     break;
                 }
-                list.Add((T)des.Invoke(reader));
+                list.Add(des.Invoke(reader));
             }
             return list;
         }
@@ -195,8 +137,37 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , CancellationToken cancellationToken = default)
     {
-        var list = await QueryListAsync<MapperRow>(self, sql, param, trans, commandType, cancellationToken);
-        return [.. list.Cast<dynamic>()];
+        DbDataReader? reader = null;
+        try
+        {
+            if (trans != null)
+            {
+                self.UseExternalTransaction(trans);
+            }
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            var des = DynamicDeserializer(reader);
+            List<object> list = [];
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                list.Add(des.Invoke(reader));
+            }
+            return list;
+        }
+        finally
+        {
+#if NET6_0_OR_GREATER
+            if (reader is not null)
+            {
+                await reader.CloseAsync();
+            }
+#else
+            reader?.Close();
+#endif
+        }
     }
 
     public static async IAsyncEnumerable<T> QueryAsync<T>(this ISqlExecutor self
@@ -221,7 +192,7 @@ public static partial class SqlExecutorExtensions
                 {
                     break;
                 }
-                yield return (T)des.Invoke(reader);
+                yield return des.Invoke(reader);
             }
         }
         finally
@@ -244,10 +215,34 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var datas = QueryAsync<MapperRow>(self, sql, param, trans, commandType, cancellationToken);
-        await foreach (var item in datas.WithCancellation(cancellationToken))
+        DbDataReader? reader = null;
+        try
         {
-            yield return item;
+            if (trans != null)
+            {
+                self.UseExternalTransaction(trans);
+            }
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            var des = DynamicDeserializer(reader);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                yield return des.Invoke(reader);
+            }
+        }
+        finally
+        {
+#if NET6_0_OR_GREATER
+            if (reader is not null)
+            {
+                await reader.CloseAsync();
+            }
+#else
+            reader?.Close();
+#endif
         }
     }
 
@@ -270,7 +265,7 @@ public static partial class SqlExecutorExtensions
             T? result = default;
             if (await reader.ReadAsync(cancellationToken))
             {
-                result = (T)des.Invoke(reader);
+                result = des.Invoke(reader);
             }
             return result;
         }
@@ -286,17 +281,17 @@ public static partial class SqlExecutorExtensions
 #endif
         }
     }
-    internal static Func<IDataReader, object> BuildDeserializer<T>(this DbDataReader reader)
+    internal static Func<IDataReader, T> BuildDeserializer<T>(this DbDataReader reader)
     {
-
-        if (typeof(T) == typeof(object) || typeof(T) == typeof(MapperRow))
-        {
-            return GetMapperRowDeserializer<T>(reader, false);
-        }
         return ExpressionBuilder.BuildDeserializer<T>(reader);
     }
 
-    internal static Func<IDataReader, object> GetMapperRowDeserializer<T>(IDataRecord reader, bool returnNullIfFirstMissing)
+    internal static Func<IDataReader, object> DynamicDeserializer(this DbDataReader reader)
+    {
+        return GetMapperRowDeserializer(reader, false);
+    }
+
+    internal static Func<IDataReader, object> GetMapperRowDeserializer(IDataRecord reader, bool returnNullIfFirstMissing)
     {
         var fieldCount = reader.FieldCount;
 

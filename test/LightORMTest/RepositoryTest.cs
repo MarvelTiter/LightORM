@@ -20,12 +20,15 @@ public class RepositoryTest : TestBase
             UserId = "test01",
             UserName = "Test",
             Age = 18,
-            IsLock = false,
+            IsLock = true,
+            Sign = SignType.Vip,
             Password = "helloworld",
         });
 
         var iu = usrRepo.Table.Where(u => u.UserId == "test01").FirstOrDefault();
         Assert.IsTrue(iu?.UserName == "Test");
+        Assert.IsTrue(iu?.IsLock == true);
+        Assert.IsTrue(iu?.Sign == SignType.Vip);
         usrRepo.DeleteFull(truncate: true);
     }
 
