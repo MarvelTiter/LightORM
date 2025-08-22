@@ -18,14 +18,17 @@
     </header>
     <section style="flex:1;overflow:hidden;display:flex;">
         <aside style="height:100%;width:fit-content;">
-            <div style="height:50px;line-height:30px;">
+            <div style="height:30px;line-height:30px;">
                 数据库列表
                 <Checkbox OnChange="AllHandle">全选</Checkbox>
             </div>
-            <div style="height:50px;line-height:30px;">
+            <div style="height:30px;line-height:30px;">
                 <Input @bind-Value="@dbKey" AllowClear Placeholder="DatabaseKey"></Input>
             </div>
-            <Card Style="height:calc(100% - 100px);overflow-y:auto;width:fit-content;min-width:200px;">
+            <div style="height:30px;line-height:30px;">
+                <Button Size="ButtonSize.Small" OnClick="@(() => showAttributeSetting = true)">配置属性Attribute</Button>
+            </div>
+            <Card Style="height:calc(100% - 90px);overflow-y:auto;width:fit-content;min-width:200px;">
                 <ChildContent>
                     <AntList DataSource="@Tables">
                         <ChildContent>
@@ -57,7 +60,20 @@
         </section>
     </section>
 </section>
-
+<Modal @bind-Visible="@showAttributeSetting" Width="550">
+    <h2>
+        <pre>属性自定义Attribute配置</pre>
+        <pre>{0}占位符用于填充Comment属性</pre>
+    </h2>
+    @for(var i = 0; i < externalAttributes.Count; i++)
+    {
+        var index = i;
+        <Input @bind-Value="@externalAttributes[index]" Placeholder="@("[自定义Attribute(Comment = \"{0}\")]")"></Input>
+    }
+    <div style="margin-top:10px;"></div>
+    <Button OnClick="@(() => externalAttributes.Add(""))">添加</Button>
+    <Button OnClick="@(() => externalAttributes.Clear())">清空</Button>
+</Modal>
 <Modal @bind-Visible="@showSetting" Width="450">
     <Form Model="@config" LabelColSpan="6">
         <FormItem Label="前缀">

@@ -22,8 +22,10 @@ namespace DatabaseUtils
         IEnumerable<DatabaseTable> Tables = [];
         IDbOperator? dbOperator = null;
         bool showSetting;
+        bool showAttributeSetting;
         private Config config = new Config();
         private string? dbKey;
+        private List<string> externalAttributes = [];
         [Inject, NotNull] IExpressionContext? Context { get; set; }
 
         async Task Connect()
@@ -63,14 +65,24 @@ namespace DatabaseUtils
                 try
                 {
                     table.Columns = await dbOperator!.GetTableStructAsync(table.TableName);
-                    string formatted = table.PascalName(prefix, separator);
-                    var content = dbOperator.BuildContent(table, prefix, separator);
-                    var classcontent = string.IsNullOrEmpty(dbKey) ? string.Format(ClassTemplate.Class, config.Namespace, table.TableName, formatted, content) : string.Format(ClassTemplate.ClassWithDatabaseKey, config.Namespace, table.TableName, formatted, content, dbKey);
+                    //string formatted = table.PascalName(prefix, separator);
+                    //var content = dbOperator.BuildContent(table, prefix, separator);
+                    //var classcontent = string.IsNullOrEmpty(dbKey) ? string.Format(ClassTemplate.Class, config.Namespace, table.TableName, formatted, content) : string.Format(ClassTemplate.ClassWithDatabaseKey, config.Namespace, table.TableName, formatted, content, dbKey);
+                    var cb = ClassBuilder.Create(table, dbKey);
+                    foreach (var item in table.Columns)
+                    {
+                       var prop = cb.AddProperty(item);
+                        foreach (var ea in externalAttributes)
+                        {
+                            if (string.IsNullOrEmpty(ea)) continue;
+                            prop.AddAttribute(ea);
+                        }
+                    }
                     GeneratedTables.Add(new()
                     {
                         TableName = table.TableName,
-                        CsFileName = formatted,
-                        GeneratedResult = classcontent,
+                        GeneratedResult = cb.ToString(dbOperator!, config),
+                        CsFileName = cb.ClassName,
                     });
                 }
                 catch (Exception ex)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DatabaseUtils.Services;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -15,5 +16,7 @@ namespace DatabaseUtils.Models
         public string? GeneratedResult { get; set; }
         public string? CsFileName { get; set; }
         public bool IsSelected { get; set; }
+        public IDbOperator? Db { get; set; }
+        public Config? Config { get; set; }
     }
 }
