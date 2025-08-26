@@ -114,8 +114,8 @@ internal partial class ExpressionBuilder
                                                     Ordinal,
                                                     TargetType);
 
-            UnaryExpression converted = Expression.Convert(TargetValueExpression, typeof(object));
-            Body = Expression.Block(converted);
+            //UnaryExpression converted = Expression.Convert(TargetValueExpression, TargetType);
+            Body = Expression.Block(TargetValueExpression);
         }
         // 其他
         else

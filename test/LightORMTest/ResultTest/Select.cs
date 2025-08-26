@@ -71,4 +71,14 @@ public class Select : TestBase
         Assert.IsTrue(result.UserRoles.Count() == 1);
         Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "SuperAdmin");
     }
+
+    [TestMethod]
+    public void SelectSingleColumn()
+    {
+        var list = Db.Select<User>().ToList(u => u.UserName);
+        foreach (var item in list)
+        {
+            Console.WriteLine(item);
+        }
+    }
 }
