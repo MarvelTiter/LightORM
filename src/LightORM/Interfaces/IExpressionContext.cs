@@ -112,4 +112,8 @@ public interface ISingleScopedExpressionContext : IDisposable
     Task CommitTransactionAsync();
     void RollbackTransaction();
     Task RollbackTransactionAsync();
+    internal void TryBeginTransaction();
+    internal void TryCommitTransaction();
+    internal void TryRollbackTransaction();
+    internal void ResetTransactionState();
 }

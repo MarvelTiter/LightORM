@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LightORM;
@@ -21,7 +22,9 @@ public static class InsertExtensions
         return count;
     }
 
-    public static async Task<int> InsertEachAsync<T>(this IExpInsert<T> insert, IEnumerable<T> entities)
+    public static async Task<int> InsertEachAsync<T>(this IExpInsert<T> insert
+        , IEnumerable<T> entities
+        , CancellationToken cancellationToken = default)
     {
         if (insert is null) throw new ArgumentNullException(nameof(insert));
         if (entities is null) throw new ArgumentNullException(nameof(entities));
@@ -29,7 +32,7 @@ public static class InsertExtensions
         foreach (var entity in entities)
         {
             insert.SetTargetObject(entity);
-            count += await insert.ExecuteAsync();
+            count += await insert.ExecuteAsync(cancellationToken: cancellationToken);
         }
         return count;
     }

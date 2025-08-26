@@ -1,10 +1,11 @@
-﻿using System.Collections.Concurrent;
+﻿using LightORM.Extension;
+using System.Collections.Concurrent;
 using System.Reflection;
-using LightORM.Extension;
+using System.Threading;
 
 namespace LightORM.Repository;
 
-internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>, IDisposable
+internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
 {
     private static readonly ParameterExpression parameterExpression = Expression.Parameter(typeof(TEntity), "entity");
     private static readonly Lazy<ConcurrentDictionary<PropertyInfo, PrimaryKeyExpressionBuilder>> keyBuilders = new(CreateKeyBuilders);
@@ -39,55 +40,131 @@ internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>, IDispo
 
     #region 增删改
 
-    public int Insert(TEntity entity) => context.Insert(entity).Execute();
+    public int Insert(TEntity entity)
+    {
+        context.TryBeginTransaction();
+        return context.Insert(entity).Execute();
+    }
 
-    public int Update(TEntity entity) => context.Update(entity).Execute();
+    public int Update(TEntity entity)
+    {
+        context.TryBeginTransaction();
+        return context.Update(entity).Execute();
+    }
 
-    public int Delete(TEntity entity) => context.Delete(entity).Execute();
+    public int Delete(TEntity entity)
+    {
+        context.TryBeginTransaction();
+        return context.Delete(entity).Execute();
+    }
 
     public int Delete(object key, string? primaryKey = null)
     {
+        context.TryBeginTransaction();
         var keyWhereExpression = BuildPrimaryKeyExpression(key, primaryKey);
         return context.Delete<TEntity>().Where(keyWhereExpression).Execute();
     }
 
-    public int DeleteFull(bool truncate) => context.Delete<TEntity>().FullDelete(truncate).Execute();
+    public int DeleteFull(bool truncate)
+    {
+        context.TryBeginTransaction();
+        return context.Delete<TEntity>().FullDelete(truncate).Execute();
+    }
 
     #endregion
 
     #region 批量增删改
 
-    public int InsertRange(IEnumerable<TEntity> entities) => context.Insert([.. entities]).Execute();
-    public int UpdateRange(IEnumerable<TEntity> entities) => context.Update([.. entities]).Execute();
-    public int DeleteRange(IEnumerable<TEntity> entities) => context.Delete([.. entities]).Execute();
+    public int InsertRange(IEnumerable<TEntity> entities)
+    {
+        context.TryBeginTransaction();
+        return context.Insert([.. entities]).Execute();
+    }
+    public int UpdateRange(IEnumerable<TEntity> entities)
+    {
+        context.TryBeginTransaction();
+        return context.Update([.. entities]).Execute();
+    }
+    public int DeleteRange(IEnumerable<TEntity> entities)
+    {
+        context.TryBeginTransaction();
+        return context.Delete([.. entities]).Execute();
+    }
 
     #endregion
 
     #region 异步增删改
 
-    public Task<int> InsertAsync(TEntity entity) => context.Insert(entity).ExecuteAsync();
-
-    public Task<int> UpdateAsync(TEntity entity) => context.Update(entity).ExecuteAsync();
-
-    public Task<int> DeleteAsync(TEntity entity) => context.Delete(entity).ExecuteAsync();
-
-    public Task<int> DeleteAsync(object key, string? primaryKey = null)
+    public Task<int> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        var keyWhereExpression = BuildPrimaryKeyExpression(key, primaryKey);
-        return context.Delete<TEntity>().Where(keyWhereExpression).ExecuteAsync();
+        context.TryBeginTransaction();
+        return context.Insert(entity).ExecuteAsync(cancellationToken);
     }
 
-    public Task<int> DeleteFullAsync(bool truncate) => context.Delete<TEntity>().FullDelete(truncate).ExecuteAsync();
+    public Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Update(entity).ExecuteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Delete(entity).ExecuteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteAsync(object key, string? primaryKey = null, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        var keyWhereExpression = BuildPrimaryKeyExpression(key, primaryKey);
+        return context.Delete<TEntity>().Where(keyWhereExpression).ExecuteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteFullAsync(bool truncate, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Delete<TEntity>().FullDelete(truncate).ExecuteAsync(cancellationToken);
+    }
 
     #endregion
 
     #region 异步批量增删改
 
-    public Task<int> InsertRangeAsync(IEnumerable<TEntity> entities) => context.Insert([.. entities]).ExecuteAsync();
-    public Task<int> UpdateRangeAsync(IEnumerable<TEntity> entities) => context.Update([.. entities]).ExecuteAsync();
-    public Task<int> DeleteRangeAsync(IEnumerable<TEntity> entities) => context.Delete([.. entities]).ExecuteAsync();
+    public Task<int> InsertRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Insert([.. entities]).ExecuteAsync(cancellationToken);
+    }
+    public Task<int> UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Update([.. entities]).ExecuteAsync(cancellationToken);
+    }
+    public Task<int> DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        context.TryBeginTransaction();
+        return context.Delete([.. entities]).ExecuteAsync(cancellationToken);
+    }
 
     #endregion
+
+    public bool SaveChanges()
+    {
+        try
+        {
+            context.TryCommitTransaction();
+            return true;
+        }
+        catch
+        {
+            context.TryRollbackTransaction();
+            throw;
+        }
+        finally
+        {
+            context.ResetTransactionState();
+        }
+    }
 
     protected virtual void Dispose(bool disposing)
     {
@@ -96,6 +173,7 @@ internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>, IDispo
             if (disposing)
             {
                 context?.Dispose();
+                context?.TryRollbackTransaction();
             }
 
             disposedValue = true;

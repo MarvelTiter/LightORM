@@ -1,6 +1,8 @@
-﻿namespace LightORM.Repository;
+﻿using System.Threading;
 
-public interface ILightOrmRepository<TEntity>
+namespace LightORM.Repository;
+
+public interface ILightOrmRepository<TEntity>: IDisposable
 {
     IQueryable<TEntity> Table { get; }
     IExpSelect<TEntity> ExpSelect { get; }
@@ -14,13 +16,13 @@ public interface ILightOrmRepository<TEntity>
     int InsertRange(IEnumerable<TEntity> entities);
     int UpdateRange(IEnumerable<TEntity> entities);
     int DeleteRange(IEnumerable<TEntity> entities);
-
-    Task<int> InsertAsync(TEntity entity);
-    Task<int> UpdateAsync(TEntity entity);
-    Task<int> DeleteAsync(TEntity entity);
-    Task<int> DeleteAsync(object key, string? primaryKey = null);
-    Task<int> DeleteFullAsync(bool truncate);
-    Task<int> InsertRangeAsync(IEnumerable<TEntity> entities);
-    Task<int> UpdateRangeAsync(IEnumerable<TEntity> entities);
-    Task<int> DeleteRangeAsync(IEnumerable<TEntity> entities);
+    bool SaveChanges();
+    Task<int> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task<int> DeleteAsync(object key, string? primaryKey = null, CancellationToken cancellationToken = default);
+    Task<int> DeleteFullAsync(bool truncate, CancellationToken cancellationToken = default);
+    Task<int> InsertRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    Task<int> UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    Task<int> DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 }
