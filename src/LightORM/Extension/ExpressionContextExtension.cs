@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Repository;
 
 namespace LightORM;
 
@@ -45,7 +46,20 @@ public static class ExpressionContextExtension
         return ado.Database.BulkCopy(dataTable);
     }
 
-    private static ITransientExpressionContext GetAttrDbKey<T>(this IExpressionContext context)
+    /// <summary>
+    /// 获取仓储对象<see cref="ILightOrmRepository{TEntity}"/>
+    /// <para>注意释放对象</para>
+    /// </summary>
+    /// <typeparam name="TEntity"></typeparam>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    public static ILightOrmRepository<TEntity> GetRepository<TEntity>(this IExpressionContext context)
+        where TEntity : class, new()
+    {
+        return new DefaultRepository<TEntity>(context);
+    }
+
+    private static ITransientExpressionContext SwitchDb<T>(this IExpressionContext context)
     {
         var table = TableContext.GetTableInfo<T>();
         if (table.TargetDatabase is null)
@@ -56,31 +70,31 @@ public static class ExpressionContextExtension
     }
 
     public static IExpSelect<T> SelectWithAttr<T>(this IExpressionContext context)
-        => context.GetAttrDbKey<T>().Select<T>();
+        => context.SwitchDb<T>().Select<T>();
 
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, T entity)
-        => context.GetAttrDbKey<T>().Insert<T>(entity);
+        => context.SwitchDb<T>().Insert<T>(entity);
 
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.GetAttrDbKey<T>().Insert<T>(entities);
+        => context.SwitchDb<T>().Insert<T>(entities);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context)
-        => context.GetAttrDbKey<T>().Update<T>();
+        => context.SwitchDb<T>().Update<T>();
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, T entity)
-     => context.GetAttrDbKey<T>().Update<T>(entity);
+     => context.SwitchDb<T>().Update<T>(entity);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.GetAttrDbKey<T>().Update<T>(entities);
+        => context.SwitchDb<T>().Update<T>(entities);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context)
-        => context.GetAttrDbKey<T>().Delete<T>();
+        => context.SwitchDb<T>().Delete<T>();
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, T entity)
-        => context.GetAttrDbKey<T>().Delete<T>(entity);
+        => context.SwitchDb<T>().Delete<T>(entity);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.GetAttrDbKey<T>().Delete<T>(entities);
+        => context.SwitchDb<T>().Delete<T>(entities);
 
     public static ISingleScopedExpressionContext CreateMainDbScoped(this IExpressionContext context)
     {

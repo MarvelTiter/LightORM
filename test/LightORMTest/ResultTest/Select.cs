@@ -73,12 +73,52 @@ public class Select : TestBase
     }
 
     [TestMethod]
-    public void SelectSingleColumn()
+    public void SelectSingleStringColumn()
     {
-        var list = Db.Select<User>().ToList(u => u.UserName);
-        foreach (var item in list)
+        Db.Insert<User>().InsertEach([new User()
         {
-            Console.WriteLine(item);
-        }
+            UserId = "test01",
+            UserName = "Test1",
+            Age = 18,
+            IsLock = false,
+            Password = "helloworld",
+        }, new User()
+        {
+            UserId = "test02",
+            UserName = "Test2",
+            Age = 18,
+            IsLock = true,
+            Password = "helloworld",
+        }]);
+        var list = Db.Select<User>().ToList(u => u.UserName).ToList();
+        Assert.IsTrue(list.Count == 2);
+        Assert.IsTrue(list[0] == "Test1");
+        Assert.IsTrue(list[1] == "Test2");
+        Db.Delete<User>().FullDelete(true).Execute();
+    }
+
+    [TestMethod]
+    public void SelectSingleIntColumn()
+    {
+        Db.Insert<User>().InsertEach([new User()
+        {
+            UserId = "test01",
+            UserName = "Test1",
+            Age = 22,
+            IsLock = false,
+            Password = "helloworld",
+        }, new User()
+        {
+            UserId = "test02",
+            UserName = "Test2",
+            Age = 18,
+            IsLock = true,
+            Password = "helloworld",
+        }]);
+        var list = Db.Select<User>().ToList(u => u.Age).ToList();
+        Assert.IsTrue(list.Count == 2);
+        Assert.IsTrue(list[0] == 22);
+        Assert.IsTrue(list[1] == 18);
+        Db.Delete<User>().FullDelete(true).Execute();
     }
 }
