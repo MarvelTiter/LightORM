@@ -3,7 +3,10 @@
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="@FlexGap.Small">
-            <SimpleSelect Style="width:150px;" AllowClear Placeholder="选择数据库" @bind-Value="@config.LastSelectedDb" DropdownMatchSelectWidth="@false">
+            <SimpleSelect Style="width:150px;" AllowClear
+                          Placeholder="选择数据库"
+                          @bind-Value="@config.LastSelectedDb"
+                          DropdownMatchSelectWidth="@false">
                 <SimpleSelectOption Value="PostgreSQL" Label="PostgreSQL"></SimpleSelectOption>
                 <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
                 <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
@@ -65,7 +68,7 @@
         <pre>属性自定义Attribute配置</pre>
         <pre>{0}占位符用于填充Comment属性</pre>
     </h2>
-    @for(var i = 0; i < externalAttributes.Count; i++)
+    @for (var i = 0; i < externalAttributes.Count; i++)
     {
         var index = i;
         <Input @bind-Value="@externalAttributes[index]" Placeholder="@("[自定义Attribute(Comment = \"{0}\")]")"></Input>

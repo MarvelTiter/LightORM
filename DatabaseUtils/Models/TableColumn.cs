@@ -2,7 +2,7 @@
 
 namespace DatabaseUtils.Models
 {
-    public class TableColumn
+    public struct TableColumn
     {
         [NotNull] public string? ColumnName { get; set; }
         [NotNull] public string? DataType { get; set; }
@@ -12,6 +12,5 @@ namespace DatabaseUtils.Models
         [NotNull] public string? Comments { get; set; }
         [NotNull] public string? DefaultValue { get; set; }
         [NotNull] public string? Length { get; set; }
-
     }
 }

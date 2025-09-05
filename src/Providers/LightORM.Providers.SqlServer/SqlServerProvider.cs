@@ -16,9 +16,9 @@ public enum SqlServerVersion
 public sealed class SqlServerProvider : IDatabaseProvider
 {
     public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
-        => new SqlServerProvider(version, master, slaves);
+        => new(version, master, slaves);
     public static SqlServerProvider Create(ICustomDatabase customDatabase, string master, params string[] slaves)
-        => new SqlServerProvider(customDatabase, master, slaves);
+        => new(customDatabase, master, slaves);
     public SqlServerProvider(SqlServerVersion version
         , string master
         , params string[] slaves)
@@ -34,18 +34,24 @@ public sealed class SqlServerProvider : IDatabaseProvider
         CustomDatabase = customDatabase;
         MasterConnectionString = master;
         SlaveConnectionStrings = slaves;
+        TableHandler = option => new SqlServerTableHandler(option, this);
     }
     public DbBaseType DbBaseType => DbBaseType.SqlServer;
     public string MasterConnectionString { get; }
 
     public ICustomDatabase CustomDatabase { get; }
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new SqlServerTableHandler(option);
+    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
+
+    //public IDatabaseTableHandler GetTableHandler(TableGenerateOption option)
+    //{
+
+    //}
 
     public string[] SlaveConnectionStrings { get; }
 
     public DbProviderFactory DbProviderFactory { get; internal set; } = SqlClientFactory.Instance;
-    
+
     public int BulkCopy(DataTable dataTable)
     {
         if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
@@ -86,6 +92,6 @@ public sealed class SqlServerProvider : IDatabaseProvider
 
         return dataTable.Rows.Count;
     }
-    
-    
+
+
 }

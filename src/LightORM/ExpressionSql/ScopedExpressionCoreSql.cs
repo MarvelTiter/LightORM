@@ -6,10 +6,12 @@ namespace LightORM.ExpressionSql;
 internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedExpressionContext
 {
     private readonly SqlExecutorProvider executorProvider;
+
     public string Id { get; } = $"{Guid.NewGuid():N}";
     private string? dbKey;
     private bool useTrans;
     private IsolationLevel isolationLevel = IsolationLevel.Unspecified;
+    public override ExpressionSqlOptions Options { get; }
     public override ISqlExecutor Ado
     {
         get
@@ -25,9 +27,11 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
         }
     }
 
+
     public ScopedExpressionCoreSql(ExpressionSqlOptions options)
     {
         this.executorProvider = new SqlExecutorProvider(options);
+        Options = options;
         foreach (var item in options.DatabaseProviders.Values)
         {
             var ctx = AsyncLocalTransactionContexts.GetOrAdd(item, new AsyncLocal<TransactionContext?>());

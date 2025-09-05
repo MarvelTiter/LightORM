@@ -60,8 +60,30 @@ public interface IExpressionContext : IDisposable
     /// </summary>
     /// <returns></returns>
     IScopedExpressionContext CreateScoped();
+    
+}
+
+/// <summary>
+/// 通过<see cref="IDatabaseProvider"/>参数，对任意数据库进行操作
+/// </summary>
+public interface ITableAction
+{
+    string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null);
+    Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
+
+    Task<IList<string>> GetTablesAsync(IDatabaseProvider provider);
+    Task<DbStruct.ReadedTable> GetTableStructAsync(IDatabaseProvider provider, string table);
+}
+
+/// <summary>
+/// 对已经注册的数据库进行操作
+/// </summary>
+public interface IDefinedTableAction
+{
     string? CreateTableSql<T>(Action<TableGenerateOption>? action = null);
     Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
+    Task<IList<string>> GetTablesAsync();
+    Task<DbStruct.ReadedTable> GetTableStructAsync(string table);
 }
 
 

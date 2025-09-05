@@ -4,6 +4,7 @@ using DatabaseUtils.Models;
 using DatabaseUtils.Services;
 using DatabaseUtils.Template;
 using LightORM;
+using LightORM.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Win32;
 using System;
@@ -27,7 +28,7 @@ namespace DatabaseUtils
         private string? dbKey;
         private List<string> externalAttributes = [];
         [Inject, NotNull] IExpressionContext? Context { get; set; }
-
+        private List<IDatabaseTableHandler> supportedDb = [];
         async Task Connect()
         {
             if (string.IsNullOrEmpty(config.LastSelectedDb) || string.IsNullOrWhiteSpace(config.Connectstring))
