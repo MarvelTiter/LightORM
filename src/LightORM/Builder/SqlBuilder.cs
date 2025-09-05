@@ -72,7 +72,7 @@ internal abstract record SqlBuilder : ISqlBuilder
                     foreach (var e in ema)
                     {
                         var pn = $"{item.Name}_{arrIndex}";
-                        DbParameters.Add(pn, e);
+                        DbParameters[pn] = e;
                         values.Add(database.AttachPrefix(pn));
                         arrIndex++;
                     }
@@ -82,7 +82,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             else
             {
                 sql.Replace(item.Name, database.AttachPrefix(item.Name));
-                DbParameters.Add(item.Name, item.Value);
+                DbParameters[item.Name] = item.Value;
             }
         }
     }

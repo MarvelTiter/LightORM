@@ -21,7 +21,9 @@ public class Select : TestBase
     [TestMethod]
     public async Task Select_ToListAsync_With_Count()
     {
+        int age = 10;
         var list = await Db.Select<User>()
+            .Where(u => u.Age < age)
             .Count(out var total)
             .ToListAsync();
         Console.WriteLine($"Total: {total}");
