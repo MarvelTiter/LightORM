@@ -56,6 +56,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.Oracle", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.SqlServer", "test\LightORMTest.SqlServer\LightORMTest.SqlServer.csproj", "{FF999AC2-68B6-9379-D2BF-80F2ACB4D0FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.Dameng", "src\Providers\LightORM.Providers.Dameng\LightORM.Providers.Dameng.csproj", "{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.Dameng", "test\LightORMTest.Dameng\LightORMTest.Dameng.csproj", "{4874C96A-D136-4C22-BC27-887EB5AE34C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -134,6 +138,14 @@ Global
 		{FF999AC2-68B6-9379-D2BF-80F2ACB4D0FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF999AC2-68B6-9379-D2BF-80F2ACB4D0FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF999AC2-68B6-9379-D2BF-80F2ACB4D0FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4874C96A-D136-4C22-BC27-887EB5AE34C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4874C96A-D136-4C22-BC27-887EB5AE34C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4874C96A-D136-4C22-BC27-887EB5AE34C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4874C96A-D136-4C22-BC27-887EB5AE34C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -159,6 +171,8 @@ Global
 		{7B639E2B-C4AB-CD88-E4E0-1DF85876E4CB} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
 		{F29E6B0E-FF0E-D850-9440-20DEDE5F3FB2} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
 		{FF999AC2-68B6-9379-D2BF-80F2ACB4D0FD} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
+		{65B3F1C6-F76F-4B28-8046-8C19C42E28DB} = {568CA44D-0F78-4CC3-BBC8-FB5D3CAF1304}
+		{4874C96A-D136-4C22-BC27-887EB5AE34C5} = {392542F8-E6C6-482F-B93E-A2D28D53AA7E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E100B2EB-6CFD-4F8B-9966-2F4050785536}

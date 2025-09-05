@@ -130,12 +130,12 @@ public sealed record ColumnInfo : ITableColumnInfo
 #else
         IsNotMapped = property.HasAttribute<IgnoreAttribute>();
         IsPrimaryKey = (lightColAttr?.PrimaryKey ?? false);
-        CustomName = lightColAttr?.Name ;
+        CustomName = lightColAttr?.Name;
 #endif
 
         AutoIncrement = lightColAttr?.AutoIncrement ?? false;
         NotNull = lightColAttr?.NotNull ?? false;
-        Length = lightColAttr?.Length;
+        Length = lightColAttr?.Length > 0 ? lightColAttr.Length : null;
         Default = lightColAttr?.Default;
         Comment = lightColAttr?.Comment;
         IsVersionColumn = lightColAttr?.Version ?? false;
