@@ -61,7 +61,7 @@ public sealed class DamengMethodResolver : BaseSqlMethodResolver
         resolver.Visit(methodCall.Object);
         resolver.Sql.Append(resolver.IsNot ? " NOT LIKE " : " LIKE ");
         resolver.Visit(methodCall.Arguments[0]);
-        resolver.Sql.Append(" || '%')");
+        resolver.Sql.Append(" || '%'");
     }
 
     public override void Contains(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -89,7 +89,7 @@ public sealed class DamengMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append(resolver.IsNot ? " NOT LIKE " : " LIKE ");
             resolver.Sql.Append("'%' || ");
             resolver.Visit(methodCall.Arguments[0]);
-            resolver.Sql.Append(" || '%')");
+            resolver.Sql.Append(" || '%'");
         }
     }
 
@@ -157,32 +157,37 @@ public sealed class DamengMethodResolver : BaseSqlMethodResolver
             resolver.Visit(methodCall.Object);
             var exps = resolver.ExpStores!;
             var joinExp = exps["Join"]!;
-            resolver.Sql.Append("WM_CONCAT( ");
-            if (exps.ContainsKey("Distinct"))
-            {
-                resolver.Sql.Append("DISTINCT ");
-            }
+            resolver.Sql.Append("LISTAGG( ");
             resolver.Visit(joinExp);
-            if (exps.TryGetValue("OrderBy", out var exp))
+            if (exps.TryGetValue("Separator", out var exp))
             {
-                resolver.Sql.Append(" ORDER BY ");
+                resolver.Sql.Append(", ");
+                resolver.Options.Parameterized = false;
                 resolver.Visit(exp);
-                resolver.Sql.Append(" ASC ");
+                resolver.Options.Parameterized = true;
+            }
+            else
+            {
+                resolver.Sql.Append(", ','");
+            }
+            resolver.Sql.Append(')');
+
+            if (exps.TryGetValue("OrderBy", out exp))
+            {
+                resolver.Sql.Append(" WITHIN GROUP (ORDER BY ");
+                resolver.Visit(exp);
+                resolver.Sql.Append(" ASC)");
             }
             else if (exps.TryGetValue("OrderByDesc", out exp))
             {
-                resolver.Sql.Append(" ORDER BY ");
+                resolver.Sql.Append(" WITHIN GROUP (ORDER BY ");
                 resolver.Visit(exp);
-                resolver.Sql.Append(" DESC ");
+                resolver.Sql.Append(" DESC)");
             }
-            //if (exps.TryGetValue("Separator", out exp))
-            //{
-            //    resolver.Sql.Append(" SEPARATOR ");
-            //    resolver.Options.Parameterized = false;
-            //    resolver.Visit(exp);
-            //    resolver.Options.Parameterized = true;
-            //}
-            resolver.Sql.Append(')');
+            else
+            {
+                throw new LightOrmException("Dameng LISTAGG 缺少 WITHIN GROUP 子句, 是否已调用OrderBy?");
+            }
             resolver.ExpStores?.Clear();
         }
     }
