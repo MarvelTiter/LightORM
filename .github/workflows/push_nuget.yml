@@ -1,4 +1,4 @@
-# This workflow will build a .NET project
+﻿# This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
 name: publish
@@ -53,4 +53,9 @@ jobs:
       run: |
         dotnet build ./src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj -c Release
         dotnet pack ./src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj -c Release -o publish/PostgreSQL
-        dotnet nuget push 'publish/PostgreSQL/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate 
+        dotnet nuget push 'publish/PostgreSQL/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+    - name: Dameng Provider
+      run: |
+        dotnet build ./src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj -c Release
+        dotnet pack ./src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj -c Release -o publish/Dameng
+        dotnet nuget push 'publish/Dameng/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate 
