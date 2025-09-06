@@ -6,31 +6,29 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LightORM.Implements;
 
 namespace LightORM.Providers.PostgreSQL;
 
-public sealed class PostgreSQLProvider : IDatabaseProvider
+public sealed class PostgreSQLProvider : BaseDatabaseProvider
 {
     public static PostgreSQLProvider Create(string master, params string[] slaves) => new PostgreSQLProvider(master, slaves);
-    public DbBaseType DbBaseType => DbBaseType.PostgreSQL;
+    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new PostgreSQLTableHandler());
+    public override DbBaseType DbBaseType => DbBaseType.PostgreSQL;
 
-    public PostgreSQLProvider(string master, params string[] slaves)
+    private PostgreSQLProvider(string master, params string[] slaves) : base(master, slaves)
     {
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
     }
 
-    public string MasterConnectionString { get; }
 
-    public ICustomDatabase CustomDatabase { get; } = CustomPostgreSQL.Instance;
+    public override ICustomDatabase CustomDatabase { get; } = CustomPostgreSQL.Instance;
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new PostgreSQLTableHandler(option);
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public string[] SlaveConnectionStrings { get; }
+    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
+    public override DbProviderFactory DbProviderFactory { get; set; } = Npgsql.NpgsqlFactory.Instance;
 
-    public DbProviderFactory DbProviderFactory { get; internal set; } = Npgsql.NpgsqlFactory.Instance;
-
-    public int BulkCopy(DataTable dataTable)
+    public override int BulkCopy(DataTable dataTable)
     {
         throw new NotImplementedException();
     }

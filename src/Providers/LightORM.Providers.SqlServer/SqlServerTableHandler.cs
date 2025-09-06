@@ -1,6 +1,7 @@
 ﻿using LightORM;
 using LightORM.DbStruct;
 using LightORM.Implements;
+using LightORM.Providers.SqlServer.TableStructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,127 +10,145 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
+public sealed class SqlServerTableHandler
+    : BaseDatabaseHandler<SqlServerTableWriter>
 {
-    protected override string BuildColumn(DbColumn column)
+   
+    public override string GetTablesSql()
     {
-        var dbType = ConvertToDbType(column);
-        string dataType = $"{DbEmphasis(column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? Option.DefaultStringLength})" : "")}";
-        string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
-        string notNull = column.NotNull ? " NOT NULL" : "";
-        return $"{dataType}{identity}{notNull}";
+        return "SELECT NAME TableName FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
     }
 
-    protected override IEnumerable<string> BuildSql(DbTable table)
+    public override string GetTableStructSql(string table)
     {
-        StringBuilder sql = new StringBuilder();
-
-        #region PrimaryKey
-        var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
-        string primaryKeyConstraint = "";
-        if (primaryKeys.Count() > 0)
-        {
-            primaryKeyConstraint =
-$"""
-,{Environment.NewLine}    CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY({string.Join($", ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))})
+        return $"""
+SELECT 
+--表名 =case when a.colorder = 1 then d.name else '' end, 
+--表说明 =case when a.colorder = 1 then isnull(f.value,'') else '' end, 
+--字段序号 = a.colorder, 
+ColumnName = a.name, 
+IsIdentity =case when COLUMNPROPERTY(a.id, a.name,'IsIdentity')= 1 then 'YES' else 'NO' end, 
+IsPrimaryKey =case when exists(SELECT 1 FROM sysobjects where xtype = 'PK' and name in ( 
+SELECT name FROM sysindexes WHERE indid in( 
+SELECT indid FROM sysindexkeys WHERE id = a.id AND colid = a.colid 
+  ))) then 'YES' else 'NO' end, 
+DataType = b.name, 
+--占用字节数 = a.length, 
+Length = COLUMNPROPERTY(a.id, a.name, 'PRECISION'), 
+--小数位数 = isnull(COLUMNPROPERTY(a.id, a.name, 'Scale'), 0), 
+Nullable =case when a.isnullable = 1 then 'YES'else 'NO' end, 
+--默认值 = isnull(e.text, ''), 
+Comments = isnull(g.[value], '') 
+FROM syscolumns a 
+left join systypes b on a.xtype = b.xusertype 
+inner join sysobjects d on a.id = d.id and d.xtype = 'U' and d.name <> 'dtproperties' 
+left join syscomments e on a.cdefault = e.id 
+left join sys.extended_properties g on a.id = g.major_id and a.colid = g.minor_id 
+left join sys.extended_properties f on d.id = f.major_id and f.minor_id = 0 
+where d.name = '{table}'--如果只查询指定表,加上此条件 
+order by a.id,a.colorder 
 """;
-        }
-        #endregion
-
-        #region Table
-        string existsClause = Option.NotCreateIfExists ? $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{table.Name}')" : "";
-        sql.Append(
-            $"""
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
-{existsClause}
-CREATE TABLE {DbEmphasis(table.Name)}(
-    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(col)))}{primaryKeyConstraint}
-);
-
-""");
-        #endregion
-
-        #region ColumnConment
-        if (Option.SupportComment)
-        {
-            var comments = table.Columns.Where(col => col.Comment != null);
-
-            foreach (var com in comments)
-            {
-                sql.AppendLine($"EXEC sp_addextendedproperty N'MS_Description',N'{com.Comment}',N'SCHEMA',N'dbo',N'table',N'{table.Name}',N'COLUMN',N'{com.Name}'");
-            }
-        }
-        #endregion
-
-        #region Default
-        var defaults = table.Columns.Where(col => col.Default != null);
-        foreach (var def in defaults)
-        {
-            var defaultValue = CheckDefaultValue(def);
-            sql.AppendLine($"ALTER TABLE {DbEmphasis(table.Name)} ADD CONSTRAINT {$"DF_{table.Name}_{def.Name}"}  DEFAULT '{defaultValue}' FOR {DbEmphasis(def.Name)}");
-        }
-        #endregion
-
-        #region Index
-        int i = 1;
-        foreach (DbIndex index in table.Indexs)
-        {
-            string columnNames = string.Join(",", index.Columns);
-            string unique = index.IsUnique ? "UNIQUE " : "";
-            string clustered = index.IsClustered ? "CLUSTERED " : "NONCLUSTERED ";
-            string type = index.DbIndexType == IndexType.ColumnStore ? "COLUMNSTORE " : "";
-            sql.AppendLine($@"CREATE {unique}{clustered}{type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames})");
-            i++;
-        }
-
-        #endregion
-
-        yield return sql.ToString();
     }
 
-    private object CheckDefaultValue(DbColumn column)
+    /// <summary>
+    /// AI 生成的代码, 用于解析 SQL Server 数据库中的数据类型到 C# 类型
+    /// </summary>
+    /// <param name="column"></param>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public override bool ParseDataType(ReadedTableColumn column, out string type)
     {
-        var defaultValueStr = column.Default!.ToString();
-        if (defaultValueStr is not null)
+         var dbType = column.DataType;
+        var nullable = column.Nullable;
+        if (string.IsNullOrWhiteSpace(dbType))
         {
-            if (column.DataType == typeof(bool) && column.Default is bool bVal)
-            {
-                return bVal ? 1 : 0;
-            }
+            type = "";
+            return false;
         }
-        return defaultValueStr!;
-    }
+        var d = dbType!.ToLower().Trim();
+        var isNullable = nullable?.ToUpper() == "YES";
 
-    protected override string ConvertToDbType(DbColumn type)
-    {
-        string? typeFullName = "";
-        if (type.DataType.IsEnum)
+        switch (d)
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
-        }
-        else
-        {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
-        }
-        return typeFullName switch
-        {
-            "System.Boolean" => "Bit",
-            "System.Byte" => "TinyInt",
-            "System.Int16" => "SmallInt",
-            "System.Int32" => "Int",
-            "System.Int64" => "BigInt",
-            "System.Single" => "Numeric",
-            "System.Double" => "Float",
-            "System.Decimal" => "Money",
-            "System.DateTime" => "DateTime",
-            "System.DateTimeOffset" => "DateTimeOffset",
-            "System.Guid" => "UniqueIdentifier",
-            "System.Byte[]" => "Binary",
-            "System.Object" => "Variant",
-            _ => Option.UseUnicodeString ? "NVarChar" : "VarChar",
-        };
-    }
+            // 字符串类型
+            case "nvarchar":
+            case "varchar":
+            case "nchar":
+            case "char":
+            case "text":
+            case "ntext":
+            case "xml":
+            case "sql_variant":
+                type = "string"; // 字符串在C#中本身就是可空的
+                return true;
 
-    protected override string DbEmphasis(string name) => $"[{name}]";
+            // 整数类型
+            case "tinyint":
+                type = isNullable ? "byte?" : "byte";
+                break;
+            case "smallint":
+                type = isNullable ? "short?" : "short";
+                break;
+            case "int":
+                type = isNullable ? "int?" : "int";
+                break;
+            case "bigint":
+                type = isNullable ? "long?" : "long";
+                break;
+
+            // 布尔类型
+            case "bit":
+                type = isNullable ? "bool?" : "bool";
+                break;
+
+            // 浮点/小数类型
+            case "float":
+                type = isNullable ? "double?" : "double";
+                break;
+            case "real":
+                type = isNullable ? "float?" : "float";
+                break;
+            case "decimal":
+            case "numeric":
+            case "money":
+            case "smallmoney":
+                type = isNullable ? "decimal?" : "decimal";
+                break;
+
+            // 日期时间类型
+            case "date":
+            case "datetime":
+            case "smalldatetime":
+            case "datetime2":
+                type = isNullable ? "DateTime?" : "DateTime";
+                break;
+            case "datetimeoffset":
+                type = isNullable ? "DateTimeOffset?" : "DateTimeOffset";
+                break;
+            case "time":
+                type = isNullable ? "TimeSpan?" : "TimeSpan";
+                break;
+
+            // 二进制类型
+            case "binary":
+            case "varbinary":
+            case "image":
+            case "timestamp":
+            case "rowversion":
+                type = "byte[]";
+                break;
+
+            // GUID类型
+            case "uniqueidentifier":
+                type = isNullable ? "Guid?" : "Guid";
+                break;
+
+            // 不支持的类型
+            default:
+                type = "";
+                return false;
+        }
+
+        return true;
+    }
 }

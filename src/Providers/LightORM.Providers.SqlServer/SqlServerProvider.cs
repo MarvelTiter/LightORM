@@ -3,6 +3,7 @@ using LightORM.Interfaces;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Data.Common;
+using LightORM.Implements;
 
 namespace LightORM.Providers.SqlServer;
 
@@ -13,40 +14,35 @@ public enum SqlServerVersion
     Over2017,
 }
 
-public sealed class SqlServerProvider : IDatabaseProvider
+public sealed class SqlServerProvider : BaseDatabaseProvider
 {
     public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
-        => new SqlServerProvider(version, master, slaves);
+        => new(version, master, slaves);
     public static SqlServerProvider Create(ICustomDatabase customDatabase, string master, params string[] slaves)
-        => new SqlServerProvider(customDatabase, master, slaves);
-    public SqlServerProvider(SqlServerVersion version
+        => new(customDatabase, master, slaves);
+    private SqlServerProvider(SqlServerVersion version
         , string master
-        , params string[] slaves)
+        , params string[] slaves): base(master, slaves)
     {
         CustomDatabase = new CustomSqlServer(version);
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
     }
-    public SqlServerProvider(ICustomDatabase customDatabase
+    private SqlServerProvider(ICustomDatabase customDatabase
         , string master
-        , params string[] slaves)
+        , params string[] slaves): base(master, slaves)
     {
         CustomDatabase = customDatabase;
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
     }
-    public DbBaseType DbBaseType => DbBaseType.SqlServer;
-    public string MasterConnectionString { get; }
+    public override DbBaseType DbBaseType => DbBaseType.SqlServer;
 
-    public ICustomDatabase CustomDatabase { get; }
+    public override ICustomDatabase CustomDatabase { get; }
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new SqlServerTableHandler(option);
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public string[] SlaveConnectionStrings { get; }
-
-    public DbProviderFactory DbProviderFactory { get; internal set; } = SqlClientFactory.Instance;
+    public override IDatabaseTableHandler DbHandler { get; } = new SqlServerTableHandler();
     
-    public int BulkCopy(DataTable dataTable)
+    public override DbProviderFactory DbProviderFactory { get; set; } = SqlClientFactory.Instance;
+
+    public override int BulkCopy(DataTable dataTable)
     {
         if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
         {
@@ -86,6 +82,6 @@ public sealed class SqlServerProvider : IDatabaseProvider
 
         return dataTable.Rows.Count;
     }
-    
-    
+
+
 }

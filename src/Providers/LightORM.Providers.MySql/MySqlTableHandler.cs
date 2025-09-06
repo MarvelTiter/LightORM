@@ -5,88 +5,145 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LightORM.Providers.MySql.TableStructure;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class MySqlTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
+public sealed class MySqlTableHandler(string database)
+    : BaseDatabaseHandler<MySqlTableWriter>
 {
-    protected override string BuildColumn(DbColumn column)
+    public override string GetTablesSql()
     {
-        string dataType = ConvertToDbType(column);
-        if (dataType.Contains("VARCHAR"))
-        {
-            dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
-        }
-        string notNull = column.NotNull || column.AutoIncrement || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement ? $"AUTO_INCREMENT" : "";
-        string commentClause = !string.IsNullOrEmpty(column.Comment) && Option.SupportComment ? $"COMMENT '{column.Comment}'" : "";
-        string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
-        return $"{DbEmphasis(column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
+        return $"""
+                SELECT
+                A.TABLE_NAME TableName
+                FROM INFORMATION_SCHEMA.TABLES A
+                WHERE A.TABLE_SCHEMA = '{database}'
+                """;
     }
 
-    protected override IEnumerable<string> BuildSql(DbTable table)
+    public override string GetTableStructSql(string table)
     {
-        StringBuilder sql = new StringBuilder();
-        var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
-        string primaryKeyConstraint = "";
-
-        if (primaryKeys.Count() > 0)
-        {
-            primaryKeyConstraint =
-$@",{Environment.NewLine}    CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} PRIMARY KEY({string.Join(", ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))})";
-        }
-
-        var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS " : "";
-        sql.AppendLine(@$"
-CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
-    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(col)))}{primaryKeyConstraint}
-)
-");
-        int i = 1;
-        foreach (DbIndex index in table.Indexs)
-        {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{DbEmphasis(item)}"));
-            string type = "";
-            if (index.DbIndexType == IndexType.Unique)
-            {
-                type = "UNIQUE ";
-            }
-            sql.AppendLine($"CREATE {type}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames});");
-            i++;
-        }
-
-        yield return sql.ToString();
+        return $"""
+                SELECT
+                A.COLUMN_NAME ColumnName,
+                A.DATA_TYPE DataType,
+                A.IS_Nullable Nullable,
+                A.COLUMN_COMMENT Comments,
+                A.COLUMN_DEFAULT DefaultValue,
+                IF(COLUMN_KEY = 'PRI', 'YES', 'NO') IsPrimaryKey,
+                A.CHARACTER_MAXIMUM_LENGTH Length,
+                IF(EXTRA = 'auto_increment', 'YES', 'NO') IsIdentity
+                FROM INFORMATION_SCHEMA.COLUMNS A
+                WHERE A.TABLE_SCHEMA='{database}'
+                AND A.TABLE_NAME = '{table}'
+                ORDER BY A.TABLE_SCHEMA,A.TABLE_NAME,A.ORDINAL_POSITION
+                """;
     }
 
-    protected override string ConvertToDbType(DbColumn type)
+    public override bool ParseDataType(ReadedTableColumn column, out string type)
     {
-        string? typeFullName = "";
-        if (type.DataType.IsEnum)
+        var dbType = column.DataType;
+        var nullable = column.Nullable;
+        if (string.IsNullOrWhiteSpace(dbType))
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
+            type = "";
+            return false;
         }
-        else
-        {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
-        }
-        return typeFullName switch
-        {
-            "System.Boolean" => "BIT",
-            "System.Byte" => "TINYINT",
-            "System.Int16" => "SMALLINT",
-            "System.Int32" => "INT",
-            "System.Int64" => "BIGINT",
-            "System.Single" => "FLOAT",
-            "System.Double" => "DOUBLE",
-            "System.Decimal" => "NUMERIC",
-            "System.DateTime" => "DATETIME",
-            "System.DateTimeOffset" => "DATETIMEOFFSET",
-            "System.Guid" => "GUID",
-            "System.Byte[]" => "BINARY",
-            "System.Object" => "VARIANT",
-            _ => "VARCHAR",
-        };
-    }
 
-    protected override string DbEmphasis(string name) => $"`{name}`";
+        // 处理可能带长度/精度的类型声明
+        var baseType = dbType.Split('(')[0].ToUpper().Trim();
+        var isNullable = nullable?.ToUpper() == "YES" || nullable?.ToUpper() == "Y";
+
+        switch (baseType)
+        {
+            // 字符串类型 - 即使string是引用类型，也按照可空特性要求加?
+            case "CHAR":
+            case "VARCHAR":
+            case "TINYTEXT":
+            case "TEXT":
+            case "MEDIUMTEXT":
+            case "LONGTEXT":
+            case "ENUM":
+            case "SET":
+            case "JSON":
+                type = isNullable ? "string?" : "string";
+                return true;
+
+            // 整数类型
+            case "TINYINT":
+                if (dbType.ToUpper().Contains("TINYINT(1)"))
+                    type = isNullable ? "bool?" : "bool";
+                else
+                    type = isNullable ? "sbyte?" : "sbyte";
+                break;
+
+            case "SMALLINT":
+            case "YEAR":
+                type = isNullable ? "short?" : "short";
+                break;
+
+            case "MEDIUMINT":
+            case "INT":
+            case "INTEGER":
+                type = isNullable ? "int?" : "int";
+                break;
+
+            case "BIGINT":
+                type = isNullable ? "long?" : "long";
+                break;
+
+            // 位类型
+            case "BIT":
+                type = dbType.ToUpper().Contains("BIT(1)")
+                    ? (isNullable ? "bool?" : "bool")
+                    : (isNullable ? "ulong?" : "ulong");
+                break;
+
+            // 小数/浮点类型
+            case "DECIMAL":
+            case "NUMERIC":
+                type = isNullable ? "decimal?" : "decimal";
+                break;
+
+            case "FLOAT":
+                type = isNullable ? "float?" : "float";
+                break;
+
+            case "DOUBLE":
+                type = isNullable ? "double?" : "double";
+                break;
+
+            // 日期时间类型
+            case "DATE":
+                type = isNullable ? "DateOnly?" : "DateOnly"; // 或 DateTime?
+                break;
+
+            case "DATETIME":
+            case "TIMESTAMP":
+                type = isNullable ? "DateTime?" : "DateTime";
+                break;
+
+            case "TIME":
+                type = isNullable ? "TimeOnly?" : "TimeOnly"; // 或 TimeSpan?
+                break;
+
+            // 二进制类型
+            case "BINARY":
+            case "VARBINARY":
+            case "TINYBLOB":
+            case "BLOB":
+            case "MEDIUMBLOB":
+            case "LONGBLOB":
+                type = "byte[]"; // 数组已经是引用类型，不需要?
+                break;
+
+            // 不支持的类型
+            default:
+                type = "";
+                return false;
+        }
+
+        return true;
+    }
 }

@@ -7,6 +7,8 @@ namespace LightORM.Interfaces
         DbBaseType DbBaseType { get; }
         string MasterConnectionString { get; }
         ICustomDatabase CustomDatabase { get; }
+        IDatabaseTableHandler DbHandler { get; }
+        [Obsolete]
         Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
         string[] SlaveConnectionStrings { get; }
         DbProviderFactory DbProviderFactory { get; }

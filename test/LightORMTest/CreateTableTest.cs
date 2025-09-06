@@ -12,31 +12,33 @@ public class CreateTableTest : TestBase
     public void GenerateCreateTableSql()
     {
         StringBuilder sql = new();
-        sql.AppendLine(Db.CreateTableSql<User>());
+        using var db = this.Db.CreateMainDbScoped();
+        sql.AppendLine(db.CreateTableSql<User>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<UserRole>());
+        sql.AppendLine(db.CreateTableSql<UserRole>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<Role>());
+        sql.AppendLine(db.CreateTableSql<Role>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<RolePermission>());
+        sql.AppendLine(db.CreateTableSql<RolePermission>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<Permission>());
+        sql.AppendLine(db.CreateTableSql<Permission>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<UserFlat>());
+        sql.AppendLine(db.CreateTableSql<UserFlat>());
         sql.AppendLine();
-        sql.AppendLine(Db.CreateTableSql<Product>());
+        sql.AppendLine(db.CreateTableSql<Product>());
         Console.WriteLine(sql.ToString());
     }
     [TestMethod]
     public async Task CreateTable()
     {
-        await Db.CreateTableAsync<User>();
-        await Db.CreateTableAsync<UserRole>();
-        await Db.CreateTableAsync<Role>();
-        await Db.CreateTableAsync<RolePermission>();
-        await Db.CreateTableAsync<Permission>();
-        await Db.CreateTableAsync<UserFlat>();
-        await Db.CreateTableAsync<Product>();
+        using var db = this.Db.CreateMainDbScoped();
+        await db.CreateTableAsync<User>();
+        await db.CreateTableAsync<UserRole>();
+        await db.CreateTableAsync<Role>();
+        await db.CreateTableAsync<RolePermission>();
+        await db.CreateTableAsync<Permission>();
+        await db.CreateTableAsync<UserFlat>();
+        await db.CreateTableAsync<Product>();
 
     }
 }

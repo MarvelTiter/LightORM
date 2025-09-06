@@ -30,12 +30,3 @@ public struct DbColumn
     public string? Comment { get; set; }
     public Type DataType { get; set; }
 }
-
-public struct DbIndex
-{
-    public IEnumerable<string> Columns { get; set; }
-    public IndexType DbIndexType { get; set; }
-    public bool IsUnique { get; set; }
-    public bool IsClustered { get; set; }
-    public string? Name { get; set; }
-}

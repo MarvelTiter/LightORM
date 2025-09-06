@@ -11,7 +11,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="*" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.10" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.10" />
 	</ItemGroup>
 
@@ -22,6 +22,7 @@
 		<PackageReference Include="LightORM.Providers.MySql" Version="*" />
 		<PackageReference Include="LightORM.Providers.Oracle" Version="*" />
 		<PackageReference Include="LightORM.Providers.PostgreSQL" Version="*" />
+		<PackageReference Include="LightORM.Providers.Dameng" Version="*" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
 		<ProjectReference Include="..\src\LightORM\LightORM.csproj" />
@@ -29,6 +30,7 @@
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.MySql\LightORM.Providers.MySql.csproj" />
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.Oracle\LightORM.Providers.Oracle.csproj" />
 		<ProjectReference Include="..\src\Providers\LightORM.Providers.PostgreSQL\LightORM.Providers.PostgreSQL.csproj" />
+		<ProjectReference Include="..\src\Providers\LightORM.Providers.Dameng\LightORM.Providers.Dameng.csproj" />
 		<ProjectReference Include="..\src\LightOrmTableContextGenerator\LightOrmTableContextGenerator.csproj" OutputItemType="Analyzer" />
 	</ItemGroup>
 	<ItemGroup>
