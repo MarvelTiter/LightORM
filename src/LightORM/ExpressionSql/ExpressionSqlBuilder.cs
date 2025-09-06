@@ -9,8 +9,6 @@ public class SqlAopProvider
     public Action<string, object?>? DbLog { get; set; }
 }
 
-internal record DbHandlerRecord(Func<TableGenerateOption, IDatabaseTableHandler>? Factory);
-
 public static class IExpressionContextSetupEx
 {
     public static IExpressionContextSetup SetDatabase(this IExpressionContextSetup setup, IDatabaseProvider provider) => setup.SetDatabase(null, provider.DbBaseType, provider);
@@ -53,12 +51,12 @@ internal class ExpressionSqlOptions
     public ICollection<IAdoInterceptor> Interceptors => TypedInterceptors.Values;
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
-    public ConcurrentDictionary<string, DbHandlerRecord> DatabaseHandlers { get; }
+    public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
     public ConcurrentDictionary<Type, IAdoInterceptor> TypedInterceptors { get; }
     public TableGenerateOption TableGenOption { get; set; }
     static ExpressionSqlOptions()
     {
-        Instance = new(() => new ExpressionSqlOptions());
+        Instance = new(() => new());
     }
 
     private ExpressionSqlOptions()
@@ -90,7 +88,7 @@ internal class ExpressionSqlOptions
 
         if (!DatabaseHandlers.TryGetValue(dbBaseType.Name, out _))
         {
-            DatabaseHandlers.TryAdd(dbBaseType.Name, new DbHandlerRecord(provider.TableHandler));
+            DatabaseHandlers.TryAdd(dbBaseType.Name, provider.DbHandler);
         }
     }
 

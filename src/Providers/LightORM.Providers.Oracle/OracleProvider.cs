@@ -2,29 +2,28 @@
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Data.Common;
+using LightORM.Implements;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleProvider : IDatabaseProvider
+public sealed class OracleProvider : BaseDatabaseProvider
 {
     public static OracleProvider Create(string master, params string[] slaves) => new OracleProvider(master, slaves);
-    private OracleProvider(string master, params string[] slaves)
+    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new OracleTableHandler());
+    private OracleProvider(string master, params string[] slaves):base(master,slaves)
     {
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
     }
-    public DbBaseType DbBaseType => DbBaseType.Oracle;
-    public string MasterConnectionString { get; }
+    public override DbBaseType DbBaseType => DbBaseType.Oracle;
 
-    public ICustomDatabase CustomDatabase { get; } = CustomOracle.Instance;
+    public override ICustomDatabase CustomDatabase { get; } = CustomOracle.Instance;
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new OracleTableHandler(option);
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public string[] SlaveConnectionStrings { get; }
+    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
 
-    public DbProviderFactory DbProviderFactory { get; internal set; } = OracleClientFactory.Instance;
+    public override DbProviderFactory DbProviderFactory { get; set; } = OracleClientFactory.Instance;
 
-    public int BulkCopy(DataTable dataTable)
+    public override int BulkCopy(DataTable dataTable)
     {
         if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
         {

@@ -3,15 +3,14 @@
 <section style="height:calc(100vh - 20px);display:flex;flex-direction:column;">
     <header>
         <Flex Gap="@FlexGap.Small">
-            <SimpleSelect Style="width:150px;" AllowClear
+            <Select Style="width:150px;" AllowClear
                           Placeholder="选择数据库"
                           @bind-Value="@config.LastSelectedDb"
+                          DataSource="supportedDb"
+                          ItemLabel="@(k => k.Key)"
+                          ItemValue="@(k => k.Key)"
                           DropdownMatchSelectWidth="@false">
-                <SimpleSelectOption Value="PostgreSQL" Label="PostgreSQL"></SimpleSelectOption>
-                <SimpleSelectOption Value="SqlServer" Label="SqlServer"></SimpleSelectOption>
-                <SimpleSelectOption Value="Oracle" Label="Oracle"></SimpleSelectOption>
-                <SimpleSelectOption Value="MySql" Label="MySql"></SimpleSelectOption>
-            </SimpleSelect>
+            </Select>
             <Input @bind-Value="@config.Connectstring"></Input>
             <Button Type="@ButtonType.Primary" OnClick="@Connect">连接</Button>
             <Button Type="@ButtonType.Primary" OnClick="@Build">生成</Button>
@@ -37,7 +36,7 @@
                         <ChildContent>
                             <ListItem>
                                 <Checkbox @bind-Checked="@context.IsSelected">
-                                    @context.TableName
+                                    @context.Table.TableName
                                 </Checkbox>
                             </ListItem>
                         </ChildContent>
@@ -49,9 +48,9 @@
             <Collapse>
                 @foreach (var table in GeneratedTables)
                 {
-                    <Panel Key="@table.TableName">
+                    <Panel Key="@table.Table.TableName">
                         <HeaderTemplate>
-                            @table.TableName
+                            @table.Table.TableName
                             <Button OnClick="@(e => CopyToClipboard(table))">复制</Button>
                         </HeaderTemplate>
                         <ChildContent>

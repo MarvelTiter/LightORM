@@ -4,14 +4,9 @@ using System.Linq.Expressions;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
+public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlMethodResolver
 {
-    public SqlServerVersion Version { get; }
-
-    public SqlServerMethodResolver(SqlServerVersion version)
-    {
-        Version = version;
-    }
+    public SqlServerVersion Version { get; } = version;
 
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -28,8 +23,7 @@ public sealed class SqlServerMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append(',');
             int styleCode = 120; // 默认使用ODBC规范
             if (methodCall.Arguments.Count > 0
-                && methodCall.Arguments[0] is ConstantExpression ce
-                && ce.Value is string format)
+                && methodCall.Arguments[0] is ConstantExpression { Value: string format })
             {
                 // 映射常见格式字符串到SQL Server样式代码
                 styleCode = format switch

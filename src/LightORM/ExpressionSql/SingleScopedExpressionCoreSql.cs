@@ -8,9 +8,11 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public bool IsTransaction { get; set; }
 
-    public SingleScopedExpressionCoreSql(ISqlExecutor sqlExecutor)
+    public override ExpressionSqlOptions Options { get; }
+    public SingleScopedExpressionCoreSql(ISqlExecutor sqlExecutor, ExpressionSqlOptions options)
     {
         Ado = sqlExecutor;
+        Options = options;
         Ado.InitTransactionContext();
     }
     public override ISqlExecutor Ado { get; }

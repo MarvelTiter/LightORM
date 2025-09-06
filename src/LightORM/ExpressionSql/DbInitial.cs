@@ -5,15 +5,16 @@ namespace LightORM.ExpressionSql;
 public class DbInitial : IDbInitial
 {
     private readonly ISqlExecutor executor;
-    private readonly Func<TableGenerateOption, IDatabaseTableHandler> handler;
-    private IDatabaseTableHandler? tableHandler;
-    public DbInitial(ISqlExecutor executor, Func<TableGenerateOption, IDatabaseTableHandler> handler)
+    private readonly IDatabaseTableHandler handler;
+
+    public DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler)
     {
         this.executor = executor;
         this.handler = handler;
     }
 
-    TableGenerateOption tableOption = new TableGenerateOption();
+    readonly TableGenerateOption tableOption = new TableGenerateOption();
+
     public IDbInitial Configuration(Action<TableGenerateOption> option)
     {
         option?.Invoke(tableOption);
@@ -24,12 +25,12 @@ public class DbInitial : IDbInitial
     {
         try
         {
-            tableHandler ??= handler.Invoke(tableOption);
-            var sql = tableHandler.GenerateDbTable<T>();
+            var sql = handler.GenerateDbTable<T>(tableOption);
             foreach (var s in sql)
             {
                 executor.ExecuteNonQuery(s);
             }
+
             if (datas?.Length > 0)
             {
                 var insert = new InsertProvider<T>(executor, datas);
@@ -40,6 +41,7 @@ public class DbInitial : IDbInitial
         {
             throw;
         }
+
         return this;
     }
 

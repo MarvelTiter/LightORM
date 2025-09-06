@@ -1,9 +1,6 @@
 ﻿using DatabaseUtils.Models;
-using DatabaseUtils.Services;
-using DatabaseUtils.Template;
-using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
+using LightORM.DbStruct;
 
 namespace DatabaseUtils.Helper;
 
@@ -11,71 +8,18 @@ public static partial class Ex
 {
     public static string PascalName(this DatabaseTable self, string? prefix, string? separator)
     {
-        return Parse(self.TableName, prefix ?? "", separator ?? "");
+        return Parse(self.Table.TableName, prefix ?? "", separator ?? "");
     }
 
-    public static string ParseCommentSingleLine(this TableColumn self)
+    public static string ParseCommentSingleLine(this ReadedTableColumn self)
     {
         if (string.IsNullOrWhiteSpace(self.Comments)) return string.Empty;
         return self.Comments.Replace(Environment.NewLine, " ").Replace("\n", " ");
     }
 
-    public static string BuildContent(this IDbOperator db, DatabaseTable table, string prefix, string separator)
-    {
-        var columns = table.Columns;
-        var content = new StringBuilder();
-        foreach (var item in columns)
-        {
-            if (!db.ParseDataType(item, out var type))
-            {
-                continue;
-            }
-            var lightAttribute = CreateLightColumnAttribute(item, type);
-            content.AppendLine(string.Format(ClassTemplate.Property, item.ParseCommentSingleLine(), lightAttribute, type, item.PascalName(prefix, separator)));
-        }
-        return content.ToString();
-    }
-
-    public static string PascalName(this TableColumn self, string? prefix, string? separator)
+    public static string PascalName(this ReadedTableColumn self, string? prefix, string? separator)
     {
         return Parse(self.ColumnName, prefix ?? "", separator ?? "");
-    }
-
-    public static string CreateLightColumnAttribute(TableColumn column, string csharpType)
-    {
-        //[LightColumn(Name = ""{1}"")]
-        var properties = new StringBuilder($"Name = \"{column.ColumnName}\"");
-        if (column.IsPrimaryKey == "YES")
-        {
-            properties.Append(", PrimaryKey = true");
-        }
-        if (column.IsIdentity == "YES")
-        {
-            properties.Append(", AutoIncrement = true");
-        }
-        if (column.Nullable == "NO")
-        {
-            properties.Append(", NotNull = true");
-        }
-        //if (!string.IsNullOrWhiteSpace(column.Length) && csharpType.StartsWith("string"))
-        //{
-        //    properties.Append($", Length = {column.Length}");
-        //}
-
-        if (!string.IsNullOrWhiteSpace(column.Comments))
-        {
-            properties.Append($", Comment = \"{column.Comments}\"");
-        }
-        if (!string.IsNullOrWhiteSpace(column.DefaultValue))
-        {
-            properties.Append($", Default = \"{column.DefaultValue}\"");
-        }
-        return $"[LightColumn({properties})]";
-    }
-
-    public static bool ParseDataType(this IDbOperator db, TableColumn column, out string type)
-    {
-        return TypeMap.Map(column.DataType, column.Nullable, out type);
     }
 
     private static string Parse(string text, string prefix, string separator)

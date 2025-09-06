@@ -2,31 +2,35 @@
 using MySqlConnector;
 using System.Data;
 using System.Data.Common;
+using System.Text.RegularExpressions;
+using LightORM.Implements;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class MySqlProvider : IDatabaseProvider
+public sealed class MySqlProvider : BaseDatabaseProvider
 {
     public static MySqlProvider Create(string master, params string[] slaves) => new MySqlProvider(master, slaves);
-
-    private MySqlProvider(string master, params string[] slaves)
+    private readonly Lazy<IDatabaseTableHandler> lazyHandler;
+    private MySqlProvider(string master, params string[] slaves):base(master, slaves)
     {
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
+        var match = Regex.Match(master, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);
+        if (!match.Success)
+        {
+            throw new Exception("未能在连接字符串中发现目标数据库!");
+        }
+        lazyHandler = new(() => new MySqlTableHandler(match.Value));
     }
-    public DbBaseType DbBaseType => DbBaseType.MySql;
+    public override DbBaseType DbBaseType => DbBaseType.MySql;
 
-    public string MasterConnectionString { get; }
+    public override ICustomDatabase CustomDatabase { get; } = CustomMySql.Instance;
 
-    public ICustomDatabase CustomDatabase { get; } = CustomMySql.Instance;
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new MySqlTableHandler(option);
+    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
 
-    public string[] SlaveConnectionStrings { get; }
+    public override DbProviderFactory DbProviderFactory { get; set; } = MySqlConnectorFactory.Instance;
 
-    public DbProviderFactory DbProviderFactory { get; internal set; } = MySqlConnectorFactory.Instance;
-
-    public int BulkCopy(DataTable dataTable)
+    public override int BulkCopy(DataTable dataTable)
     {
         if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
         {

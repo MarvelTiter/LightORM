@@ -5,144 +5,128 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LightORM.Providers.PostgreSQL.TableStructure;
 
 namespace LightORM.Providers.PostgreSQL;
 
-public sealed class PostgreSQLTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
+public sealed class PostgreSQLTableHandler
+    : BaseDatabaseHandler<PostgreSQLTableWriter>
 {
-    protected override IEnumerable<string> BuildSql(DbTable table)
+    public override string GetTablesSql()
     {
-        StringBuilder sql = new StringBuilder();
-
-        #region Table
-        var existsClause = Option.NotCreateIfExists ? " IF NOT EXISTS" : "";
-        sql.Append($"""
-CREATE TABLE{existsClause} {DbEmphasis(table.Name)}(
-    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
-)
-""");
-
-        // PostgreSQL 的表空间语法与 Oracle 不同
-        if (!string.IsNullOrEmpty(Option.PostgreSQLTableSpace))
-        {
-            sql.Append($" TABLESPACE {Option.PostgreSQLTableSpace}");
-        }
-        sql.AppendLine(";");
-        #endregion
-
-        #region ColumnComment
-        if (Option.SupportComment)
-        {
-            var comments = table.Columns.Where(col => col.Comment != null);
-
-            foreach (var com in comments)
-            {
-                sql.AppendLine($"COMMENT ON COLUMN {DbEmphasis(table.Name)}.{DbEmphasis(com.Name)} IS '{com.Comment?.Replace("'", "''")}';");
-            }
-        }
-        #endregion
-
-        #region PrimaryKey
-        var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
-        if (primaryKeys.Any())
-        {
-            // PostgreSQL 允许在列定义中直接指定主键，但这里保持与 Oracle 一致的单独约束语法
-            sql.AppendLine(
-$@"ALTER TABLE {DbEmphasis(table.Name)} 
-ADD CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} 
-PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(item.Name)))});");
-        }
-        #endregion
-
-        #region Index
-        // 确保主键有索引（PostgreSQL 自动为主键创建索引）
-        var pks = table.Columns.Where(c => c.PrimaryKey);
-        foreach (var p in pks)
-        {
-            if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
-            table.Indexs = table.Indexs.Concat(new DbIndex[]
-            {
-                new DbIndex(){
-                    Columns = new string[]{p.Name },
-                    DbIndexType= IndexType.Unique}
-            });
-        }
-        int i = 1;
-        foreach (DbIndex index in table.Indexs)
-        {
-            string columnNames = string.Join(", ", index.Columns.Select(c => $"{DbEmphasis(c)}"));
-            string unique = index.IsUnique || index.DbIndexType == IndexType.Unique ? "UNIQUE " : "";
-
-            // PostgreSQL 不支持 BITMAP 和 REVERSE 索引类型
-            sql.AppendLine($"CREATE {unique}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(table.Name)}({columnNames});");
-            i++;
-        }
-
-        #endregion
-
-        yield return sql.ToString();
+        return """
+               SELECT 
+                   table_schema as SchemaName,
+                   table_name as TableName
+               FROM 
+                   information_schema.tables
+               WHERE 
+                   table_schema NOT IN ('pg_catalog', 'information_schema')
+               ORDER BY 
+                   table_schema, table_name
+               """;
     }
 
-    protected override string BuildColumn(DbColumn column)
+    public override string GetTableStructSql(string table)
     {
-        string dataType = ConvertToDbType(column);
-
-        // 处理长度限制
-        if (dataType.Contains("CHAR") || dataType == "NUMERIC")
-        {
-            dataType = column.Length != null ? $"{dataType}({column.Length})" : dataType;
-        }
-
-        string notNull = column.NotNull || column.PrimaryKey ? " NOT NULL" : " NULL";
-        string identity = column.AutoIncrement ? " GENERATED ALWAYS AS IDENTITY" : "";
-        string defaultValue = column.Default != null ? $" DEFAULT {FormatDefaultValue(column.Default, dataType)}" : "";
-
-        return $"{DbEmphasis(column.Name)} {dataType}{identity}{defaultValue}{notNull}";
+        return $"""
+                SELECT 
+                    c.column_name as columnname,
+                    c.data_type as datatype,
+                    c.is_nullable,
+                    COALESCE(c.column_default::text,'') as defaultvalue,
+                    c.is_identity as isidentity,
+                    pgd.description as comments,
+                    CASE WHEN c.data_type IN ('character varying', 'varchar', 'char', 'text') THEN COALESCE(c.character_maximum_length::text, '') ELSE '' END AS length,
+                    CASE WHEN pk.column_name IS NOT NULL THEN 'YES' ELSE 'NO' END as isprimarykey
+                FROM 
+                    information_schema.columns c
+                LEFT JOIN 
+                    pg_catalog.pg_statio_all_tables st ON c.table_schema = st.schemaname AND c.table_name = st.relname
+                LEFT JOIN 
+                    pg_catalog.pg_description pgd ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+                LEFT JOIN (
+                    SELECT 
+                        kcu.column_name 
+                    FROM 
+                        information_schema.table_constraints tc
+                    JOIN 
+                        information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
+                    WHERE 
+                        tc.constraint_type = 'PRIMARY KEY' 
+                        AND tc.table_name = '{table}'
+                ) pk ON c.column_name = pk.column_name
+                WHERE 
+                    c.table_name = '{table}'
+                ORDER BY 
+                    c.ordinal_position
+                """;
     }
 
-    protected override string ConvertToDbType(DbColumn type)
+    public override bool ParseDataType(ReadedTableColumn column, out string type)
     {
-        string? typeFullName;
-        if (type.DataType.IsEnum)
+        var dbType = column.DataType;
+        var nullable = column.Nullable;
+        if (string.IsNullOrWhiteSpace(dbType))
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
+            type = "";
+            return false;
         }
-        else
+        var d = dbType.ToLower().Trim();
+        var isNullable = nullable?.ToUpper() == "YES";
+
+        switch (dbType)
         {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
+            case "integer":
+                type = isNullable ? "int?" : "int";
+                return true;
+            case "bigint":
+                type = isNullable ? "long?" : "long";
+                return true;
+            case "smallint":
+                type = isNullable ? "short?" : "short";
+                return true;
+            case "numeric":
+            case "decimal":
+                type = isNullable ? "decimal?" : "decimal";
+                return true;
+            case "real":
+                type = isNullable ? "float?" : "float";
+                return true;
+            case "double precision":
+                type = isNullable ? "double?" : "double";
+                return true;
+            case "boolean":
+                type = isNullable ? "bool?" : "bool";
+                return true;
+            case "text":
+            case "character varying":
+            case "varchar":
+                type = isNullable ? "string?" : "string";
+                return true;
+            case "timestamp without time zone":
+            case "timestamp":
+                type = isNullable ? "DateTime?" : "DateTime";
+                return true;
+            case "date":
+                type = isNullable ? "DateOnly?" : "DateOnly";
+                return true;
+            case "time without time zone":
+                type = isNullable ? "TimeOnly?" : "TimeOnly";
+                return true;
+            case "bytea":
+                type = isNullable ? "byte[]?" : "byte[]";
+                return true;
+            case "uuid":
+                type = isNullable ? "Guid?" : "Guid";
+                return true;
+            case "json":
+            case "jsonb":
+                type = isNullable ? "string?" : "string"; // 或者可以返回特定的JSON类型
+                return true;
+            default:
+                type = isNullable ? "object?" : "object";
+                return false;
         }
-
-        return typeFullName switch
-        {
-            "System.Boolean" => "BOOLEAN",
-            "System.Byte" => "SMALLINT", // PostgreSQL 没有直接的 BYTE 类型
-            "System.Int16" => "SMALLINT",
-            "System.Int32" => "INTEGER",
-            "System.Int64" => "BIGINT",
-            "System.Single" => "REAL",
-            "System.Double" => "DOUBLE PRECISION",
-            "System.Decimal" => "NUMERIC",
-            "System.DateTime" => "TIMESTAMP",
-            "System.DateTimeOffset" => "TIMESTAMP WITH TIME ZONE",
-            "System.Guid" => "UUID",
-            "System.Byte[]" => "BYTEA",
-            _ => "TEXT", // PostgreSQL 的 TEXT 类型适合任意长度字符串
-        };
-    }
-
-    protected override string DbEmphasis(string name) => $"\"{name}\"";
-
-
-    private string FormatDefaultValue(object value, string dataType)
-    {
-        if (value == null) return "NULL";
-
-        return dataType switch
-        {
-            "BOOLEAN" => (bool)value ? "TRUE" : "FALSE",
-            "UUID" => $"'{value}'::uuid",
-            "TIMESTAMP" or "TIMESTAMP WITH TIME ZONE" => $"'{value:yyyy-MM-dd HH:mm:ss}'::timestamp",
-            _ => $"'{value.ToString()?.Replace("'", "''")}'"
-        };
     }
 }

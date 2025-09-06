@@ -5,191 +5,169 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LightORM.Providers.Oracle.TableStructure;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleTableHandler(TableGenerateOption option) : BaseDatabaseHandler(option)
+public sealed class OracleTableHandler
+    : BaseDatabaseHandler<OracleTableWriter>
 {
-    protected override IEnumerable<string> BuildSql(DbTable table)
+    public override string GetTablesSql()
     {
-        var tableSpace = Option?.OracleTableSpace != null ? $"TABLESPACE {Option.OracleTableSpace}" : "";
-
-        #region Table
-        yield return $"""
-CREATE TABLE {DbEmphasis(table.Name)}(
-    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(BuildColumn))}
-){tableSpace}
-
-""";
-
-        #endregion
-
-        #region ColumnConment
-        if (Option!.SupportComment)
-        {
-            var comments = table.Columns.Where(col => col.Comment != null);
-
-            foreach (var com in comments)
-            {
-                yield return $"COMMENT ON COLUMN {AttachUserId(table.Name)}.{DbEmphasis(com.Name)} IS '{com.Comment}'";
-            }
-        }
-        #endregion
-
-        #region Index
-
-        {
-            var pks = table.Columns.Where(c => c.PrimaryKey);
-            foreach (var p in pks)
-            {
-                if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
-                table.Indexs = table.Indexs.Concat(
-                [
-                    new(){ Columns = new string[]{p.Name }, DbIndexType= IndexType.Unique }
-                ]);
-            }
-        }
-
-        int i = 1;
-        foreach (DbIndex index in table.Indexs)
-        {
-            string columnNames = string.Join(",", index.Columns.Select(c => $"{DbEmphasis(c)}"));
-            var type = "";
-            if (index.IsUnique || index.DbIndexType == IndexType.Unique)
-            {
-                type = "UNIQUE ";
-            }
-            else if (index.DbIndexType == IndexType.Bitmap)
-            {
-                type = "BITMAP ";
-            }
-            string reverse = index.DbIndexType == IndexType.Reverse ? "REVERSE" : "";
-            yield return $"CREATE {type}INDEX {DbEmphasis(CheckIdxLength(table, index, i))} ON {DbEmphasis(table.Name)}({columnNames}){reverse}";
-            i++;
-        }
-
-        #endregion
-
-        #region PrimaryKey
-        var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
-        if (primaryKeys.Any())
-        {
-            yield return
-$"""
-ALTER TABLE {AttachUserId(table.Name)} ADD CONSTRAINT {CheckPkLength(table.Name, primaryKeys)} PRIMARY KEY
-(
-    {string.Join($",{Environment.NewLine}    ", primaryKeys.Select(item => $"{DbEmphasis(item.Name)}"))}
-)
-"""
-;
-        }
-        #endregion
-
-        if (!Option.OracleOverVersion)
-        {
-            // 序列 + 触发器自增
-            var increments = table.Columns.Where(col => col.AutoIncrement);
-            foreach (var col in increments)
-            {
-                var triName = AttachUserId($"TRI_{table.Name}_{col.Name}").ToUpper();
-                var seqName = $"SEQ_{table.Name}_{col.Name}".ToUpper();
-                yield return $"""
-CREATE SEQUENCE {AttachUserId(seqName)} START WITH 1 INCREMENT BY 1MINVALUE 1 MAXVALUE 999999999999999 ORDER
-""";
-                yield return $"""
- CREATE OR REPLACE TRIGGER {triName}
-     BEFORE INSERT ON {DbEmphasis(table.Name.ToUpper())}
-     FOR EACH ROW
- BEGIN
-     IF :NEW.{DbEmphasis(col.Name.ToUpper())} IS NULL THEN
-         SELECT {DbEmphasis(seqName)}.NEXTVAL INTO :NEW.{DbEmphasis(col.Name.ToUpper())} FROM DUAL;
-     END IF;
- END;
- """;
-
-                yield return $"ALTER TRIGGER {triName} ENABLE";
-            }
-        }
-
+        return "select table_name TableName from user_tab_columns group by table_name order by table_name";
     }
 
-    private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
+    public override string GetTableStructSql(string table)
     {
-        var originKey = GetPrimaryKeyName(name, pks);
-        if (originKey.Length < 30)
-        {
-            return originKey;
-        }
-        var over = originKey.Length - 30;
-        var parts = pks.Count() + 1;
-        var splitCount = (over / parts) + 1;
-        return $"PK_{name.Substring(splitCount)}_{string.Join("_", pks.Select(c => c.Name.Substring(splitCount)))}";
+        return $"""
+                SELECT 
+                    tc.column_name AS "ColumnName",
+                    tc.data_type AS "DataType",
+                    CASE 
+                        WHEN tc.data_type IN ('VARCHAR2', 'CHAR', 'NVARCHAR2', 'NCHAR') 
+                        THEN TO_CHAR(tc.char_length)
+                        WHEN tc.data_type = 'NUMBER' AND tc.data_precision IS NOT NULL 
+                        THEN TO_CHAR(tc.data_precision) || 
+                             CASE WHEN tc.data_scale > 0 THEN ',' || TO_CHAR(tc.data_scale) ELSE '' END
+                        ELSE TO_CHAR(tc.data_length)
+                    END AS "Length",
+                    CASE WHEN tc.nullable = 'Y' THEN 'YES' ELSE 'NO' END AS "Nullable",
+                    NVL(tc.data_default,'') AS "DefaultValue",
+                    CASE WHEN (SELECT '1' 
+                     FROM user_cons_columns cc
+                     JOIN user_constraints c ON cc.constraint_name = c.constraint_name
+                     WHERE c.constraint_type = 'P'
+                     AND cc.table_name = tc.table_name
+                     AND cc.column_name = tc.column_name
+                     AND ROWNUM = 1) = '1' THEN 'YES' ELSE 'NO' END AS "IsPrimaryKey",
+                    NVL(cc.comments, '') AS "Comments"
+                FROM 
+                    user_tab_columns tc
+                LEFT JOIN 
+                    user_col_comments cc ON tc.table_name = cc.table_name 
+                    AND tc.column_name = cc.column_name
+                WHERE 
+                    tc.table_name = UPPER('{table}')  -- 替换为您的表名
+                ORDER BY 
+                    tc.column_id
+                """;
     }
 
-    private static string CheckIdxLength(DbTable info, DbIndex index, int i)
+    public override bool ParseDataType(ReadedTableColumn column, out string type)
     {
-        var originKey = GetIndexName(info, index, i);
-        if (originKey.Length < 30)
+        var dbType = column.DataType;
+        var nullable = column.Nullable;
+        if (string.IsNullOrWhiteSpace(dbType))
         {
-            return originKey;
+            type = "";
+            return false;
         }
-        
-        var over = originKey.Length - 30;
-        var parts = index.Columns.Count() + 1;
-        var splitCount = (over / parts) + 1;
-        return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
-    }
 
-    protected override string BuildColumn(DbColumn column)
-    {
-        string dataType = ConvertToDbType(column);
-        if (dataType.Contains("VARCHAR"))
-        {
-            dataType = $"{dataType}({column.Length ?? Option.DefaultStringLength})";
-        }
-        string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement && Option.OracleOverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
-        string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
-        return $"{DbEmphasis(column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
-    }
+        // 处理可能带长度的类型声明（如 VARCHAR2(50)）
+        var baseType = dbType.Split('(')[0].ToUpper().Trim();
+        var isNullable = nullable?.ToUpper() == "Y" || nullable?.ToUpper() == "YES";
 
-    /// https://www.cnblogs.com/liufuhuang/articles/3020009.html
-    protected override string ConvertToDbType(DbColumn type)
-    {
-        string? typeFullName = "";
-        if (type.DataType.IsEnum)
+        switch (baseType)
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
-        }
-        else
-        {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
-        }
-        return typeFullName switch
-        {
-            "System.Boolean" => "CHAR(1)",
-            "System.Byte" => "NUMBER(3)",
-            "System.Int16" => "NUMBER(5)",
-            "System.Int32" => "NUMBER(10)",
-            "System.Int64" => "NUMBER(19)",
-            "System.Single" => "NUMBER(7,3)",
-            "System.Double" => "NUMBER(15,5)",
-            "System.Decimal" => "DECIMAL(33,3)",
-            "System.DateTime" => "DATE",
-            //"System.DateTimeOffset" => "DateTimeOffset",
-            "System.Guid" => "RAW(16)",
-            "System.Byte[]" => "BLOB",
-            //"System.Object" => "Variant",
-            _ => Option.UseUnicodeString ? "NVARCHAR2" : "VARCHAR2",
-        };
-    }
+            // 字符串类型
+            case "VARCHAR2":
+            case "NVARCHAR2":
+            case "CHAR":
+            case "NCHAR":
+            case "LONG":
+            case "CLOB":
+            case "NCLOB":
+            case "ROWID":
+            case "UROWID":
+                type = isNullable ? "string?" : "string"; // 字符串在C#中本身就是可空的
+                return true;
 
-    protected override string DbEmphasis(string name) => $"\"{name.ToUpper()}\"";
-    private string AttachUserId(string name)
-    {
-        if (Option.OracleUserId != null)
-            return $"\"{Option.OracleUserId}\".\"{name.ToUpper()}\"";
-        else
-            return DbEmphasis(name);
+            // 数值类型
+            case "NUMBER":
+                // Oracle NUMBER 类型需要特殊处理，可能映射到不同C#类型
+                if (dbType.Contains("NUMBER("))
+                {
+                    // 尝试解析精度和小数位
+                    var parts = dbType.Split(['(', ',', ')']);
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var precision))
+                    {
+                        if (parts.Length >= 3 && int.TryParse(parts[2], out var scale))
+                        {
+                            // 有小数位的情况
+                            type = isNullable ? "decimal?" : "decimal";
+                            return true;
+                        }
+
+                        // 只有精度的情况
+                        if (precision <= 4)
+                            type = isNullable ? "short?" : "short";
+                        else if (precision <= 9)
+                            type = isNullable ? "int?" : "int";
+                        else if (precision <= 18)
+                            type = isNullable ? "long?" : "long";
+                        else
+                            type = isNullable ? "decimal?" : "decimal";
+                        return true;
+                    }
+                }
+
+                // 默认处理
+                type = isNullable ? "int?" : "int";
+                break;
+
+            // 整数类型（Oracle的特定整数类型）
+            case "BINARY_INTEGER":
+            case "PLS_INTEGER":
+                type = isNullable ? "int?" : "int";
+                break;
+
+            // 浮点类型
+            case "BINARY_FLOAT":
+                type = isNullable ? "float?" : "float";
+                break;
+            case "BINARY_DOUBLE":
+            case "FLOAT":
+                type = isNullable ? "double?" : "double";
+                break;
+
+            // 日期时间类型
+            case "DATE":
+                type = isNullable ? "DateTime?" : "DateTime";
+                break;
+            case "TIMESTAMP":
+            case "TIMESTAMP WITH TIME ZONE":
+            case "TIMESTAMP WITH LOCAL TIME ZONE":
+                type = isNullable ? "DateTimeOffset?" : "DateTimeOffset";
+                break;
+            case "INTERVAL YEAR TO MONTH":
+            case "INTERVAL DAY TO SECOND":
+                type = isNullable ? "TimeSpan?" : "TimeSpan";
+                break;
+
+            // 二进制类型
+            case "BLOB":
+            case "BFILE":
+            case "RAW":
+            case "LONG RAW":
+                type = "byte[]";
+                break;
+
+            // XML类型
+            case "XMLTYPE":
+                type = isNullable ? "string?" : "string"; // 或 System.Xml.XmlDocument/XElement
+                return true;
+
+            // 布尔类型（Oracle没有原生BOOLEAN，但有时用NUMBER(1)表示）
+            case "BOOLEAN": // 某些Oracle版本支持
+                type = isNullable ? "bool?" : "bool";
+                break;
+
+            // 不支持的类型
+            default:
+                type = "";
+                return false;
+        }
+
+        return true;
     }
 }

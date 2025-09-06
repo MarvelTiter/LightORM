@@ -2,13 +2,12 @@
 
 namespace LightORM.Implements;
 
-public abstract class WriteTableFromType(TableGenerateOption option)
+public abstract class WriteTableFromType
 {
-    protected TableGenerateOption Option { get; } = option;
-    protected abstract string ConvertToDbType(DbColumn type);
-    protected abstract string BuildColumn(DbColumn column);
-    protected abstract string DbEmphasis(string name);
-    public abstract IEnumerable<string> BuildTableSql(DbTable table);
+    protected abstract string ConvertToDbType(TableGenerateOption option, DbColumn type);
+    protected abstract string BuildColumn(TableGenerateOption option, DbColumn column);
+    protected abstract string DbEmphasis(TableGenerateOption option, string name);
+    public abstract IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table);
 
     protected static string GetIndexName(DbTable info, DbIndex index, int i)
     {

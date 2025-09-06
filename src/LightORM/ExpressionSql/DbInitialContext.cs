@@ -19,7 +19,7 @@ public abstract class DbInitialContext
         }
         using var executor = new SqlExecutor.SqlExecutor(db, new AdoInterceptor(option.Interceptors));
         option.DatabaseHandlers.TryGetValue(key, out var handler);
-        if (handler?.Factory == null)
+        if (handler is null)
         {
             return;
         }
@@ -37,7 +37,7 @@ public abstract class DbInitialContext
         {
             hasTable = false;
         }
-        var context = new DbInitial(executor, handler.Factory);
+        var context = new DbInitial(executor, handler);
         Info ??= new DbInfo();
         if (!hasTable)
         {

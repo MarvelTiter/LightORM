@@ -2,28 +2,25 @@
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
+using LightORM.Implements;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteProvider : IDatabaseProvider
+public sealed class SqliteProvider : BaseDatabaseProvider
 {
     public static SqliteProvider Create(string master, params string[] slaves) => new SqliteProvider(master, slaves);
-    public SqliteProvider(string master, params string[] slaves)
+    private SqliteProvider(string master, params string[] slaves):base(master,slaves)
     {
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
     }
-    public DbBaseType DbBaseType => DbBaseType.Sqlite;
-    public DbProviderFactory DbProviderFactory { get; internal set; } = SQLiteFactory.Instance;
+    public override DbBaseType DbBaseType => DbBaseType.Sqlite;
+    public override DbProviderFactory DbProviderFactory { get; set; } = SQLiteFactory.Instance;
 
-    public string MasterConnectionString { get; }
+    public override ICustomDatabase CustomDatabase { get; } = CustomSqlite.Instance;
 
-    public string[] SlaveConnectionStrings { get; }
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override IDatabaseTableHandler DbHandler { get; } = new SqliteTableHandler();
 
-    public ICustomDatabase CustomDatabase { get; } = CustomSqlite.Instance;
-
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new SqliteTableHandler(option);
-    public int BulkCopy(DataTable dataTable)
+    public override int BulkCopy(DataTable dataTable)
     {
         throw new NotSupportedException();
     }

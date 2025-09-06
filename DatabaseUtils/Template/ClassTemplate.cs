@@ -1,19 +1,16 @@
 ﻿using DatabaseUtils.Helper;
 using DatabaseUtils.Models;
-using DatabaseUtils.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+using LightORM.DbStruct;
+using LightORM.Interfaces;
+
 namespace DatabaseUtils.Template
 {
     public class ClassProperty
     {
         private readonly List<string> attributes = [];
-        private readonly TableColumn column;
-        internal ClassProperty(TableColumn column)
+        private readonly ReadedTableColumn column;
+        internal ClassProperty(ReadedTableColumn column)
         {
             this.column = column;
         }
@@ -27,19 +24,19 @@ namespace DatabaseUtils.Template
             attributes.Add(template);
         }
 
-        private IEnumerable<string> GenAttributes(IDbOperator db, Config config, string csharpType, string comment)
+        private IEnumerable<string> GenAttributes(IDatabaseTableHandler db, Config config, string csharpType, string comment)
         {
             yield return CreateLightColumnAttribute(column, csharpType);
             foreach (var item in attributes)
             {
-                if (item.IndexOf("{0}") > -1)
+                if (item.IndexOf("{0}", StringComparison.Ordinal) > -1)
                     yield return string.Format(item, comment);
                 else
                     yield return item;
             }
         }
 
-        public string ToString(IDbOperator db, Config config)
+        public string ToString(IDatabaseTableHandler db, Config config)
         {
             if (!db.ParseDataType(column, out var type))
             {
@@ -61,7 +58,7 @@ $$"""
 """;
         }
 
-        private static string CreateLightColumnAttribute(TableColumn column, string csharpType)
+        private static string CreateLightColumnAttribute(ReadedTableColumn column, string csharpType)
         {
             //[LightColumn(Name = ""{1}"")]
             var properties = new StringBuilder($"Name = \"{column.ColumnName}\"");
@@ -106,13 +103,13 @@ $$"""
             this.dbKey = dbKey;
         }
         public List<ClassProperty> Properties { get; set; } = [];
-        public ClassProperty AddProperty(TableColumn column)
+        public ClassProperty AddProperty(ReadedTableColumn column)
         {
             var prop = new ClassProperty(column);
             Properties.Add(prop);
             return prop;
         }
-        public string ToString(IDbOperator db, Config config)
+        public string ToString(IDatabaseTableHandler db, Config config)
         {
             ClassName = table.PascalName(config.Prefix, config.Separator);
             return
@@ -124,7 +121,7 @@ $$"""
  */
 using LightORM;
 namespace {{config.Namespace}};
-[LightTable(Name = "{{table.TableName}}"{{SetDbKey()}})] 
+[LightTable(Name = "{{table.Table.TableName}}"{{SetDbKey()}})] 
 public class {{ClassName}}
 {
 {{string.Join(Environment.NewLine, Properties.Select(p => p.ToString(db, config)))}}

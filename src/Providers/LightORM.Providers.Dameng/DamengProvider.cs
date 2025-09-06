@@ -2,31 +2,29 @@
 using LightORM.Interfaces;
 using System.Data;
 using System.Data.Common;
+using LightORM.Implements;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class DamengProvider : IDatabaseProvider
+public sealed class DamengProvider : BaseDatabaseProvider
 {
     public static DamengProvider Create(string master, params string[] slaves) => new DamengProvider(master, slaves);
+    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new DamengTableHandler());
 
-    private DamengProvider(string master, params string[] slaves)
+    private DamengProvider(string master, params string[] slaves):base(master,slaves)
     {
-        MasterConnectionString = master;
-        SlaveConnectionStrings = slaves;
+        
     }
-    public DbBaseType DbBaseType => DbBaseType.MySql;
+    public override DbBaseType DbBaseType => DbBaseType.Dameng;
+    public override ICustomDatabase CustomDatabase { get; } = CustomDameng.Instance;
 
-    public string MasterConnectionString { get; }
+    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public ICustomDatabase CustomDatabase { get; } = CustomDameng.Instance;
+    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
 
-    public Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => new DamengTableHandler(option);
+    public override DbProviderFactory DbProviderFactory { get; set; } = DmClientFactory.Instance;
 
-    public string[] SlaveConnectionStrings { get; }
-
-    public DbProviderFactory DbProviderFactory { get; internal set; } = DmClientFactory.Instance;
-
-    public int BulkCopy(DataTable dataTable)
+    public override int BulkCopy(DataTable dataTable)
     {
         if (dataTable == null || dataTable.Columns.Count == 0 || dataTable.Rows.Count == 0)
         {
