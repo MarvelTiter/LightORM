@@ -43,54 +43,60 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    //public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
-    //{
-    //    this.WhereHandle(exp);
-    //    return (this as TSelect)!;
-    //}
-    //public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
-    //{
-    //    if (condition) this.WhereHandle(exp);
-    //    return (this as TSelect)!;
-    //}
+    public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
+    {
+        this.WhereHandle(exp);
+        return (this as TSelect)!;
+    }
+    public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
+    {
+        if (condition) this.WhereHandle(exp);
+        return (this as TSelect)!;
+    }
 
-    //public TSelect WithParameters(object parameters)
-    //{
-    //    return (this as TSelect)!;
-    //}
+    public TSelect WithParameters(object parameters)
+    {
+        if (parameters is not IDictionary<string, object> dic)
+        {
+            var reader = DbParameterReader.CreateReadToDictionary("", parameters.GetType());
+            dic = reader.Invoke(parameters);
+        }
+        SqlBuilder.DbParameters.TryAddDictionary(dic);
+        return (this as TSelect)!;
+    }
 
-    //public TSelect Where(string sql, object? parameters = null)
-    //{
-    //    SqlBuilder.Where.Add(sql);
-    //    SqlBuilder.TryAddParameters(sql, parameters);
-    //    return (this as TSelect)!;
-    //}
+    public TSelect Where(string sql, object? parameters = null)
+    {
+        SqlBuilder.Where.Add(sql);
+        SqlBuilder.TryAddParameters(sql, parameters);
+        return (this as TSelect)!;
+    }
 
-    //public TSelect WhereIf(bool condition, string sql, object? parameters = null)
-    //{
-    //    if (condition)
-    //    {
-    //        return Where(sql, parameters);
-    //    }
-    //    return (this as TSelect)!;
-    //}
-    //public TSelect GroupBy(string sql, object? parameters = null)
-    //{
-    //    SqlBuilder.GroupBy.Add(sql);
-    //    SqlBuilder.TryAddParameters(sql, parameters);
-    //    return (this as TSelect)!;
-    //}
-    //public TSelect Having(string sql, object? parameters = null)
-    //{
-    //    //SqlBuilder
-    //    return (this as TSelect)!;
-    //}
-    //public TSelect OrderBy(string sql, object? parameters = null)
-    //{
-    //    SqlBuilder.OrderBy.Add(sql);
-    //    SqlBuilder.TryAddParameters(sql, parameters);
-    //    return (this as TSelect)!;
-    //}
+    public TSelect WhereIf(bool condition, string sql, object? parameters = null)
+    {
+        if (condition)
+        {
+            return Where(sql, parameters);
+        }
+        return (this as TSelect)!;
+    }
+    public TSelect GroupBy(string sql, object? parameters = null)
+    {
+        SqlBuilder.GroupBy.Add(sql);
+        SqlBuilder.TryAddParameters(sql, parameters);
+        return (this as TSelect)!;
+    }
+    public TSelect Having(string sql, object? parameters = null)
+    {
+        //SqlBuilder
+        return (this as TSelect)!;
+    }
+    public TSelect OrderBy(string sql, object? parameters = null)
+    {
+        SqlBuilder.OrderBy.Add(sql);
+        SqlBuilder.TryAddParameters(sql, parameters);
+        return (this as TSelect)!;
+    }
 
     #endregion
 
@@ -294,7 +300,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     {
         //SqlBuilder.PageIndex = pageIndex;
         //SqlBuilder.PageSize = pageSize;
-        SqlBuilder.Skip = (pageIndex -1) * pageSize;
+        SqlBuilder.Skip = (pageIndex - 1) * pageSize;
         SqlBuilder.Take = pageSize;
         return (this as TSelect)!;
     }

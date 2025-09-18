@@ -136,7 +136,8 @@ internal static class DbParameterReader
             assign,
             retExpInited,
             ];
-        var props = ExtractParameter(commandText, type.GetProperties());
+        var all = type.GetProperties();
+        var props = string.IsNullOrEmpty(commandText) ? all : ExtractParameter(commandText, all);
         foreach (var item in props)
         {
             var key = Expression.Constant(item.Name, typeof(string));

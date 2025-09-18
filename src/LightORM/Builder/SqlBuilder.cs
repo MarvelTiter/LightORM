@@ -4,7 +4,7 @@ using System.Collections;
 using System.Text;
 
 namespace LightORM.Builder;
-
+//internal readonly struct 
 internal abstract record SqlBuilder : ISqlBuilder
 {
     public static string N { get; } = Environment.NewLine;
