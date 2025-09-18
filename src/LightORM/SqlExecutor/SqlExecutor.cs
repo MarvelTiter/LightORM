@@ -952,7 +952,7 @@ internal partial class SqlExecutor : ISqlExecutor
         return (T)Convert.ChangeType(value, conversionType);
     }
 
-    private static Dictionary<Type, Action<DbCommand>> commandInitCache = new Dictionary<Type, Action<DbCommand>>();
+    private static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
     internal static Action<DbCommand>? GetInit(Type commandType)
     {
         if (commandType == null)
@@ -960,15 +960,14 @@ internal partial class SqlExecutor : ISqlExecutor
             return null;
         }
 
-        if (commandInitCache.TryGetValue(commandType, out Action<DbCommand>? value))
+        return commandInitCache.GetOrAdd(commandType, t =>
         {
-            return value;
-        }
-
-        MethodInfo? basicPropertySetter = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
-        MethodInfo? basicPropertySetter2 = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
-        if (basicPropertySetter != null || basicPropertySetter2 != null)
-        {
+            MethodInfo? setBindName = GetBasicPropertySetter(t, "BindByName", typeof(bool));
+            MethodInfo? setInit = GetBasicPropertySetter(t, "InitialLONGFetchSize", typeof(int));
+            if (setBindName is null && setInit is null)
+            {
+                return null;
+            }
             /*
              * (DbCommand cmd) => {
              *     (OracleCommand)cmd.set_BindByName(true);
@@ -977,25 +976,21 @@ internal partial class SqlExecutor : ISqlExecutor
              */
             ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
             List<Expression> body = new List<Expression>();
-            if (basicPropertySetter != null)
+            if (setBindName != null)
             {
                 UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, basicPropertySetter, Expression.Constant(true, typeof(bool)));
+                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
                 body.Add(setter1Exp);
             }
-            if (basicPropertySetter2 != null)
+            if (setInit != null)
             {
                 UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, basicPropertySetter2, Expression.Constant(-1, typeof(int)));
+                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
                 body.Add(setter2Exp);
             }
             var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
-            value = lambda.Compile();
-
-            commandInitCache.Add(commandType, value);
-        }
-
-        return value;
+            return lambda.Compile();
+        });
     }
 
     internal static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
