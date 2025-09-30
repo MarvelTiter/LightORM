@@ -9,7 +9,10 @@ public class TableInfo
     public static TableInfo Create<T>(int index) => Create(typeof(T), index);
     public static TableInfo Create(Type type) => Create(type, 0);
     public static TableInfo Create(Type type, int index) => new(type, index);
-
+    public static TableInfo Create<T>(string? tableName) => Create<T>(tableName, 0);
+    public static TableInfo Create<T>(string? tableName, int index) => Create(tableName, typeof(T), index);
+    public static TableInfo Create(string? tableName, Type type) => Create(tableName, type, 0);
+    public static TableInfo Create(string? tableName, Type type, int index) => new(tableName, type, index);
     private TableInfo(Type type, int index)
     {
         Type = type;
@@ -17,6 +20,12 @@ public class TableInfo
         Alias = ALIAS[index].ToString();
         TableEntityInfo = TableContext.GetTableInfo(type);
     }
+    private TableInfo(string? tableName, Type type, int index) : this(type, index)
+    {
+        overriddenTableName = tableName;
+    }
+    private readonly string? overriddenTableName;
+    public string TableName => overriddenTableName ?? TableEntityInfo.TableName;
     /// <summary>
     /// 表类型
     /// </summary>

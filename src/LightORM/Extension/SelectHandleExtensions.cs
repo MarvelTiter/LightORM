@@ -23,6 +23,7 @@ internal static class SelectHandleExtensions
             AdditionalParameter = asc ? "ASC" : "DESC"
         });
     }
+
     internal static IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(this IExpSelect select, Expression? exp)
     {
         if (exp is LambdaExpression keySelector)
@@ -49,7 +50,11 @@ internal static class SelectHandleExtensions
         }
     }
 
-    internal static void JoinHandle<TJoin>(this IExpSelect select, Expression? exp, TableLinkType joinType, IExpSelect<TJoin>? subQuery = null)
+    internal static void JoinHandle<TJoin>(this IExpSelect select
+        , Expression? exp
+        , TableLinkType joinType
+        , IExpSelect<TJoin>? subQuery = null
+        , string? overriddenTableName = null)
     {
         var expression = new ExpressionInfo
         {
@@ -62,9 +67,9 @@ internal static class SelectHandleExtensions
         {
             ExpressionId = expression.Id,
             JoinType = joinType,
-            EntityInfo = TableInfo.Create<TJoin>(select.SqlBuilder.NextTableIndex),
+            EntityInfo = TableInfo.Create<TJoin>(overriddenTableName, select.SqlBuilder.NextTableIndex),
         };
-        if (subQuery != null)
+        if (subQuery is not null)
         {
             joinInfo.IsSubQuery = true;
             joinInfo.SubQuery = subQuery.SqlBuilder;
@@ -87,7 +92,6 @@ internal static class SelectHandleExtensions
             JoinType = joinType,
             EntityInfo = TableInfo.Create(type, select.SqlBuilder.NextTableIndex),
         };
-
         select.SqlBuilder.Joins.Add(joinInfo);
     }
 

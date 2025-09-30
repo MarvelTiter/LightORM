@@ -4,7 +4,7 @@ public static partial class SelectExtensions
 {
     static string? GetDbKey(params Type[] types)
     {
-        List<string> keys = new List<string>();
+        HashSet<string> keys = [];
         foreach (var item in types)
         {
             var t = TableContext.GetTableInfo(item);
@@ -14,12 +14,11 @@ public static partial class SelectExtensions
             }
             keys.Add(t.TargetDatabase);
         }
-        var dbKeys = keys.Distinct().ToArray();
-        if (dbKeys.Length > 1)
+        if (keys.Count > 1)
         {
-            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", dbKeys)}");
+            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", keys)}");
         }
-        return dbKeys.FirstOrDefault();
+        return keys.FirstOrDefault();
     }
 
 
@@ -64,11 +63,13 @@ public static partial class SelectExtensions
     {
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
-            instance.SwitchDatabase(key);
+        {
+            return new SelectProvider2<T1, T2>(instance.GetAdo(key));
+        }
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
 
-    public static IExpSelect<T1, T2> SelectField<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static IExpSelect<T1, T2> SelectColumns<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;

@@ -147,7 +147,6 @@ internal record DeleteBuilder<T> : SqlBuilder
     }
     public override string ToSqlString(ICustomDatabase database)
     {
-        //TODO 处理批量删除
         if (IsBatchDelete)
         {
             CreateBatchDeleteSql(database);

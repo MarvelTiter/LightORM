@@ -851,4 +851,13 @@ public class SelectSql : TestBase
             });
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void SelectWithOverriddenTableName()
+    {
+        var sql = Db.Select<User>("Old_User")
+            .Where(u => u.UserName == "admin")
+            .ToSql();
+        Console.WriteLine(sql);
+    }
 }

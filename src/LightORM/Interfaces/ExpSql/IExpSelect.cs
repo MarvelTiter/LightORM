@@ -68,6 +68,9 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp);
     IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp);
     IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp);
+    IExpSelect<T1, TJoin> InnerJoin<TJoin>(string tableName,Expression<Func<T1, TJoin, bool>> exp);
+    IExpSelect<T1, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp);
+    IExpSelect<T1, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp);
     IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpSelect<T1, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);
     IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where);

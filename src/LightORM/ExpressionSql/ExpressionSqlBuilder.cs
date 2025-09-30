@@ -166,6 +166,12 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         action.Invoke(option.TableGenOption);
         return this;
     }
+    public IExpressionContextSetup UseIdentifierQuote(bool value = true)
+    {
+
+        return this;
+    }
+
     public ExpressionSqlOptions Build(IServiceProvider? provider)
     {
         if (provider is not null)
@@ -187,6 +193,4 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
 
         return option;
     }
-
-    
 }

@@ -2,10 +2,16 @@
 
 namespace LightORM;
 
+public interface IContext
+{
+    ISqlExecutor Ado { get; }
+
+}
+
 /// <summary>
 /// <see cref="IExpressionContext.SwitchDatabase(string)"/>后的数据库操作对象
 /// </summary>
-public interface ITransientExpressionContext : IDefinedTableAction
+public interface ITransientExpressionContext : IDefinedTableAction, IContext
 {
     internal string Key { get; }
     IExpSelect<T> Select<T>();
@@ -14,18 +20,16 @@ public interface ITransientExpressionContext : IDefinedTableAction
     IExpUpdate<T> Update<T>(params T[] entities);
     IExpDelete<T> Delete<T>();
     IExpDelete<T> Delete<T>(params T[] entities);
-    ISqlExecutor Ado { get; }
 }
 
 /// <summary>
 /// 数据库操作上下文
 /// </summary>
-public interface IExpressionContext : IDisposable, ITableAction
+public interface IExpressionContext : IDisposable, ITableAction, IContext
 {
     string Id { get; }
-    ISqlExecutor Ado { get; }
     internal ExpressionSqlOptions Options { get; }
-
+    internal ISqlExecutor GetAdo(string key);
     /// <summary>
     /// 与<see cref="IExpSelect{T1}.Union(IExpSelect{T1})"/>不同的是，当Union个数大于1时，该方法会嵌套为子查询
     /// </summary>
@@ -93,11 +97,10 @@ public interface IDefinedTableAction
 /// <summary>
 /// UnitOfWork, 该对象的所有操作，支持事务
 /// </summary>
-public interface IScopedExpressionContext : IDisposable, IDefinedTableAction
+public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
     IScopedExpressionContext SwitchDatabase(string key);
     string Id { get; }
-    ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
     IExpInsert<T> Insert<T>(params T[] entities);
     IExpUpdate<T> Update<T>();
@@ -121,10 +124,9 @@ public interface IScopedExpressionContext : IDisposable, IDefinedTableAction
 /// <summary>
 /// 只能对单个数据库操作
 /// </summary>
-public interface ISingleScopedExpressionContext : IDisposable, IDefinedTableAction
+public interface ISingleScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
     string Id { get; }
-    ISqlExecutor Ado { get; }
     IExpSelect<T> Select<T>();
     IExpInsert<T> Insert<T>(params T[] entities);
     IExpUpdate<T> Update<T>();

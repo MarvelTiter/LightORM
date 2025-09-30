@@ -12,5 +12,7 @@ public interface IExpressionContextSetup
     IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase;
     IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new();
     IExpressionContextSetup TableConfiguration(Action<TableGenerateOption> action);
+    // TODO 定界符配置
+    IExpressionContextSetup UseIdentifierQuote(bool value = true);
 
 }

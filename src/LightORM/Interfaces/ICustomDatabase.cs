@@ -14,5 +14,6 @@ namespace LightORM.Interfaces
         string ReturnIdentitySql();
         string HandleBooleanValue(bool value);
         ISqlMethodResolver MethodResolver { get; }
+        bool IsKeyWork(string keyWork);
     }
 }

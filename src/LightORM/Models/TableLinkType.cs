@@ -4,17 +4,14 @@ internal static class TableLinkTypeEx
 {
     internal static string ToLabel(this TableLinkType self)
     {
-        switch (self)
+        return self switch
         {
-            case TableLinkType.LeftJoin:
-                return "LEFT JOIN";
-            case TableLinkType.InnerJoin:
-                return "INNER JOIN";
-            case TableLinkType.RightJoin:
-                return "RIGHT JOIN";
-            default:
-                throw new ArgumentException($"未知的TableLinkType {self}");
-        }
+            TableLinkType.LeftJoin => "LEFT JOIN",
+            TableLinkType.InnerJoin => "INNER JOIN",
+            TableLinkType.RightJoin => "RIGHT JOIN",
+            TableLinkType.FullOuterJoin => "FULL OUTER JOIN",
+            _ => throw new ArgumentException($"未知的TableLinkType {self}"),
+        };
     }
 }
 internal enum TableLinkType
@@ -23,4 +20,5 @@ internal enum TableLinkType
     LeftJoin,
     InnerJoin,
     RightJoin,
+    FullOuterJoin,
 }

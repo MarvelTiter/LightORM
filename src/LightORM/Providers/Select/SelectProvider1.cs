@@ -20,6 +20,12 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
         }
     }
+    public SelectProvider1(string overriddenTableName, ISqlExecutor executor)
+        : base(executor)
+    {
+        SqlBuilder = new SelectBuilder();
+        SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(overriddenTableName));
+    }
     public IExpSelect<T1> As(string alias)
     {
         throw new NotImplementedException("暂不支持自定义alias");
@@ -70,6 +76,24 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
         this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin, overriddenTableName: tableName);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
