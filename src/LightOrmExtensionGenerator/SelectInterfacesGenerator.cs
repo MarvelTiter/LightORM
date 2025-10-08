@@ -43,11 +43,17 @@ namespace LightOrmExtensionGenerator
                     IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
-
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp);
+                    
+                    IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp);
+                                        
                     IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
-
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where);
                 """ : "";
 
             string typeSetJoin = count < 16 ? $$"""
@@ -55,10 +61,17 @@ namespace LightOrmExtensionGenerator
                     IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
-
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+                    
+                    IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp);
+                    
                     IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
                     IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
                     IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
+                    IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where);
                 """ : "";
             var code = $$"""
 

@@ -54,7 +54,6 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
-
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin);
@@ -65,6 +64,33 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    
+                    public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
+                    {
+                        this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
                         this.JoinHandle<TJoin>(where, TableLinkType.InnerJoin, subQuery);
@@ -81,6 +107,11 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(where, TableLinkType.RightJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
+                    {
+                        this.JoinHandle<TJoin>(where, TableLinkType.OuterJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
                 """ : "";
 
             string typeSetJoin = count < 16 ? $$"""
@@ -91,7 +122,6 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
-                
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
@@ -104,6 +134,38 @@ namespace LightOrmExtensionGenerator
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    
+                    public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, overriddenTableName: tableName);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
@@ -121,6 +183,12 @@ namespace LightOrmExtensionGenerator
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, subQuery);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                    }
+                    public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
+                    {
+                        var flatExp = FlatTypeSet.Default.Flat(where);
+                        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, subQuery);
                         return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
                     }
                 """ : "";

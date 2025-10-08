@@ -1,29 +1,23 @@
-﻿using LightORM;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LightORM.Providers.Sqlite.Extensions;
-using LightORM.Providers.Oracle.Extensions;
-using LightORM.Providers.MySql.Extensions;
-using LightORM.Interfaces;
+﻿using LightORM.Interfaces;
 using LightORM.Models;
 using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
+
 namespace LightORMTest;
 
 public class TestBase
 {
-    public IExpressionContext Db { get;  }
+    protected IExpressionContext Db { get; }
     internal ResolveContext ResolveCtx { get; set; }
     protected IServiceProvider Services { get; }
     public ITableContext TableContext { get; } = new TestTableContext();
-    [NotNull]
-    public virtual DbBaseType? DbType { get; }
-    public TestBase()
+    [NotNull] public virtual DbBaseType? DbType { get; }
+
+    private readonly Dictionary<string, string> sqlResults = [];
+
+    protected TestBase()
     {
         IServiceCollection services = new ServiceCollection();
         services.AddLightOrm(option =>
@@ -37,11 +31,23 @@ public class TestBase
         Db = Services.GetRequiredService<IExpressionContext>();
 
         ResolveCtx = ResolveContext.Create(DbType);
+        ConfiguraSqlResults(sqlResults);
     }
 
-    public virtual void Configura(IExpressionContextSetup option)
+    protected void AssertSqlResult(string methodName, string sql)
     {
+        if (sqlResults.TryGetValue(methodName, out var sqlResult))
+        {
+            Assert.IsTrue(SqlNormalizer.AreSqlEqual(sqlResult, sql));
+        }
+    }
 
+    protected virtual void Configura(IExpressionContextSetup option)
+    {
+    }
+
+    protected virtual void ConfiguraSqlResults(Dictionary<string, string> results)
+    {
     }
 }
 

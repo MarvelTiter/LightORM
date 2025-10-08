@@ -14,6 +14,12 @@ namespace LightORM.Interfaces
         string ReturnIdentitySql();
         string HandleBooleanValue(bool value);
         ISqlMethodResolver MethodResolver { get; }
-        bool IsKeyWork(string keyWork);
+        /// <summary>
+        /// 是否使用标识引用符号，数据库关键词会强制使用，可通过<see cref="AddKeyWord"/>新增
+        /// </summary>
+        bool UseIdentifierQuote { get; set; }
+        bool IsKeyWord(string keyWork);
+        void AddKeyWord(params string[] keyWords);
+        
     }
 }

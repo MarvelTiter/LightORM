@@ -11,7 +11,8 @@ namespace LightORMTest.Dameng.SqlGenerate;
 public class UpdateSql: LightORMTest.SqlGenerate.UpdateSql
 {
     public override DbBaseType DbType => DbBaseType.Dameng;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
         option.UseDameng(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();

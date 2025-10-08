@@ -8,8 +8,10 @@ public static class IocExtension
     public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options)
     {
         //var option = ExpressionSqlOptions.Instance.Value;
-        var builder = new ExpressionOptionBuilder();
-        builder.WeakServices = new WeakReference<IServiceCollection>(services);
+        var builder = new ExpressionOptionBuilder
+        {
+            WeakServices = new(services)
+        };
         options(builder);
         //if (option.InitialContexts.Count > 0)
         //{

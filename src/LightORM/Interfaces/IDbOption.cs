@@ -14,4 +14,5 @@ public interface IDbOption
     /// </summary>
     /// <param name="keyWords"></param>
     void AddDbKeyWords(params string[] keyWords);
+    IDbOption  UseIdentifierQuote(bool value = true);
 }

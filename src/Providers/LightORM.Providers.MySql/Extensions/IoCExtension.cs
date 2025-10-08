@@ -13,7 +13,7 @@ public static class IoCExtension
     }
     public static void UseMySql(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(CustomMySql.Instance.MethodResolver);
+        var dbOption = new DataBaseOption(CustomMySql.Instance);
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

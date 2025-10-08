@@ -1,5 +1,10 @@
 ﻿namespace LightORM;
 
+// public static partial class Select1Ex<T1>
+// {
+//     public static IExpSelect<T1, TJoin> InnerJoin<TJoin>(this IExpSelect)
+// }
+
 public static partial class SelectExtensions
 {
     static string? GetDbKey(params Type[] types)
@@ -56,7 +61,14 @@ public static partial class SelectExtensions
         select.HandleResult(exp, null);
         return select;
     }
-
+#if NET10_0_OR_GREATER 
+    
+    extension<T1>(IExpSelect<T1> select)
+    {
+        
+    }
+#endif
+    
     #region 2个类型参数
 
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
@@ -86,36 +98,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.InnerJoin);
-        return select;
-    }
-
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.LeftJoin);
-        return select;
-    }
-
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.RightJoin);
-        return select;
-    }
-
+    
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
@@ -158,37 +141,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.InnerJoin);
-        return select;
-    }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.LeftJoin);
-        return select;
-    }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.RightJoin);
-        return select;
-    }
-
+    
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;

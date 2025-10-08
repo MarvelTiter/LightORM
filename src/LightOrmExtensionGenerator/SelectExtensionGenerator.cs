@@ -25,7 +25,9 @@ public static partial class SelectExtensions
     {
         var key = GetDbKey({{string.Join(", ", types)}});
         if (key != null)
-            instance.SwitchDatabase(key);
+        {
+            return new SelectProvider{{count}}<{{argsStr}}>(instance.GetAdo(key));
+        }
         return new SelectProvider{{count}}<{{argsStr}}>(instance.Ado);
     }
     /// <summary>
@@ -39,36 +41,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.InnerJoin);
-        return select;
-    }
     
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.LeftJoin);
-        return select;
-    }
-    
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.RightJoin);
-        return select;
-    }
-
     public static IEnumerable<dynamic> ToDynamicList<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
@@ -109,39 +82,6 @@ public static partial class SelectExtensions
         {
             select.Where(exp);
         }
-        return select;
-    }
-
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> InnerJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.InnerJoin);
-        return select;
-    }
-    
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> LeftJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.LeftJoin);
-        return select;
-    }
-    
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<{{argsStr}}> RightJoin<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<TypeSet<{{argsStr}}>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.RightJoin);
         return select;
     }
 

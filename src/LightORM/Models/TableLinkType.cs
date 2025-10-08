@@ -9,16 +9,16 @@ internal static class TableLinkTypeEx
             TableLinkType.LeftJoin => "LEFT JOIN",
             TableLinkType.InnerJoin => "INNER JOIN",
             TableLinkType.RightJoin => "RIGHT JOIN",
-            TableLinkType.FullOuterJoin => "FULL OUTER JOIN",
+            TableLinkType.OuterJoin => "FULL OUTER JOIN",
             _ => throw new ArgumentException($"未知的TableLinkType {self}"),
         };
     }
 }
-internal enum TableLinkType
+public enum TableLinkType
 {
     None,
     LeftJoin,
     InnerJoin,
     RightJoin,
-    FullOuterJoin,
+    OuterJoin,
 }
