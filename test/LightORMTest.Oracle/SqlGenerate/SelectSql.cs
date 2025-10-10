@@ -10,7 +10,6 @@ public class SelectSql : LightORMTest.SqlGenerate.SelectSql
         option.UseOracle(o =>
         {
             o.MasterConnectionString = ConnectString.Value;
-            o.UseIdentifierQuote(false);
         });
         option.UseInterceptor<LightOrmAop>();
     }

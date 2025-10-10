@@ -10,7 +10,6 @@ internal static class CustomDatabaseExtensions
         {
             return database.Emphasis.Insert(1, name);
         }
-
         return name;
     }
 

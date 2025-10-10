@@ -7,7 +7,7 @@ public abstract class CustomDatabase : ICustomDatabase
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }
     public ISqlMethodResolver MethodResolver { get; }
-    public bool UseIdentifierQuote { get; set; }
+    public bool UseIdentifierQuote { get; set; } = true;
 
     private readonly HashSet<string> keyWorks = new(StringComparer.OrdinalIgnoreCase)
     {
