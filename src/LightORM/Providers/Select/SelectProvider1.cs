@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using System.Threading;
+
 namespace LightORM.Providers.Select;
 
 //TODO Select 匿名类
@@ -20,6 +21,14 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
         }
     }
+
+    public SelectProvider1(string overriddenTableName, ISqlExecutor executor)
+        : base(executor)
+    {
+        SqlBuilder = new SelectBuilder();
+        SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(overriddenTableName));
+    }
+
     public IExpSelect<T1> As(string alias)
     {
         throw new NotImplementedException("暂不支持自定义alias");
@@ -31,6 +40,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         SqlBuilder.AddUnion(select.SqlBuilder, false);
         return this;
     }
+
     public IExpSelect<T1> UnionAll(IExpSelect<T1> select)
     {
         //var provider = this.HandleSubQuery<T1>();
@@ -42,11 +52,13 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         return this.GroupByHandle<TGroup, T1>(exp);
     }
+
     public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp)
     {
         this.OrderByHandle(exp, true);
         return this;
     }
+
     public IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp)
     {
         this.OrderByHandle(exp, false);
@@ -54,6 +66,12 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     }
 
     #region Join
+
+    public IExpSelect<T1, TJoin> Join<TJoin>(TableLinkType joinType, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, joinType);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
 
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
@@ -70,6 +88,36 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
     {
         this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin, overriddenTableName: tableName);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
@@ -91,6 +139,12 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> exp)
+    {
+        this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
     {
         this.JoinHandle<TJoin>(where, TableLinkType.InnerJoin, subQuery);
@@ -102,9 +156,16 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         this.JoinHandle<TJoin>(where, TableLinkType.LeftJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
+
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
     {
         this.JoinHandle<TJoin>(where, TableLinkType.RightJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(IExpTemp<TJoin> subQuery, Expression<Func<T1, TJoin, bool>> where)
+    {
+        this.JoinHandle<TJoin>(where, TableLinkType.OuterJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
@@ -140,6 +201,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
                 includeWhereExpression = mc.Arguments[1];
             }
         }
+
         LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
         var navCol = SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
@@ -224,6 +286,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     #endregion
 
     #region with temp
+
     public IExpSelect<T1, TTemp> WithTempQuery<TTemp>(IExpTemp<TTemp> temp)
     {
         //SqlBuilder.TempViews.Add(temp.SqlBuilder);
@@ -259,27 +322,67 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         this.HandleTempQuery(temp1, temp2, temp3, temp4, temp5);
         return new SelectProvider6<T1, TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(Executor, SqlBuilder);
     }
+
     #endregion
 
     #region TypeSet
+
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
+
     public IExpSelect<T1, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
+
     public IExpSelect<T1, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, overriddenTableName: tableName);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
     public IExpSelect<T1, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
@@ -298,6 +401,13 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, subQuery);
+        return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
+    }
+
+    public IExpSelect<T1, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, TJoin>, bool>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp)!;
+        this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, subQuery);
         return new SelectProvider2<T1, TJoin>(Executor, SqlBuilder);
     }
 
@@ -362,5 +472,4 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     }
 
     #endregion
-
 }

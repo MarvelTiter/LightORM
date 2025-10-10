@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace LightORM.Repository;
 
-internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
+internal sealed class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
 {
     private static readonly ParameterExpression parameterExpression = Expression.Parameter(typeof(TEntity), "entity");
     private static readonly Lazy<ConcurrentDictionary<PropertyInfo, PrimaryKeyExpressionBuilder>> keyBuilders = new(CreateKeyBuilders);
@@ -166,7 +166,7 @@ internal class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!disposedValue)
         {

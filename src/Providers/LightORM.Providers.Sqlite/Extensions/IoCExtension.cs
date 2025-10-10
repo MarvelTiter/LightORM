@@ -15,7 +15,7 @@ public static class IoCExtension
     }
     public static void UseSqlite(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(CustomSqlite.Instance.MethodResolver);
+        var dbOption = new DataBaseOption(CustomSqlite.Instance);
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

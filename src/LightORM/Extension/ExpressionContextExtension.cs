@@ -46,6 +46,11 @@ public static class ExpressionContextExtension
         return ado.Database.BulkCopy(dataTable);
     }
 
+    public static IExpSelect<T> Select<T>(this IContext context, string tableName)
+    {
+        return new SelectProvider1<T>(tableName, context.Ado);
+    }
+
     /// <summary>
     /// 获取仓储对象<see cref="ILightOrmRepository{TEntity}"/>
     /// <para>注意释放对象</para>

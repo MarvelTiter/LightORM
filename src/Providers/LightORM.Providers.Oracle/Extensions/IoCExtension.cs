@@ -15,7 +15,7 @@ public static class IoCExtension
     }
     public static void UseOracle(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(CustomOracle.Instance.MethodResolver);
+        var dbOption = new DataBaseOption(CustomOracle.Instance);
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

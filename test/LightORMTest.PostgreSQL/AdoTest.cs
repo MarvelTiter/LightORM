@@ -10,7 +10,8 @@ namespace LightORMTest.PostgreSQL;
 public class AdoTest : LightORMTest.AdoTest
 {
     public override DbBaseType DbType => DbBaseType.PostgreSQL;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
         option.UsePostgreSQL(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();

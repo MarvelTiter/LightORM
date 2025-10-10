@@ -4,9 +4,22 @@
 public class SelectSql : LightORMTest.SqlGenerate.SelectSql
 {
     public override DbBaseType DbType => DbBaseType.Oracle;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseOracle(ConnectString.Value);
+        option.UseOracle(o =>
+        {
+            o.MasterConnectionString = ConnectString.Value;
+        });
         option.UseInterceptor<LightOrmAop>();
+    }
+
+    protected override void ConfiguraSqlResults(Dictionary<string, string> results)
+    {
+        results[nameof(Select_One_Table)] = """
+                                            SELECT a.PRODUCT_ID AS ProductId, a.PRODUCT_NAME AS ProductName
+                                            FROM PRODUCTS a
+                                            WHERE (a.MODIFY_TIME > :Now_0_0)
+                                            """;
     }
 }

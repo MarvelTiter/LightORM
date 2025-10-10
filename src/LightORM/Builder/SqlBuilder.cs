@@ -116,15 +116,15 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     public static string GetTableName(ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {
-        return $"{NpTableName(database, ti.TableEntityInfo)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {database.AttachEmphasis(ti.Alias)}" : "")}";
+        return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {database.AttachEmphasis(ti.Alias)}" : "")}";
     }
 
     //TODO Oracle?
-    protected static string NpTableName(ICustomDatabase database, ITableEntityInfo table)
+    protected static string NpTableName(ICustomDatabase database, TableInfo table)
     {
-        if (table.IsTempTable)
+        if (table.TableEntityInfo.IsTempTable)
         {
-            return table.TableName;
+            return table.TableEntityInfo.TableName;
         }
         var tablename = table.TableName;
         if (!tablename.Contains('.'))

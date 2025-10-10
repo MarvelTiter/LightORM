@@ -10,7 +10,8 @@ namespace LightORMTest.PostgreSQL.SqlGenerate;
 public class DeleteSql:LightORMTest.SqlGenerate.DeleteSql
 {
     public override DbBaseType DbType => DbBaseType.PostgreSQL;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
         option.UsePostgreSQL(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();

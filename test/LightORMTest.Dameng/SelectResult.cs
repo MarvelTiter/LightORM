@@ -10,7 +10,8 @@ namespace LightORMTest.Dameng;
 public class SelectResult : LightORMTest.ResultTest.Select
 {
     public override DbBaseType DbType => DbBaseType.Dameng;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
         option.UseDameng(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();

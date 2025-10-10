@@ -1,10 +1,15 @@
 ﻿namespace LightORM;
 
+// public static partial class Select1Ex<T1>
+// {
+//     public static IExpSelect<T1, TJoin> InnerJoin<TJoin>(this IExpSelect)
+// }
+
 public static partial class SelectExtensions
 {
     static string? GetDbKey(params Type[] types)
     {
-        List<string> keys = new List<string>();
+        HashSet<string> keys = [];
         foreach (var item in types)
         {
             var t = TableContext.GetTableInfo(item);
@@ -14,12 +19,11 @@ public static partial class SelectExtensions
             }
             keys.Add(t.TargetDatabase);
         }
-        var dbKeys = keys.Distinct().ToArray();
-        if (dbKeys.Length > 1)
+        if (keys.Count > 1)
         {
-            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", dbKeys)}");
+            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", keys)}");
         }
-        return dbKeys.FirstOrDefault();
+        return keys.FirstOrDefault();
     }
 
 
@@ -57,18 +61,27 @@ public static partial class SelectExtensions
         select.HandleResult(exp, null);
         return select;
     }
-
+#if NET10_0_OR_GREATER 
+    
+    extension<T1>(IExpSelect<T1> select)
+    {
+        
+    }
+#endif
+    
     #region 2个类型参数
 
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
     {
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
-            instance.SwitchDatabase(key);
+        {
+            return new SelectProvider2<T1, T2>(instance.GetAdo(key));
+        }
         return new SelectProvider2<T1, T2>(instance.Ado);
     }
 
-    public static IExpSelect<T1, T2> SelectField<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static IExpSelect<T1, T2> SelectColumns<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
         return select;
@@ -85,36 +98,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.InnerJoin);
-        return select;
-    }
-
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.LeftJoin);
-        return select;
-    }
-
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, bool>> on)
-    {
-        select.JoinHandle(on, TableLinkType.RightJoin);
-        return select;
-    }
-
+    
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
@@ -157,37 +141,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> InnerJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.InnerJoin);
-        return select;
-    }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> LeftJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.LeftJoin);
-        return select;
-    }
-    /// <summary>
-    /// 当Select了多个表的时候，使用非泛型的Join扩展方法时，按顺序从SelectedTables中Join
-    /// </summary>
-    [Obsolete("多余的设计")]
-    public static IExpSelect<T1, T2> RightJoin<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, bool>> on)
-    {
-        var flatExp = FlatTypeSet.Default.Flat(on)!;
-        select.JoinHandle(flatExp, TableLinkType.RightJoin);
-        return select;
-    }
-
+    
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;

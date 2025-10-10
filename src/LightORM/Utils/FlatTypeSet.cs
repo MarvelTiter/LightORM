@@ -4,7 +4,6 @@ internal class FlatTypeSet : ExpressionVisitor
 {
     private ParameterExpression[] parameters = [];
     private ParameterExpression? lambdaTypeSet;
-    private int groupTypeIndex = 0;
     public static FlatTypeSet Default => new();
 
     public Expression? Flat(LambdaExpression exp)

@@ -26,7 +26,7 @@ public partial class SqlNormalizer
     {
         string normalized1 = NormalizeSql(sql1);
         string normalized2 = NormalizeSql(sql2);
-        return normalized1.Equals(normalized2);
+        return normalized1.Equals(normalized2, StringComparison.InvariantCultureIgnoreCase);
     }
 
     [GeneratedRegex(@"\s+")]

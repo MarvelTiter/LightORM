@@ -16,6 +16,7 @@ internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : E
         return TransientExpressionCoreSql.Create(key, ado, Options);
     }
 
+    public ISqlExecutor GetAdo(string key) => executorProvider.GetSqlExecutor(key);
 
     public IExpSelect Select(string tableName) => throw new NotImplementedException(); //new SelectProvider0(tableName, Ado);
 

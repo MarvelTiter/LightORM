@@ -10,7 +10,8 @@ namespace LightORMTest.Sqlite.SqlGenerate;
 public class InsertSql : LightORMTest.SqlGenerate.InsertSql
 {
     public override DbBaseType DbType => DbBaseType.Sqlite;
-    public override void Configura(IExpressionContextSetup option)
+
+    protected override void Configura(IExpressionContextSetup option)
     {
         option.UseSqlite(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
