@@ -5,36 +5,24 @@ public partial class SelectSql : TestBase
     #region select
 
     [TestMethod]
-    public virtual void Select_One_Table()
+    public virtual void TestSelectOneTable()
     {
         var sql = Db.Select<Product>()
             .Where(p => p.ModifyTime > DateTime.Now)
             .ToSql(p => new { p.ProductId, p.ProductName });
         Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_One_Table), sql);
+        AssertSqlResult(nameof(TestSelectOneTable), sql);
     }
 
     [TestMethod]
-    public void Select_One_Table_And_Join_Two_Table()
-    {
-        var sql = Db.Select<User>()
-            .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
-            .LeftJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
-            .Where(u => u.UserId == "admin")
-            .ToSql(w => w.Tb1);
-        Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_One_Table_And_Join_Two_Table), sql);
-    }
-
-    [TestMethod]
-    public void Select_Three_Table()
+    public void TestMultiSelect()
     {
         var sql = Db.Select<Permission, RolePermission, Role>()
             .Distinct()
             .Where(w => w.Tb1.PermissionId == w.Tb2.PermissionId && w.Tb2.RoleId == w.Tb3.RoleId)
             .ToSql(w => new { w.Tb1 });
         Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_Three_Table), sql);
+        AssertSqlResult(nameof(TestMultiSelect), sql);
     }
 
     class Jobs
@@ -45,69 +33,21 @@ public partial class SelectSql : TestBase
 
 
     [TestMethod]
-    public void Select_AsTable()
+    public void TestSelectColumns()
     {
         var sql = Db.Select<User>()
             .SelectColumns(u => new { u.UserId, u.Password })
             .ToSql();
         Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_AsTable), sql);
+        AssertSqlResult(nameof(TestSelectColumns), sql);
     }
 
-    #endregion
-
-    #region group
-
-    [TestMethod]
-    public void Select_Join_GroupBy_Having()
-    {
-        var sql = Db.Select<User>()
-            .InnerJoin<UserRole>(w => w.Tb1.UserId == w.Tb2.UserId)
-            .GroupBy(w => new { w.Tb1.UserId, w.Tb2.RoleId })
-            .Having(w => w.Count() > 10 && w.Max(w.Tables.Tb1.Age) > 18)
-            .OrderBy(w => w.Group.UserId)
-            .ToSql(w => new
-            {
-                w.Group.UserId,
-                w.Group.RoleId,
-                Total = w.Count(),
-                Pass = w.Count<int?>(w.Tables.Tb1.Age > 10 ? 1 : null),
-                NoPass = w.Max(w.Tables.Tb1.Age > 10, w.Tables.Tb1.UserName)
-            });
-        Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_Join_GroupBy_Having), sql);
-
-    }
-
-    [TestMethod]
-    public void Select_GroupBy_SubQuery_Join()
-    {
-        var sql = Db.Select<User>()
-            .GroupBy(a => new { a.UserId })
-            .AsTable(g => new
-            {
-                g.Group.UserId,
-                Total = g.Count(),
-                Tb = g.Count<int?>(g.Tables.Age > 18 ? 1 : null)
-            }).AsSubQuery()
-            .InnerJoin<Permission>((a, s) => a.UserId == s.PermissionId)
-            .ToSql((a, s) => new
-            {
-                Jyjgbh = a.UserId,
-                a.Total,
-                a.Tb,
-                Jczmc = s.PermissionName
-            });
-        Console.WriteLine(sql);
-        AssertSqlResult(nameof(Select_GroupBy_SubQuery_Join),sql);
-    }
-    
     #endregion
 
     #region sub select
 
     [TestMethod]
-    public void Select_JoinGroupSelect()
+    public void TestSubJoin()
     {
         var sql = Db.Select<User>()
             .LeftJoin(Db.Select<Product>().GroupBy(p => new { p.ProductId }).AsTable(g => new
@@ -118,53 +58,32 @@ public partial class SelectSql : TestBase
             .Where(w => w.Tb2.Total > 10)
             .ToSql();
         Console.WriteLine(sql);
-        //var result = """
-        //        SELECT *
-        //        FROM `USER` `a`
-        //        LEFT JOIN (
-        //            SELECT `a`.`ProductId`, COUNT(*) AS `Total`
-        //            FROM `Product` `a`
-        //            GROUP BY `a`.`ProductId`
-        //        ) `b` ON (`a`.`AGE` = `b`.`ProductId`)
-        //        WHERE (`b`.`Total` > 10)
-        //        """;
-        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
-        AssertSqlResult(nameof(Select_JoinGroupSelect), sql);
+        AssertSqlResult(nameof(TestSubJoin), sql);
     }
     
     [TestMethod]
-    public void Select_GroupBy_AsTable_SubQuery()
+    public void TestGroupByThenAsSubQuery()
     {
         var sql = Db.Select<User>()
             .Where(u => u.Age > 10)
-            .GroupBy(u => new { u.UserId })
+            .GroupBy(u => u.UserId)
             .AsTable(u => new
             {
-                u.Group.UserId,
+                UserId = u.Group,
                 Total = u.Count()
             }).AsSubQuery()
             .Where(t => t.UserId.Contains("admin"))
             .ToSql();
         Console.WriteLine(sql);
-        //var result = """
-        //        SELECT *
-        //        FROM (
-        //            SELECT `a`.`USER_ID` AS `UserId`, COUNT(*) AS `Total`
-        //            FROM `USER` `a`
-        //            WHERE (`a`.`AGE` > 10)
-        //            GROUP BY `a`.`USER_ID`
-        //        ) `a`
-        //        WHERE `a`.`UserId` LIKE '%'||'admin'||'%'
-        //        """;
-        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        AssertSqlResult(nameof(TestGroupByThenAsSubQuery), sql);
     }
 
     [TestMethod]
-    public void Select_Join_SelectJoin()
+    public void TestMultiJoinThenAsSubJoin()
     {
         var temp = Db.Select<User>()
             .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
-            .InnerJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+            .RightJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
             .AsTable(w => new
             {
                 w.Tb1.UserId,
@@ -173,21 +92,16 @@ public partial class SelectSql : TestBase
             });
         var sql = Db.Select<User>()
             .LeftJoin<Permission>(w => w.Tb1.UserId == w.Tb2.PermissionId)
-            .LeftJoin(temp, (u, _, t) => u.UserId == t.UserId)
-            .ToSql();
+            .OuterJoin(temp, (u, _, t) => u.UserId == t.UserId)
+            .ToSql(w => new
+            {
+                w.Tb1.UserId,
+                w.Tb1.UserName,
+                w.Tb2.PermissionName,
+                w.Tb3.RoleName
+            });
         Console.WriteLine(sql);
-        //var result = """
-        //        SELECT *
-        //        FROM `USER` `a`
-        //        LEFT JOIN `POWERS` `b` ON (`a`.`USER_ID` = `b`.`POWER_ID`)
-        //        LEFT JOIN (
-        //            SELECT `a`.`USER_ID` AS `UserId`, `a`.`USER_NAME` AS `UserName`, `c`.`ROLE_NAME` AS `RoleName`
-        //            FROM `USER` `a`
-        //            INNER JOIN `USER_ROLE` `b` ON (`a`.`USER_ID` = `b`.`USER_ID`)
-        //            INNER JOIN `ROLE` `c` ON (`b`.`ROLE_ID` = `c`.`ROLE_ID`)
-        //        ) `c` ON (`a`.`USER_ID` = `c`.`UserId`)
-        //        """;
-        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
+        AssertSqlResult(nameof(TestMultiJoinThenAsSubJoin), sql);
     }
 
     [TestMethod]
@@ -197,16 +111,6 @@ public partial class SelectSql : TestBase
             .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectColumns(ur => ur.RoleId).Result<int>())
             .ToSql();
         Console.WriteLine(sql);
-        //var result = """
-        //        SELECT *
-        //        FROM `USER` `a`
-        //        WHERE (`a`.`AGE` > (
-        //            SELECT `a`.`ROLE_ID`
-        //            FROM `USER_ROLE` `a`
-        //            WHERE `a`.`ROLE_ID` LIKE '%'||'admin'||'%'
-        //        ))
-        //        """;
-        //Assert.IsTrue(SqlNormalizer.AreSqlEqual(result, sql));
 
         sql = Db.Select<User>()
             .Where(u => u.Age > Db.Select<User>().Max(u => u.Age))

@@ -1,6 +1,4 @@
 ﻿namespace LightORM.Models;
-
-#pragma warning disable IDE0290 // 使用主构造函数
 public class TableInfo
 {
     private const string ALIAS = "abcdefghijklmnopqrstuvwyz";

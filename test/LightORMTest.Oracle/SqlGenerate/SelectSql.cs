@@ -16,7 +16,7 @@ public class SelectSql : LightORMTest.SqlGenerate.SelectSql
 
     protected override void ConfiguraSqlResults(Dictionary<string, string> results)
     {
-        results[nameof(Select_One_Table)] = """
+        results[nameof(TestSelectOneTable)] = """
                                             SELECT a.PRODUCT_ID AS ProductId, a.PRODUCT_NAME AS ProductName
                                             FROM PRODUCTS a
                                             WHERE (a.MODIFY_TIME > :Now_0_0)

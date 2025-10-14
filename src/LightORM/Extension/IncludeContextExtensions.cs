@@ -8,6 +8,23 @@ namespace LightORM.Extension
         private readonly static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
         private readonly static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
         private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault), Type.EmptyTypes)!;
+        //public static void BindIncludeData<T>(this IncludeContext context, ISqlExecutor executor,T data)
+        //{
+        //    foreach (IncludeInfo include in context.Includes)
+        //    {
+        //        Do(context, executor, data!, include);
+        //    }
+        //}
+        //public static void BindIncludeDatas<T>(this IncludeContext context, ISqlExecutor executor, IList<T> datas)
+        //{
+        //    foreach (var item in datas)
+        //    {
+        //        foreach (IncludeInfo include in context.Includes)
+        //        {
+        //            Do(context, executor, item!, include);
+        //        }
+        //    }
+        //}
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)
@@ -27,33 +44,33 @@ namespace LightORM.Extension
                     Do(context, executor, data, include);
                 }
             }
+        }
 
-            static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
+        private static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
+        {
+            var database = executor.Database.CustomDatabase;
+            SelectBuilder includeBuilder = BuildIncludeSqlBuilder(database, item, include);
+            var selectedType = include.NavigateInfo!.NavigateType;
+            string sql = includeBuilder.ToSqlString(database);
+            var param = includeBuilder.DbParameters;
+            var typedQuery = QueryMethod.MakeGenericMethod(selectedType);
+            var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
+            if (include.NavigateInfo!.IsMultiResult)
             {
-                var database = executor.Database.CustomDatabase;
-                SelectBuilder includeBuilder = BuildIncludeSqlBuilder(database, item, include);
-                var selectedType = include.NavigateInfo!.NavigateType;
-                string sql = includeBuilder.ToSqlString(database);
-                var param = includeBuilder.DbParameters;
-                var typedQuery = QueryMethod.MakeGenericMethod(selectedType);
-                var result = typedQuery.Invoke(null, [executor, sql, param, null, CommandType.Text]);
-                if (include.NavigateInfo!.IsMultiResult)
-                {
-                    var tolist = ToList.MakeGenericMethod(selectedType);
-                    result = tolist.Invoke(null, [result]);
-                }
-                else
-                {
-                    var firstOrDefault = FirstOrDefault.MakeGenericMethod(selectedType);
-                    result = firstOrDefault.Invoke(null, [result]);
-                }
-                if (result == null)
-                {
-                    return;
-                }
-                include.ParentNavigateColumn!.SetValue(item, result);
-                context.ThenInclude?.BindIncludeDatas(executor, result);
+                var tolist = ToList.MakeGenericMethod(selectedType);
+                result = tolist.Invoke(null, [result]);
             }
+            else
+            {
+                var firstOrDefault = FirstOrDefault.MakeGenericMethod(selectedType);
+                result = firstOrDefault.Invoke(null, [result]);
+            }
+            if (result == null)
+            {
+                return;
+            }
+            include.ParentNavigateColumn!.SetValue(item, result);
+            context.ThenInclude?.BindIncludeDatas(executor, result);
         }
 
         public static SelectBuilder BuildIncludeSqlBuilder(ICustomDatabase database, object item, IncludeInfo include)
@@ -82,7 +99,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = mapTable,
                     JoinType = TableLinkType.InnerJoin,
-                    Where = $"( {database.AttachEmphasis(selectSql.MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {selectSql.MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
@@ -90,7 +107,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = TableLinkType.InnerJoin,
-                    Where = $"( {database.AttachEmphasis(parentTable.Alias)}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }
             else
@@ -101,7 +118,7 @@ namespace LightORM.Extension
                 {
                     EntityInfo = parentTable,
                     JoinType = TableLinkType.InnerJoin,
-                    Where = $"( {database.AttachEmphasis(parentTable.Alias)}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {database.AttachEmphasis(selectSql.MainTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                    Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.MainTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }
             ParameterExpression[] all = [.. selectSql.AllTables().Select(t => Expression.Parameter(t.Type))];

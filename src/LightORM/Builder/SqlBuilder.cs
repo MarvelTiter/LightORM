@@ -116,7 +116,7 @@ internal abstract record SqlBuilder : ISqlBuilder
 
     public static string GetTableName(ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {
-        return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {database.AttachEmphasis(ti.Alias)}" : "")}";
+        return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {ti.Alias}" : "")}";
     }
 
     //TODO Oracle?

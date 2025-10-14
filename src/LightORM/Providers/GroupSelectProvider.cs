@@ -65,11 +65,7 @@ namespace LightORM.Providers
             SqlBuilder.IsRollup = true;
             return this;
         }
-        //public IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
-        //{
-        //    // TODO 没想好怎么写
-        //    return this;
-        //}
+        
         public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);

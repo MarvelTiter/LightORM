@@ -16,8 +16,8 @@ public class PostgreSQLTableWriter : LightORM.Implements.WriteTableFromType
         #region Table
         var existsClause = option.NotCreateIfExists ? " IF NOT EXISTS" : "";
         sql.Append($"""
-CREATE TABLE{existsClause} {DbEmphasis(option,table.Name)}(
-    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(c => BuildColumn(option,c)))}
+CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
+    {string.Join($",{Environment.NewLine}    ", table.Columns.Select(c => BuildColumn(option, c)))}
 )
 """);
 
@@ -36,7 +36,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option,table.Name)}(
 
             foreach (var com in comments)
             {
-                sql.AppendLine($"COMMENT ON COLUMN {DbEmphasis(option,table.Name)}.{DbEmphasis(option,com.Name)} IS '{com.Comment?.Replace("'", "''")}';");
+                sql.AppendLine($"COMMENT ON COLUMN {DbEmphasis(option, table.Name)}.{DbEmphasis(option, com.Name)} IS '{com.Comment?.Replace("'", "''")}';");
             }
         }
         #endregion
@@ -47,33 +47,48 @@ CREATE TABLE{existsClause} {DbEmphasis(option,table.Name)}(
         {
             // PostgreSQL 允许在列定义中直接指定主键，但这里保持与 Oracle 一致的单独约束语法
             sql.AppendLine(
-$@"ALTER TABLE {DbEmphasis(option,table.Name)} 
+$@"ALTER TABLE {DbEmphasis(option, table.Name)} 
 ADD CONSTRAINT {GetPrimaryKeyName(table.Name, primaryKeys)} 
-PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option,item.Name)))});");
+PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, item.Name)))});");
         }
         #endregion
 
         #region Index
         // 确保主键有索引（PostgreSQL 自动为主键创建索引）
         var pks = table.Columns.Where(c => c.PrimaryKey);
+
+        //if (pks.Count() == 1)
+        //{
+        //    var pkColumn = pks.First();
+        //    bool existsUniqueIndex = table.Indexs.Any(index =>
+        //        index.Columns.Count() == 1 &&
+        //        index.Columns.First() == pkColumn.Name &&
+        //        (index.IsUnique || index.DbIndexType == IndexType.Unique));
+        //    if (!existsUniqueIndex)
+        //    {
+        //        table.Indexs = table.Indexs.Concat(
+        //    [
+        //        new() { Columns = [pkColumn.Name], DbIndexType = IndexType.Unique }
+        //    ]);
+        //    }
+        //}
+        var it = pks.Count() > 1 ? IndexType.Normal : IndexType.Unique;
         foreach (var p in pks)
         {
             if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
-            table.Indexs = table.Indexs.Concat(new DbIndex[]
-            {
-                new DbIndex(){
-                    Columns = new string[]{p.Name },
-                    DbIndexType= IndexType.Unique}
-            });
+            table.Indexs = table.Indexs.Concat(
+            [
+                new DbIndex(){ Columns = [p.Name], DbIndexType= it }
+            ]);
         }
         int i = 1;
         foreach (DbIndex index in table.Indexs)
         {
-            string columnNames = string.Join(", ", index.Columns.Select(c => $"{DbEmphasis(option,c)}"));
+            string columnNames = string.Join(", ", index.Columns.Select(c => $"{DbEmphasis(option, c)}"));
             string unique = index.IsUnique || index.DbIndexType == IndexType.Unique ? "UNIQUE " : "";
 
             // PostgreSQL 不支持 BITMAP 和 REVERSE 索引类型
-            sql.AppendLine($"CREATE {unique}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(option,table.Name)}({columnNames});");
+            sql.AppendLine($"CREATE {unique}INDEX {GetIndexName(table, index, i)} ON {DbEmphasis(option, table.Name)}({columnNames});");
             i++;
         }
 
@@ -84,7 +99,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option,ite
 
     protected override string BuildColumn(TableGenerateOption option, DbColumn column)
     {
-        string dataType = ConvertToDbType(option,column);
+        string dataType = ConvertToDbType(option, column);
 
         // 处理长度限制
         if (dataType.Contains("CHAR") || dataType == "NUMERIC")
@@ -96,7 +111,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option,ite
         string identity = column.AutoIncrement ? " GENERATED ALWAYS AS IDENTITY" : "";
         string defaultValue = column.Default != null ? $" DEFAULT {FormatDefaultValue(column.Default, dataType)}" : "";
 
-        return $"{DbEmphasis(option,column.Name)} {dataType}{identity}{defaultValue}{notNull}";
+        return $"{DbEmphasis(option, column.Name)} {dataType}{identity}{defaultValue}{notNull}";
     }
 
     protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
