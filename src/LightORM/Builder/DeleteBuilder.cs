@@ -35,7 +35,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                     var targetType = navInfo.NavigateType;
                     var targetTable = TableInfo.Create(targetType, navSqlBuilder.NextTableIndex);
 
-                    navSqlBuilder.SelectValue = $"{database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)}";
+                    navSqlBuilder.SelectValue = $"{MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)}";
                     if (navInfo.MappingType != null)
                     {
                         var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
@@ -47,7 +47,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                         {
                             EntityInfo = mapTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                            Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
 
                         subCol = mapTable.GetColumnInfo(targetNav.SubName!);
@@ -56,7 +56,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                         {
                             EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                            Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
                         if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
                         && l!.Parameters[0].Type == navSqlBuilder.Joins.LastOrDefault()?.EntityInfo?.Type)
@@ -83,7 +83,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                         {
                             EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {database.AttachEmphasis(MainTable.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} )"
+                            Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                         });
                         var n = result.MemberOfNavigateMember;
                         if (n is not null)
@@ -95,11 +95,11 @@ internal record DeleteBuilder<T> : SqlBuilder
                                 var indexOfLeft = result.SqlString?.IndexOf('(');
                                 if (indexOfLeft > -1)
                                 {
-                                    mainColWhere = result.SqlString!.Insert(indexOfLeft.Value + 1, $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}");
+                                    mainColWhere = result.SqlString!.Insert(indexOfLeft.Value + 1, $"{targetTable.Alias}.{database.AttachEmphasis(c.ColumnName)}");
                                 }
                                 else
                                 {
-                                    mainColWhere = $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
+                                    mainColWhere = $"{targetTable.Alias}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
                                 }
                                 navSqlBuilder.Where.Add(mainColWhere);
                             }

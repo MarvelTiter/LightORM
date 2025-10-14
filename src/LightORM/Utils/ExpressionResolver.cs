@@ -238,18 +238,18 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var member = exp.Members![i];
             var arg = exp.Arguments[i];
-            if (member.Name.StartsWith("Tb")
-                && member is PropertyInfo prop
-                && prop.DeclaringType?.FullName?.StartsWith("LightORM.TypeSet") == true)
-            {
-                //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,"Visit TypeSet Property");
-                //TODO 这段if分支，应该是不需要了
-                Debug.Assert(false);
-                ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
-                Visit(p);
-                UseAs = true;
-            }
-            else
+            //if (member.Name.StartsWith("Tb")
+            //    && member is PropertyInfo prop
+            //    && prop.DeclaringType?.FullName?.StartsWith("LightORM.TypeSet") == true)
+            //{
+            //    //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,"Visit TypeSet Property");
+            //    // 这段if分支，应该是不需要了
+            //    Debug.Assert(false);
+            //    ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
+            //    Visit(p);
+            //    UseAs = true;
+            //}
+            //else
             {
                 ResolvedMembers.Add(exp.Members[i].Name);
                 if (Options.SqlType == SqlPartial.Select)
@@ -299,7 +299,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         if (Options.SqlType == SqlPartial.Select)
         {
             var alias = Context.GetTable(exp).Alias;
-            Sql.Append($"{Database.AttachEmphasis(alias!)}.*");
+            Sql.Append($"{alias}.*");
             UseAs = false;
             //foreach (var item in alias.Columns)
             //{
@@ -332,7 +332,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 var col = table.GetColumn(member.Name)!;
                 if (Options.RequiredTableAlias)
                 {
-                    Sql.Append($"{Database.AttachEmphasis(table.Alias)}.{Database.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
                 }
                 else
                 {
@@ -445,7 +445,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             }
             if (Options.RequiredTableAlias)
             {
-                Sql.Append($"{Database.AttachEmphasis(table.Alias!)}.{Database.AttachEmphasis(col.ColumnName)}");
+                Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
             }
             else
             {

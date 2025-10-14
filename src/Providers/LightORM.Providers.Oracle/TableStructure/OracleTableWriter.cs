@@ -42,12 +42,28 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
 
         {
             var pks = table.Columns.Where(c => c.PrimaryKey);
+            //if (pks.Count() == 1)
+            //{
+            //    var pkColumn = pks.First();
+            //    bool existsUniqueIndex = table.Indexs.Any(index =>
+            //        index.Columns.Count() == 1 &&
+            //        index.Columns.First() == pkColumn.Name &&
+            //        (index.IsUnique || index.DbIndexType == IndexType.Unique));
+            //    if (!existsUniqueIndex)
+            //    {
+            //        table.Indexs = table.Indexs.Concat(
+            //    [
+            //        new() { Columns = [pkColumn.Name], DbIndexType = IndexType.Unique }
+            //    ]);
+            //    }
+            //}
+            var it = pks.Count() > 1 ? IndexType.Normal : IndexType.Unique;
             foreach (var p in pks)
             {
                 if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
                 table.Indexs = table.Indexs.Concat(
                 [
-                    new() { Columns = new string[] { p.Name }, DbIndexType = IndexType.Unique }
+                    new() { Columns = [p.Name], DbIndexType = it }
                 ]);
             }
         }

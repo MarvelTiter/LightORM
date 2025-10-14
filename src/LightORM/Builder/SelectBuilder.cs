@@ -184,7 +184,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = mapTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {database.AttachEmphasis(mainTableInfo.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                        Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                     });
 
                     subCol = mapTable.GetColumnInfo(targetNav.SubName!);
@@ -193,7 +193,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = targetTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} = {database.AttachEmphasis(mapTable.Alias)}.{database.AttachEmphasis(subCol.ColumnName)} )"
+                        Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                     });
                 }
                 else
@@ -204,7 +204,7 @@ namespace LightORM.Builder
                     {
                         EntityInfo = targetTable,
                         JoinType = TableLinkType.InnerJoin,
-                        Where = $"( {database.AttachEmphasis(mainTableInfo.Alias)}.{database.AttachEmphasis(mainCol.ColumnName)} = {database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(targetCol.ColumnName)} )"
+                        Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                     });
                     var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
                     if (n is not null)
@@ -212,7 +212,7 @@ namespace LightORM.Builder
                         var c = targetTable.GetColumn(n);
                         if (c is not null)
                         {
-                            var where = $"{database.AttachEmphasis(targetTable.Alias)}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
+                            var where = $"{targetTable.Alias}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
                             Where.Add(where);
                         }
                     }
@@ -284,7 +284,7 @@ namespace LightORM.Builder
                 SubQuery.Level = Level + 1;
                 sb.AppendLine($"{Indent.Value}FROM (");
                 sb.Append(SubQuery.ToSqlString(database));
-                sb.AppendLine($"{Indent.Value}) {database.AttachEmphasis(MainTable.Alias)}");
+                sb.AppendLine($"{Indent.Value}) {MainTable.Alias}");
                 DbParameters.TryAddDictionary(SubQuery.DbParameters);
             }
 
@@ -295,7 +295,7 @@ namespace LightORM.Builder
                     item.SubQuery!.Level = Level + 1;
                     sb.AppendLine($"{Indent.Value}{item.JoinType.ToLabel()} (");
                     sb.Append(item.SubQuery.ToSqlString(database));
-                    sb.AppendLine($"{Indent.Value}) {database.AttachEmphasis(item.EntityInfo!.Alias!)} ON {item.Where}");
+                    sb.AppendLine($"{Indent.Value}) {item.EntityInfo!.Alias!} ON {item.Where}");
                     DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
                 }
                 else
