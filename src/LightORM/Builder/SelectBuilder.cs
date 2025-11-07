@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace LightORM.Builder
@@ -85,6 +86,7 @@ namespace LightORM.Builder
                 context.SetParamPrefix("s");
             }
         }
+
         protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
         {
             if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)

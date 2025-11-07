@@ -1,6 +1,7 @@
 ﻿using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM;
 
@@ -37,7 +38,7 @@ internal class ExpressionSqlOptions
     {
         get
         {
-            var d = defaultDbKey?? ConstString.Main;
+            var d = defaultDbKey ?? ConstString.Main;
             if (!DatabaseProviders.ContainsKey(d))
             {
                 throw new KeyNotFoundException($"数据库 '{d}' 未注册. 使用'SetDefault'设置默认值.");
@@ -145,15 +146,25 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         option.SetTableContext(context);
         return this;
     }
-
-    public IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase
+#if NET8_0_OR_GREATER
+    public IExpressionContextSetup UseInterceptor<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>()
+#else
+    public IExpressionContextSetup UseInterceptor<T>() 
+#endif
+        where T : AdoInterceptorBase
     {
-        interceptorTypes.Add(typeof(T));
+        var item = typeof(T);
+        interceptorTypes.Add(item);
         if (WeakServices?.TryGetTarget(out var services) == true)
         {
             services?.AddScoped<T>();
         }
-
+        else
+        {
+            var nonParameterCtor = item.GetConstructors().FirstOrDefault(c => c.GetParameters().Length == 0);
+            if (nonParameterCtor?.Invoke([]) is IAdoInterceptor obj)
+                option.AddInterceptor(item, obj);
+        }
         return this;
     }
 
@@ -175,14 +186,6 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
             {
                 var interceptor = provider.GetService(interceptorType) as IAdoInterceptor;
                 option.AddInterceptor(interceptorType, interceptor);
-            }
-        }
-        else
-        {
-            foreach (var item in interceptorTypes)
-            {
-                var nonParameterCtor = item.GetConstructors().FirstOrDefault(c => c.GetParameters().Length == 0);
-                if (nonParameterCtor?.Invoke([]) is IAdoInterceptor obj) option.Interceptors.Add(obj);
             }
         }
 

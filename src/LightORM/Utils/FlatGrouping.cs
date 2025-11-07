@@ -1,4 +1,6 @@
-﻿namespace LightORM.Utils;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LightORM.Utils;
 
 internal class FlatGrouping : ExpressionVisitor
 {

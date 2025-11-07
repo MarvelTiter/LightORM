@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 namespace LightORM.SqlExecutor;
 
 internal partial class SqlExecutor : ISqlExecutor
@@ -960,7 +961,11 @@ internal partial class SqlExecutor : ISqlExecutor
             return null;
         }
 
-        return commandInitCache.GetOrAdd(commandType, t =>
+        return commandInitCache.GetOrAdd(commandType, static (
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+            t) =>
         {
             MethodInfo? setBindName = GetBasicPropertySetter(t, "BindByName", typeof(bool));
             MethodInfo? setInit = GetBasicPropertySetter(t, "InitialLONGFetchSize", typeof(int));
@@ -975,16 +980,16 @@ internal partial class SqlExecutor : ISqlExecutor
              * }
              */
             ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
-            List<Expression> body = new List<Expression>();
+            List<Expression> body = [];
             if (setBindName != null)
             {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, t);
                 MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
                 body.Add(setter1Exp);
             }
             if (setInit != null)
             {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, t);
                 MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
                 body.Add(setter2Exp);
             }
@@ -993,7 +998,11 @@ internal partial class SqlExecutor : ISqlExecutor
         });
     }
 
-    internal static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+    internal static MethodInfo? GetBasicPropertySetter(
+#if NET8_0_OR_GREATER
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type declaringType, string name, Type expectedType)
     {
         PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
         if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)

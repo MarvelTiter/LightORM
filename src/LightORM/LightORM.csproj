@@ -13,6 +13,8 @@
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 		<IncludeSymbols>False</IncludeSymbols>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
+		<PublishAot Condition="'$(TargetFramework)' == 'net8.0'">true</PublishAot>
 	</PropertyGroup>
 	<Import Project="Versions.props" />
 	<ItemGroup>

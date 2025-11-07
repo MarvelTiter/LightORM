@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace LightORM.Cache;
@@ -126,46 +127,51 @@ internal static partial class TableContext
         //{
 
         //}
-
-        var entityInfoCache = reflectTables.GetOrAdd(type, static type =>
-        {
-            var entityInfo = new TableEntity(type);
-            var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
-#if NET6_0_OR_GREATER
-            var tableAttribute = type.GetAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
-            entityInfo.CustomName = lightTableAttribute?.Name ?? tableAttribute?.Name ?? type.Name;
-#else
-            entityInfo.CustomName = lightTableAttribute?.Name ?? type.Name;
-#endif
-            if (!entityInfo.IsAnonymousType)
-            {
-                entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;
-                var descriptionAttribute = type.GetAttribute<DescriptionAttribute>();
-                if (descriptionAttribute != null)
-                {
-                    entityInfo.Description = descriptionAttribute.Description;
-                }
-            }
-
-            var propertyInfos = type.GetProperties();
-
-            var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
-            entityInfo.Columns = [.. propertyColumnInfos];
-            //if (entityInfo.IsAnonymousType)
-            //{
-            //    entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
-            //}
-            //else
-            //{
-            //    entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
-            //}
-            return entityInfo;
-        });
+        var entityInfoCache = reflectTables.GetOrAdd(type, CreateTableEntity);
         // 拷贝
         return entityInfoCache with { };
     }
+    private static TableEntity CreateTableEntity(
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type type)
+    {
+        var entityInfo = new TableEntity(type);
+        var lightTableAttribute = type.GetAttribute<LightTableAttribute>();
+#if NET6_0_OR_GREATER
+        var tableAttribute = type.GetAttribute<System.ComponentModel.DataAnnotations.Schema.TableAttribute>();
+        entityInfo.CustomName = lightTableAttribute?.Name ?? tableAttribute?.Name ?? type.Name;
+#else
+        entityInfo.CustomName = lightTableAttribute?.Name ?? type.Name;
+#endif
+        if (!entityInfo.IsAnonymousType)
+        {
+            entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;
+            var descriptionAttribute = type.GetAttribute<DescriptionAttribute>();
+            if (descriptionAttribute != null)
+            {
+                entityInfo.Description = descriptionAttribute.Description;
+            }
+        }
 
+        var propertyInfos = type.GetProperties();
+
+        var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
+        entityInfo.Columns = [.. propertyColumnInfos];
+        //if (entityInfo.IsAnonymousType)
+        //{
+        //    entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
+        //}
+        //else
+        //{
+        //    entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
+        //}
+        return entityInfo;
+
+    }
     private static IEnumerable<ITableColumnInfo> ScanProperty(PropertyInfo prop)
+
     {
         if (prop.HasAttribute<LightFlatAttribute>())
         {
