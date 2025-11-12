@@ -1,13 +1,9 @@
 ﻿using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM;
-
-public class SqlAopProvider
-{
-    public Action<string, object?>? DbLog { get; set; }
-}
 
 public static class IExpressionContextSetupEx
 {
@@ -28,16 +24,78 @@ public static class IExpressionContextSetupEx
     }
 }
 
-internal class ExpressionSqlOptions
+internal partial class ExpressionSqlOptions
 {
-    private int poolSize = Environment.ProcessorCount * 4;
+    // 共享不可变的数据
+    private readonly static ConcurrentDictionary<string, IDatabaseProvider> databaseProviders = [];
+    private readonly static ConcurrentDictionary<string, ICustomDatabase> customDatabases = [];
+    private readonly static ConcurrentDictionary<string, IDatabaseTableHandler> databaseHandlers = [];
+    private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
+    private static int poolSize = Environment.ProcessorCount * 4;
+    internal static TableGenerateOption StaticTableGenOption { get; set; } = new();
+
+    private static string? defaultDbKey;
+    private static bool useParameterized = true;
+    static ExpressionSqlOptions()
+    {
+        Instance = new(() => new ExpressionSqlOptions());
+    }
+
+    public static void SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
+    {
+        var k = key ?? ConstString.Main;
+        if (!databaseProviders.TryGetValue(k, out _))
+        {
+            databaseProviders.TryAdd(k, provider);
+        }
+
+        if (!customDatabases.TryGetValue(dbBaseType.Name, out _))
+        {
+            customDatabases.TryAdd(dbBaseType.Name, provider.CustomDatabase);
+        }
+
+        if (!databaseHandlers.TryGetValue(dbBaseType.Name, out _))
+        {
+            databaseHandlers.TryAdd(dbBaseType.Name, provider.DbHandler);
+        }
+    }
+
+    public static void AddStateLessInterceptor(Type interceptorType, IAdoInterceptor? interceptor)
+    {
+        if (!stateLessInterceptors.TryGetValue(interceptorType, out _) && interceptor is not null)
+        {
+            stateLessInterceptors.TryAdd(interceptorType, interceptor);
+        }
+    }
+
+    public static void SetTableContext(ITableContext context)
+    {
+        TableContext.StaticContext = context;
+    }
+
+    public static void SetDefaultDatabase(string key)
+    {
+        defaultDbKey = key;
+    }
+    public static void SetConnectionPoolSize(int size)
+    {
+        poolSize = size;
+    }
+    public static void SetUseParameterized(bool use)
+    {
+        useParameterized = use;
+    }
+}
+
+internal partial class ExpressionSqlOptions
+{
+    public static Lazy<ExpressionSqlOptions> Instance { get; }
     public int PoolSize => poolSize;
-    private string? defaultDbKey;
     public string DefaultDbKey
     {
         get
         {
-            var d = defaultDbKey?? ConstString.Main;
+            var d = defaultDbKey ?? ConstString.Main;
             if (!DatabaseProviders.ContainsKey(d))
             {
                 throw new KeyNotFoundException($"数据库 '{d}' 未注册. 使用'SetDefault'设置默认值.");
@@ -45,115 +103,87 @@ internal class ExpressionSqlOptions
             return d;
         }
     }
-    public static Lazy<ExpressionSqlOptions> Instance { get; }
-    public bool UseParameterized { get; set; } = true;
+    public bool UseParameterized => useParameterized;
     public IServiceProvider? Services { get; set; }
-    public ICollection<IAdoInterceptor> Interceptors => TypedInterceptors.Values;
+    private ICollection<IAdoInterceptor> allInterceptors;
+    public ICollection<IAdoInterceptor> Interceptors => allInterceptors;
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
     public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
-    public ConcurrentDictionary<Type, IAdoInterceptor> TypedInterceptors { get; }
     public TableGenerateOption TableGenOption { get; set; }
-    static ExpressionSqlOptions()
+
+    public ExpressionSqlOptions()
     {
-        Instance = new(() => new());
+        DatabaseProviders = databaseProviders;
+        CustomDatabases = customDatabases;
+        DatabaseHandlers = databaseHandlers;
+        TableGenOption = StaticTableGenOption;
+        allInterceptors = stateLessInterceptors.Values;
     }
 
-    private ExpressionSqlOptions()
+    public ExpressionSqlOptions(IEnumerable<IAdoInterceptor> interceptors) : this()
     {
-        DatabaseProviders = [];
-        CustomDatabases = [];
-        DatabaseHandlers = [];
-        TypedInterceptors = [];
-        TableGenOption = new TableGenerateOption();
-    }
-
-    public void SetConnectionPoolSize(int poolSize)
-    {
-        this.poolSize = poolSize;
-    }
-
-    public void SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
-    {
-        var k = key ?? ConstString.Main;
-        if (!DatabaseProviders.TryGetValue(k, out _))
+        if (interceptors.Any())
         {
-            DatabaseProviders.TryAdd(k, provider);
+            allInterceptors = [.. interceptors, .. stateLessInterceptors.Values];
         }
-
-        if (!CustomDatabases.TryGetValue(dbBaseType.Name, out _))
+        else
         {
-            CustomDatabases.TryAdd(dbBaseType.Name, provider.CustomDatabase);
-        }
-
-        if (!DatabaseHandlers.TryGetValue(dbBaseType.Name, out _))
-        {
-            DatabaseHandlers.TryAdd(dbBaseType.Name, provider.DbHandler);
-        }
-    }
-
-    public void SetTableContext(ITableContext context)
-    {
-        TableContext.StaticContext = context;
-    }
-
-    public void SetDefaultDatabase(string key)
-    {
-        defaultDbKey = key;
-    }
-
-    public void AddInterceptor(Type interceptorType, IAdoInterceptor? interceptor)
-    {
-        if (!TypedInterceptors.TryGetValue(interceptorType, out _) && interceptor is not null)
-        {
-            TypedInterceptors.TryAdd(interceptorType, interceptor);
+            allInterceptors = stateLessInterceptors.Values;
         }
     }
 }
 
 internal partial class ExpressionOptionBuilder : IExpressionContextSetup
 {
-    private readonly ExpressionSqlOptions option = ExpressionSqlOptions.Instance.Value;
-    private readonly List<Type> interceptorTypes = [];
-
     public WeakReference<IServiceCollection>? WeakServices { get; set; }
     public IExpressionContextSetup SetDefault(string key)
     {
-        option.SetDefaultDatabase(key);
+        ExpressionSqlOptions.SetDefaultDatabase(key);
         return this;
     }
     public IExpressionContextSetup SetUseParameterized(bool use)
     {
-        option.UseParameterized = use;
+        ExpressionSqlOptions.SetUseParameterized(use);
         return this;
     }
 
     public IExpressionContextSetup SetConnectionPoolSize(int poolSize)
     {
-        option.SetConnectionPoolSize(poolSize);
+        ExpressionSqlOptions.SetConnectionPoolSize(poolSize);
         return this;
     }
 
     public IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
     {
-        option.SetDatabase(key, dbBaseType, provider);
+        ExpressionSqlOptions.SetDatabase(key, dbBaseType, provider);
         return this;
     }
 
     public IExpressionContextSetup SetTableContext(ITableContext context)
     {
-        option.SetTableContext(context);
+        ExpressionSqlOptions.SetTableContext(context);
         return this;
     }
-
-    public IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase
+#if NET8_0_OR_GREATER
+    public IExpressionContextSetup UseInterceptor<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>()
+#else
+    public IExpressionContextSetup UseInterceptor<T>()
+#endif
+        where T : AdoInterceptorBase
     {
-        interceptorTypes.Add(typeof(T));
-        if (WeakServices?.TryGetTarget(out var services) == true)
+        var item = typeof(T);
+        var nonParameterCtor = item.GetConstructors().FirstOrDefault(c => c.GetParameters().Length == 0);
+        if (nonParameterCtor != null)
         {
-            services?.AddScoped<T>();
+            // 如果有无参构造器，当作无状态的处理
+            if (nonParameterCtor?.Invoke([]) is IAdoInterceptor obj)
+                ExpressionSqlOptions.AddStateLessInterceptor(item, obj);
         }
-
+        else if (WeakServices?.TryGetTarget(out var services) == true)
+        {
+            services?.AddScoped(typeof(IAdoInterceptor), item);
+        }
         return this;
     }
 
@@ -163,7 +193,7 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     }
     public IExpressionContextSetup TableConfiguration(Action<TableGenerateOption> action)
     {
-        action.Invoke(option.TableGenOption);
+        action.Invoke(ExpressionSqlOptions.StaticTableGenOption);
         return this;
     }
 
@@ -171,21 +201,9 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     {
         if (provider is not null)
         {
-            foreach (var interceptorType in interceptorTypes)
-            {
-                var interceptor = provider.GetService(interceptorType) as IAdoInterceptor;
-                option.AddInterceptor(interceptorType, interceptor);
-            }
+            var interceptor = provider.GetServices<IAdoInterceptor>();
+            return new(interceptor);
         }
-        else
-        {
-            foreach (var item in interceptorTypes)
-            {
-                var nonParameterCtor = item.GetConstructors().FirstOrDefault(c => c.GetParameters().Length == 0);
-                if (nonParameterCtor?.Invoke([]) is IAdoInterceptor obj) option.Interceptors.Add(obj);
-            }
-        }
-
-        return option;
+        return new();
     }
 }

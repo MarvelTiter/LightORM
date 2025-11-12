@@ -7,17 +7,12 @@ public static class IocExtension
 
     public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options)
     {
-        //var option = ExpressionSqlOptions.Instance.Value;
         var builder = new ExpressionOptionBuilder
         {
             WeakServices = new(services)
         };
         options(builder);
-        //if (option.InitialContexts.Count > 0)
-        //{
-        //    option.Check();
-        //}
-        services.AddSingleton(provider =>
+        services.AddScoped(provider =>
         {
             var option = builder.Build(provider);
             return option;
@@ -26,11 +21,4 @@ public static class IocExtension
         services.AddScoped<IExpressionContext, ExpressionCoreSql>();
         return services;
     }
-
-    //public static void InitializedContext<T>(this IExpressionContext context) where T : ExpressionContext, new()
-    //{
-    //    var ctx = new T();
-    //    ctx.Initialized((context as IDbInitial)!);
-    //}
-
 }
