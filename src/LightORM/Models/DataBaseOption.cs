@@ -6,11 +6,11 @@ public sealed class DataBaseOption : IDbOption
 {
     private readonly ICustomDatabase database;
 
-    [Obsolete]
-    public DataBaseOption(ISqlMethodResolver methodResolver)
-    {
-        MethodResolver = methodResolver;
-    }
+    //[Obsolete]
+    //public DataBaseOption(ISqlMethodResolver methodResolver)
+    //{
+    //    MethodResolver = methodResolver;
+    //}
 
     public DataBaseOption(ICustomDatabase database)
     {

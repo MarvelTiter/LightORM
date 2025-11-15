@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace LightORM.Extension
@@ -25,6 +26,9 @@ namespace LightORM.Extension
         //        }
         //    }
         //}
+#if NET8_0_OR_GREATER
+        [RequiresDynamicCode("MakeGenericMethod 可能在AOT中出现错误")]
+#endif
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
             if (data is IEnumerable datas)
@@ -45,7 +49,9 @@ namespace LightORM.Extension
                 }
             }
         }
-
+#if NET8_0_OR_GREATER
+        [RequiresDynamicCode("MakeGenericMethod 可能在AOT中出现错误")]
+#endif
         private static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
         {
             var database = executor.Database.CustomDatabase;

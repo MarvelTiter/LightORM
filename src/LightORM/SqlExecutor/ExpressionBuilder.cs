@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -11,7 +12,11 @@ internal partial class ExpressionBuilder
 {
     private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
 
-    public static Func<IDataReader, T> BuildDeserializer<T>(DbDataReader reader)
+    public static Func<IDataReader, T> BuildDeserializer<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(DbDataReader reader)
     {
         var type = typeof(T);
 
@@ -62,7 +67,11 @@ internal partial class ExpressionBuilder
     /// <param name="reader"></param>
     /// <param name="Culture"></param>
     /// <returns></returns>
-    private static Func<IDataReader, Target> BuildFunc<Target>(DbDataReader reader, CultureInfo Culture)
+    private static Func<IDataReader, Target> BuildFunc<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    Target>(DbDataReader reader, CultureInfo Culture)
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
@@ -255,6 +264,9 @@ internal partial class ExpressionBuilder
         ParameterExpression recordInstanceExp,
         DataTable SchemaTable,
         int Ordinal,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
         Type TargetMemberType)
     {
         Type RecordFieldType = reader.GetFieldType(Ordinal);
@@ -325,7 +337,15 @@ internal partial class ExpressionBuilder
         return NullCheckExpression;
     }
 
-    private static Expression GetConversionExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture)
+    private static Expression GetConversionExpression(
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type SourceType, Expression SourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    Type TargetType, CultureInfo Culture)
     {
         Expression TargetExpression;
         if (TargetType == SourceType)
@@ -338,7 +358,9 @@ internal partial class ExpressionBuilder
         }
         else if (TargetType == typeof(string))
         {
-            TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
+            //TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
+             //string.Format("{0}", SourceExpression)
+            TargetExpression = Expression.Call(String_Format, Expression.Constant("{0}"), SourceExpression);
         }
         else if (TargetType == typeof(bool))
         {
@@ -356,7 +378,11 @@ internal partial class ExpressionBuilder
         return TargetExpression;
     }
 
-    private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType)
+    private static Expression GetArrayHandlerExpression(Expression sourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type targetType)
     {
         Expression TargetExpression;
         if (targetType == typeof(byte[]))
@@ -374,7 +400,11 @@ internal partial class ExpressionBuilder
         }
         return TargetExpression;
     }
-    private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture)
+    private static Expression GetParseExpression(Expression SourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type TargetType, CultureInfo Culture)
     {
         Type UnderlyingType = GetUnderlyingType(TargetType);
         if (UnderlyingType.IsEnum)
@@ -422,13 +452,21 @@ internal partial class ExpressionBuilder
                 return Expression.Convert(ParseExpression, TargetType);
             }
         }
-        Expression GetGenericParseExpression(Expression sourceExpression, Type type)
+        Expression GetGenericParseExpression(Expression sourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type type)
         {
             MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string)])!;
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression]);
             return CallExpression;
         }
-        Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+        Expression GetDateTimeParseExpression(Expression sourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type type, CultureInfo culture)
         {
             MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.DateTimeFormat, typeof(DateTimeFormatInfo));
@@ -447,21 +485,35 @@ internal partial class ExpressionBuilder
             return CallExpression;
         }
 
-        MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+        MethodCallExpression GetNumberParseExpression(Expression sourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type type, CultureInfo culture)
         {
             MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
         }
-        Expression TryParseStringToBoolean(Expression sourceExpression, Type type)
+        Expression TryParseStringToBoolean(Expression sourceExpression,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+            Type type)
         {
             var valueExpression = Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
             return GetGenericParseExpression(valueExpression, type);
         }
     }
-
-    private static Type GetUnderlyingType(Type targetType)
+#if NET8_0_OR_GREATER
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    private static Type GetUnderlyingType(
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type targetType)
     {
         return Nullable.GetUnderlyingType(targetType) ?? targetType;
     }

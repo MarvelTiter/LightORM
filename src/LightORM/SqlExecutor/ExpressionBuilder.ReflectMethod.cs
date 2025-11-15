@@ -33,7 +33,7 @@ internal partial class ExpressionBuilder
     private static readonly MethodInfo DataRecord_GetUInt64 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt64), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly MethodInfo CustomStringParseToBoolean = typeof(ExpressionBuilder).GetMethod(nameof(CustomStringToBoolean), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToBytes), BindingFlags.NonPublic | BindingFlags.Static)!;
-
+    private static readonly MethodInfo String_Format = typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object)])!;
 
     readonly static Dictionary<Type, MethodInfo> typeMapMethod = new(37)
     {

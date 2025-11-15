@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -10,7 +11,11 @@ internal static class DbParameterReader
 {
     private static readonly ConcurrentDictionary<string, Action<DbCommand, object>> cacheReaders = [];
     private static readonly ConcurrentDictionary<string, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
-    public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText, Type paramaterType)
+    public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
         {
@@ -73,7 +78,11 @@ internal static class DbParameterReader
     static readonly MethodInfo createParameterMethodInfo = typeof(DbCommand).GetMethod("CreateParameter")!;
     static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
     static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, object>).GetMethod("Add")!;
-    public static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
+    public static Action<DbCommand, object> CreateReader(string commandText,
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type parameterType)
     {
         /*
          * (cmd, obj) => { 
@@ -125,7 +134,11 @@ internal static class DbParameterReader
         return lambda.Compile();
     }
 
-    public static Func<object, Dictionary<string, object>> CreateReadToDictionary(string commandText, Type type)
+    public static Func<object, Dictionary<string, object>> CreateReadToDictionary(string commandText,
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type type)
     {
         var pExp = Expression.Parameter(typeof(object), "p");
         var retExp = Expression.Variable(typeof(Dictionary<string, object>), "ret");

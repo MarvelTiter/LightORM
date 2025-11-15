@@ -6,7 +6,7 @@ public interface ITableColumnInfo
 {
     //ITableEntityInfo Table { get; }
 #if NET8_0_OR_GREATER
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
     Type TableType { get; }
     string ColumnName { get; }
@@ -28,7 +28,7 @@ public interface ITableColumnInfo
     bool IsNotMapped { get; }
     bool IsPrimaryKey { get; }
 #if NET8_0_OR_GREATER
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
     Type? AggregateType { get; }
     string? AggregateProp { get; }

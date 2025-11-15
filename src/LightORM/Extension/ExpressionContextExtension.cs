@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Repository;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM;
 
@@ -58,7 +59,11 @@ public static class ExpressionContextExtension
     /// <typeparam name="TEntity"></typeparam>
     /// <param name="context"></param>
     /// <returns></returns>
-    public static ILightOrmRepository<TEntity> GetRepository<TEntity>(this IExpressionContext context)
+    public static ILightOrmRepository<TEntity> GetRepository<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    TEntity>(this IExpressionContext context)
         where TEntity : class, new()
     {
         return new DefaultRepository<TEntity>(context);

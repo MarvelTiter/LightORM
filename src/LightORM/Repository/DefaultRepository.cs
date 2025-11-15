@@ -1,11 +1,16 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 
 namespace LightORM.Repository;
 
-internal sealed class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
+internal sealed class DefaultRepository<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TEntity> : ILightOrmRepository<TEntity>
 {
     private static readonly ParameterExpression parameterExpression = Expression.Parameter(typeof(TEntity), "entity");
     private static readonly Lazy<ConcurrentDictionary<PropertyInfo, PrimaryKeyExpressionBuilder>> keyBuilders = new(CreateKeyBuilders);

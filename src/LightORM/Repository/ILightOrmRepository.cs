@@ -1,8 +1,13 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM.Repository;
 
-public interface ILightOrmRepository<TEntity>: IDisposable
+public interface ILightOrmRepository<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TEntity> : IDisposable
 {
     IQueryable<TEntity> Table { get; }
     IExpSelect<TEntity> ExpSelect { get; }

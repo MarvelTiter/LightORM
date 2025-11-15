@@ -151,6 +151,10 @@ internal abstract class ExpressionCoreSqlBase
     {
         if (ado.Database.DbHandler is null)
             throw new NotSupportedException();
+        if (table.TableName is null)
+        {
+            throw new ArgumentNullException(nameof(table.TableName));
+        }
         var sql = ado.Database.DbHandler.GetTableStructSql(table.TableName);
         var columns = await ado.QueryListAsync<DbStruct.ReadedTableColumn>(sql);
         return table with { Columns = columns };

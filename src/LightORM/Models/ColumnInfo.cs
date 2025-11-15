@@ -1,5 +1,6 @@
-﻿using System.Reflection;
-using LightORM.Extension;
+﻿using LightORM.Extension;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 
 namespace LightORM.Models;
 public static class ColumnInfoExtensions
@@ -21,6 +22,9 @@ public static class ColumnInfoExtensions
 public sealed record ColumnInfo : ITableColumnInfo
 {
     //public ITableEntityInfo Table { get; set; }
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
     public Type TableType { get; }
     public string ColumnName => CustomName ?? PropertyName;
     public string PropertyName { get; set; }
@@ -48,6 +52,9 @@ public sealed record ColumnInfo : ITableColumnInfo
     public bool CanRead { get; set; }
     public bool CanWrite { get; set; }
     public bool CanInit { get; set; }
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
     public Type? AggregateType { get; }
     public bool IsAggregated { get; }
     public bool IsAggregatedProperty { get; }

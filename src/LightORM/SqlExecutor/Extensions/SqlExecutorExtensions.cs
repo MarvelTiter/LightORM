@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -12,7 +13,11 @@ public static partial class SqlExecutorExtensions
     //    conn.ConnectionString = executor.Database.MasterConnectionString;
     //    return conn;
     //}
-    public static IEnumerable<T> Query<T>(this ISqlExecutor self
+    public static IEnumerable<T> Query<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -62,7 +67,11 @@ public static partial class SqlExecutorExtensions
             reader?.Close();
         }
     }
-    public static T? QuerySingle<T>(this ISqlExecutor self
+    public static T? QuerySingle<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -90,7 +99,11 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async Task<IList<T>> QueryListAsync<T>(this ISqlExecutor self
+    public static async Task<IList<T>> QueryListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -170,7 +183,11 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async IAsyncEnumerable<T> QueryAsync<T>(this ISqlExecutor self
+    public static async IAsyncEnumerable<T> QueryAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -246,7 +263,11 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async Task<T?> QuerySingleAsync<T>(this ISqlExecutor self
+    public static async Task<T?> QuerySingleAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this ISqlExecutor self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -281,7 +302,11 @@ public static partial class SqlExecutorExtensions
 #endif
         }
     }
-    internal static Func<IDataReader, T> BuildDeserializer<T>(this DbDataReader reader)
+    internal static Func<IDataReader, T> BuildDeserializer<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(this DbDataReader reader)
     {
         return ExpressionBuilder.BuildDeserializer<T>(reader);
     }
