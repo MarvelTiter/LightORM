@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows8.0</TargetFramework>
+		<TargetFramework>net10.0-windows8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
@@ -11,8 +11,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="AntDesign" Version="*" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.10" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="10.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
