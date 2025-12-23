@@ -42,6 +42,9 @@ public sealed class CustomSqlServer(SqlServerVersion version) : CustomDatabase(n
             sql.Append($"AND Paging.ROWNO <= {builder.Skip + builder.Take}");
         }
     }
-
+    public override string HandleBooleanValueForBulkCopy(bool value)
+    {
+        return value ? "true" : "false";
+    }
     public override string ReturnIdentitySql() => "SELECT SCOPE_IDENTITY()";
 }

@@ -15,7 +15,7 @@ public class User
     /// <summary>
     /// 自增ID
     /// </summary>
-    [LightColumn(Name = "ID", PrimaryKey = true, AutoIncrement = true, Comment = "自增ID")]
+    [LightColumn(Name = "ID", PrimaryKey = true, Comment = "自增ID")]
     public int Id { get; set; }
     [LightColumn(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
     public string UserId { get; set; }
@@ -30,7 +30,7 @@ public class User
     [LightColumn(Name = "LAST_LOGIN", Comment = "最后登录时间")]
     public DateTime? LastLogin { get; set; }
     [LightColumn(Name = "MODIFY_DATE", Comment = "修改时间")]
-    public DateTime? ModifyTime { get; set; } 
+    public DateTime? ModifyTime { get; set; }
 
     [LightColumn(Name = "IS_LOCK", Comment = "是否锁定")]
     public bool? IsLock { get; set; }

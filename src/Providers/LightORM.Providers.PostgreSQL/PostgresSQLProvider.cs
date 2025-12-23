@@ -30,6 +30,6 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
 
     public override int BulkCopy(DataTable dataTable)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

@@ -16,10 +16,19 @@ public static class ExpressionContextExtension
     {
         var table = TableContext.GetTableInfo<T>();
         var dt = new DataTable(table.TableName);
+        Dictionary<string, Type> addedColumns = [];
         foreach (var col in table.Columns)
         {
-            if (col.IsNotMapped) continue;
-            dt.Columns.Add(col.ColumnName);
+            if (col.IsNotMapped || col.IsAggregated || col.IsNavigate) continue;
+            var propType = table.Type?.GetProperty(col.PropertyName)?.PropertyType;
+            if (propType is null)
+            {
+                continue;
+            }
+            propType = Nullable.GetUnderlyingType(propType) ?? propType;
+            var isBool = propType == typeof(bool);
+            dt.Columns.Add(col.ColumnName, isBool ? typeof(object) : propType);
+            addedColumns.Add(col.ColumnName, propType);
         }
         foreach (var item in datas)
         {
@@ -27,8 +36,23 @@ public static class ExpressionContextExtension
             var row = dt.NewRow();
             foreach (var col in table.Columns)
             {
-                if (col.IsNotMapped) continue;
-                row[col.ColumnName] = col.GetValue(item);
+                if (addedColumns.TryGetValue(col.ColumnName, out var type))
+                {
+                    var value = col.GetValue(item);
+                    if (value is null)
+                    {
+                        row[col.ColumnName] = DBNull.Value;
+                        continue;
+                    }
+                    if (value is bool b)
+                    {
+                        // bool类型特殊处理
+                        row[col.ColumnName] = ado.Database.CustomDatabase.HandleBooleanValueForBulkCopy(b);
+                        continue;
+                    }
+                    row[col.ColumnName] = Convert.ChangeType(value, type);
+                }
+
             }
             dt.Rows.Add(row);
         }

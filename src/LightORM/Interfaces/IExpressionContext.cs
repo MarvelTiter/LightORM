@@ -92,6 +92,7 @@ public interface IDefinedTableAction
     Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
     Task<IList<DbStruct.ReadedTable>> GetTablesAsync();
     Task<DbStruct.ReadedTable> GetTableStructAsync(DbStruct.ReadedTable table);
+    Task<bool> DropTableAsync<T>(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -13,6 +13,7 @@ namespace LightORM.Interfaces
         void Paging(ISelectSqlBuilder builder, StringBuilder sql);
         string ReturnIdentitySql();
         string HandleBooleanValue(bool value);
+        string HandleBooleanValueForBulkCopy(bool value);
         ISqlMethodResolver MethodResolver { get; }
         /// <summary>
         /// 是否使用标识引用符号，数据库关键词会强制使用，可通过<see cref="AddKeyWord"/>新增

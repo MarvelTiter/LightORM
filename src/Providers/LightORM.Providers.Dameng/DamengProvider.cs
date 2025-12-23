@@ -11,9 +11,9 @@ public sealed class DamengProvider : BaseDatabaseProvider
     public static DamengProvider Create(string master, params string[] slaves) => new DamengProvider(master, slaves);
     private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new DamengTableHandler());
 
-    private DamengProvider(string master, params string[] slaves):base(master,slaves)
+    private DamengProvider(string master, params string[] slaves) : base(master, slaves)
     {
-        
+
     }
     public override DbBaseType DbBaseType => DbBaseType.Dameng;
     public override ICustomDatabase CustomDatabase { get; } = CustomDameng.Instance;
@@ -37,14 +37,14 @@ public sealed class DamengProvider : BaseDatabaseProvider
         using var transcation = (DmTransaction)conn.BeginTransaction();
         var bulkCopy = new DmBulkCopy(conn, DmBulkCopyOptions.Default, transcation)
         {
-            DestinationTableName = dataTable.TableName,
+            DestinationTableName = CustomDatabase.Emphasis.Insert(1, dataTable.TableName),
             BulkCopyTimeout = 120
         };
 
         for (int i = 0; i < dataTable.Columns.Count; i++)
         {
             var col = dataTable.Columns[i];
-            var mapping = new DmBulkCopyColumnMapping(i, col.ColumnName);
+            var mapping = new DmBulkCopyColumnMapping(i, CustomDatabase.Emphasis.Insert(1, col.ColumnName));
             bulkCopy.ColumnMappings.Add(mapping);
         }
         int effectedRows = 0;

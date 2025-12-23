@@ -1,0 +1,39 @@
+<Solution>
+  <Folder Name="/doc/">
+    <File Path=".github/workflows/push_nuget.yml" />
+    <File Path="doc/版本日志.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/items/">
+    <File Path="src/SupportedFrameworks.props" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/LightORM/LightORM.csproj" />
+    <Project Path="src/LightOrmExtensionGenerator/LightOrmExtensionGenerator.csproj" />
+    <Project Path="src/LightOrmTableContextGenerator/LightOrmTableContextGenerator.csproj" />
+  </Folder>
+  <Folder Name="/src/GenShared/">
+    <Project Path="src/GenShared/Generators.Shared/Generators.Shared.shproj" />
+  </Folder>
+  <Folder Name="/src/Providers/">
+    <Project Path="src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.MySql/LightORM.Providers.MySql.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.Oracle/LightORM.Providers.Oracle.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.Sqlite/LightORM.Providers.Sqlite.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.SqlServer/LightORM.Providers.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/LightORMTest.Dameng/LightORMTest.Dameng.csproj" />
+    <Project Path="test/LightORMTest.MySql/LightORMTest.MySql.csproj" />
+    <Project Path="test/LightORMTest.Oracle/LightORMTest.Oracle.csproj" />
+    <Project Path="test/LightORMTest.PostgreSQL/LightORMTest.PostgreSQL.csproj" />
+    <Project Path="test/LightORMTest.Sqlite/LightORMTest.Sqlite.csproj" />
+    <Project Path="test/LightORMTest.SqlServer/LightORMTest.SqlServer.csproj" />
+    <Project Path="test/LightORMTest/LightORMTest.csproj" />
+    <Project Path="test/PerformanceTest/PerformanceTest.csproj" />
+    <Project Path="test/TestProject1/TestProject1.csproj" />
+    <Project Path="test/TestWeb/TestWeb.csproj" />
+  </Folder>
+  <Project Path="DatabaseUtils/DatabaseUtils.csproj" />
+</Solution>

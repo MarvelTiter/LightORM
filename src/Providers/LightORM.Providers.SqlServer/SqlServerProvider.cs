@@ -55,13 +55,13 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         using var trans = conn.BeginTransaction();
         var sqlBulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity, trans)
         {
-            DestinationTableName = dataTable.TableName,
+            DestinationTableName = CustomDatabase.Emphasis.Insert(1, dataTable.TableName),
             BulkCopyTimeout = 120
         };
 
         foreach (DataColumn item in dataTable.Columns)
         {
-            sqlBulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(item.ColumnName, item.ColumnName));
+            sqlBulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(item.ColumnName, CustomDatabase.Emphasis.Insert(1, item.ColumnName)));
         }
         try
         {

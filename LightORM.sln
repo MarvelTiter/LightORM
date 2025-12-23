@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.2.32516.85
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseUtils", "DatabaseUtils\DatabaseUtils.csproj", "{F17FA142-2757-441D-A442-2E588F90A21D}"
 EndProject
@@ -59,6 +59,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORM.Providers.Dameng", "src\Providers\LightORM.Providers.Dameng\LightORM.Providers.Dameng.csproj", "{65B3F1C6-F76F-4B28-8046-8C19C42E28DB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightORMTest.Dameng", "test\LightORMTest.Dameng\LightORMTest.Dameng.csproj", "{4874C96A-D136-4C22-BC27-887EB5AE34C5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "items", "items", "{588BB9FE-47D9-4A20-B46B-39D5D062D28D}"
+	ProjectSection(SolutionItems) = preProject
+		src\SupportedFrameworks.props = src\SupportedFrameworks.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

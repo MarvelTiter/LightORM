@@ -101,6 +101,13 @@ internal abstract class ExpressionCoreSqlBase
         return await InternalTableStructAsync(table, ado, Options);
     }
 
+    public async Task<bool> DropTableAsync<T>(CancellationToken cancellationToken = default)
+    {
+        var ado = Ado;
+        var t = TableContext.GetTableInfo<T>();
+        return await InternalDropTableAsync(ado, t.TableName, cancellationToken);
+    }
+
     protected static string InternalCreateTableSql<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
     {
         try
@@ -112,7 +119,7 @@ internal abstract class ExpressionCoreSqlBase
             throw;
         }
     }
-    
+
     protected static async Task<bool> InternalCreateTableAsync<T>(ISqlExecutor ado, ExpressionSqlOptions options, Action<TableGenerateOption>? action, CancellationToken cancellationToken)
     {
         try
@@ -138,7 +145,7 @@ internal abstract class ExpressionCoreSqlBase
             return false;
         }
     }
-    
+
     protected static async Task<IList<DbStruct.ReadedTable>> InternalGetTablesAsync(ISqlExecutor ado, ExpressionSqlOptions _)
     {
         if (ado.Database.DbHandler is null)
@@ -151,9 +158,18 @@ internal abstract class ExpressionCoreSqlBase
     {
         if (ado.Database.DbHandler is null)
             throw new NotSupportedException();
-        var sql = ado.Database.DbHandler.GetTableStructSql(table.TableName);
+        var sql = ado.Database.DbHandler.GetTableStructSql(table.TableName!);
         var columns = await ado.QueryListAsync<DbStruct.ReadedTableColumn>(sql);
         return table with { Columns = columns };
+    }
+
+    protected static async Task<bool> InternalDropTableAsync(ISqlExecutor ado, string tableName, CancellationToken cancellationToken)
+    {
+        if (ado.Database.DbHandler is null)
+            throw new NotSupportedException();
+        var sql = ado.Database.DbHandler.GetDropTableSql(tableName);
+        await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
+        return true;
     }
 
     private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)

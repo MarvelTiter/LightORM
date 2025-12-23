@@ -72,6 +72,11 @@ public abstract class CustomDatabase : ICustomDatabase
         return value ? "1" : "0";
     }
 
+    public virtual string HandleBooleanValueForBulkCopy(bool value)
+    {
+        return HandleBooleanValue(value);
+    }
+
     public bool IsKeyWord(string keyWork)
     {
         return keyWorks.Contains(keyWork);
