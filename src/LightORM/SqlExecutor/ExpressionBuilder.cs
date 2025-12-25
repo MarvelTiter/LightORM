@@ -70,7 +70,8 @@ internal partial class ExpressionBuilder
         Expression? Body = default;
 
         // 元组处理
-        if (TargetType.FullName?.StartsWith("System.Tuple`") ?? false)
+        if ((TargetType.FullName?.StartsWith("System.Tuple`") ?? false)
+            || (TargetType.FullName?.StartsWith("System.ValueTuple`") ?? false))
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
             if (Constructors.Length != 1)

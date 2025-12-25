@@ -14,10 +14,11 @@ public interface ITableEntityInfo
     //object? GetValue(ITableColumnInfo col, object target);
     //void SetValue(ITableColumnInfo col, object target, object? value);
     //ITableColumnInfo? GetColumn(string name);
-    
+
 }
 
 public interface ITableEntityInfo<T> : ITableEntityInfo
+    where T : new()
 {
     Func<IDataReader, T>? DataReaderDeserializer { get; }
 }
