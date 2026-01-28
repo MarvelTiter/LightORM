@@ -67,14 +67,31 @@ internal record UpdateBuilder<T> : SqlBuilder
         // 筛选需要的列
 
         var columns = MainTable.TableEntityInfo.Columns
-                   .Where(c => !IgnoreMembers.Contains(c.PropertyName))
                    .Where(col =>
                    {
-                       if (Members.Count == 0) return true;
-                       if (col.IsPrimaryKey || col.IsVersionColumn) return true;
+                       // 如果 IgnoreMembers 非空，排除被忽略的列
+                       if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(col.PropertyName))
+                           return false;
+
+                       // 如果 Members 为空，且当前列不是被强制保留的类型，则需进一步判断
+                       if (Members.Count == 0)
+                       {
+                           // 当 Members 为空时，只要没被 Ignore 就保留
+                           return true;
+                       }
+
+                       // Members 非空：只保留显式指定的成员，主键、版本号等始终保留
+                       if (col.IsPrimaryKey || col.IsVersionColumn)
+                           return true;
+
+                       // 自增列、未映射、导航属性、聚合属性、禁止更新的列，始终不更新
+                       if (col.AutoIncrement || col.IsNotMapped || col.IsNavigate || col.IsAggregated || col.IsIgnoreUpdate)
+                           return false;
+
+                       // 最终：是否在 Members 中
                        return Members.Contains(col.PropertyName);
                    })
-                   .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.AutoIncrement && !c.IsIgnoreUpdate).ToArray();
+                   .ToArray();
 
         BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count, DbParameters);
         var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";

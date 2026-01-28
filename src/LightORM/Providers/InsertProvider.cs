@@ -77,7 +77,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             {
                 var effectRows = 0;
                 if (usingTransaction)
-                    await executor.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                    executor.BeginTransaction();
                 foreach (var item in sqlBuilder.BatchInfos!)
                 {
                     effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);

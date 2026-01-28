@@ -77,15 +77,15 @@ namespace LightORM.Providers
                     var effectRows = 0;
                     if (usingTransaction)
                     {
-                        await executor.BeginTransactionAsync(cancellationToken: cancellationToken);
+                        executor.BeginTransaction();
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
-                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken);
+                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                     if (usingTransaction)
                     {
-                        await executor.CommitTransactionAsync(cancellationToken);
+                        await executor.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
                     }
                     return effectRows;
                 }
@@ -93,7 +93,7 @@ namespace LightORM.Providers
                 {
                     if (usingTransaction)
                     {
-                        await executor.RollbackTransactionAsync(cancellationToken);
+                        await executor.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
                     }
                     throw;
                 }
