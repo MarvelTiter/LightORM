@@ -13,10 +13,11 @@ internal record UpdateBuilder<T> : SqlBuilder
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
-    List<string> IgnoreMembers { get; set; } = [];
-    public List<string> SetNullMembers { get; set; } = [];
+    HashSet<string> IgnoreMembers { get; set; } = [];
+    HashSet<string> Members { get; set; } = [];
+    HashSet<string> SetNullMembers { get; set; } = [];
+    HashSet<string> WhereMembers { get; set; } = [];
     public bool IsBatchUpdate { get; internal set; }
-    public List<string> WhereMembers { get; set; } = [];
 
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -48,6 +49,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Ignore)
         {
             IgnoreMembers.AddRange(result.Members!);
+            //IgnoreMembers = new(result.Members!)
         }
     }
     bool batchDone = false;
@@ -215,8 +217,18 @@ internal record UpdateBuilder<T> : SqlBuilder
         if (Members.Count == 0)
         {
             var autoUpdateCols = MainTable.TableEntityInfo.Columns
-               .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-               .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsPrimaryKey && !c.IsAggregated && !c.IsVersionColumn && !c.IsIgnoreUpdate && !c.AutoIncrement);
+               .Where(c =>
+               {
+                   if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(c.PropertyName))
+                   {
+                       return false;
+                   }
+                   if (c.IsNotMapped || c.IsNavigate || c.IsPrimaryKey || c.IsAggregated || c.IsVersionColumn || c.IsIgnoreUpdate || c.AutoIncrement)
+                   {
+                       return false;
+                   }
+                   return true;
+               });
             //参数处理
             foreach (var item in autoUpdateCols)
             {
@@ -249,7 +261,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
 
-        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName));
+        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName));
 
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(database, MainTable, false));

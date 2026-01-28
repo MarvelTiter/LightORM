@@ -8,7 +8,9 @@ internal record InsertBuilder<T> : SqlBuilder
     public new T? TargetObject { get; set; }
     public IEnumerable<T> TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
-    public List<string> IgnoreMembers { get; set; } = [];
+    HashSet<string> IgnoreMembers { get; set; } = [];
+    HashSet<string> Members { get; set; } = [];
+
     public bool IsReturnIdentity { get; set; }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -86,9 +88,25 @@ internal record InsertBuilder<T> : SqlBuilder
             Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.IsAggregated && !c.AutoIncrement).Select(c => c.PropertyName));
         }
         var insertColumns = MainTable.TableEntityInfo.Columns
-            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate)
-            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-            .Where(c => c.GetValue(TargetObject!) != null)
+            //.Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate)
+            //.Where(c => !IgnoreMembers.Contains(c.PropertyName))
+            //.Where(c => c.GetValue(TargetObject!) != null)
+            .Where(c =>
+            {
+                if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(c.PropertyName))
+                {
+                    return false;
+                }
+                if (c.IsNotMapped || c.IsNavigate)
+                {
+                    return false;
+                }
+                if (!Members.Contains(c.PropertyName))
+                {
+                    return false;
+                }
+                return c.GetValue(TargetObject!) != null;
+            })
             .ToArray();
         StringBuilder columns = new();
         StringBuilder values = new();

@@ -70,7 +70,6 @@ public readonly struct WindowFnSpecification(Expression expression)
     public string Idenfity { get; } = $"{Guid.NewGuid():N}";
     public Expression Expression { get; } = expression;
 }
-
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
@@ -116,6 +115,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     int parameterPositionIndex = 0;
     bool useAs;
     bool resolveNullValue;
+    string? lastResolvedColumnName;
     bool UseAs
     {
         get
@@ -145,6 +145,16 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     }
 
     bool isVisitConvert;
+
+    bool ShouldApplyUseAs(Expression exp, string columnName)
+    {
+        if (exp is MethodCallExpression)
+        {
+            return true;
+        }
+        return lastResolvedColumnName != columnName;
+    }
+
     Expression? VisitLambda(LambdaExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
@@ -162,6 +172,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitBinary(BinaryExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
+
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
@@ -253,46 +264,30 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var member = exp.Members![i];
             var arg = exp.Arguments[i];
-            //if (member.Name.StartsWith("Tb")
-            //    && member is PropertyInfo prop
-            //    && prop.DeclaringType?.FullName?.StartsWith("LightORM.TypeSet") == true)
-            //{
-            //    //Debug.WriteLineIf(ShowExpressionResolveDebugInfo,"Visit TypeSet Property");
-            //    // 这段if分支，应该是不需要了
-            //    Debug.Assert(false);
-            //    ParameterExpression p = Expression.Parameter(prop.PropertyType, member.Name);
-            //    Visit(p);
-            //    UseAs = true;
-            //}
-            //else
+
+            ResolvedMembers.Add(exp.Members[i].Name);
+            if (Options.SqlType == SqlPartial.Select)
             {
-                ResolvedMembers.Add(exp.Members[i].Name);
-                if (Options.SqlType == SqlPartial.Select)
+                Visit(arg);
+                if (ShouldApplyUseAs(arg, member.Name))
                 {
-                    Visit(arg);
-                    if (UseAs)
-                    {
-                        Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
-                    }
-                }
-                else if (Options.SqlType == SqlPartial.Insert)
-                {
-                    //var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
-                    //Sql.Append($"{Database.AttachEmphasis(col.ColumnName)} = ");
-                    Visit(arg);
-                }
-                else
-                {
-                    Visit(arg);
+                    Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
                 }
             }
+            else if (Options.SqlType == SqlPartial.Insert)
+            {
+                //var col = Context.GetTable(exp.Type).Columns.First(c => c.PropertyName == member.Name);
+                //Sql.Append($"{Database.AttachEmphasis(col.ColumnName)} = ");
+                Visit(arg);
+            }
+            else
+            {
+                Visit(arg);
+            }
+
 
             if (i + 1 < exp.Arguments.Count)
             {
-                //if (Options.SqlType == SqlPartial.Select)
-                //{
-                //    Sql.Append(SqlBuilder.N);
-                //}
                 Sql.Append(", ");
             }
         }
@@ -375,7 +370,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(memberAssign.Expression);
-                if (UseAs)
+                if (ShouldApplyUseAs(memberAssign.Expression, memberAssign.Member.Name))
                 {
                     Sql.Append($" AS {Database.AttachEmphasis(memberAssign.Member.Name)}");
                 }
@@ -405,18 +400,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
             var paramExp = exp.Expression as ParameterExpression;
             var pType = paramExp?.Type;
-            //if (pType.IsAnonymous() == true)
-            //{
-            //    if (Context.TryGetAnonymousInfo(paramExp, exp.Member.Name, out var i))
-            //    {
-            //        paramExp = i!.ParameterExp;
-            //    }
-            //}
-            //else if (pType?.Name.StartsWith("IExpSelectGrouping") == true)
-            //{
 
-            //}
-            //var memberType = exp.Member!.DeclaringType!;
             var name = exp.Member.Name;
             var table = Context.GetTable(paramExp!);
             var col = table.GetColumn(name)!;
@@ -466,6 +450,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             {
                 Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
             }
+            lastResolvedColumnName = col.ColumnName;
             Members.Clear();
             return null;
         }

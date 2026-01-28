@@ -16,7 +16,6 @@ internal abstract record SqlBuilder : ISqlBuilder
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
-    public List<string> Members { get; set; } = [];
     public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
     public bool? IsParameterized { get; set; } = true;
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
