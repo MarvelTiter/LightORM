@@ -142,8 +142,10 @@ public class UpdateSql : TestBase
     public void Update_Batch()
     {
         var datas = GetList();
-
-        var sql = Db.Update([.. datas]).ToSql();
+        var sign = "222";
+        var sql = Db.Update([.. datas])
+            .Set(u => u.Sign, sign)
+            .ToSql();
         Console.WriteLine(sql);
         List<UserFlat> GetList()
         {

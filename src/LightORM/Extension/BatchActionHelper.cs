@@ -23,7 +23,10 @@
             }
             return size;
         }
-        public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns, List<T> datas, int limit = 2000)
+        public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns
+            , List<T> datas
+            , int limit = 2000
+            , Dictionary<string, object>? additionalParameters = null)
         {
             var list = new List<BatchSqlInfo>();
             var verions = columns.Count(c => c.IsVersionColumn);
@@ -38,8 +41,8 @@
                     var dbParameters = new List<SimpleColumn>();
                     foreach (var col in columns)
                     {
-                        var val = col.GetValue(obj!);
-                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val)
+                        var isStatic = GetValue(col, obj!, additionalParameters, out var val);
+                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val, isStatic)
                         );
                     }
                     rowIndex++;
@@ -49,6 +52,16 @@
                 list.Add(new BatchSqlInfo(pList));
             }
             return list;
+
+            static bool GetValue(ITableColumnInfo col, object target, Dictionary<string, object>? additionalParameters, out object? value)
+            {
+                if (additionalParameters != null && additionalParameters.TryGetValue(col.PropertyName, out value))
+                {
+                    return true;
+                }
+                value = col.GetValue(target);
+                return false;
+            }
         }
     }
 }

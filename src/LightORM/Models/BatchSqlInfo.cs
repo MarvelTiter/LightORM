@@ -17,7 +17,7 @@
     //    public string PropName { get; set; }
     //    public object? Value { get; set; }
     //}
-    internal record SimpleColumn(bool IsPrimaryKey, bool IsVersion, string ColumnName, string ParameterName, string PropName, object? Value);
+    internal record SimpleColumn(bool IsPrimaryKey, bool IsVersion, string ColumnName, string ParameterName, string PropName, object? Value, bool isStaticValue);
     internal record BatchParameters(ITableColumnInfo Column, List<SimpleColumn> Parameters);
     internal class BatchSqlInfo
     {

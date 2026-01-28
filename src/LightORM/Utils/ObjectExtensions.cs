@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 
 namespace LightORM.Utils;
+
 internal static class ObjectExtensions
 {
     public static Func<object, object> GetPropertyAccessor(this Type type, PropertyInfo property)
@@ -44,7 +45,12 @@ internal static class ObjectExtensions
         var agg = Expression.Property(ins, aggregate);
         var prop = Expression.Property(agg, property);
         var ret = Expression.Convert(prop, typeof(object));
-        var lambda = Expression.Lambda<Func<object, object>>(ret, p);
+        var checkNull = Expression.Condition(Expression.Equal(agg, Expression.Constant(null)),
+            Expression.Constant(null, typeof(object)),
+            ret
+        );
+
+        var lambda = Expression.Lambda<Func<object, object>>(checkNull, p);
         return lambda.Compile();
     }
 

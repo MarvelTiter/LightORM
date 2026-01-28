@@ -60,7 +60,7 @@ public partial class SelectSql : TestBase
         Console.WriteLine(sql);
         AssertSqlResult(nameof(TestSubJoin), sql);
     }
-    
+
     [TestMethod]
     public void TestGroupByThenAsSubQuery()
     {
@@ -173,7 +173,7 @@ public partial class SelectSql : TestBase
             // 两种写法都可以
             .Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .ToSql();
-        Assert.IsTrue(sql == sql2);
+        Assert.AreEqual(sql2, sql);
         //var result = """
         //    SELECT DISTINCT *
         //    FROM `USER` `a`
@@ -251,10 +251,10 @@ public partial class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-            {
-                Id = u.UserId,
-                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-            }).AsSubQuery()
+        {
+            Id = u.UserId,
+            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+        }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Average(g.Tables.DateDiff) < 1).AsTemp("temp", g =>
@@ -289,10 +289,10 @@ public partial class SelectSql : TestBase
     {
         var dt = DateTime.Now;
         var temp = Db.Select<User>().Where(u => u.LastLogin > dt).AsTable(u => new
-            {
-                Id = u.UserId,
-                DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
-            }).AsSubQuery()
+        {
+            Id = u.UserId,
+            DateDiff = (u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserId).OrderBy(u.LastLogin).Value()) * 24
+        }).AsSubQuery()
             .Where(a => a.DateDiff != null)
             .GroupBy(a => new { a.Id })
             .Having(g => g.Count() > 2 && g.Average(g.Tables.DateDiff) < 1).AsTable(g =>
@@ -500,6 +500,15 @@ public partial class SelectSql : TestBase
         int? age = null;
         var sql = Db.Select<User>()
             .Where(u => u.Age != age)
+            .ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestNull()
+    {
+        var sql = Db.Select<User>()
+            .Where(u => u.Age == null)
             .ToSql();
         Console.WriteLine(sql);
     }

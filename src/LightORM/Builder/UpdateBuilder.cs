@@ -51,11 +51,10 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
     }
     bool batchDone = false;
-    bool CheckMembers(ITableColumnInfo col)
-    {
-        if (Members.Count == 0) return true;
-        return Members.Contains(col.PropertyName);
-    }
+    //bool CheckMembers(ITableColumnInfo col)
+    //{
+
+    //}
     private void CreateUpdateBatchSql(ICustomDatabase database)
     {
         if (batchDone)
@@ -66,12 +65,18 @@ internal record UpdateBuilder<T> : SqlBuilder
 
         //var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
         // 筛选需要的列
+
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-                   .Where(CheckMembers)
+                   .Where(col =>
+                   {
+                       if (Members.Count == 0) return true;
+                       if (col.IsPrimaryKey || col.IsVersionColumn) return true;
+                       return Members.Contains(col.PropertyName);
+                   })
                    .Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.AutoIncrement && !c.IsIgnoreUpdate).ToArray();
 
-        BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
+        BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count, DbParameters);
         var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";
         //var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
@@ -91,12 +96,14 @@ internal record UpdateBuilder<T> : SqlBuilder
                     {
                         var newVersion = VersionPlus(currentCol.Value);
                         var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_new", Value = newVersion };
-                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {(newCol.Value == null ? "NULL" : database.AttachPrefix(newCol.ParameterName))} ");
+                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {GetValueExpression(newCol)} ");
+                        //(newCol.Value == null ? "NULL" : database.AttachPrefix(newCol.ParameterName))
                         rowDatas.Add(newCol);
                     }
                     else
                     {
-                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {(currentCol.Value == null ? "NULL" : database.AttachPrefix(currentCol.ParameterName))} ");
+                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {GetValueExpression(currentCol)} ");
+                        // (currentCol.Value == null ? "NULL" : database.AttachPrefix(currentCol.ParameterName))
                     }
                 }
                 sb.Append("END,");
@@ -110,12 +117,59 @@ internal record UpdateBuilder<T> : SqlBuilder
             {
                 Where.Add($"( {database.AttachEmphasis(item.Key)} IN ({string.Join(", ", item.Select(i => database.AttachPrefix(i.ParameterName)))}))");
             }
-
-            sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+            if (Where.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+            }
             HandleSqlParameters(sb, database);
             batch.Sql = sb.ToString();
         }
         batchDone = true;
+
+        string GetValueExpression(SimpleColumn col)
+        {
+            if (col.Value is null)
+            {
+                return "NULL";
+            }
+            if (col.isStaticValue)
+            {
+                return FormatStaticValue(col.Value);
+            }
+            return database.AttachPrefix(col.ParameterName);
+        }
+        string FormatStaticValue(object value)
+        {
+            return value switch
+            {
+                // 字符串：用单引号包裹，并转义单引号（基础防护）
+                string s => $"'{s.Replace("'", "''")}'",
+
+                // 布尔值：根据 SQL 标准，多数数据库用 1/0，PostgreSQL 用 true/false
+                bool b => database.HandleBooleanValue(b),
+
+                // 整数类型
+                sbyte or byte or short or ushort or int or uint or long or ulong => $"{value}",
+
+                // 浮点数
+                float f => f.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                double d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                decimal m => m.ToString(System.Globalization.CultureInfo.InvariantCulture),
+
+                // 日期时间（可选支持）
+                DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'",
+#if NET6_0_OR_GREATER
+                DateOnly dOnly => $"'{dOnly:yyyy-MM-dd}'",
+                TimeOnly tOnly => $"'{tOnly:HH:mm:ss}'",
+#endif
+                // Guid（可选）
+                Guid g => $"'{g}'",
+
+                // 不支持的类型：抛出异常或返回 NULL / 占位符
+                _ => throw new NotSupportedException($"Static value of type '{value.GetType()}' is not supported in SQL literal generation.")
+            };
+        }
     }
 
     public override string ToSqlString(ICustomDatabase database)
@@ -179,7 +233,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
 
         var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Contains(c.PropertyName));
-        
+
         StringBuilder sb = new("UPDATE ");
         sb.Append(GetTableName(database, MainTable, false));
         sb.AppendLine(" SET   ");

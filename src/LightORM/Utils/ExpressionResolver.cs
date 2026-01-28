@@ -26,16 +26,16 @@ internal static class ExpressionExtensions
         };
     }
 
-    public static string OperatorParser(this ExpressionType expressionNodeType)
+    public static string OperatorParser(this ExpressionType expressionNodeType, bool isNull)
     {
         return expressionNodeType switch
         {
             ExpressionType.And or
             ExpressionType.AndAlso => " AND ",
-            ExpressionType.Equal => " = ",
+            ExpressionType.Equal => isNull ? " IS " : " = ",
             ExpressionType.GreaterThan => " > ",
             ExpressionType.GreaterThanOrEqual => " >= ",
-            ExpressionType.NotEqual => " <> ",
+            ExpressionType.NotEqual => isNull ? " IS NOT " : " <> ",
             ExpressionType.Or or
             ExpressionType.OrElse => " OR ",
             ExpressionType.LessThan => " < ",
@@ -115,6 +115,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
     int parameterPositionIndex = 0;
     bool useAs;
+    bool resolveNullValue;
     bool UseAs
     {
         get
@@ -129,6 +130,19 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         set => useAs = value;
     }
 
+    bool ResolveNullValue
+    {
+        get
+        {
+            if (resolveNullValue)
+            {
+                resolveNullValue = false;
+                return true;
+            }
+            return resolveNullValue;
+        }
+        set => resolveNullValue = value;
+    }
 
     bool isVisitConvert;
     Expression? VisitLambda(LambdaExpression exp)
@@ -167,9 +181,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
 
         Visit(exp.Left);
-        var op = exp.NodeType.OperatorParser();
-        Sql.Append(op);
+        var insertIndex = Sql.Length;
         Visit(exp.Right);
+        var op = exp.NodeType.OperatorParser(ResolveNullValue);
+        Sql.Insert(insertIndex, op);
 
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
@@ -509,7 +524,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             if (v == null)
             {
+                //var name = FormatDbParameterName(Context, Options, "CONST", ref parameterPositionIndex);
+                //Sql.Append(name);
+                //DbParameters.Add(new(name, null, ExpValueType.Null));
+                //return;
                 Sql.Append("NULL");
+                ResolveNullValue = true;
                 return;
             }
             if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
