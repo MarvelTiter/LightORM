@@ -48,28 +48,6 @@ internal static class ExpressionExtensions
         };
     }
 }
-
-public interface IExpressionResolver
-{
-    bool IsNot { get; }
-    int NavigateDeep { get; set; }
-    int Level { get; }
-    Dictionary<string, Expression?>? ExpStores { get; set; }
-    StringBuilder Sql { get; }
-    bool UseNavigate { get; set; }
-    public List<WindowFnSpecification>? WindowFnPartials { get; set; }
-    SqlResolveOptions Options { get; }
-    Expression? NavigateWhereExpression { get; set; }
-    Expression? Visit(Expression? expression);
-    Expression? Body { get; }
-    ReadOnlyCollection<ParameterExpression>? Parameters { get; }
-}
-
-public readonly struct WindowFnSpecification(Expression expression)
-{
-    public string Idenfity { get; } = $"{Guid.NewGuid():N}";
-    public Expression Expression { get; } = expression;
-}
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
     public SqlResolveOptions Options { get; } = options;
@@ -91,6 +69,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
     public ReadOnlyCollection<ParameterExpression>? Parameters => parametersExpression;
+    public Stack<ResolvePart> ResolveRecord { get; set; } = [];
     public Expression? Visit(Expression? expression)
     {
         //Debug.Write($"");
@@ -113,22 +92,22 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? bodyExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
     int parameterPositionIndex = 0;
-    bool useAs;
     bool resolveNullValue;
-    string? lastResolvedColumnName;
-    bool UseAs
-    {
-        get
-        {
-            if (useAs)
-            {
-                useAs = false;
-                return true && Options.UseColumnAlias;
-            }
-            return useAs && Options.UseColumnAlias;
-        }
-        set => useAs = value;
-    }
+    //string? lastResolvedColumnName;
+    //bool useAs;
+    //bool UseAs
+    //{
+    //    get
+    //    {
+    //        if (useAs)
+    //        {
+    //            useAs = false;
+    //            return true && Options.UseColumnAlias;
+    //        }
+    //        return useAs && Options.UseColumnAlias;
+    //    }
+    //    set => useAs = value;
+    //}
 
     bool ResolveNullValue
     {
@@ -146,14 +125,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     bool isVisitConvert;
 
-    bool ShouldApplyUseAs(Expression exp, string columnName)
-    {
-        if (exp is MethodCallExpression)
-        {
-            return true;
-        }
-        return lastResolvedColumnName != columnName;
-    }
+    //bool ShouldApplyUseAs(Expression exp, string columnName)
+    //{
+    //    if (exp is MethodCallExpression)
+    //    {
+    //        return true;
+    //    }
+    //    return lastResolvedColumnName != columnName;
+    //}
 
     Expression? VisitLambda(LambdaExpression exp)
     {
@@ -221,6 +200,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
+        ResolveRecord.Push(ResolvePart.MethodCall);
         Members.Clear();
         if (exp.Method.Name.Equals("get_Item") && (exp.Method.DeclaringType?.FullName?.StartsWith("System.Collections.Generic") ?? false))
         {
@@ -228,18 +208,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         else
         {
-            //if (exp.Object is not null)
+            //if (Options.SqlType == SqlPartial.Select)
             //{
-            //    var obj = Expression.Lambda(exp.Object).Compile().DynamicInvoke();
-            //    if (obj is IExpSelect sel)
-            //    {
-            //        var sql = sel.SqlBuilder.ToSqlString();
-            //    }
+            //    UseAs = true;
             //}
-            if (Options.SqlType == SqlPartial.Select)
-            {
-                UseAs = true;
-            }
             MethodResolver.Resolve(this, exp);
         }
         return null;
@@ -269,10 +241,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(arg);
-                if (ShouldApplyUseAs(arg, member.Name))
-                {
-                    Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
-                }
+                //if (member.Name != lastResolvedColumnName || UseAs)
+                //{
+                //}
+                Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
             }
             else if (Options.SqlType == SqlPartial.Insert)
             {
@@ -310,7 +282,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var alias = Context.GetTable(exp).Alias;
             Sql.Append($"{alias}.*");
-            UseAs = false;
+            //UseAs = false;
             //foreach (var item in alias.Columns)
             //{
             //    var prop = Expression.Property(exp, item.PropertyName);
@@ -370,10 +342,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(memberAssign.Expression);
-                if (ShouldApplyUseAs(memberAssign.Expression, memberAssign.Member.Name))
-                {
-                    Sql.Append($" AS {Database.AttachEmphasis(memberAssign.Member.Name)}");
-                }
+                //if (lastResolvedColumnName != memberAssign.Member.Name || UseAs)
+                //{
+                //}
+                Sql.Append($" AS {Database.AttachEmphasis(memberAssign.Member.Name)}");
                 if (i + 1 < exp.Bindings.Count)
                 {
                     Sql.Append(", ");
@@ -392,14 +364,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         if (exp.Expression?.NodeType == ExpressionType.Parameter)
         {
-            //var eType = exp.Type;
-            //if (eType.IsGenericType && eType.GetGenericTypeDefinition() == typeof(Nullable<>))
-            //{
-            //    eType = eType.GetGenericArguments()[0];
-            //}
 
             var paramExp = exp.Expression as ParameterExpression;
-            var pType = paramExp?.Type;
+            //var pType = paramExp?.Type;
 
             var name = exp.Member.Name;
             var table = Context.GetTable(paramExp!);
@@ -438,10 +405,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 ResolvedMembers.Add(col.PropertyName);
             }
 
-            if (!table.TableEntityInfo.IsAnonymousType)
-            {
-                UseAs = col.ColumnName != col.PropertyName;
-            }
+            //if (!table.TableEntityInfo.IsAnonymousType)
+            //{
+            //    UseAs = col.ColumnName != col.PropertyName;
+            //}
             if (Options.RequiredTableAlias)
             {
                 Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
@@ -450,7 +417,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             {
                 Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
             }
-            lastResolvedColumnName = col.ColumnName;
+            //lastResolvedColumnName = col.ColumnName;
             Members.Clear();
             return null;
         }
@@ -547,10 +514,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     Sql.Append($"'{v}'");
                 }
             }
-            if (Options.SqlAction == SqlAction.Select)
-            {
-                UseAs = true;
-            }
+            //if (Options.SqlAction == SqlAction.Select)
+            //{
+            //    UseAs = true;
+            //}
         }
     }
 

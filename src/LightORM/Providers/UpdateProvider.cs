@@ -172,7 +172,7 @@ namespace LightORM.Providers
             });
             return this;
         }
-        public IExpUpdate<T> UpdateColumns(Expression<Func<T, object>> columns)
+        public IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns)
         {
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
@@ -182,7 +182,7 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpUpdate<T> IgnoreColumns(Expression<Func<T, object>> columns)
+        public IExpUpdate<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
         {
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {

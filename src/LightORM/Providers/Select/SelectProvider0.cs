@@ -155,13 +155,13 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return this.InternalSingle<TMember>();
     }
 
-    public double Sum(Expression<Func<T1, object>> exp)
+    public double Sum<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
         return this.InternalSingle<double>();
     }
 
-    public int Count(Expression<Func<T1, object>> exp)
+    public int Count<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
         return this.InternalSingle<int>();
@@ -173,7 +173,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return this.InternalSingle<int>();
     }
 
-    public double Avg(Expression<Func<T1, object>> exp)
+    public double Avg<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
         return this.InternalSingle<double>();
@@ -262,13 +262,13 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return this.InternalSingleAsync<TMember>(cancellationToken);
     }
 
-    public Task<double> SumAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    public Task<double> SumAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "SUM({0})");
         return this.InternalSingleAsync<double>(cancellationToken);
     }
 
-    public Task<int> CountAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    public Task<int> CountAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "COUNT({0})");
         return this.InternalSingleAsync<int>(cancellationToken);
@@ -280,7 +280,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return this.InternalSingleAsync<int>(cancellationToken);
     }
 
-    public Task<double> AvgAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    public Task<double> AvgAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "AVG({0})");
         return this.InternalSingleAsync<double>(cancellationToken);

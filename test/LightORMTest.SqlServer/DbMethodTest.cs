@@ -1,4 +1,5 @@
-﻿using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
+﻿using LightORMTest.Models;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace LightORMTest.SqlServer;
 
@@ -28,6 +29,29 @@ public class DbMethodTest : LightORMTest.DbMethodTest
                  Scores = g.Average(g.Tables.Tb1.Scores)
              });
         Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void CCCC()
+    {
+        var sql = Db.Update([.. GetList()])
+            .UpdateColumns(i => i.Line)
+            .Set(i => i.Status, 1)
+            .ToSql();
+        Console.WriteLine(sql);
+
+        List<Inspectotrs> GetList()
+        {
+            return new List<Inspectotrs>
+            {
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+                new() ,
+            };
+        }
     }
 }
 public class RRR

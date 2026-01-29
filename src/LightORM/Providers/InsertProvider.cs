@@ -100,7 +100,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         }
     }
 
-    public IExpInsert<T> IgnoreColumns(Expression<Func<T, object>> columns)
+    public IExpInsert<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
     {
         sqlBuilder.Expressions.Add(new ExpressionInfo()
         {
@@ -121,7 +121,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         return this;
     }
 
-    public IExpInsert<T> SetColumns(Expression<Func<T, object>> columns)
+    public IExpInsert<T> SetColumns<TSet>(Expression<Func<T, TSet>> columns)
     {
         sqlBuilder.Expressions.Add(new ExpressionInfo()
         {

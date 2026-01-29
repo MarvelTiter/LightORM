@@ -26,20 +26,20 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default);
     Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
     Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
-    Task<double> SumAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
-    Task<int> CountAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+    Task<double> SumAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
+    Task<int> CountAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
-    Task<double> AvgAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+    Task<double> AvgAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
     Task<bool> AnyAsync(CancellationToken cancellationToken = default);
     TSelect Paging(int pageIndex, int pageSize);
     TSelect Skip(int count);
     TSelect Take(int count);
     TMember? Max<TMember>(Expression<Func<T1, TMember>> exp);
     TMember? Min<TMember>(Expression<Func<T1, TMember>> exp);
-    double Sum(Expression<Func<T1, object>> exp);
-    int Count(Expression<Func<T1, object>> exp);
+    double Sum<TMember>(Expression<Func<T1, TMember>> exp);
+    int Count<TMember>(Expression<Func<T1, TMember>> exp);
     int Count();
-    double Avg(Expression<Func<T1, object>> exp);
+    double Avg<TMember>(Expression<Func<T1, TMember>> exp);
 
     bool Any();
 

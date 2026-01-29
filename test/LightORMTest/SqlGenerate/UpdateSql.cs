@@ -144,6 +144,7 @@ public class UpdateSql : TestBase
         var datas = GetList();
         var sign = "222";
         var sql = Db.Update([.. datas])
+            .UpdateColumns(u => u.UserName)
             .Set(u => u.Sign, sign)
             .ToSql();
         Console.WriteLine(sql);
