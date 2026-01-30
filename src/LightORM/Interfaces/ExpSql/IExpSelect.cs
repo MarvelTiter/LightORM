@@ -68,8 +68,8 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
 
 public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 {
-    IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp);
-    IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp);
+    IExpSelect<T1> OrderBy<TOrder>(Expression<Func<T1, TOrder>> exp);
+    IExpSelect<T1> OrderByDesc<TOrder>(Expression<Func<T1, TOrder>> exp);
     IExpSelectGroup<TGroup, T1> GroupBy<TGroup>(Expression<Func<T1, TGroup>> exp);
 
     #region join methods
@@ -207,8 +207,8 @@ public interface IExpTemp<TTemp> : IExpTemp
 
 public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 {
-    IExpSelect<T1, T2> OrderBy(Expression<Func<T1, T2, object>> exp);
-    IExpSelect<T1, T2> OrderByDesc(Expression<Func<T1, T2, object>> exp);
+    IExpSelect<T1, T2> OrderBy<TOrder>(Expression<Func<T1, T2, TOrder>> exp);
+    IExpSelect<T1, T2> OrderByDesc<TOrder>(Expression<Func<T1, T2, TOrder>> exp);
 
     IExpSelect<T1, T2> Where(Expression<Func<T1, T2, bool>> exp);
 
@@ -272,8 +272,8 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 
     #region TypeSet
 
-    IExpSelect<T1, T2> OrderBy(Expression<Func<TypeSet<T1, T2>, object>> exp);
-    IExpSelect<T1, T2> OrderByDesc(Expression<Func<TypeSet<T1, T2>, object>> exp);
+    IExpSelect<T1, T2> OrderBy<TOrder>(Expression<Func<TypeSet<T1, T2>, TOrder>> exp);
+    IExpSelect<T1, T2> OrderByDesc<TOrder>(Expression<Func<TypeSet<T1, T2>, TOrder>> exp);
 
     IExpSelect<T1, T2> Where(Expression<Func<TypeSet<T1, T2>, bool>> exp);
 

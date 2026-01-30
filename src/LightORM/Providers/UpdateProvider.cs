@@ -106,11 +106,8 @@ namespace LightORM.Providers
             }
         }
 
-        public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
+        public IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp)
         {
-            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            //var member = result.Members!.First();
-            //SqlBuilder.SetNullMembers.Add(member);
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
@@ -120,7 +117,7 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpUpdate<T> SetNullIf<TField>(bool condition, Expression<Func<T, TField>> exp)
+        public IExpUpdate<T> SetNullIf<TNull>(bool condition, Expression<Func<T, TNull>> exp)
         {
             if (condition)
             {
@@ -131,19 +128,10 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-
-            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            //var member = result.Members!.First();
-            //if (value is null)
-            //{
-            //    SqlBuilder.SetNullMembers.Add(member);
-            //}
-            //else
-            //{
-            //    SqlBuilder.Members.Add(member);
-            //    SqlBuilder.DbParameters.Add(member, value!);
-            //}
-
+            if (exp.Body.NodeType == ExpressionType.New || exp.Body.NodeType == ExpressionType.MemberInit)
+            {
+                throw new LightOrmException("不支持多字段设置");
+            }
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,

@@ -34,13 +34,13 @@ internal record UpdateBuilder<T> : SqlBuilder
             }
             else if (expInfo.AdditionalParameter is UpdateValue v)
             {
-                var member = result.Members!.First();
                 if (v.Value is null)
                 {
-                    SetNullMembers.Add(member);
+                    SetNullMembers.AddRange(result.Members!);
                 }
                 else
                 {
+                    var member = result.Members!.First();
                     Members.Add(member);
                     DbParameters.Add(member, v.Value);
                 }

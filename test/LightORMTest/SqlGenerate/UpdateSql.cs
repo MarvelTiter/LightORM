@@ -161,4 +161,14 @@ public class UpdateSql : TestBase
             };
         }
     }
+
+    [TestMethod]
+    public void Update_SetNull()
+    {
+        var sql = Db.Update<User>()
+             .SetNull(t => new { t.Sign, t.Age })
+             .Where(u => u.Id == 10)
+             .ToSql();
+        Console.WriteLine(sql);
+    }
 }

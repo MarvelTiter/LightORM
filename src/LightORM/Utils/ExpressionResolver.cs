@@ -1,9 +1,10 @@
 ﻿using LightORM.Extension;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Collections;
-using System.Diagnostics;
-using System.Collections.ObjectModel;
 namespace LightORM;
 
 internal static class ExpressionExtensions
@@ -89,25 +90,27 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             _ => null
         };
     }
+
+    private const string AS_LITERAL = " AS ";
     Expression? bodyExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
     int parameterPositionIndex = 0;
     bool resolveNullValue;
     //string? lastResolvedColumnName;
-    //bool useAs;
-    //bool UseAs
-    //{
-    //    get
-    //    {
-    //        if (useAs)
-    //        {
-    //            useAs = false;
-    //            return true && Options.UseColumnAlias;
-    //        }
-    //        return useAs && Options.UseColumnAlias;
-    //    }
-    //    set => useAs = value;
-    //}
+    bool useAs = true;
+    bool UseAs
+    {
+        get
+        {
+            if (!useAs)
+            {
+                useAs = true;
+                return false;
+            }
+            return useAs && Options.UseColumnAlias;
+        }
+        set => useAs = value;
+    }
 
     bool ResolveNullValue
     {
@@ -155,7 +158,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
-            var index = Convert.ToInt32(Expression.Lambda(exp.Right).Compile().DynamicInvoke());
+            var index = ExtractConstantInt(exp.Right);
             var array = Expression.Lambda(exp.Left).Compile().DynamicInvoke() as Array;
             var arrayValue = array!.GetValue(index);
             //var parameterName = AddDbParameter("Const", );
@@ -182,6 +185,50 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
 
         return null;
+
+        // 尝试将表达式求值为常量（仅支持 Constant 和 简单 Member 访问）
+        static int ExtractConstantInt(Expression expression)
+        {
+            if (expression is ConstantExpression ce && ce.Value is int index)
+            {
+                return index;
+            }
+            var members = new Stack<MemberInfo>();
+            Expression? current = expression;
+
+            // 向下遍历，收集 MemberInfo
+            while (current is MemberExpression memberExpr)
+            {
+                members.Push(memberExpr.Member);
+                current = memberExpr.Expression;
+            }
+            object? value;
+
+            if (current is ConstantExpression constExpr)
+            {
+                value = constExpr.Value;
+            }
+            else if (current is null)
+            {
+                value = null;
+            }
+            else
+            {
+                throw new LightOrmException($"数组索引表达式必须以常量或者Null结尾，但得到: {current?.GetType().Name}: {current}");
+            }
+
+            value = GetValue(members, value);
+
+            // 4. 转为 int
+            return value switch
+            {
+                int i => i,
+                long l when l >= int.MinValue && l <= int.MaxValue => (int)l,
+                short s => s,
+                byte b => b,
+                _ => throw new LightOrmException($"索引值必须是整数类型，实际类型: {value?.GetType()}")
+            };
+        }
     }
 
     Expression? VisitConditional(ConditionalExpression exp)
@@ -241,10 +288,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(arg);
-                //if (member.Name != lastResolvedColumnName || UseAs)
-                //{
-                //}
-                Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
+                if (UseAs)
+                    Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
             }
             else if (Options.SqlType == SqlPartial.Insert)
             {
@@ -282,7 +327,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var alias = Context.GetTable(exp).Alias;
             Sql.Append($"{alias}.*");
-            //UseAs = false;
+            UseAs = false;
             //foreach (var item in alias.Columns)
             //{
             //    var prop = Expression.Property(exp, item.PropertyName);
@@ -342,10 +387,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (Options.SqlType == SqlPartial.Select)
             {
                 Visit(memberAssign.Expression);
-                //if (lastResolvedColumnName != memberAssign.Member.Name || UseAs)
-                //{
-                //}
-                Sql.Append($" AS {Database.AttachEmphasis(memberAssign.Member.Name)}");
+
+                if (UseAs)
+                {
+                    Sql.Append(AS_LITERAL);
+                }
+                Sql.AppendEmphasis(memberAssign.Member.Name, Database);
+
                 if (i + 1 < exp.Bindings.Count)
                 {
                     Sql.Append(", ");
@@ -565,6 +613,16 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         return compilerVar;
     }
 
+    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar)
+    {
+        while (memberInfos.Count > 0)
+        {
+            var item = memberInfos.Pop();
+            compilerVar = GetValue(item, compilerVar);
+        }
+        return compilerVar;
+    }
+
     /// <summary>
     /// 获取值
     /// </summary>
@@ -593,20 +651,18 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     /// <returns></returns>
     public static object? GetValue(MemberInfo memberInfo, object? obj)
     {
-        if (obj == null)
+        return memberInfo switch
         {
-            return null;
-        }
-        if (memberInfo.MemberType == MemberTypes.Property)
-        {
-            var propertyInfo = memberInfo as PropertyInfo;
-            return propertyInfo!.GetValue(obj);
-        }
-        else if (memberInfo.MemberType == MemberTypes.Field)
-        {
-            var fieldInfo = memberInfo as FieldInfo;
-            return fieldInfo!.GetValue(obj);
-        }
-        return new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.");
+            PropertyInfo prop => prop.GetValue(obj),
+            FieldInfo field => field.GetValue(obj),
+            //PropertyInfo prop when obj is not null => prop.GetValue(obj),
+            //PropertyInfo staticProp when obj is null => staticProp.GetValue(null),
+            //FieldInfo field when obj is not null => field.GetValue(obj),
+            //FieldInfo staticField when obj is null => staticField.GetValue(null),
+            _ => throw new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.")
+        };
     }
+
+
+
 }

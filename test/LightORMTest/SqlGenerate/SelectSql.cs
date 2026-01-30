@@ -522,15 +522,21 @@ public partial class SelectSql : TestBase
             .ToSql();
         Console.WriteLine(sql);
     }
-
+    static int ArrIndex = 10;
     [TestMethod]
     public void TestArrayAccess()
     {
         int[] arr = [10];
+        int? i = GetIndex();
+        var ii = new { index = 5 };
         var sql = Db.Select<User>()
-            .Where(u => u.Age == arr[0])
+            .Where(u => u.Age == arr[i.Value])
             .ToSql();
         Console.WriteLine(sql);
+        int GetIndex()
+        {
+            return 3;
+        }
     }
 
     [TestMethod]

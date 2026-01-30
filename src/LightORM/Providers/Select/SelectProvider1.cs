@@ -53,13 +53,13 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         return this.GroupByHandle<TGroup, T1>(exp);
     }
 
-    public IExpSelect<T1> OrderBy(Expression<Func<T1, object>> exp)
+    public IExpSelect<T1> OrderBy<TOrder>(Expression<Func<T1, TOrder>> exp)
     {
         this.OrderByHandle(exp, true);
         return this;
     }
 
-    public IExpSelect<T1> OrderByDesc(Expression<Func<T1, object>> exp)
+    public IExpSelect<T1> OrderByDesc<TOrder>(Expression<Func<T1, TOrder>> exp)
     {
         this.OrderByHandle(exp, false);
         return this;

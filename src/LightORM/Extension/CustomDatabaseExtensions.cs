@@ -1,4 +1,6 @@
-﻿namespace LightORM.Extension;
+﻿using System.Text;
+
+namespace LightORM.Extension;
 
 internal static class CustomDatabaseExtensions
 {
@@ -11,6 +13,25 @@ internal static class CustomDatabaseExtensions
             return database.Emphasis.Insert(1, name);
         }
         return name;
+    }
+
+    public static StringBuilder AppendEmphasis(this StringBuilder sql, string name, ICustomDatabase database)
+    {
+        if (database.Emphasis.Length != 2)
+        {
+            throw new LightOrmException("Emphasis must be exactly 2 characters, e.g., \"[]\" or \"``\".");
+        }
+        if (database.UseIdentifierQuote || database.IsKeyWord(name))
+        {
+            sql.Append(database.Emphasis[0]);
+            sql.Append(name);
+            sql.Append(database.Emphasis[1]);
+        }
+        else
+        {
+            sql.Append(name);
+        }
+        return sql;
     }
 
     public static ICustomDatabase GetDbCustom(this DbBaseType type)
