@@ -140,6 +140,7 @@ internal static partial class TableContext
             if (!entityInfo.IsAnonymousType)
             {
                 entityInfo.TargetDatabase = lightTableAttribute?.DatabaseKey;
+                entityInfo.Schema = lightTableAttribute?.Schema;
                 var descriptionAttribute = type.GetAttribute<DescriptionAttribute>();
                 if (descriptionAttribute != null)
                 {

@@ -56,7 +56,31 @@ public class LightOrmAop : AdoInterceptorBase
 {
     public override void AfterExecute(SqlExecuteContext context)
     {
-        Debug.WriteLine($"{context.TraceId} {Environment.NewLine}{context.Sql} {Environment.NewLine}耗时:{context.Elapsed}");
+        //Debug.WriteLine($"{context.TraceId} {Environment.NewLine}{context.Sql} {Environment.NewLine}耗时:{context.Elapsed}");
+
+        Debug.WriteLine($"""
+
+            {context.TraceId}
+            SQL: 
+            {context.Sql}
+            ===============
+            参数:
+            {string.Join($"  {Environment.NewLine}", DisplayParameter(context.Parameter))}
+
+            耗时:{context.Elapsed}
+
+            """);
+
+        IEnumerable<string> DisplayParameter(object? p)
+        {
+            if (p is Dictionary<string, object> dic)
+            {
+                foreach (var item in dic)
+                {
+                    yield return $"{item.Key} - {item.Value}";
+                }
+            }
+        }
     }
 
     public override void BeforeExecute(SqlExecuteContext context)

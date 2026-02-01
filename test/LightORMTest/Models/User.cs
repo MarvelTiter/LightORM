@@ -15,7 +15,7 @@ public class User
     /// <summary>
     /// 自增ID
     /// </summary>
-    [LightColumn(Name = "ID", PrimaryKey = true, Comment = "自增ID")]
+    [LightColumn(Name = "ID", PrimaryKey = true, Comment = "自增ID", AutoIncrement = true)]
     public int Id { get; set; }
     [LightColumn(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
     public string UserId { get; set; }

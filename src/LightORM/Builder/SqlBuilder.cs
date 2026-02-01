@@ -118,6 +118,8 @@ internal abstract record SqlBuilder : ISqlBuilder
         return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {ti.Alias}" : "")}";
     }
 
+    
+
     //TODO Oracle?
     protected static string NpTableName(ICustomDatabase database, TableInfo table)
     {

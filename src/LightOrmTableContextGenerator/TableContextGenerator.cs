@@ -86,8 +86,9 @@ public class TableContextGenerator : IIncrementalGenerator
 
         // public string? TargetDatabase => null;
         lightTable.GetNamedValue("DatabaseKey", out var dbKey);
+        lightTable.GetNamedValue("Schema", out var schema);
         members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("TargetDatabase").Lambda($"{(dbKey == null ? "null" : $"\"{dbKey}\"")}"));
-
+        members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("Schema").Lambda($"{(dbKey == null ? "null": $"\"{schema}\"")}"));
         // public string? Description => null;
         var desValue = "null";
         if (des?.GetNamedValue("Description", out var description) == true)

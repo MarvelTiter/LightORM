@@ -99,7 +99,7 @@ public class UpdateSql : TestBase
         var sql = Db.Update(p)
             .Set(s => s.PriInfo.Age, 100)
             .Where(s => s.PriInfo.Address == "123")
-            .ToSql();
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //    UPDATE `SMS_LOG` SET
@@ -146,7 +146,8 @@ public class UpdateSql : TestBase
         var sql = Db.Update([.. datas])
             .UpdateColumns(u => u.UserName)
             .Set(u => u.Sign, sign)
-            .ToSql();
+            .Where(u => u.PriInfo.Age > 100)
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         List<UserFlat> GetList()
         {

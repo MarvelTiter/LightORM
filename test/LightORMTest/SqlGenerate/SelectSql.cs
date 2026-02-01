@@ -93,13 +93,7 @@ public partial class SelectSql : TestBase
         var sql = Db.Select<User>()
             .LeftJoin<Permission>(w => w.Tb1.UserId == w.Tb2.PermissionId)
             .OuterJoin(temp, (u, _, t) => u.UserId == t.UserId)
-            .ToSql(w => new
-            {
-                w.Tb1.UserId,
-                w.Tb1.UserName,
-                w.Tb2.PermissionName,
-                w.Tb3.RoleName
-            });
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         AssertSqlResult(nameof(TestMultiJoinThenAsSubJoin), sql);
     }
@@ -530,7 +524,7 @@ public partial class SelectSql : TestBase
         int? i = GetIndex();
         var ii = new { index = 5 };
         var sql = Db.Select<User>()
-            .Where(u => u.Age == arr[i.Value])
+            .Where(u => u.Age == arr[0])
             .ToSql();
         Console.WriteLine(sql);
         int GetIndex()

@@ -17,7 +17,7 @@ namespace LightORM.Providers
             sqlBuilder.TargetObject = entity;
         }
 
-        public UpdateProvider(ISqlExecutor executor, IEnumerable<T> entities)
+        public UpdateProvider(ISqlExecutor executor, T[] entities)
         {
             this.executor = executor;
             sqlBuilder = new UpdateBuilder<T>();
@@ -198,17 +198,41 @@ namespace LightORM.Providers
             }
             return this;
         }
-        public string ToSql() => sqlBuilder.ToSqlString(Database);
+        public string ToSql()
+        {
+            var sql = sqlBuilder.ToSqlString(Database);
+            if (sqlBuilder.IsBatchUpdate)
+            {
+                return string.Join($";{Environment.NewLine}", sqlBuilder.BatchInfos?.Select(b => b.Sql) ?? []);
+            }
+            return sql;
+        }
 
         public string ToSqlWithParameters()
         {
-            var sql = sqlBuilder.ToSqlString(Database);
+            var sql = ToSql();
             StringBuilder sb = new(sql);
             sb.AppendLine();
             sb.AppendLine("参数列表: ");
             foreach (var item in sqlBuilder.DbParameters)
             {
                 sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            if (sqlBuilder.IsBatchUpdate)
+            {
+                foreach (var batch in sqlBuilder.BatchInfos ?? [])
+                {
+                    sb.AppendLine($"批量更新，批次：{batch.Index}");
+                    foreach (var item in batch.Parameters)
+                    {
+                        sb.AppendLine("----行数据");
+                        item.ForEach(row =>
+                        {
+                            if (row.isStaticValue) return;
+                            sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                        });
+                    }
+                }
             }
             return sb.ToString();
         }

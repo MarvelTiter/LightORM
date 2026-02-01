@@ -19,12 +19,13 @@ internal static class DbParameterReader
         Certificate cer = new(connectionString, commandText, paramaterType);
         return cacheReaders.GetOrAdd($"DbParameterReader_{cer}", _ =>
         {
-            return (cmd, obj) =>
-            {
-                var reader = CreateReader(cmd.CommandText, paramaterType);
-                reader.Invoke(cmd, obj);
-                SetDbType(cmd);
-            };
+            //return (cmd, obj) =>
+            //{
+            //    var reader = CreateReader(cmd.CommandText, paramaterType);
+            //    reader.Invoke(cmd, obj);
+            //    SetDbType(cmd);
+            //};
+            return CreateReader(commandText, paramaterType);
         });
     }
 
@@ -47,15 +48,27 @@ internal static class DbParameterReader
         return func.Invoke(value);
     }
 
-    private static void SetDbType(DbCommand cmd)
-    {
-        foreach (IDbDataParameter p in cmd.Parameters)
-        {
-            var dbType = GetDbType(p.Value!);
-            if (dbType.HasValue)
-                p.DbType = dbType.Value;
-        }
-    }
+    //private static void SetDbType(DbCommand cmd)
+    //{
+    //    foreach (IDbDataParameter p in cmd.Parameters)
+    //    {
+    //        var dbType = GetDbType(p.Value!);
+    //        if (dbType.HasValue)
+    //            p.DbType = dbType.Value;
+    //    }
+    //}
+
+    //private static object? ConvertEnumValue(object? value)
+    //{
+    //    if (value == null) return null;
+    //    var t = value.GetType();
+    //    var ut = Nullable.GetUnderlyingType(t) ?? t;
+    //    if (ut.IsEnum)
+    //    {
+    //        return Convert.ChangeType(value, Enum.GetUnderlyingType(ut));
+    //    }
+    //    return value;
+    //}
 
     private static void ReadDictionary(DbCommand cmd, object obj)
     {
@@ -63,10 +76,11 @@ internal static class DbParameterReader
         foreach (var item in dic)
         {
             var p = cmd.CreateParameter(item.Key);
-            var dbType = GetDbType(item.Value);
+            var value = item.Value;
+            var dbType = GetDbType(ref value);
             if (dbType.HasValue)
                 p.DbType = dbType.Value;
-            p.Value = item.Value;
+            p.Value = value;
             cmd.Parameters.Add(p);
         }
     }
@@ -174,7 +188,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static DbType? GetDbType(object value)
+    private static DbType? GetDbType(ref object? value)
     {
         if (value == null)
         {
@@ -185,6 +199,7 @@ internal static class DbParameterReader
         if (t.IsEnum)
         {
             t = Enum.GetUnderlyingType(t);
+            value = Convert.ChangeType(value, t);
         }
         if (typeMapDbType.TryGetValue(t, out var v))
             return v;

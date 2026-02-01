@@ -17,7 +17,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         sqlBuilder.TargetObject = entity;
     }
 
-    public InsertProvider(ISqlExecutor executor, IEnumerable<T> entities)
+    public InsertProvider(ISqlExecutor executor, T[] entities)
     {
         this.executor = executor;
         sqlBuilder = new InsertBuilder<T>();
@@ -131,17 +131,41 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         return this;
     }
 
-    public string ToSql() => sqlBuilder.ToSqlString(Database);
+    public string ToSql()
+    {
+        var sql = sqlBuilder.ToSqlString(Database);
+        if (sqlBuilder.IsBatchInsert)
+        {
+            return string.Join($";{Environment.NewLine}", sqlBuilder.BatchInfos?.Select(b => b.Sql) ?? []);
+        }
+        return sql;
+    }
 
     public string ToSqlWithParameters()
     {
-        var sql = sqlBuilder.ToSqlString(Database);
+        var sql = ToSql();
         StringBuilder sb = new(sql);
         sb.AppendLine();
         sb.AppendLine("参数列表: ");
         foreach (var item in sqlBuilder.DbParameters)
         {
             sb.AppendLine($"{item.Key} - {item.Value}");
+        }
+        if (sqlBuilder.IsBatchInsert)
+        {
+            foreach (var batch in sqlBuilder.BatchInfos ?? [])
+            {
+                sb.AppendLine($"批量插入，批次：{batch.Index}");
+                foreach (var item in batch.Parameters)
+                {
+                    sb.AppendLine("----行数据");
+                    item.ForEach(row =>
+                    {
+                        if (row.isStaticValue) return;
+                        sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                    });
+                }
+            }
         }
         return sb.ToString();
     }

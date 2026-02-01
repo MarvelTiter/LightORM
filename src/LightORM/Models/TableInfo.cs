@@ -24,6 +24,7 @@ public class TableInfo
     }
     private readonly string? overriddenTableName;
     public string TableName => overriddenTableName ?? TableEntityInfo.TableName;
+    public string? Schema => TableEntityInfo.Schema;
     /// <summary>
     /// 表类型
     /// </summary>

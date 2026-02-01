@@ -20,16 +20,16 @@ internal abstract class ExpressionCoreSqlBase
     {
         if (entities.Length == 1)
         {
-            return CreateInsertProvider<T>(entities[0]);
+            return CreateInsertProvider(entities[0]);
         }
         else
         {
-            return CreateInsertProvider<T>(entities);
+            return CreateInsertProvider(entities);
         }
     }
 
     InsertProvider<T> CreateInsertProvider<T>(T? entity = default) => new(Ado, entity);
-    InsertProvider<T> CreateInsertProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    InsertProvider<T> CreateInsertProvider<T>(T[] entities) => new(Ado, entities);
 
     #endregion
 
@@ -41,16 +41,16 @@ internal abstract class ExpressionCoreSqlBase
     {
         if (entities.Length == 1)
         {
-            return CreateUpdateProvider<T>(entities[0]);
+            return CreateUpdateProvider(entities[0]);
         }
         else
         {
-            return CreateUpdateProvider<T>(entities);
+            return CreateUpdateProvider(entities);
         }
     }
 
     UpdateProvider<T> CreateUpdateProvider<T>(T? entity = default) => new(Ado, entity);
-    UpdateProvider<T> CreateUpdateProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    UpdateProvider<T> CreateUpdateProvider<T>(T[] entities) => new(Ado, entities);
 
     #endregion
 
@@ -62,16 +62,16 @@ internal abstract class ExpressionCoreSqlBase
     {
         if (entities.Length == 1)
         {
-            return CreateDeleteProvider<T>(entities[0]);
+            return CreateDeleteProvider(entities[0]);
         }
         else
         {
-            return CreateDeleteProvider<T>(entities);
+            return CreateDeleteProvider(entities);
         }
     }
 
     DeleteProvider<T> CreateDeleteProvider<T>(T? entity = default) => new(Ado, entity);
-    DeleteProvider<T> CreateDeleteProvider<T>(IEnumerable<T> entities) => new(Ado, entities);
+    DeleteProvider<T> CreateDeleteProvider<T>(T[] entities) => new(Ado, entities);
 
     #endregion
 

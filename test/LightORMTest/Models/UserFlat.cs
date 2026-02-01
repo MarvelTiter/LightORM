@@ -20,6 +20,9 @@ public class UserFlat
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; } = [];
 
+    [LightColumn(Name = "VER", Version = true)]
+    public int Version { get; set; }
+
     [LightFlat]
     public PrivateInfo? PriInfo { get; set; }
 }

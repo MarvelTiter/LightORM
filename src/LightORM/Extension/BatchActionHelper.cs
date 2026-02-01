@@ -24,13 +24,13 @@
             return size;
         }
         public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns
-            , List<T> datas
+            , T[] datas
             , int limit = 2000
             , Dictionary<string, object>? additionalParameters = null)
         {
             var list = new List<BatchSqlInfo>();
             var verions = columns.Count(c => c.IsVersionColumn);
-            var size = CalcBatchSize(columns.Length + verions, limit, datas.Count, out var rows);
+            var size = CalcBatchSize(columns.Length + verions, limit, datas.Length, out var rows);
             for (var i = 0; i < size; i++)
             {
                 var rowIndex = 0;
@@ -49,7 +49,7 @@
                     pList.Add(dbParameters);
                 }
 
-                list.Add(new BatchSqlInfo(pList));
+                list.Add(new BatchSqlInfo(pList, i + 1));
             }
             return list;
 

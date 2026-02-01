@@ -2,14 +2,16 @@
 using System.Text;
 
 namespace LightORM.Builder;
+
 internal record DeleteBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
-    public IEnumerable<T> TargetObjects { get; set; } = [];
+    public T[] TargetObjects { get; set; } = [];
     private bool batchDone = false;
     public bool IsBatchDelete { get; set; }
-    public bool ForceDelete { get; set; }
+    public bool FullDelete { get; set; }
     public bool Truncate { get; set; }
+    HashSet<string> Members { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -112,6 +114,7 @@ internal record DeleteBuilder<T> : SqlBuilder
             else
             {
                 Where.Add(result.SqlString!);
+                Members.AddRange(result.Members);
             }
         }
     }
@@ -124,22 +127,69 @@ internal record DeleteBuilder<T> : SqlBuilder
         ResolveExpressions(database);
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
-
-        BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
+        if (columns.Length == 0 && Where.Count == 0)
+        {
+            throw new LightOrmException("没有主键并且未设置Where条件");
+        }
+        BatchInfos = columns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
+        //var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
         foreach (var batch in BatchInfos)
         {
-            StringBuilder sb = new();
-            sb.AppendLine(delete);
-            List<string> autoWhereList = [];
-            foreach (var p in batch.Parameters)
+            StringBuilder sb = new("DELETE FROM ");
+            //sb.AppendLine(GetTableName(database, MainTable, false));
+            sb.AppendTableName(database, MainTable, false).AppendLine();
+            sb.Append("WHERE ");
+            if (TargetObjects.Length == 0)
             {
-                var where = string.Join(" AND ", p.Select(c => $"{c.ColumnName} = {c.ParameterName}"));
-                autoWhereList.Add($"({where})");
+                sb.Append("1=0");
+                batch.Sql = sb.ToString();
+                break;
             }
-            var autoWhere = string.Join(" OR ", autoWhereList);
-            Where.Add(autoWhere);
-            sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+            sb.Append('(');
+            for (int rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
+            {
+                List<SimpleColumn>? row = batch.Parameters[rowIndex];
+                if (columns.Length > 1)
+                {
+                    sb.Append('(');
+                    for (var i = 0; i < row.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(" AND ");
+                        }
+                        sb.AppendEmphasis(row[i].ColumnName, database);
+                        sb.Append(" = ");
+                        sb.WithPrefix(row[i].ParameterName, database);
+                    }
+                    sb.Append(')');
+                    if (rowIndex < batch.Parameters.Count - 1)
+                        sb.Append(" OR ");
+                }
+                else
+                {
+                    if (rowIndex == 0)
+                    {
+                        // 这里直接访问索引0是安全的，因为进入到else分支的话，说明row.Count == 1, 而row.Count是跟前面的columns的数量是一致的
+                        sb.AppendEmphasis(row[0].ColumnName, database);
+                        sb.Append(" IN (");
+
+                    }
+                    sb.WithPrefix(row[0].ParameterName, database);
+                    if (rowIndex < batch.Parameters.Count - 1)
+                        sb.Append(',');
+                    else
+                        sb.Append(')');
+                }
+            }
+            sb.Append(')');
+
+            foreach (var w in Where)
+            {
+                sb.AppendLine();
+                sb.Append("AND ");
+                sb.Append(w);
+            }
             HandleSqlParameters(sb, database);
             batch.Sql = sb.ToString();
         }
@@ -150,10 +200,12 @@ internal record DeleteBuilder<T> : SqlBuilder
         if (IsBatchDelete)
         {
             CreateBatchDeleteSql(database);
-            return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
+            // ToSqlString由内部或者测试项目调用，批量情况下查看SQL使用BatchInfos属性
+            return string.Empty;
+            //return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
         ResolveExpressions(database);
-        if (ForceDelete)
+        if (FullDelete)
         {
             if (Truncate)
             {
@@ -166,30 +218,62 @@ internal record DeleteBuilder<T> : SqlBuilder
         }
         else
         {
-            // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件
-            if (Where.Count == 0)
+            if (Where.Count == 0 && TargetObject is null)
             {
-                if (TargetObject is null) LightOrmException.Throw("Where Condition is null and not provider a entity value");
-                var primary = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey).ToArray();
-                if (primary.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
-                var wheres = primary.Select(c =>
-                 {
-                     DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
-                     return $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.ColumnName)}";
-                 });
-                Where.AddRange(wheres);
+                throw new LightOrmException("Where Condition is null and not provider a entity value");
             }
             StringBuilder sql;
             sql = new("DELETE FROM ");
-            sql.AppendLine(GetTableName(database, MainTable, false));
+            //sql.AppendLine(GetTableName(database, MainTable, false));
+            sql.AppendTableName(database, MainTable, false).AppendLine();
+            // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件
+            bool first = true;
+            if (TargetObject is not null)
+            {
+                var keyedColumns = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey || f.IsVersionColumn).ToArray();
+                if (keyedColumns.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+                //var wheres = keyedColumns.Select(c =>
+                //{
+                //    DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
+                //    return $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.ColumnName)}";
+                //});
+                //Where.AddRange(wheres);
+                sql.Append("WHERE ");
+                foreach (var col in keyedColumns)
+                {
+                    if (Members.Contains(col.PropertyName))
+                    {
+                        continue;
+                    }
+                    DbParameters.Add(col.PropertyName, col.GetValue(TargetObject)!);
+                    if (!first)
+                    {
+                        sql.Append(" AND ");
+                    }
+                    first = false;
+                    sql.Append('(');
+                    sql.AppendEmphasis(col.ColumnName, database);
+                    sql.Append(" = ");
+                    sql.WithPrefix(col.PropertyName, database);
+                    sql.Append(')');
+                }
+            }
+
             if (Where.Count > 0)
             {
-                sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+                if (first)
+                {
+                    sql.Append("WHERE ");
+                }
+                else
+                {
+                    sql.Append(" AND ");
+                }
+                //sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+                sql.AppendJoined(Where, " AND ");
             }
             HandleSqlParameters(sql, database);
             return sql.Trim();
         }
     }
-
-
 }
