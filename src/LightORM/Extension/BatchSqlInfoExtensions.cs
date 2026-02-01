@@ -10,6 +10,7 @@
                 foreach (var col in row)
                 {
                     if (col.Value == null) continue;
+                    if (col.isStaticValue) continue;
                     values.Add(col.ParameterName, col.Value);
                 }
             }

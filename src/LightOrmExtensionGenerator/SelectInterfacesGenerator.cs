@@ -77,10 +77,8 @@ namespace LightOrmExtensionGenerator
 
 public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, T1>
 {
-    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp);
-    IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
-
-    IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<{{argsStr}}, object>> exp);
+    IExpSelect<{{argsStr}}> OrderBy<TOrder>(Expression<Func<{{argsStr}}, TOrder>> exp);
+    IExpSelect<{{argsStr}}> OrderByDesc<TOrder>(Expression<Func<{{argsStr}}, TOrder>> exp);
 
     IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<{{argsStr}}, TGroup>> exp);
 
@@ -123,7 +121,8 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
 
     #region TypeSet
 {{typeSetJoin}}
-    IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);
+    IExpSelect<{{argsStr}}> OrderBy<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp);
+    IExpSelect<{{argsStr}}> OrderByDesc<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp);
     IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp);
     IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp);

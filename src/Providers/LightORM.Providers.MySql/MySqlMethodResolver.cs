@@ -67,23 +67,8 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
 
     public override void Contains(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
-        if (methodCall.Object != null && (methodCall.Object.Type.FullName?.StartsWith("System.Collections.Generic") ?? false))
-        {
-            resolver.Visit(methodCall.Arguments[0]);
-            resolver.Sql.Append(resolver.IsNot ? " NOT IN " : " IN ");
-            resolver.Sql.Append('(');
-            resolver.Visit(methodCall.Object);
-            resolver.Sql.Append(')');
-        }
-        else if (methodCall.Method.DeclaringType == typeof(Enumerable))
-        {
-            resolver.Visit(methodCall.Arguments[1]);
-            resolver.Sql.Append(resolver.IsNot ? " NOT IN " : " IN ");
-            resolver.Sql.Append('(');
-            resolver.Visit(methodCall.Arguments[0]);
-            resolver.Sql.Append(')');
-        }
-        else
+
+        if (methodCall.Method.DeclaringType == typeof(string))
         {
             // 字符串
             resolver.Visit(methodCall.Object);
@@ -91,6 +76,26 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
             resolver.Sql.Append("CONCAT('%', ");
             resolver.Visit(methodCall.Arguments[0]);
             resolver.Sql.Append(", '%')");
+        }
+        else
+        {
+            if (methodCall.Method.IsStatic)
+            {
+                resolver.Visit(methodCall.Arguments[1]);
+                resolver.Sql.Append(resolver.IsNot ? " NOT IN " : " IN ");
+                resolver.Sql.Append('(');
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append(')');
+
+            }
+            else
+            {
+                resolver.Visit(methodCall.Arguments[0]);
+                resolver.Sql.Append(resolver.IsNot ? " NOT IN " : " IN ");
+                resolver.Sql.Append('(');
+                resolver.Visit(methodCall.Object);
+                resolver.Sql.Append(')');
+            }
         }
     }
 

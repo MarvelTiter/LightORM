@@ -38,6 +38,13 @@ public class InsertSql : TestBase
     }
 
     [TestMethod]
+    public void Insert_Flat_Entity_Array()
+    {
+        var sql = Db.Insert([new UserFlat(), new UserFlat(), new UserFlat(), new UserFlat()]).ToSql();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
     public void InsertEntity_AutoIncrement()
     {
         int hour = DateTime.Now.Hour;

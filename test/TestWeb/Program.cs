@@ -9,12 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
+builder.Services.AddScoped<Ctx>();
 builder.Services.AddLightOrm(option =>
 {
     var path = Path.GetFullPath("../test.db");
     //option.SetDatabase(DbBaseType.Sqlite, "DataSource=" + path, SQLiteFactory.Instance);
     option.UseSqlite("DataSource=" + path);
+    option.UseInterceptor<SqlTrace>();
     option.UseOracle(option =>
     {
         option.DbKey = "Oracle";

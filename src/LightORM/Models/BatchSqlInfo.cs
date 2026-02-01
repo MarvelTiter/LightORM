@@ -21,10 +21,12 @@
     internal record BatchParameters(ITableColumnInfo Column, List<SimpleColumn> Parameters);
     internal class BatchSqlInfo
     {
-        public BatchSqlInfo(List<List<SimpleColumn>> parameters)
+        public BatchSqlInfo(List<List<SimpleColumn>> parameters, int index)
         {
             Parameters = parameters;
+            Index = index;
         }
+        public int Index { get; set; }
         public string? Sql { get; set; }
         public List<List<SimpleColumn>> Parameters { get; set; }
     }

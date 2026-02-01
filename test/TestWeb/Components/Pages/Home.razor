@@ -1,7 +1,16 @@
 ﻿@page "/"
 @inject Services1 S1
+@inject Ctx ctx
 <PageTitle>Home</PageTitle>
-
+<button @onclick="OnClick">Scoped SqlTrace</button>
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@code {
+    private async Task OnClick()
+    {
+        ctx.Id = 10;
+        await S1.Query();
+    }
+}

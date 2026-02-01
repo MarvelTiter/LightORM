@@ -216,13 +216,13 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(exp);
     }
 
-    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<{{argsStr}}, object>> exp)
+    public IExpSelect<{{argsStr}}> OrderBy<TOrder>(Expression<Func<{{argsStr}}, TOrder>> exp)
     {
         this.OrderByHandle(exp, true);
         return this;
     }
 
-    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<{{argsStr}}, object>> exp)
+    public IExpSelect<{{argsStr}}> OrderByDesc<TOrder>(Expression<Func<{{argsStr}}, TOrder>> exp)
     {
         this.OrderByHandle(exp, false);
         return this;
@@ -302,14 +302,14 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this.GroupByHandle<TGroup, TypeSet<{{argsStr}}>>(flatExp);
     }
 
-    public IExpSelect<{{argsStr}}> OrderBy(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IExpSelect<{{argsStr}}> OrderBy<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.OrderByHandle(flatExp, true);
         return this;
     }
 
-    public IExpSelect<{{argsStr}}> OrderByDesc(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IExpSelect<{{argsStr}}> OrderByDesc<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.OrderByHandle(flatExp, false);

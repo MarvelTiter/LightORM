@@ -93,13 +93,7 @@ public partial class SelectSql : TestBase
         var sql = Db.Select<User>()
             .LeftJoin<Permission>(w => w.Tb1.UserId == w.Tb2.PermissionId)
             .OuterJoin(temp, (u, _, t) => u.UserId == t.UserId)
-            .ToSql(w => new
-            {
-                w.Tb1.UserId,
-                w.Tb1.UserName,
-                w.Tb2.PermissionName,
-                w.Tb3.RoleName
-            });
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         AssertSqlResult(nameof(TestMultiJoinThenAsSubJoin), sql);
     }
@@ -522,15 +516,21 @@ public partial class SelectSql : TestBase
             .ToSql();
         Console.WriteLine(sql);
     }
-
+    static int ArrIndex = 10;
     [TestMethod]
     public void TestArrayAccess()
     {
         int[] arr = [10];
+        int? i = GetIndex();
+        var ii = new { index = 5 };
         var sql = Db.Select<User>()
             .Where(u => u.Age == arr[0])
             .ToSql();
         Console.WriteLine(sql);
+        int GetIndex()
+        {
+            return 3;
+        }
     }
 
     [TestMethod]

@@ -42,6 +42,7 @@ public class Select : TestBase
             Age = 12,
             IsLock = true,
             Password = "helloworld",
+            Sign = SignType.Svip
         }]);
         await db.Insert<UserRole>().InsertEachAsync([new UserRole()
         {
@@ -97,7 +98,7 @@ public class Select : TestBase
                 .Where(u => u.Age < age)
                 .Count(out var total)
                 .ToListAsync();
-            Assert.IsTrue(total == 2);
+            Assert.AreEqual(2, total);
             Console.WriteLine($"Total: {total}");
             foreach (var item in list)
             {
@@ -128,28 +129,28 @@ public class Select : TestBase
             .Include(u => u.UserRoles)
             .Where(u => u.UserId == "test01")
             .FirstAsync();
-            Assert.IsFalse(result is null);
-            Assert.IsFalse(result.UserRoles is null);
-            Assert.IsTrue(result.UserRoles.Count() == 1);
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.UserRoles);
+            Assert.AreEqual(1, result.UserRoles.Count());
 
             result = await Db.Select<User>()
                 .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Ad")))
                 .Where(u => u.UserId == "test03")
                 .FirstAsync();
 
-            Assert.IsFalse(result is null);
-            Assert.IsFalse(result.UserRoles is null);
-            Assert.IsTrue(result.UserRoles.Count() == 1);
-            Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "Admin");
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.UserRoles);
+            Assert.AreEqual(1, result.UserRoles.Count());
+            Assert.AreEqual("Admin", result.UserRoles.FirstOrDefault()!.RoleId);
 
             result = await Db.Select<User>()
                 .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Su")))
                 .Where(u => u.UserId == "test03")
                 .FirstAsync();
-            Assert.IsFalse(result is null);
-            Assert.IsFalse(result.UserRoles is null);
-            Assert.IsTrue(result.UserRoles.Count() == 1);
-            Assert.IsTrue(result.UserRoles.FirstOrDefault()!.RoleId == "SuperAdmin");
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.UserRoles);
+            Assert.AreEqual(1, result.UserRoles.Count());
+            Assert.AreEqual("SuperAdmin", result.UserRoles.FirstOrDefault()!.RoleId);
         });
     }
 
@@ -159,9 +160,9 @@ public class Select : TestBase
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
             var list = await Db.Select<User>().ToListAsync(u => u.UserName);
-            Assert.IsTrue(list.Count == 4);
-            Assert.IsTrue(list[0] == "Test1");
-            Assert.IsTrue(list[1] == "Test2");
+            Assert.HasCount(4, list);
+            Assert.AreEqual("Test1", list[0]);
+            Assert.AreEqual("Test2", list[1]);
         });
     }
 
@@ -171,9 +172,9 @@ public class Select : TestBase
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
             var list = await Db.Select<User>().ToListAsync(u => u.Age);
-            Assert.IsTrue(list.Count == 4);
-            Assert.IsTrue(list[0] == 11);
-            Assert.IsTrue(list[1] == 9);
+            Assert.HasCount(4, list);
+            Assert.AreEqual(11, list[0]);
+            Assert.AreEqual(9, list[1]);
         });
     }
 
@@ -183,10 +184,10 @@ public class Select : TestBase
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
             var list = await Db.Select<User>().ToListAsync(u => new { u.UserId, u.UserName, u.Age });
-            Assert.IsTrue(list.Count == 4);
-            Assert.IsTrue(list[0].UserId == "test01");
-            Assert.IsTrue(list[0].UserName == "Test1");
-            Assert.IsTrue(list[0].Age == 11);
+            Assert.HasCount(4, list);
+            Assert.AreEqual("test01", list[0].UserId);
+            Assert.AreEqual("Test1", list[0].UserName);
+            Assert.AreEqual(11, list[0].Age);
         });
     }
 
@@ -205,9 +206,76 @@ public class Select : TestBase
                     MaxAge = g.Max(g.Tables.Age),
                     MinAge = g.Min(g.Tables.Age),
                 });
-            Assert.IsTrue(list.Count == 2);
+            Assert.HasCount(2, list);
             Assert.IsTrue(list.Any(r => r.IsLock == true && r.Total == 2 && r.AvgAge == 10.5 && r.MaxAge == 12 && r.MinAge == 9));
             Assert.IsTrue(list.Any(r => r.IsLock == false && r.Total == 2 && r.AvgAge == 9.5 && r.MaxAge == 11 && r.MinAge == 8));
+        });
+    }
+
+
+    class UserDto
+    {
+        public string? UserId { get; set; }
+        public SignType Sign { get; set; }
+    }
+    [TestMethod]
+    public async Task SelectProjection()
+    {
+        await DoSomethingWithTempUserDataAsync(Db, async () =>
+        {
+            var dto = await Db.Select<User>()
+                .Where(u => u.UserId == "test04")
+                .ToListAsync<UserDto>(u => new { u.UserId, u.Sign });
+            Assert.HasCount(1, dto);
+            Assert.AreEqual(SignType.Svip, dto[0].Sign);
+        });
+    }
+
+    [TestMethod]
+    public async Task UpdateTest()
+    {
+        await DoSomethingWithTempUserDataAsync(Db, async () =>
+        {
+            var users = await Db.Select<User>().ToListAsync();
+            var oldValue = users.Sum(u => u.Age);
+            foreach (var item in users)
+            {
+                item.Age *= 2;
+            }
+            await Db.Update([.. users]).UpdateColumns(u => u.Age).Set(u => u.Password, "123").ExecuteAsync();
+            var newUsers = await Db.Select<User>().ToListAsync();
+            var newValue = newUsers.Sum(u => u.Age);
+            Assert.IsTrue(newUsers.All(u => u.Password == "123"));
+            Assert.AreEqual(oldValue * 2, newValue);
+        });
+    }
+
+    [TestMethod]
+    public async Task DeleteTest()
+    {
+        await DoSomethingWithTempUserDataAsync(Db, async () =>
+        {
+            var users = await Db.Select<User>().ToListAsync();
+            var cc = users.Count;
+            var less10 = users.Where(u => u.Age < 10).ToArray();
+            // 批量删除
+            var dc = await Db.Delete(less10).ExecuteAsync();
+            users = await Db.Select<User>().ToListAsync();
+            Assert.HasCount(cc - dc, users);
+            var vip = users.Where(u => u.Sign == SignType.Svip).First();
+
+            dc = await Db.Delete(vip).Where(u => u.Age > 20).ExecuteAsync();
+            Assert.AreEqual(0, dc);
+
+            var id = -1;
+            dc = await Db.Delete(vip).Where(u => u.Id == id).ExecuteAsync();
+            Assert.AreEqual(0, dc);
+
+            dc = await Db.Delete(vip).ExecuteAsync();
+            Assert.AreEqual(1, dc);
+
+            dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync();
+            Assert.AreEqual(1, dc);
         });
     }
 }

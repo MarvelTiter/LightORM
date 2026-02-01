@@ -50,11 +50,12 @@ namespace LightORM.Implements
             var sel = methodCall.GetExpSelectObject();
             if (sel is not null)
             {
-                sel.SqlBuilder.Level = resolver.Level + 1;
+                //sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                resolver.Sql.Append(sql);
+                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+                //resolver.Sql.Append(sql);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -67,12 +68,13 @@ namespace LightORM.Implements
             var sel = methodCall.GetExpSelectObject();
             if (sel is not null)
             {
-                sel.SqlBuilder.Level = resolver.Level + 1;
+                //sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 sel.SqlBuilder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
-                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                resolver.Sql.Append(sql);
+                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+                //resolver.Sql.Append(sql);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -162,11 +164,12 @@ namespace LightORM.Implements
                     sel.HandleResult(methodCall.Arguments[0], "COUNT(DISTINCT {0})");
                 }
 
-                sel.SqlBuilder.Level = resolver.Level + 1;
+                //sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                resolver.Sql.Append(sql);
+                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+                //resolver.Sql.Append(sql);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
                 resolver.Sql.AppendLine(")");
                 return;
             }
@@ -483,7 +486,13 @@ namespace LightORM.Implements
 
         public virtual void Any(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (resolver.NavigateDeep > 0)
+            {
+                resolver.Sql.Clear();
+            }
+            resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
+            resolver.NavigateWhereExpression = methodCall.Arguments[1];
         }
 
         #endregion
@@ -616,11 +625,12 @@ namespace LightORM.Implements
                 //sel.HandleResult(methodCall.Arguments[0], template);
                 action(sel, methodCall.Arguments, template);
 
-                sel.SqlBuilder.Level = resolver.Level + 1;
+                //sel.SqlBuilder.Level = resolver.Level + 1;
                 sel.SqlBuilder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                resolver.Sql.Append(sql);
+                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
+                //resolver.Sql.Append(sql);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
                 resolver.Sql.Append(')');
                 return true;
             }

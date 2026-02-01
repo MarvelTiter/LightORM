@@ -11,7 +11,7 @@ internal struct UpdateValue
 internal record UpdateBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
-    public IEnumerable<T> TargetObjects { get; set; } = [];
+    public T[] TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     HashSet<string> IgnoreMembers { get; set; } = [];
     HashSet<string> Members { get; set; } = [];
@@ -34,13 +34,13 @@ internal record UpdateBuilder<T> : SqlBuilder
             }
             else if (expInfo.AdditionalParameter is UpdateValue v)
             {
-                var member = result.Members!.First();
                 if (v.Value is null)
                 {
-                    SetNullMembers.Add(member);
+                    SetNullMembers.AddRange(result.Members!);
                 }
                 else
                 {
+                    var member = result.Members!.First();
                     Members.Add(member);
                     DbParameters.Add(member, v.Value);
                 }
@@ -95,51 +95,96 @@ internal record UpdateBuilder<T> : SqlBuilder
                    })
                    .ToArray();
 
-        BatchInfos = columns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count, DbParameters);
-        var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";
+        BatchInfos = columns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count, DbParameters);
+        //var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";
         //var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
         {
             // 每一个BatchSqInfo就是每批次更新的数据量
-            StringBuilder sb = new(update);
-            foreach (var col in columns)
+            StringBuilder sb = new("UPDATE ");
+            //sb.Append(GetTableName(database, MainTable, false));
+            sb.AppendTableName(database, MainTable, false);
+            sb.Append(" SET ");
+            for (int i = 0; i < columns.Length; i++)
             {
+                ITableColumnInfo? col = columns[i];
                 if (col.IsPrimaryKey) continue;
-                sb.Append($"\n{database.AttachEmphasis(col.ColumnName)} = CASE ");
-
+                //sb.Append($"\n{database.AttachEmphasis(col.ColumnName)} = CASE ");
+                sb.AppendEmphasis(col.ColumnName, database);
+                sb.AppendLine(" = CASE");
                 // 每一条记录的参数数量
-                foreach (var rowDatas in batch.Parameters)
+                for (var rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
                 {
+                    var rowDatas = batch.Parameters[rowIndex];
                     var currentCol = rowDatas.First(r => r.PropName == col.PropertyName);
                     if (currentCol.IsVersion)
                     {
                         var newVersion = VersionPlus(currentCol.Value);
-                        var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_new", Value = newVersion };
-                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {GetValueExpression(newCol)} ");
-                        //(newCol.Value == null ? "NULL" : database.AttachPrefix(newCol.ParameterName))
+                        var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_n", Value = newVersion, IsVersion = false };
                         rowDatas.Add(newCol);
+                        currentCol = newCol;
                     }
-                    else
+                    bool first = true;
+                    sb.Append("  WHEN ");
+                    foreach (var item in rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion))
                     {
-                        sb.Append($"WHEN {string.Join(" AND ", rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion).Select(r => $"{database.AttachEmphasis(r.ColumnName)} = {database.AttachPrefix(r.ParameterName)}"))} THEN {GetValueExpression(currentCol)} ");
-                        // (currentCol.Value == null ? "NULL" : database.AttachPrefix(currentCol.ParameterName))
+                        if (!first) sb.Append(" AND ");
+                        first = false;
+                        sb.AppendEmphasis(item.ColumnName, database);
+                        sb.Append(" = ");
+                        sb.WithPrefix(item.ParameterName, database);
                     }
+                    sb.Append(" THEN ");
+                    sb.AppendLine(GetValueExpression(currentCol));
+                    //if (currentCol.IsVersion)
+                    //{
+                    //    rowDatas.Add(currentCol);
+                    //}
                 }
-                sb.Append("END,");
+
+                sb.Append("END, ");
             }
 
-            sb.RemoveLast(1);
+            sb.RemoveLast(2);
 
-            var pValues = batch.Parameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey));
-
-            foreach (var item in pValues.GroupBy(c => c.ColumnName))
+            var pValues = batch.Parameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey | r.IsVersion)).GroupBy(c => c.ColumnName).ToList();
+            if (pValues.Count == 0 && Where.Count == 0)
             {
-                Where.Add($"( {database.AttachEmphasis(item.Key)} IN ({string.Join(", ", item.Select(i => database.AttachPrefix(i.ParameterName)))}))");
+                throw new LightOrmException($"类型{typeof(T)}, 没有主键并且缺失Where条件");
+            }
+            sb.AppendLine();
+            sb.Append("WHERE ");
+            for (int k = 0; k < pValues.Count; k++)
+            {
+                IGrouping<string, SimpleColumn>? item = pValues[k];
+                if (k > 0)
+                {
+                    sb.AppendLine();
+                    sb.Append("AND ");
+                }
+                sb.Append('(');
+                sb.AppendEmphasis(item.Key, database);
+                sb.Append(" IN (");
+                foreach (var i in item)
+                {
+                    sb.WithPrefix(i.ParameterName, database);
+                    sb.Append(',');
+                }
+                sb.RemoveLast(1);
+                sb.Append("))");
             }
             if (Where.Count > 0)
             {
-                sb.AppendLine();
-                sb.AppendLine($"WHERE {string.Join($"{N}AND ", Where)}");
+                //if (pValues.Count == 0)
+                for (int i = 0; i < Where.Count; i++)
+                {
+                    if (i > 0 || pValues.Count > 0)
+                    {
+                        sb.AppendLine();
+                        sb.Append("AND ");
+                    }
+                    sb.Append(Where[i]);
+                }
             }
             HandleSqlParameters(sb, database);
             batch.Sql = sb.ToString();
@@ -248,7 +293,7 @@ internal record UpdateBuilder<T> : SqlBuilder
             {
                 var version = versionColumn.GetValue(TargetObject);
                 var newVersion = VersionPlus(version);
-                DbParameters.Add($"{versionColumn.PropertyName}_new", newVersion);
+                DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
 #if NET462
                 if (!DbParameters.ContainsKey(versionColumn.PropertyName))
                 {
@@ -264,22 +309,32 @@ internal record UpdateBuilder<T> : SqlBuilder
         var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName));
 
         StringBuilder sb = new("UPDATE ");
-        sb.Append(GetTableName(database, MainTable, false));
+        sb.AppendTableName(database, MainTable, false);
         sb.AppendLine(" SET   ");
         foreach (var c in customCols)
         {
             // 处理一般列
-            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)},");
+            sb.AppendEmphasis(c.ColumnName, database);
+            sb.Append(" = ");
+            sb.WithPrefix(c.PropertyName, database);
+            sb.AppendLine(",");
+            //sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)},");
         }
         foreach (var c in setNullCol)
         {
             // 处理显式设置为Null值的列
-            sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = NULL,");
+            //sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = NULL,");
+            sb.AppendEmphasis(c.ColumnName, database);
+            sb.AppendLine(" = NULL,");
         }
         if (versionColumn is not null)
         {
             // 处理版本列
-            sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")},");
+            sb.AppendEmphasis(versionColumn.ColumnName, database);
+            sb.Append(" = ");
+            sb.WithPrefix($"{versionColumn.PropertyName}_n", database);
+            sb.AppendLine(",");
+            //sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")},");
             if (!WhereMembers.Contains(versionColumn.PropertyName))
             {
                 var versonCondition = $"({database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}")})";

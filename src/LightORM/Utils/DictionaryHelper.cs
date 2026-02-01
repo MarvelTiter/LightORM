@@ -7,6 +7,7 @@ namespace LightORM.Utils
         public static void TryAddDictionary<TK, TV>(this IDictionary<TK, TV> dic, IDictionary<TK, TV>? other)
         {
             if (other == null) return;
+            if (other.Count == 0) return;
             foreach (var kv in other)
             {
                 if (dic.ContainsKey(kv.Key))

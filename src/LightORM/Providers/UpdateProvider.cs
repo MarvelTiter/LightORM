@@ -17,7 +17,7 @@ namespace LightORM.Providers
             sqlBuilder.TargetObject = entity;
         }
 
-        public UpdateProvider(ISqlExecutor executor, IEnumerable<T> entities)
+        public UpdateProvider(ISqlExecutor executor, T[] entities)
         {
             this.executor = executor;
             sqlBuilder = new UpdateBuilder<T>();
@@ -106,11 +106,8 @@ namespace LightORM.Providers
             }
         }
 
-        public IExpUpdate<T> SetNull<TField>(Expression<Func<T, TField>> exp)
+        public IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp)
         {
-            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            //var member = result.Members!.First();
-            //SqlBuilder.SetNullMembers.Add(member);
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
@@ -120,7 +117,7 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpUpdate<T> SetNullIf<TField>(bool condition, Expression<Func<T, TField>> exp)
+        public IExpUpdate<T> SetNullIf<TNull>(bool condition, Expression<Func<T, TNull>> exp)
         {
             if (condition)
             {
@@ -131,19 +128,10 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
         {
-
-            //var result = exp.Resolve(SqlResolveOptions.Update, SqlBuilder.MainTable);
-            //var member = result.Members!.First();
-            //if (value is null)
-            //{
-            //    SqlBuilder.SetNullMembers.Add(member);
-            //}
-            //else
-            //{
-            //    SqlBuilder.Members.Add(member);
-            //    SqlBuilder.DbParameters.Add(member, value!);
-            //}
-
+            if (exp.Body.NodeType == ExpressionType.New || exp.Body.NodeType == ExpressionType.MemberInit)
+            {
+                throw new LightOrmException("不支持多字段设置");
+            }
             sqlBuilder.Expressions.Add(new ExpressionInfo()
             {
                 Expression = exp,
@@ -210,17 +198,41 @@ namespace LightORM.Providers
             }
             return this;
         }
-        public string ToSql() => sqlBuilder.ToSqlString(Database);
+        public string ToSql()
+        {
+            var sql = sqlBuilder.ToSqlString(Database);
+            if (sqlBuilder.IsBatchUpdate)
+            {
+                return string.Join($";{Environment.NewLine}", sqlBuilder.BatchInfos?.Select(b => b.Sql) ?? []);
+            }
+            return sql;
+        }
 
         public string ToSqlWithParameters()
         {
-            var sql = sqlBuilder.ToSqlString(Database);
+            var sql = ToSql();
             StringBuilder sb = new(sql);
             sb.AppendLine();
             sb.AppendLine("参数列表: ");
             foreach (var item in sqlBuilder.DbParameters)
             {
                 sb.AppendLine($"{item.Key} - {item.Value}");
+            }
+            if (sqlBuilder.IsBatchUpdate)
+            {
+                foreach (var batch in sqlBuilder.BatchInfos ?? [])
+                {
+                    sb.AppendLine($"批量更新，批次：{batch.Index}");
+                    foreach (var item in batch.Parameters)
+                    {
+                        sb.AppendLine("----行数据");
+                        item.ForEach(row =>
+                        {
+                            if (row.isStaticValue) return;
+                            sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                        });
+                    }
+                }
             }
             return sb.ToString();
         }

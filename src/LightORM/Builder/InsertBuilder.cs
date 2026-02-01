@@ -6,7 +6,7 @@ namespace LightORM.Builder;
 internal record InsertBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
-    public IEnumerable<T> TargetObjects { get; set; } = [];
+    public T[] TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     HashSet<string> IgnoreMembers { get; set; } = [];
     HashSet<string> Members { get; set; } = [];
@@ -41,35 +41,58 @@ internal record InsertBuilder<T> : SqlBuilder
             .Where(c => !IgnoreMembers.Contains(c.PropertyName))
             .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
 
-        BatchInfos = insertColumns.GenBatchInfos(TargetObjects.ToList(), 2000 - DbParameters.Count);
-        var insert = $"INSERT INTO {GetTableName(database, MainTable, false)} {N}({string.Join(", ", insertColumns.Select(c => database.AttachEmphasis(c.ColumnName)))}) {N}VALUES {N}";
+        BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
+        //var insert = $"INSERT INTO {GetTableName(database, MainTable, false)} {N}({string.Join(", ", insertColumns.Select(c => database.AttachEmphasis(c.ColumnName)))}) {N}VALUES {N}";
         foreach (var item in BatchInfos)
         {
-            StringBuilder sb = new(insert);
-            List<string> values = [];
+            StringBuilder sb = CreateInsertBuilder();//new(insert);//
+            bool firstRow = true;
             foreach (var dic in item.Parameters)
             {
-                var rowValues = dic.Select(c =>
-                 {
-                     var val = c.Value;
-                     if (val is null)
-                     {
-                         return "NULL";
-                     }
-                     //if (c.UnderlyingType.IsNumber() || c.UnderlyingType == typeof(string))
-                     //{
-                     //    return $"'{val}'";
-                     //}
-                     return database.AttachPrefix(c.ParameterName);
-                 });
-                values.Add($"({string.Join(", ", rowValues)})");
+                if (!firstRow)
+                {
+                    sb.Append(',');
+                    sb.AppendLine();
+                }
+                firstRow = false;
+                sb.Append('(');
+                foreach (var c in dic)
+                {
+                    if (c.Value is null)
+                    {
+                        sb.Append("NULL");
+                    }
+                    else
+                    {
+                        sb.WithPrefix(c.ParameterName, database);
+                    }
+                    sb.Append(',');
+                }
+                sb.RemoveLast(1);
+                sb.Append(')');
             }
-            sb.AppendLine($"{string.Join($", {N}", values)}");
             HandleSqlParameters(sb, database);
             item.Sql = sb.ToString();
         }
         batchDone = true;
 
+        StringBuilder CreateInsertBuilder()
+        {
+            var sb = new StringBuilder("INSERT INTO ");
+            //sb.Append(GetTableName(database, MainTable, false));
+            sb.AppendTableName(database, MainTable, false).AppendLine();
+            sb.Append('(');
+            foreach (var item in insertColumns)
+            {
+                sb.AppendEmphasis(item.ColumnName, database);
+                sb.Append(',');
+            }
+            sb.RemoveLast(1);
+            sb.Append(')');
+            sb.AppendLine();
+            sb.AppendLine("VALUES");
+            return sb;
+        }
     }
 
 
@@ -78,7 +101,9 @@ internal record InsertBuilder<T> : SqlBuilder
         if (IsBatchInsert)
         {
             CreateInsertBatchSql(database);
-            return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
+            //return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
+            // ToSqlString由内部或者测试项目调用，批量情况下查看SQL使用BatchInfos属性
+            return string.Empty;
         }
 
         if (TargetObject == null) LightOrmException.Throw("insert null entity");
@@ -116,8 +141,8 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         foreach (var item in insertColumns)
         {
-            columns.Append(database.AttachEmphasis(item.ColumnName));
-            columns.Append(", ");
+            columns.AppendEmphasis(item.ColumnName, database);
+            columns.Append(',');
             var val = item.GetValue(TargetObject!);
             if (val is bool b)
             {
@@ -127,14 +152,15 @@ internal record InsertBuilder<T> : SqlBuilder
             else
             {
                 DbParameters.Add(item.PropertyName, val!);
-                values.Append(database.AttachPrefix(item.PropertyName));
+                values.WithPrefix(item.PropertyName, database);
             }
-            values.Append(", ");
+            values.Append(',');
         }
-        columns.RemoveLast(2);
-        values.RemoveLast(2);
+        columns.RemoveLast(1);
+        values.RemoveLast(1);
         StringBuilder sb = new("INSERT INTO");
-        sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
+        //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
+        sb.AppendTableName(database, MainTable, false).AppendLine();
         sb.Append('(');
         sb.Append(columns);
         sb.AppendLine(")");
