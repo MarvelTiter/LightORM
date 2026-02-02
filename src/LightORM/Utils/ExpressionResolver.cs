@@ -241,10 +241,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         else
         {
-            //if (Options.SqlType == SqlPartial.Select)
-            //{
-            //    UseAs = true;
-            //}
             if (exp.Method.Name == "op_Implicit" && exp.Method.IsSpecialName)
             {
                 return exp.Arguments[0];
@@ -281,9 +277,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 if (UseAs)
                 {
                     Sql.Append(AS_LITERAL);
+                    Sql.AppendEmphasis(member.Name, Database);
                 }
                 //Sql.Append($" AS {Database.AttachEmphasis(member.Name)}");
-                Sql.AppendEmphasis(member.Name, Database);
             }
             else if (Options.SqlType == SqlPartial.Insert)
             {
@@ -346,11 +342,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 var col = table.GetColumn(member.Name)!;
                 if (Options.RequiredTableAlias)
                 {
-                    Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
+                    //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
+                    Sql.Append(table.Alias).Append('.').AppendEmphasis(col.ColumnName, Database);
                 }
                 else
                 {
-                    Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
+                    //Sql.Append($"{Database.AttachEmphasis(col.ColumnName)}");
+                    Sql.AppendEmphasis(col.ColumnName, Database);
                 }
             }
         }
@@ -378,8 +376,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 if (UseAs)
                 {
                     Sql.Append(AS_LITERAL);
+                    Sql.AppendEmphasis(memberAssign.Member.Name, Database);
                 }
-                Sql.AppendEmphasis(memberAssign.Member.Name, Database);
 
                 if (i + 1 < exp.Bindings.Count)
                 {
