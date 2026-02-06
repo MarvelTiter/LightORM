@@ -20,10 +20,10 @@ internal abstract record SqlBuilder : ISqlBuilder
     public bool? IsParameterized { get; set; } = true;
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
-    public void TryAddParameters(string sql, object? value)
+    public void TryAddParameters(string prefix, string sql, object? value)
     {
         if (value is null) return;
-        var dic = DbParameterReader.ReadToDictionary(sql, value);
+        var dic = DbParameterReader.ObjectToDictionary(prefix, sql, value);
         DbParameters.TryAddDictionary(dic);
     }
     protected virtual void BeforeResolveExpressions(ResolveContext context)
@@ -118,7 +118,7 @@ internal abstract record SqlBuilder : ISqlBuilder
         return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {ti.Alias}" : "")}";
     }
 
-    
+
 
     //TODO Oracle?
     protected static string NpTableName(ICustomDatabase database, TableInfo table)

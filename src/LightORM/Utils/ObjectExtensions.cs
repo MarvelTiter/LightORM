@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace LightORM.Utils;
 
@@ -82,4 +83,6 @@ internal static class ObjectExtensions
     //     * dictionary.Add(
     //     */
     //}
+
+    
 }

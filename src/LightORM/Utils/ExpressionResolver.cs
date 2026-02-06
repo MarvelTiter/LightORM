@@ -1,11 +1,15 @@
 ﻿using LightORM.Extension;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Xml.Linq;
 namespace LightORM;
 
 internal static class ExpressionExtensions
@@ -71,7 +75,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
     public ReadOnlyCollection<ParameterExpression>? Parameters => parametersExpression;
-    public Stack<ResolvePart> ResolveRecord { get; set; } = [];
     public Expression? Visit(Expression? expression)
     {
         //Debug.Write($"");
@@ -233,7 +236,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
-        ResolveRecord.Push(ResolvePart.MethodCall);
         Members.Clear();
         if (exp.Method.Name.Equals("get_Item") && (exp.Method.DeclaringType?.FullName?.StartsWith("System.Collections.Generic") ?? false))
         {
@@ -465,7 +467,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             //value = GetValue(Members, value, out var name);
             //VariableValue(value, name);
-            var v = GetValue(Members, value, out var propNames);
+            var v = GetValueByExpression(Members, value, out var propNames);
             var pn = FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
             Sql.Append(pn);
             VariableValue(v, pn);
@@ -560,6 +562,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     /// <param name="compilerVar">编译器变量值</param>
     /// <param name="memberName">成员名称</param>
     /// <returns></returns>
+    [Obsolete]
     public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar, out string memberName)
     {
         var names = new List<string>();
@@ -576,36 +579,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         memberName = string.Join("_", names);
         return compilerVar;
     }
-
-    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar)
-    {
-        while (memberInfos.Count > 0)
-        {
-            var item = memberInfos.Pop();
-            compilerVar = GetValue(item, compilerVar);
-        }
-        return compilerVar;
-    }
-
-    /// <summary>
-    /// 获取值
-    /// </summary>
-    /// <param name="memberInfos">成员信息</param>
-    /// <returns></returns>
-    public static string GetValueName(Stack<MemberInfo> memberInfos)
-    {
-        var names = new List<string>();
-        while (memberInfos.Count > 0)
-        {
-            var item = memberInfos.Pop();
-            if (!item.Name.StartsWith("CS$<>8__locals"))
-            {
-                names.Add(item.Name);
-            }
-
-        }
-        return string.Join("_", names);
-    }
+    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
 
     /// <summary>
     /// 获取值
@@ -614,6 +588,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     /// <param name="obj">对象</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete]
     public static object? GetValue(MemberInfo memberInfo, object? obj)
     {
         return memberInfo switch
@@ -622,5 +597,32 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             FieldInfo field => field.GetValue(obj),
             _ => throw new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.")
         };
+    }
+
+    private static readonly ConcurrentDictionary<string, Func<object?, object?>> getterCache = [];
+    public static object? GetValueByExpression(Stack<MemberInfo> memberInfos, object? value, out string name)
+    {
+        name = string.Join("_", memberInfos.Where(m => !m.Name.StartsWith("CS$<>8__locals")).Select(m => m.Name));
+        if (value is null) return null;
+        var type = value.GetType();
+        var memberKey = $"{type.FullName}_{name}";
+        var func = getterCache.GetOrAdd(memberKey, _ =>
+        {
+            return CreateGetter(type, memberInfos);
+        });
+        return func.Invoke(value);
+    }
+
+    private static Func<object?, object?> CreateGetter(Type type, Stack<MemberInfo> memberInfos)
+    {
+        var param = Expression.Parameter(typeof(object), "obj");
+        Expression body = Expression.Convert(param, type);
+        while (memberInfos.Count > 0)
+        {
+            body = Expression.MakeMemberAccess(body, memberInfos.Pop());
+        }
+        body = Expression.Convert(body, typeof(object));
+        var lambda = Expression.Lambda<Func<object?, object?>>(body, param);
+        return lambda.Compile();
     }
 }

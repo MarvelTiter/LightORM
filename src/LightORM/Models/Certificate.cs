@@ -1,18 +1,13 @@
 ﻿namespace LightORM.Models;
-internal class Certificate
+
+internal record Certificate(string Sql, string DbPrefix, Type ParameterType)
 {
-    public Certificate(string conn, string commandText, Type parameterType)
-    {
-        ConnectString = conn;
-        Sql = commandText;
-        ParameterType = parameterType;
-    }
-    public string ConnectString { get; }
-    public string Sql { get; }
-    public Type ParameterType { get; }
+    //public string ConnectString { get; } = conn;
+    //public string Sql { get; } = commandText;
+    //public Type ParameterType { get; } = parameterType;
 
     public override string ToString()
     {
-        return $"{ConnectString}_{Sql}_{ParameterType.GUID}";
+        return $"{DbPrefix}_{Sql}_{ParameterType.FullName}";
     }
 }

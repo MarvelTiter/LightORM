@@ -54,25 +54,30 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect WithParameters(object parameters)
+    public TSelect WithParameters<TParameter>(TParameter parameters)
     {
-        if (parameters is not IDictionary<string, object> dic)
-        {
-            var reader = DbParameterReader.CreateReadToDictionary("", parameters.GetType());
-            dic = reader.Invoke(parameters);
-        }
-        SqlBuilder.DbParameters.TryAddDictionary(dic);
+        //if (parameters is not null)
+        //{
+        //    if (parameters is not IDictionary<string, object> dic)
+        //    {
+        //        var reader = DbParameterReader.CreateReadToDictionary("", typeof(TParameter));
+        //        dic = reader.Invoke(parameters);
+        //    }
+        //    SqlBuilder.DbParameters.TryAddDictionary(dic);
+        //}
+
+        SqlBuilder.TryAddParameters(Database.Prefix, "", parameters);
         return (this as TSelect)!;
     }
 
-    public TSelect Where(string sql, object? parameters = null)
+    public TSelect Where(string sql, object? parameters = default!)
     {
         SqlBuilder.Where.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
+        SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
 
-    public TSelect WhereIf(bool condition, string sql, object? parameters = null)
+    public TSelect WhereIf(bool condition, string sql, object? parameters = default!)
     {
         if (condition)
         {
@@ -80,21 +85,23 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
-    public TSelect GroupBy(string sql, object? parameters = null)
+    public TSelect GroupBy(string sql, object? parameters = default!)
     {
         SqlBuilder.GroupBy.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
+        SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect Having(string sql, object? parameters = null)
+    public TSelect Having(string sql, object? parameters = default!)
     {
         //SqlBuilder
+        SqlBuilder.Having.Add(sql);
+        SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect OrderBy(string sql, object? parameters = null)
+    public TSelect OrderBy(string sql, object? parameters = default!)
     {
         SqlBuilder.OrderBy.Add(sql);
-        SqlBuilder.TryAddParameters(sql, parameters);
+        SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
 

@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
-using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -8,28 +7,21 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
-    private static readonly ConcurrentDictionary<string, Action<DbCommand, object>> cacheReaders = [];
-    private static readonly ConcurrentDictionary<string, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
-    public static Action<DbCommand, object> GetDbParameterReader(string connectionString, string commandText, Type paramaterType)
+    private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object>> cacheReaders = [];
+    private static readonly ConcurrentDictionary<Certificate, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
+    public static Action<IDbCommand, object> GetDbParameterReader(string commandText
+        , string prefix
+        , Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
         {
             return ReadDictionary;
         }
-        Certificate cer = new(connectionString, commandText, paramaterType);
-        return cacheReaders.GetOrAdd($"DbParameterReader_{cer}", _ =>
-        {
-            //return (cmd, obj) =>
-            //{
-            //    var reader = CreateReader(cmd.CommandText, paramaterType);
-            //    reader.Invoke(cmd, obj);
-            //    SetDbType(cmd);
-            //};
-            return CreateReader(commandText, paramaterType);
-        });
+        Certificate cer = new(commandText, prefix, paramaterType);
+        return cacheReaders.GetOrAdd(cer, key => CreateReader(key.DbPrefix, key.Sql, key.ParameterType));
     }
 
-    public static Dictionary<string, object> ReadToDictionary(string sql, object value)
+    public static Dictionary<string, object> ObjectToDictionary(string prefix, string sql, object? value)
     {
         if (value is null)
         {
@@ -39,55 +31,56 @@ internal static class DbParameterReader
         {
             return d;
         }
-        var type = value.GetType();
-        var key = $"{sql}_{type.FullName}";
-        var func = readObjectToDicCache.GetOrAdd(key, _ =>
-        {
-            return CreateReadToDictionary(sql, type);
-        });
+        var cer = new Certificate(sql, prefix, value.GetType());
+        var func = readObjectToDicCache.GetOrAdd(cer, key => CreateObjectToDictionary(key.DbPrefix, key.Sql, key.ParameterType));
         return func.Invoke(value);
     }
 
-    //private static void SetDbType(DbCommand cmd)
-    //{
-    //    foreach (IDbDataParameter p in cmd.Parameters)
-    //    {
-    //        var dbType = GetDbType(p.Value!);
-    //        if (dbType.HasValue)
-    //            p.DbType = dbType.Value;
-    //    }
-    //}
-
-    //private static object? ConvertEnumValue(object? value)
-    //{
-    //    if (value == null) return null;
-    //    var t = value.GetType();
-    //    var ut = Nullable.GetUnderlyingType(t) ?? t;
-    //    if (ut.IsEnum)
-    //    {
-    //        return Convert.ChangeType(value, Enum.GetUnderlyingType(ut));
-    //    }
-    //    return value;
-    //}
-
-    private static void ReadDictionary(DbCommand cmd, object obj)
+    private static void ReadDictionary(IDbCommand cmd, object obj)
     {
         var dic = (Dictionary<string, object>)obj;
         foreach (var item in dic)
         {
             var p = cmd.CreateParameter(item.Key);
             var value = item.Value;
-            var dbType = GetDbType(ref value);
-            if (dbType.HasValue)
-                p.DbType = dbType.Value;
-            p.Value = value;
+            var (finalValue, dbType) = GetDbTypeAndValue(value);
+            p.DbType = dbType;
+            p.Value = finalValue;
             cmd.Parameters.Add(p);
         }
+
+        static (object? finalValue, DbType dbType) GetDbTypeAndValue(object? value)
+        {
+            if (value == null)
+            {
+                return (null, DbType.Object);
+            }
+            var t = value.GetType();
+            var underlying = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum)
+            {
+                var enumType = Enum.GetUnderlyingType(underlying);
+                var converted = Convert.ChangeType(value, enumType);
+                if (!typeMapDbType.TryGetValue(enumType, out var dbType))
+                {
+                    dbType = DbType.Object;
+                }
+                return (converted, dbType);
+            }
+            else
+            {
+                if (!typeMapDbType.TryGetValue(underlying, out var dbType))
+                {
+                    dbType = DbType.Object;
+                }
+                return (value, dbType);
+            }
+        }
     }
-    static readonly MethodInfo createParameterMethodInfo = typeof(DbCommand).GetMethod("CreateParameter")!;
+    static readonly MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
     static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
     static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, object>).GetMethod("Add")!;
-    public static Action<DbCommand, object> CreateReader(string commandText, Type parameterType)
+    public static Action<IDbCommand, object> CreateReader(string prefix, string commandText, Type parameterType)
     {
         /*
          * (cmd, obj) => { 
@@ -98,13 +91,13 @@ internal static class DbParameterReader
          * }
          */
         // (cmd, obj) => 
-        PropertyInfo parameterCollection = typeof(DbCommand).GetProperty("Parameters")!;
+        PropertyInfo parameterCollection = typeof(IDbCommand).GetProperty("Parameters")!;
 
-        ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
+        ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
         ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
         var objType = parameterType;
         //TODO 优化
-        var props = ExtractParameter(commandText, objType.GetProperties());
+        var props = ExtractParameter(prefix, commandText, objType.GetProperties());
         // var temp
         var tempExp = Expression.Variable(typeof(IDataParameter), "temp");
         // var p = (Type)obj;
@@ -117,29 +110,90 @@ internal static class DbParameterReader
         foreach (PropertyInfo prop in props)
         {
             // cmd.CreateParameter()
-            var createParam = Expression.Call(cmdExp, createParameterMethodInfo);
+            var (IsNullable, IsEnum) = GetUnderlyingType(prop.PropertyType, out var realType);
+
             // temp = cmd.CreateParameter()                
-            var pAssign = Expression.Assign(tempExp, createParam);
-            var paramNameExp = Expression.Property(tempExp, "ParameterName");
-            var valueExp = Expression.Property(tempExp, "Value");
+            var pAssign = Expression.Assign(
+                tempExp,
+                Expression.Call(cmdExp, createParameterMethodInfo));
             // temp.ParameterName = prop.Name
-            var nameAssignExp = Expression.Assign(paramNameExp, Expression.Constant(prop.Name));
+            var nameAssignExp = Expression.Assign(
+                Expression.Property(tempExp, "ParameterName"),
+                Expression.Constant(prop.Name, typeof(string)));
+
+            var propAccess = Expression.Property(paramExp, prop);
+            Expression finalValueExp;
+            if (IsNullable && IsEnum)
+            {
+                // Nullable<Enum>：需要条件判断 null
+                var isNull = Expression.Equal(propAccess, Expression.Constant(null, prop.PropertyType));
+                finalValueExp = Expression.Condition(
+                    isNull,
+                    //Expression.Convert(Expression.Default(prop.PropertyType), typeof(object)),
+                    Expression.Constant(null, typeof(object)),
+                    Expression.Convert(Expression.Convert(propAccess, realType), typeof(object))
+                );
+            }
+            else if (IsEnum)
+            {
+                var converted = Expression.Convert(propAccess, realType);
+                finalValueExp = Expression.Convert(converted, typeof(object));
+            }
+            else
+            {
+                finalValueExp = Expression.Convert(propAccess, typeof(object));
+            }
+
+            var valueExp = Expression.Property(tempExp, "Value");
+
             // temp.Value = p.PropertyValue
-            var valueAssignExp = Expression.Assign(valueExp, Expression.Convert(Expression.Property(paramExp, prop), typeof(object)));
+            var valueAssignExp = Expression.Assign(
+                Expression.Property(tempExp, "Value"),
+                finalValueExp);
+            if (!typeMapDbType.TryGetValue(realType, out var dbType))
+            {
+                dbType = DbType.Object;
+            }
+
+            //temp.DbType = dbType;
+            var dbTypeAssignExp = Expression.Assign(
+                Expression.Property(tempExp, "DbType"),
+                Expression.Constant(dbType, typeof(DbType)));
             // cmd.Parameters.Add(temp)
             var addToList = Expression.Call(Expression.Property(cmdExp, parameterCollection), listAddMethodInfo, tempExp);
 
             body.Add(pAssign);
             body.Add(nameAssignExp);
             body.Add(valueAssignExp);
+            body.Add(dbTypeAssignExp);
             body.Add(addToList);
         }
         var block = Expression.Block([tempExp, p1], body);
-        var lambda = Expression.Lambda<Action<DbCommand, object>>(block, cmdExp, objExp);
+        var lambda = Expression.Lambda<Action<IDbCommand, object>>(block, cmdExp, objExp);
         return lambda.Compile();
+
+
+        static (bool IsNullable, bool IsEnum) GetUnderlyingType(Type t, out Type realType)
+        {
+            var type = Nullable.GetUnderlyingType(t);
+            var isNullable = false;
+            var isEnum = false;
+            if (type is not null)
+            {
+                isNullable = true;
+            }
+            type ??= t;
+            if (type.IsEnum)
+            {
+                isEnum = true;
+                type = Enum.GetUnderlyingType(type);
+            }
+            realType = type;
+            return (isNullable, isEnum);
+        }
     }
 
-    public static Func<object, Dictionary<string, object>> CreateReadToDictionary(string commandText, Type type)
+    public static Func<object, Dictionary<string, object>> CreateObjectToDictionary(string prefix, string commandText, Type type)
     {
         var pExp = Expression.Parameter(typeof(object), "p");
         var retExp = Expression.Variable(typeof(Dictionary<string, object>), "ret");
@@ -151,7 +205,7 @@ internal static class DbParameterReader
             retExpInited,
             ];
         var all = type.GetProperties();
-        var props = string.IsNullOrEmpty(commandText) ? all : ExtractParameter(commandText, all);
+        var props = string.IsNullOrEmpty(commandText) ? all : ExtractParameter(prefix, commandText, all);
         foreach (var item in props)
         {
             var key = Expression.Constant(item.Name, typeof(string));
@@ -165,21 +219,22 @@ internal static class DbParameterReader
         return lambda.Compile();
     }
 
-    private static IEnumerable<PropertyInfo> ExtractParameter(string commandText, params PropertyInfo[] parameters)
+    private static IEnumerable<PropertyInfo> ExtractParameter(string prefix, string commandText, params PropertyInfo[] parameters)
     {
         foreach (PropertyInfo parameter in parameters)
         {
-            if (Regex.IsMatch(commandText, "[?@:]" + parameter.Name + "([^\\p{L}\\p{N}_]+|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
+            // [^\\p{{L}}\\p{{N}}_]+|$ => \\b
+            if (Regex.IsMatch(commandText, $"{Regex.Escape(prefix)}{Regex.Escape(parameter.Name)}(\\b)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.CultureInvariant))
             {
                 yield return parameter;
             }
         }
     }
 
-    private static DbParameter CreateParameter(this DbCommand cmd, string parameterName)
+    private static IDbDataParameter CreateParameter(this IDbCommand cmd, string parameterName)
     {
         if (cmd.Parameters.Contains(parameterName))
-            return cmd.Parameters[parameterName];
+            return (IDbDataParameter)cmd.Parameters[parameterName];
         else
         {
             var p = cmd.CreateParameter();
@@ -188,25 +243,7 @@ internal static class DbParameterReader
         }
     }
 
-    private static DbType? GetDbType(ref object? value)
-    {
-        if (value == null)
-        {
-            return DbType.String;
-        }
-        var t = value.GetType();
-        t = Nullable.GetUnderlyingType(t) ?? t;
-        if (t.IsEnum)
-        {
-            t = Enum.GetUnderlyingType(t);
-            value = Convert.ChangeType(value, t);
-        }
-        if (typeMapDbType.TryGetValue(t, out var v))
-            return v;
-        else return default;
-    }
-
-    readonly static Dictionary<Type, DbType> typeMapDbType = new Dictionary<Type, DbType>(37)
+    readonly static Dictionary<Type, DbType> typeMapDbType = new(20)
     {
         [typeof(byte)] = DbType.Byte,
         [typeof(sbyte)] = DbType.SByte,
@@ -227,23 +264,23 @@ internal static class DbParameterReader
         [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
         [typeof(TimeSpan)] = DbType.Time,
         [typeof(byte[])] = DbType.Binary,
-        [typeof(byte?)] = DbType.Byte,
-        [typeof(sbyte?)] = DbType.SByte,
-        [typeof(short?)] = DbType.Int16,
-        [typeof(ushort?)] = DbType.UInt16,
-        [typeof(int?)] = DbType.Int32,
-        [typeof(uint?)] = DbType.UInt32,
-        [typeof(long?)] = DbType.Int64,
-        [typeof(ulong?)] = DbType.UInt64,
-        [typeof(float?)] = DbType.Single,
-        [typeof(double?)] = DbType.Double,
-        [typeof(decimal?)] = DbType.Decimal,
-        [typeof(bool?)] = DbType.Boolean,
-        [typeof(char?)] = DbType.StringFixedLength,
-        [typeof(Guid?)] = DbType.Guid,
-        [typeof(DateTime?)] = DbType.DateTime,
-        [typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
-        [typeof(TimeSpan?)] = DbType.Time,
+        //[typeof(byte?)] = DbType.Byte,
+        //[typeof(sbyte?)] = DbType.SByte,
+        //[typeof(short?)] = DbType.Int16,
+        //[typeof(ushort?)] = DbType.UInt16,
+        //[typeof(int?)] = DbType.Int32,
+        //[typeof(uint?)] = DbType.UInt32,
+        //[typeof(long?)] = DbType.Int64,
+        //[typeof(ulong?)] = DbType.UInt64,
+        //[typeof(float?)] = DbType.Single,
+        //[typeof(double?)] = DbType.Double,
+        //[typeof(decimal?)] = DbType.Decimal,
+        //[typeof(bool?)] = DbType.Boolean,
+        //[typeof(char?)] = DbType.StringFixedLength,
+        //[typeof(Guid?)] = DbType.Guid,
+        //[typeof(DateTime?)] = DbType.DateTime,
+        //[typeof(DateTimeOffset?)] = DbType.DateTimeOffset,
+        //[typeof(TimeSpan?)] = DbType.Time,
         [typeof(object)] = DbType.Object
     };
 }

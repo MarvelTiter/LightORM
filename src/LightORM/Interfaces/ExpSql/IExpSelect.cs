@@ -55,13 +55,12 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    TSelect WithParameters(object parameters);
+    TSelect WithParameters<TParameter>(TParameter parameters);
 
-    TSelect Where(string sql, object? parameters = null);
-    TSelect WhereIf(bool condition, string sql, object? parameters = null);
-    TSelect GroupBy(string sql, object? parameters = null);
-    TSelect Having(string sql, object? parameters = null);
-    TSelect OrderBy(string sql, object? parameters = null);
+    TSelect Where(string sql, object? parameters = default!);
+    TSelect WhereIf(bool condition, string sql, object? parameters = default!);
+    TSelect GroupBy(string sql, object? parameters = default!);
+    TSelect Having(string sql, object? parameters = default!);
 
     #endregion
 }

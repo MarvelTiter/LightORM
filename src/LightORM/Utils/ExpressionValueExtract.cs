@@ -62,7 +62,7 @@ internal class ExpressionValueExtract : ExpressionVisitor
         var value = node.Value;
         if (members.Count > 0 && value != null)
         {
-            value = ExpressionResolver.GetValue(members, value, out var name);
+            value = ExpressionResolver.GetValueByExpression(members, value, out var name);
             var bn = ExpressionResolver.FormatDbParameterName(context, option, name, ref index);
             VariableValue(value, bn);
         }

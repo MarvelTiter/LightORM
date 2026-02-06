@@ -480,7 +480,7 @@ internal partial class SqlExecutor : ISqlExecutor
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = DbParameterReader.GetDbParameterReader(conn.ConnectionString, commandText, dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(Database.CustomDatabase.Prefix, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
 
@@ -529,7 +529,7 @@ internal partial class SqlExecutor : ISqlExecutor
         command.CommandType = commandType;
         if (dbParameters != null)
         {
-            var action = DbParameterReader.GetDbParameterReader(conn.ConnectionString, commandText, dbParameters.GetType());
+            var action = DbParameterReader.GetDbParameterReader(Database.CustomDatabase.Prefix, commandText, dbParameters.GetType());
             action?.Invoke(command, dbParameters);
         }
         return new(command, conn, needToReturn, false);
