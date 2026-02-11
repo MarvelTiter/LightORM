@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using LightORM.Performances;
+using System.Text;
 
 namespace LightORM.Extension;
 
@@ -44,15 +45,25 @@ internal static class CustomDatabaseExtensions
 
     public static StringBuilder AppendJoined(this StringBuilder sql, List<string> values, string separator)
     {
-        bool first = true;
-        foreach (var item in values)
+        if (values.Count == 0) return sql;
+        sql.Append(values[0]);
+        for (int i = 1; i < values.Count; i++)
         {
-            if (!first)
+            sql.Append(separator);
+            sql.Append(values[i]);
+        }
+        return sql;
+    }
+
+    public static StringBuilder AppendJoined(this StringBuilder sql, ref SlimList<string> values, string separator)
+    {
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (i > 0)
             {
                 sql.Append(separator);
             }
-            first = false;
-            sql.Append(item);
+            sql.Append(values[i]);
         }
         return sql;
     }

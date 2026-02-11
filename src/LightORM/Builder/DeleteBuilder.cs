@@ -15,7 +15,7 @@ internal record DeleteBuilder<T> : SqlBuilder
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
-        if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
+        if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
             if (result.UseNavigate)
             {
@@ -26,11 +26,9 @@ internal record DeleteBuilder<T> : SqlBuilder
                     {
                         continue;
                     }
-                    var navSqlBuilder = new SelectBuilder
-                    {
-                        IsSubQuery = true,
-                        Level = 1
-                    };
+                    var navSqlBuilder = SelectBuilder.GetSelectBuilder();
+                    navSqlBuilder.IsSubQuery = true;
+                    navSqlBuilder.Level = 1;
                     navSqlBuilder.SelectedTables.Add(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);

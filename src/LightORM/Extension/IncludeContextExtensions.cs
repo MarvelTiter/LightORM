@@ -82,7 +82,7 @@ namespace LightORM.Extension
 
         private static SelectBuilder BuildSql(ICustomDatabase database, IncludeInfo include, object item)
         {
-            SelectBuilder selectSql = new();
+            SelectBuilder selectSql = SelectBuilder.GetSelectBuilder();
             var selectedType = include.NavigateInfo!.NavigateType;
             selectSql.SelectedTables.Add(TableInfo.Create(selectedType));
             //selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;

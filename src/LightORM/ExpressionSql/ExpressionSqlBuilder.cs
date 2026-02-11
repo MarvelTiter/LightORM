@@ -32,10 +32,12 @@ internal partial class ExpressionSqlOptions
     private readonly static ConcurrentDictionary<string, IDatabaseTableHandler> databaseHandlers = [];
     private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
     private static int poolSize = Environment.ProcessorCount * 4;
+    private static int objectPoolSize = Environment.ProcessorCount * 8;
     internal static TableGenerateOption StaticTableGenOption { get; set; } = new();
 
     private static string? defaultDbKey;
     private static bool useParameterized = true;
+    private static bool enableExpressionCache = true;
     static ExpressionSqlOptions()
     {
         Instance = new(() => new ExpressionSqlOptions());
@@ -85,12 +87,18 @@ internal partial class ExpressionSqlOptions
     {
         useParameterized = use;
     }
+    public static void SetEnableExpressionCache(bool enable)
+    {
+        enableExpressionCache = enable;
+    }
 }
 
 internal partial class ExpressionSqlOptions
 {
     public static Lazy<ExpressionSqlOptions> Instance { get; }
     public int PoolSize => poolSize;
+    public int InternalObjectPoolSize => objectPoolSize;
+    public bool EnableExpressionCache => enableExpressionCache;
     public string DefaultDbKey
     {
         get
@@ -105,7 +113,7 @@ internal partial class ExpressionSqlOptions
     }
     public bool UseParameterized => useParameterized;
     public IServiceProvider? Services { get; set; }
-    private ICollection<IAdoInterceptor> allInterceptors;
+    private readonly ICollection<IAdoInterceptor> allInterceptors;
     public ICollection<IAdoInterceptor> Interceptors => allInterceptors;
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
@@ -151,6 +159,12 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     public IExpressionContextSetup SetConnectionPoolSize(int poolSize)
     {
         ExpressionSqlOptions.SetConnectionPoolSize(poolSize);
+        return this;
+    }
+
+    public IExpressionContextSetup SetEnableExpressionCache(bool enable)
+    {
+        ExpressionSqlOptions.SetEnableExpressionCache(enable);
         return this;
     }
 

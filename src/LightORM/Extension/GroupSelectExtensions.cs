@@ -1,4 +1,6 @@
-﻿namespace LightORM;
+﻿using LightORM.Utils.Vistors;
+
+namespace LightORM;
 
 public static class GroupSelectExtensions
 {

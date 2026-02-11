@@ -7,6 +7,7 @@ public interface IExpressionContextSetup
     IExpressionContextSetup SetDefault(string key);
     IExpressionContextSetup SetUseParameterized(bool use);
     IExpressionContextSetup SetConnectionPoolSize(int poolSize);
+    IExpressionContextSetup SetEnableExpressionCache(bool enable);
     IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider);
     IExpressionContextSetup SetTableContext(ITableContext context);
     IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase;

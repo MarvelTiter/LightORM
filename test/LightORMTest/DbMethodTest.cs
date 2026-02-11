@@ -12,8 +12,10 @@ public class DbMethodTest : TestBase
     [TestMethod]
     public void TestToString()
     {
-        Expression<Func<User, string?>> exp = u => u.LastLogin.Value.ToString("yyyy-MM-dd");
-        var sql = exp.Resolve(SqlResolveOptions.Where, ResolveCtx);
-        Console.WriteLine(sql.SqlString);
+        var today = DateTime.Now;
+        Expression<Func<User, bool>> exp = u => u.LastLogin!.Value.ToString("yyyy-MM-dd") == today.ToString("yyyy-MM-dd");
+        var r1 = exp.Resolve(SqlResolveOptions.Where, ResolveCtx);
+        var r2 = exp.Resolve(SqlResolveOptions.Where, ResolveCtx);
+        Console.WriteLine(r1.SqlString);
     }
 }

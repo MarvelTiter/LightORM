@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Performances;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
@@ -14,22 +15,52 @@ namespace LightORM;
 
 internal static class ExpressionExtensions
 {
+    private static readonly ConcurrentDictionary<ulong, ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
-        var resolve = new ExpressionResolver(options, context);
-        resolve.Visit(expression);
-        return new ExpressionResolvedResult
+
+        //resolve.Visit(expression);
+        //return new ExpressionResolvedResult(resolve);
+        //var resolve = new ExpressionResolver(options, context);
+        bool enableCache = ExpressionSqlOptions.Instance.Value.EnableExpressionCache;
+        ulong key = 0;
+        if (enableCache)
         {
-            SqlString = resolve.Sql.ToString(),
-            DbParameters = resolve.DbParameters,
-            Members = resolve.ResolvedMembers,
-            MemberOfNavigateMember = resolve.MemberOfNavigateMember,
-            UseNavigate = resolve.UseNavigate,
-            NavigateDeep = resolve.NavigateDeep,
-            NavigateMembers = resolve.NavigateMembers,
-            WindowFnPartials = resolve.WindowFnPartials,
-            NavigateWhereExpression = resolve.NavigateWhereExpression
-        };
+            key = ExpressionHasher.Default.ComputeHash64(expression);
+            Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {key}");
+        }
+        if (enableCache && expressionResolvedResultCache.TryGetValue(key, out var result))
+        {
+            //result.DbParameters
+            if (result.NeedToExtractValues)
+            {
+                var parameters = ExpressionValueExtract.Default.Extract(expression, options, context);
+                return result with { DbParameters = parameters };
+            }
+            return result;
+        }
+        else
+        {
+            var resolver = ExpressionResolverPool.Rent(options, context);
+            try
+            {
+                resolver.Visit(expression);
+                result = new(resolver)
+                {
+                    NeedToExtractValues = resolver.ContainVariable
+                };
+                expressionResolvedResultCache.TryAdd(key, result);
+                if (resolver.DbParameters.Count > 0)
+                {
+                    return result with { DbParameters = [.. resolver.DbParameters] };
+                }
+                return result;
+            }
+            finally
+            {
+                ExpressionResolverPool.Return(resolver);
+            }
+        }
     }
 
     public static string OperatorParser(this ExpressionType expressionNodeType, bool isNull)
@@ -56,8 +87,8 @@ internal static class ExpressionExtensions
 }
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
-    public SqlResolveOptions Options { get; } = options;
-    public ResolveContext Context { get; } = context;
+    public SqlResolveOptions Options { get; set; } = options;
+    public ResolveContext Context { get; set; } = context;
     public List<DbParameterInfo> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder(128);
     public Stack<MemberInfo> Members { get; set; } = [];
@@ -74,7 +105,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
-    public ReadOnlyCollection<ParameterExpression>? Parameters => parametersExpression;
+    public bool ContainVariable { get; set; }
+    public ReadOnlyCollection<ParameterExpression>? Parameters
+    {
+        get => parametersExpression;
+        set => parametersExpression = value;
+    }
+
     public Expression? Visit(Expression? expression)
     {
         //Debug.Write($"");
@@ -98,11 +135,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private const string AS_LITERAL = " AS ";
     Expression? bodyExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
-    int parameterPositionIndex = 0;
-    bool resolveNullValue;
     //string? lastResolvedColumnName;
     bool useAs = true;
-    bool UseAs
+    public bool UseAs
     {
         get
         {
@@ -116,7 +151,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         set => useAs = value;
     }
 
-    bool ResolveNullValue
+    bool resolveNullValue;
+    public bool ResolveNullValue
     {
         get
         {
@@ -131,6 +167,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     }
 
     bool isVisitConvert;
+    public bool IsVisitConvert
+    {
+        get => isVisitConvert;
+        set => isVisitConvert = value;
+    }
+
+    int parameterPositionIndex = 0;
+    public int ParameterPositionIndex { get => parameterPositionIndex; set => parameterPositionIndex = value; }
 
     Expression? VisitLambda(LambdaExpression exp)
     {
@@ -153,12 +197,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
-            var index = ExtractInstanceValue<int>(exp.Right);
-            var array = ExtractInstanceValue<Array>(exp.Left);
+            var index = ResolveHelper.ExtractInstanceValue<int>(exp.Right);
+            var array = ResolveHelper.ExtractInstanceValue<Array>(exp.Left);
             var arrayValue = array!.GetValue(index);
-            var pname = FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
+            var pname = ResolveHelper.FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
             Sql.Append(pname);
             DbParameters.Add(new(pname, arrayValue, ExpValueType.Other));
+            ContainVariable = true;
             return null;
         }
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
@@ -179,45 +224,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
         return null;
 
-        // 尝试将表达式求值为常量（仅支持 Constant 和 简单 Member 访问）
-        static T ExtractInstanceValue<T>(Expression expression)
-        {
-            if (expression is ConstantExpression ce && ce.Value is T index)
-            {
-                return index;
-            }
-            var members = new Stack<MemberInfo>();
-            Expression? current = expression;
 
-            // 向下遍历，收集 MemberInfo
-            while (current is MemberExpression memberExpr)
-            {
-                members.Push(memberExpr.Member);
-                current = memberExpr.Expression;
-            }
-            object? value;
-
-            if (current is ConstantExpression constExpr)
-            {
-                value = constExpr.Value;
-            }
-            else if (current is null)
-            {
-                value = null;
-            }
-            else
-            {
-                throw new LightOrmException($"数组索引表达式必须以常量或者Null结尾，但得到: {current?.GetType().Name}: {current}");
-            }
-
-            value = GetValue(members, value);
-
-            if (value is T t)
-            {
-                return t;
-            }
-            throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
-        }
     }
 
     Expression? VisitConditional(ConditionalExpression exp)
@@ -307,7 +314,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: UnaryExpression: {exp}");
         IsNot = exp.NodeType == ExpressionType.Not;
-        isVisitConvert = exp.NodeType == ExpressionType.Convert;
+        IsVisitConvert = exp.NodeType == ExpressionType.Convert;
         Visit(exp.Operand);
         return null;
     }
@@ -336,9 +343,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         else
         {
-            if (isVisitConvert && Members.Count > 0)
+            if (IsVisitConvert && Members.Count > 0)
             {
-                isVisitConvert = false;
+                IsVisitConvert = false;
                 var member = Members.Pop();
                 var table = Context.GetTable(exp);
                 var col = table.GetColumn(member.Name)!;
@@ -467,10 +474,11 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             //value = GetValue(Members, value, out var name);
             //VariableValue(value, name);
-            var v = GetValueByExpression(Members, value, out var propNames);
-            var pn = FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
+            var v = ResolveHelper.GetValueByExpression(Members, value, out var propNames);
+            var pn = ResolveHelper.FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
             Sql.Append(pn);
             VariableValue(v, pn);
+            ContainVariable = true;
         }
         else
         {
@@ -548,81 +556,61 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
     }
 
-    public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? option, string name, ref int index)
-    {
-        var p = $"{context?.ParameterPrefix}{name}_{option?.ParameterPartialIndex}_{index}";
-        index += 1;
-        return p;
-    }
+    //public static void FormatDbParameterName(StringBuilder sql, ResolveContext? context, SqlResolveOptions? option, string name, ref int index)
+    //{
+    //    //var p = $"{context?.ParameterPrefix}{name}_{option?.ParameterPartialIndex}_{index}";
+    //    //index += 1;
+    //    //return p;
+    //    sql.Append(context?.ParameterPrefix);
+    //    sql.Append(name);
+    //    sql.Append('_');
+    //    sql.Append(option?.ParameterPartialIndex);
+    //    sql.Append('_');
+    //    index += 1;
+    //    sql.Append(index);
+    //}
 
-    /// <summary>
-    /// 获取值
-    /// </summary>
-    /// <param name="memberInfos">成员信息</param>
-    /// <param name="compilerVar">编译器变量值</param>
-    /// <param name="memberName">成员名称</param>
-    /// <returns></returns>
-    [Obsolete]
-    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar, out string memberName)
-    {
-        var names = new List<string>();
-        while (memberInfos.Count > 0)
-        {
-            var item = memberInfos.Pop();
-            if (!item.Name.StartsWith("CS$<>8__locals"))
-            {
-                names.Add(item.Name);
-            }
+    ///// <summary>
+    ///// 获取值
+    ///// </summary>
+    ///// <param name="memberInfos">成员信息</param>
+    ///// <param name="compilerVar">编译器变量值</param>
+    ///// <param name="memberName">成员名称</param>
+    ///// <returns></returns>
+    //[Obsolete]
+    //public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar, out string memberName)
+    //{
+    //    var names = new List<string>();
+    //    while (memberInfos.Count > 0)
+    //    {
+    //        var item = memberInfos.Pop();
+    //        if (!item.Name.StartsWith("CS$<>8__locals"))
+    //        {
+    //            names.Add(item.Name);
+    //        }
 
-            compilerVar = GetValue(item, compilerVar);
-        }
-        memberName = string.Join("_", names);
-        return compilerVar;
-    }
-    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
+    //        compilerVar = GetValue(item, compilerVar);
+    //    }
+    //    memberName = string.Join("_", names);
+    //    return compilerVar;
+    //}
 
-    /// <summary>
-    /// 获取值
-    /// </summary>
-    /// <param name="memberInfo">成员信息</param>
-    /// <param name="obj">对象</param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [Obsolete]
-    public static object? GetValue(MemberInfo memberInfo, object? obj)
-    {
-        return memberInfo switch
-        {
-            PropertyInfo prop => prop.GetValue(obj),
-            FieldInfo field => field.GetValue(obj),
-            _ => throw new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.")
-        };
-    }
 
-    private static readonly ConcurrentDictionary<string, Func<object?, object?>> getterCache = [];
-    public static object? GetValueByExpression(Stack<MemberInfo> memberInfos, object? value, out string name)
-    {
-        name = string.Join("_", memberInfos.Where(m => !m.Name.StartsWith("CS$<>8__locals")).Select(m => m.Name));
-        if (value is null) return null;
-        var type = value.GetType();
-        var memberKey = $"{type.FullName}_{name}";
-        var func = getterCache.GetOrAdd(memberKey, _ =>
-        {
-            return CreateGetter(type, memberInfos);
-        });
-        return func.Invoke(value);
-    }
-
-    private static Func<object?, object?> CreateGetter(Type type, Stack<MemberInfo> memberInfos)
-    {
-        var param = Expression.Parameter(typeof(object), "obj");
-        Expression body = Expression.Convert(param, type);
-        while (memberInfos.Count > 0)
-        {
-            body = Expression.MakeMemberAccess(body, memberInfos.Pop());
-        }
-        body = Expression.Convert(body, typeof(object));
-        var lambda = Expression.Lambda<Func<object?, object?>>(body, param);
-        return lambda.Compile();
-    }
+    ///// <summary>
+    ///// 获取值
+    ///// </summary>
+    ///// <param name="memberInfo">成员信息</param>
+    ///// <param name="obj">对象</param>
+    ///// <returns></returns>
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //[Obsolete]
+    //public static object? GetValue(MemberInfo memberInfo, object? obj)
+    //{
+    //    return memberInfo switch
+    //    {
+    //        PropertyInfo prop => prop.GetValue(obj),
+    //        FieldInfo field => field.GetValue(obj),
+    //        _ => throw new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.")
+    //    };
+    //}
 }

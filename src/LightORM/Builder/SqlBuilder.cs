@@ -8,7 +8,6 @@ namespace LightORM.Builder;
 internal abstract record SqlBuilder : ISqlBuilder
 {
     public static string N { get; } = Environment.NewLine;
-
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
     public List<TableInfo> SelectedTables { get; set; } = [];
@@ -97,15 +96,17 @@ internal abstract record SqlBuilder : ISqlBuilder
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
-            item.ResolveOptions!.ParameterPartialIndex = index;
-            var result = item.Expression.Resolve(item.ResolveOptions!, ResolveCtx);
+            //item.ResolveOptions = item.ResolveOptions with { ParameterPartialIndex = index };
+            item.ResolveOptions.ParameterPartialIndex = index;
+            var result = item.Expression.Resolve(item.ResolveOptions, ResolveCtx);
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
             {
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
             HandleResult(database, item, result);
-            DbParameterInfos.AddRange(result.DbParameters ?? []);
+            if (result.DbParameters != null)
+                DbParameterInfos.AddRange(result.DbParameters);
             index++;
         }
     }

@@ -1,39 +1,53 @@
-﻿using System.Reflection;
+﻿using LightORM;
+using LightORM.Performances;
+using System.Reflection;
 
-namespace LightORM.Utils;
+namespace LightORM.Utils.Vistors;
 
-internal class LinqExpressionFlattener : ExpressionVisitor
+internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
 {
     private List<ParameterExpression> newParameters = [];
     private ParameterExpression? _transparentParameter;
-    public static LinqExpressionFlattener Default => new();
+    public static LinqExpressionFlattener Default => ExpressionVisitorPool<LinqExpressionFlattener>.Rent();
+    public void Reset()
+    {
+        newParameters.Clear();
+        _transparentParameter = null;
+    }
     public LambdaExpression Flatten(LambdaExpression lambda)
     {
-        var p = lambda.Parameters;
-        // 检查是否是透明标识符模式
-        if (p.Count == 1 &&
-            p[0].Name?.Contains("TransparentIdentifier") == true)
+        try
         {
-            _transparentParameter = lambda.Parameters[0];
+            var p = lambda.Parameters;
+            // 检查是否是透明标识符模式
+            if (p.Count == 1 &&
+                p[0].Name?.Contains("TransparentIdentifier") == true)
+            {
+                _transparentParameter = lambda.Parameters[0];
 
-            //// 从透明标识符中提取原始参数
-            //if (lambda.Body is MemberExpression memberExpr && memberExpr.Expression is not null)
-            //{
-            //    // 创建原始参数表达式
-            //    _originalParameter = Expression.Parameter(memberExpr.Expression.Type, "p");
-            //    // 访问并转换表达式体
-            //    // 返回新的Lambda表达式
-            //}
-            var newBody = Visit(lambda.Body);
-            return Expression.Lambda(newBody, newParameters);
+                //// 从透明标识符中提取原始参数
+                //if (lambda.Body is MemberExpression memberExpr && memberExpr.Expression is not null)
+                //{
+                //    // 创建原始参数表达式
+                //    _originalParameter = Expression.Parameter(memberExpr.Expression.Type, "p");
+                //    // 访问并转换表达式体
+                //    // 返回新的Lambda表达式
+                //}
+                var newBody = Visit(lambda.Body);
+                return Expression.Lambda(newBody, newParameters);
+            }
+            // IGrouping<TKey, TTables>
+            else if (p.Count == 1 && p[0].Type.Name.StartsWith("IGrouping"))
+            {
+
+            }
+            // 不是透明标识符模式，直接返回原表达式
+            return lambda;
         }
-        // IGrouping<TKey, TTables>
-        else if (p.Count == 1 && p[0].Type.Name.StartsWith("IGrouping"))
+        finally
         {
-
+            ExpressionVisitorPool<LinqExpressionFlattener>.Return(this);
         }
-        // 不是透明标识符模式，直接返回原表达式
-        return lambda;
     }
 
     protected override Expression VisitMember(MemberExpression node)

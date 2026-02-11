@@ -149,7 +149,7 @@ internal static class SelectHandleExtensions
     internal static SelectProvider1<TTemp> HandleSubQuery<TTemp>(this IExpSelect select, string? alias = null)
     {
         select.SqlBuilder.IsSubQuery = true;
-        var builder = new SelectBuilder();
+        var builder = SelectBuilder.GetSelectBuilder();
         var table = TableInfo.Create<TTemp>();
         if (alias != null)
         {

@@ -225,7 +225,7 @@ public class Select : TestBase
         {
             var dto = await Db.Select<User>()
                 .Where(u => u.UserId == "test04")
-                .ToListAsync<UserDto>(u => new { u.UserId, u.Sign });
+                .ToListAsync<UserDto>(u => new() { UserId = u.UserId, Sign = u.Sign });
             Assert.HasCount(1, dto);
             Assert.AreEqual(SignType.Svip, dto[0].Sign);
         });
