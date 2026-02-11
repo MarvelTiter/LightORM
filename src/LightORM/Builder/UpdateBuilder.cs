@@ -21,12 +21,12 @@ internal record UpdateBuilder<T> : SqlBuilder
 
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
-        if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
+        if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
             Where.Add(result.SqlString!);
-            WhereMembers.AddRange(result?.Members?.Distinct() ?? []);
+            WhereMembers.AddRange(result.Members?.Distinct() ?? []);
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Update)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Update)
         {
             if (expInfo.AdditionalParameter is null)
             {
@@ -46,7 +46,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 }
             }
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Ignore)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Ignore)
         {
             IgnoreMembers.AddRange(result.Members!);
             //IgnoreMembers = new(result.Members!)

@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Performances;
 using System.Text;
 
 namespace LightORM.Builder;
@@ -19,10 +20,9 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
 {
     public SelectBuilder()
     {
-        //DbType = dbType;
         IncludeContext = new IncludeContext();
-        //Indent = new Lazy<string>(() => new string(' ', 4 * Level));
     }
+    public static SelectBuilder GetSelectBuilder() => new();//SelectBuilderPool.Rent();
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public int PageIndex { get; set; }
     public int PageSize { get; set; }
@@ -46,7 +46,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public List<JoinInfo> Joins { get; set; } = [];
     public List<string> Having { get; set; } = [];
     public List<IncludeInfo> Includes { get; set; } = [];
-    public IncludeContext IncludeContext { get; set; } = default!;
+    public IncludeContext IncludeContext { get; set; }
 
     public List<string> GroupBy { get; set; } = [];
     public List<string> OrderBy { get; set; } = [];
@@ -87,7 +87,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
-        if (expInfo.ResolveOptions?.SqlType == SqlPartial.Where)
+        if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
             if (result.UseNavigate)
             {
@@ -116,7 +116,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 Where.Add(result.SqlString!);
             }
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Join)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Join)
         {
             var joinInfo = Joins.FirstOrDefault(j => j.ExpressionId == expInfo.Id);
             if (joinInfo != null)
@@ -124,7 +124,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 joinInfo.Where = result.SqlString!;
             }
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Select)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Select)
         {
             if (result.UseNavigate)
             {
@@ -146,16 +146,16 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 SelectValue = result.SqlString!;
             }
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.GroupBy)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.GroupBy)
         {
             GroupBy.Add(result.SqlString!);
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.OrderBy)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.OrderBy)
         {
             OrderBy.Add(result.SqlString!);
             AdditionalValue = expInfo.AdditionalParameter;
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Having)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Having)
         {
             Having.Add(result.SqlString!);
         }
@@ -251,17 +251,21 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public override string ToSqlString(ICustomDatabase database)
     {
         //SubQuery?.ResolveExpressions();
-        StringBuilder sql = new();
+        var estimatedSize = EstimateSqlLength();
+        StringBuilder sql = new(estimatedSize);
         Build(sql, database, Level);
         HandleSqlParameters(sql, database);
         sql.Trim();
-        return sql.ToString();
+        var sqlString = sql.ToString();
+        //SelectBuilderPool.Return(this);
+        return sqlString;
 
     }
 
     public void Build(StringBuilder sql, ICustomDatabase database, int currentLevel)
     {
         ResolveExpressions(database);
+        
         var ident = new string(' ', 4 * currentLevel);
         if (InsertInfo.HasValue)
         {
@@ -417,4 +421,140 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
             }
         }
     }
+
+    int EstimateSqlLength(int currentLevel = 0)
+    {
+        int total = 0;
+        const int indentPerLevel = 4;
+        var indent = indentPerLevel * currentLevel;
+
+        // SELECT
+        total += indent + 10 + (IsDistinct ? 9 : 0);
+        if (SelectValue != null) total += SelectValue.Length;
+        total += 2; // \n
+
+        // FROM / SubQuery
+        if (SubQuery != null)
+        {
+            total += indent + 7;
+            total += SubQuery.EstimateSqlLength(currentLevel + 1);
+            total += indent + 3;
+            if (MainTable.Alias != null) total += MainTable.Alias.Length;
+            total += 2;
+        }
+        else
+        {
+            total += indent + 5;
+            for (int i = 0; i < SelectedTables.Count; i++)
+            {
+                if (i > 0) total += 2; // ", "
+                var t = SelectedTables[i];
+                total += t.TableName.Length + 2;
+                if (t.Alias != null) total += 1 + t.Alias.Length;
+            }
+            total += 1; // \n
+        }
+
+        // JOINs
+        for (int i = 0; i < Joins.Count; i++)
+        {
+            var join = Joins[i];
+            total += indent + 10; // "INNER JOIN "
+            if (join.IsSubQuery && join.SubQuery != null)
+            {
+                total += join.SubQuery.EstimateSqlLength(currentLevel + 1);
+            }
+            else if (join.EntityInfo != null)
+            {
+                total += join.EntityInfo.TableName.Length + 2;
+                if (join.EntityInfo.Alias != null)
+                    total += 1 + join.EntityInfo.Alias.Length;
+            }
+            total += 4; // " ON "
+            if (join.Where != null) total += join.Where.Length;
+            else total += 10;
+            total += 2; // \n
+        }
+
+        // WHERE
+        if (Where.Count > 0)
+        {
+            total += indent + 7;
+            for (int i = 0; i < Where.Count; i++)
+            {
+                if (i > 0) total += 5; // " AND "
+                total += Where[i].Length;
+            }
+            total += 1; // \n
+        }
+
+        // GROUP BY
+        if (GroupBy.Count > 0)
+        {
+            total += indent + 12;
+            if (IsRollup) total += 9;
+            for (int i = 0; i < GroupBy.Count; i++)
+            {
+                if (i > 0) total += 2; // ", "
+                total += GroupBy[i].Length;
+            }
+            if (IsRollup) total += 1;
+            total += 1; // \n
+        }
+
+        // ORDER BY
+        if (OrderBy.Count > 0)
+        {
+            total += indent + 10;
+            for (int i = 0; i < OrderBy.Count; i++)
+            {
+                if (i > 0) total += 2;
+                total += OrderBy[i].Length;
+            }
+            // ⚠️ AdditionalValue: 避免 ToString()
+            // 如果你知道它通常是 string/int，可特殊处理：
+            if (AdditionalValue is string s) total += s.Length;
+            else if (AdditionalValue is not null)
+            {
+                // 保守估计：最多 10 个字符（如 "DESC"）
+                total += 10;
+            }
+            total += 1; // \n
+        }
+
+        // Paging (Take/Skip)
+        if (Take > 0)
+        {
+            total += 50; // 保守估计 LIMIT/OFFSET/FETCH
+        }
+
+        // CTE (WITH ...)
+        if (TempViews.Count > 0)
+        {
+            total += 5; // "WITH "
+            foreach (var view in TempViews)
+            {
+                total += view.EstimateSqlLength(currentLevel + 1);
+                total += 2; // "),"
+            }
+        }
+
+        // UNION
+        foreach (var union in Unions)
+        {
+            total += indent + 12; // "UNION ALL\n"
+            total += union.SqlBuilder.EstimateSqlLength(currentLevel);
+        }
+
+        // Temp wrapper: " name AS (\n ... \n)"
+        if (IsTemp)
+        {
+            total += (TempName?.Length ?? 10) + 6; // " name AS ("
+            total += 2; // "\n...\n)"
+        }
+
+        // 安全边际
+        return Math.Max(64, (int)(total * 1.2) + 50);
+    }
 }
+

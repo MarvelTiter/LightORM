@@ -26,5 +26,6 @@ namespace LightORM.AssemblyControl
     {
         public static readonly bool ShowExpressionResolveDebugInfo = false;
         public static readonly bool ShowSqlExecutorDebugInfo = true;
+        public static readonly bool ShowExpressionHashCodeDebugInfo = true;
     }
 }

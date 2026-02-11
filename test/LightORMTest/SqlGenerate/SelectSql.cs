@@ -406,21 +406,21 @@ public partial class SelectSql : TestBase
                 Index = WinFn.RowNumber().PartitionBy(g.Tables.StnId).OrderByDesc(g.Count()).Value()
             });
         // 从info表中，按Fzjg分组并且按Count(*)排序后，选择StnId，Fzjg，Count(*)，RowNumer，作为temp表，并命名为all_fzjg，表数据为所有Fzjg中，按每个Fzjg的数据量进行排序并标记为Index
-        var allFzjg = Db.FromTemp(info).GroupBy(a => new { a.Fzjg })
+        var allFzjg = Db.FromTemp(info).GroupBy(a => a.Fzjg)
             .OrderByDesc(a => a.Count())
             .AsTemp("all_fzjg", g => new
             {
                 StnId = "合计",
-                g.Group.Fzjg,
+                Fzjg = g.Group,
                 Count = g.Count(),
                 Index = WinFn.RowNumber().OrderByDesc(g.Count()).Value()
             });
         // 从info表中，按StnId进行Group By Rollup ，选择StnId和分组数据量，作为temp表，并命名为all_station
-        var allStation = Db.FromTemp(info).GroupBy(t => new { t.StnId })
+        var allStation = Db.FromTemp(info).GroupBy(t => t.StnId)
             .Rollup()
             .AsTemp("all_station", g => new
             {
-                StnId = SqlFn.NullThen(g.Group.StnId, "合计"),
+                StnId = SqlFn.NullThen(g.Group, "合计"),
                 Total = SqlFn.Count()
             });
         /*
@@ -431,10 +431,10 @@ public partial class SelectSql : TestBase
          * 5. select结果列
          */
         var sql = Db.FromTemp(stnFzjg).Where(t => t.Index < 4)
-            .GroupBy(t => new { t.StnId })
+            .GroupBy(t => t.StnId)
             .AsTable(g => new
             {
-                StnId = g.Group.StnId!,
+                StnId = g.Group!,
                 FirstFzjg = g.Join(g.Tables.Index == 1 ? g.Tables.Fzjg.ToString() : "").Separator("").OrderBy(g.Tables.StnId).Value(),
                 FirstCount = g.Join(g.Tables.Index == 1 ? g.Tables.Count.ToString() : "").Separator("").OrderBy(g.Tables.StnId).Value()
             }).UnionAll(Db.FromTemp(allFzjg).Where(t => t.Index < 4).AsTable(g => new
@@ -537,11 +537,20 @@ public partial class SelectSql : TestBase
     public void TestArrayContain()
     {
         int?[] arr = [10, 11];
-        var select = Db.Select<User>()
+        var r1 = Run();
+        arr = [9, 1, 3];
+        var r2 = Run();
+        Console.WriteLine(r1.Item1);
+        Console.WriteLine(r2.Item1);
+        return;
+        (string, Dictionary<string, object>?) Run()
+        {
+            var select = Db.Select<User>()
             .Where(u => arr.Contains(u.Age));
-        var sql = select.ToSql();
-        var ps = select.SqlBuilder.DbParameters;
-        Console.WriteLine(sql);
+            var sql = select.ToSql();
+            var ps = select.SqlBuilder.DbParameters;
+            return (sql, ps);
+        }
     }
 
     [TestMethod]

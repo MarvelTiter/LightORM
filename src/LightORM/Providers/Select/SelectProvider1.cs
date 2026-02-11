@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
+using LightORM.Utils.Vistors;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
@@ -16,7 +17,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder();
+            SqlBuilder = SelectBuilder.GetSelectBuilder();
             //SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
         }
@@ -25,7 +26,7 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
     public SelectProvider1(string overriddenTableName, ISqlExecutor executor)
         : base(executor)
     {
-        SqlBuilder = new SelectBuilder();
+        SqlBuilder = SelectBuilder.GetSelectBuilder();
         SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(overriddenTableName));
     }
 

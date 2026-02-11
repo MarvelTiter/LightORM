@@ -1,47 +1,65 @@
-﻿namespace LightORM.Utils;
+﻿using LightORM;
+using LightORM.Performances;
 
-internal class FlatGrouping : ExpressionVisitor
+namespace LightORM.Utils.Vistors;
+
+internal class FlatGrouping : ExpressionVisitor, IResetable
 {
     private List<ParameterExpression> parameters = [];
     private ParameterExpression? lambdaTypeSet;
     private LambdaExpression? keySelector;
     private int groupTypeIndex = 0;
-    public static FlatGrouping Default => new();
+    public static FlatGrouping Default => ExpressionVisitorPool<FlatGrouping>.Rent();
+
+    public void Reset()
+    {
+        parameters.Clear();
+        lambdaTypeSet = null;
+        keySelector = null;
+        groupTypeIndex = 0;
+    }
 
     public LambdaExpression? Flat(LambdaExpression exp, LambdaExpression keySelector)
     {
-        var p = exp.Parameters;
-        // IExpSelectGrouping<TGroup, TTables>
-        if (p.Count == 1 && p[0].Type.Name.StartsWith("IExpSelectGrouping"))
+        try
         {
-            var gType = p[0].Type.GenericTypeArguments[0];
-            // 并且 TTables 是 TypeSet<T1,T2,....> 
-            if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
+            var p = exp.Parameters;
+            // IExpSelectGrouping<TGroup, TTables>
+            if (p.Count == 1 && p[0].Type.Name.StartsWith("IExpSelectGrouping"))
             {
-                var type = p[0].Type.GenericTypeArguments[1];
-                var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
-                groupTypeIndex = tp.Length;
-                parameters = [.. tp, p[0]];
+                var gType = p[0].Type.GenericTypeArguments[0];
+                // 并且 TTables 是 TypeSet<T1,T2,....> 
+                if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
+                {
+                    var type = p[0].Type.GenericTypeArguments[1];
+                    var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
+                    groupTypeIndex = tp.Length;
+                    parameters = [.. tp, p[0]];
+                }
+                else
+                {
+                    groupTypeIndex = 1;
+                    var type = p[0].Type.GenericTypeArguments[1];
+                    parameters = [Expression.Parameter(type, "p0"), p[0]];
+                }
+            }
+            else if (p.Count == 1 && p[0].Type.Name.StartsWith("IGrouping"))
+            {
+                parameters = [.. p];
             }
             else
             {
-                groupTypeIndex = 1;
-                var type = p[0].Type.GenericTypeArguments[1];
-                parameters = [Expression.Parameter(type, "p0"), p[0]];
+                return exp;
             }
+            this.keySelector = keySelector;
+            TryAddSelectorParameters();
+            var body = Visit(exp.Body);
+            return Expression.Lambda(body, parameters);
         }
-        else if (p.Count == 1 && p[0].Type.Name.StartsWith("IGrouping"))
+        finally
         {
-            parameters = [.. p];
+            ExpressionVisitorPool<FlatGrouping>.Return(this);
         }
-        else
-        {
-            return exp;
-        }
-        this.keySelector = keySelector;
-        TryAddSelectorParameters();
-        var body = Visit(exp.Body);
-        return Expression.Lambda(body, parameters);
     }
 
     private void TryAddSelectorParameters()

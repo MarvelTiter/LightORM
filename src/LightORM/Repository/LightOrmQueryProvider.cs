@@ -1,9 +1,10 @@
 ﻿using LightORM.Extension;
+using LightORM.Utils.Vistors;
 
 namespace LightORM.Repository;
 internal class LightOrmQueryProvider : IQueryProvider
 {
-    private readonly SelectBuilder select = new();
+    private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();
     private readonly ISqlExecutor ado;
     private LambdaExpression? keySelector;
     public LightOrmQueryProvider(ISqlExecutor ado, Type type)

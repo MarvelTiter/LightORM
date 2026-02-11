@@ -1,46 +1,60 @@
-﻿namespace LightORM.Utils;
+﻿using LightORM;
+using LightORM.Performances;
 
-internal class FlatTypeSet : ExpressionVisitor
+namespace LightORM.Utils.Vistors;
+
+internal class FlatTypeSet : ExpressionVisitor, IResetable
 {
     private ParameterExpression[] parameters = [];
     private ParameterExpression? lambdaTypeSet;
-    public static FlatTypeSet Default => new();
-
+    public static FlatTypeSet Default => ExpressionVisitorPool<FlatTypeSet>.Rent();
+    public void Reset()
+    {
+        parameters = [];
+        lambdaTypeSet = null;
+    }
     public Expression? Flat(LambdaExpression exp)
     {
-        var p = exp.Parameters;
-        // TypeSet<T1,T2,....> 
-        if (p.Count == 1 && p[0].Type.Name.StartsWith("TypeSet`"))
+        try
         {
-            var set = p[0];
-            parameters = [.. set.Type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}"))];
-            lambdaTypeSet = p[0];
+            var p = exp.Parameters;
+            // TypeSet<T1,T2,....> 
+            if (p.Count == 1 && p[0].Type.Name.StartsWith("TypeSet`"))
+            {
+                var set = p[0];
+                parameters = [.. set.Type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}"))];
+                lambdaTypeSet = p[0];
+            }
+            //// IExpSelectGrouping<TGroup, TTables>
+            //else if (p.Count == 1 && p[0].Type.Name.StartsWith("IExpSelectGrouping"))
+            //{
+            //    var gType = p[0].Type.GenericTypeArguments[0];
+            //    // 并且 TTables 是 TypeSet<T1,T2,....> 
+            //    if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
+            //    {
+            //        var type = p[0].Type.GenericTypeArguments[1];
+            //        var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
+            //        groupTypeIndex = tp.Length;
+            //        parameters = [.. tp, Expression.Parameter(gType, "group")];
+            //    }
+            //    else
+            //    {
+            //        groupTypeIndex = 1;
+            //        var type = p[0].Type.GenericTypeArguments[1];
+            //        parameters = [Expression.Parameter(type, "p0"), Expression.Parameter(gType, "group")];
+            //    }
+            //}
+            else
+            {
+                return exp;
+            }
+            var body = Visit(exp.Body);
+            return Expression.Lambda(body, parameters);
         }
-        //// IExpSelectGrouping<TGroup, TTables>
-        //else if (p.Count == 1 && p[0].Type.Name.StartsWith("IExpSelectGrouping"))
-        //{
-        //    var gType = p[0].Type.GenericTypeArguments[0];
-        //    // 并且 TTables 是 TypeSet<T1,T2,....> 
-        //    if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
-        //    {
-        //        var type = p[0].Type.GenericTypeArguments[1];
-        //        var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
-        //        groupTypeIndex = tp.Length;
-        //        parameters = [.. tp, Expression.Parameter(gType, "group")];
-        //    }
-        //    else
-        //    {
-        //        groupTypeIndex = 1;
-        //        var type = p[0].Type.GenericTypeArguments[1];
-        //        parameters = [Expression.Parameter(type, "p0"), Expression.Parameter(gType, "group")];
-        //    }
-        //}
-        else
+        finally
         {
-            return exp;
+            ExpressionVisitorPool<FlatTypeSet>.Return(this);
         }
-        var body = Visit(exp.Body);
-        return Expression.Lambda(body, parameters);
     }
     /// <summary>
     /// 将属性访问的节点替换掉

@@ -14,11 +14,11 @@ internal record InsertBuilder<T> : SqlBuilder
     public bool IsReturnIdentity { get; set; }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
-        if (expInfo.ResolveOptions?.SqlType == SqlPartial.Insert)
+        if (expInfo.ResolveOptions.SqlType == SqlPartial.Insert)
         {
             Members.AddRange(result.Members!);
         }
-        else if (expInfo.ResolveOptions?.SqlType == SqlPartial.Ignore)
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.Ignore)
         {
             IgnoreMembers.AddRange(result.Members!);
         }

@@ -11,7 +11,7 @@
         /// <summary>
         /// 解析Sql选项
         /// </summary>
-        public SqlResolveOptions? ResolveOptions { get; set; }
+        public SqlResolveOptions ResolveOptions { get; set; }
         /// <summary>
         /// 表达式
         /// </summary>

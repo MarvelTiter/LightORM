@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using LightORM.Utils.Vistors;
+using System.Threading;
 
 namespace LightORM.Providers.Select;
 
@@ -9,7 +10,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder();
+            SqlBuilder = SelectBuilder.GetSelectBuilder();
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(0));
             SqlBuilder.SelectedTables.Add(TableInfo.Create<T2>(1));
         }

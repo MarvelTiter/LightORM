@@ -206,7 +206,7 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
     {
         if (builder == null)
         {
-            SqlBuilder = new SelectBuilder();
+            SqlBuilder = SelectBuilder.GetSelectBuilder();
 {{string.Join("\n", selecteds)}}
         }
     }
