@@ -18,7 +18,21 @@ internal record UpdateBuilder<T> : SqlBuilder
     HashSet<string> SetNullMembers { get; set; } = [];
     HashSet<string> WhereMembers { get; set; } = [];
     public bool IsBatchUpdate { get; internal set; }
-
+    public void AddMember(string member, object? value)
+    {
+        Members.Add(member);
+        if (value is not null)
+        {
+#if NET462
+            if (!DbParameters.ContainsKey(member))
+            {
+                DbParameters.Add(member, value);
+            }
+#else
+            DbParameters.TryAdd(member, value);
+#endif
+        }
+    }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
@@ -306,7 +320,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
 
-        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName));
+        var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName)).ToList();
 
         StringBuilder sb = new("UPDATE ");
         sb.AppendTableName(database, MainTable, false);
@@ -314,11 +328,19 @@ internal record UpdateBuilder<T> : SqlBuilder
         foreach (var c in customCols)
         {
             // 处理一般列
+            if (!DbParameters.ContainsKey(c.PropertyName) && TargetObject is not null)
+            {
+                var value = c.GetValue(TargetObject);
+                if (value is null)
+                {
+                    continue;
+                }
+                DbParameters.Add(c.PropertyName, value);
+            }
             sb.AppendEmphasis(c.ColumnName, database);
             sb.Append(" = ");
             sb.WithPrefix(c.PropertyName, database);
             sb.AppendLine(",");
-            //sb.AppendLine($"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.PropertyName)},");
         }
         foreach (var c in setNullCol)
         {
@@ -344,7 +366,9 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
         sb.RemoveLast(N.Length + 1);
         sb.AppendLine();
-        sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+        //sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+        sb.Append("WHERE ");
+        sb.AppendJoined(Where, " AND ");
         HandleSqlParameters(sb, database);
         return sb.Trim();
     }

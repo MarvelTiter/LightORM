@@ -35,6 +35,9 @@ public class User
     [LightColumn(Name = "IS_LOCK", Comment = "是否锁定")]
     public bool? IsLock { get; set; }
 
+    [LightColumn(Name = "VERSION", Version = true)]
+    public int Version { get; set; }
+
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 

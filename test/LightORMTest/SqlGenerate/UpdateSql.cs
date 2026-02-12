@@ -172,4 +172,29 @@ public class UpdateSql : TestBase
              .ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void UpdateByName()
+    {
+        var u = new User()
+        {
+            Age = 11,
+            UserId = "admin"
+        };
+        var sql = Db.Update(u).UpdateByName(nameof(User.Age), 20).ToSqlWithParameters();
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void UpdateByNames()
+    {
+        var u = new User()
+        {
+            Age = 11,
+            UserName = "测试",
+            UserId = "admin"
+        };
+        var sql = Db.Update(u).UpdateByNames([nameof(User.Age), nameof(User.UserName)], [20, "测试2"]).ToSqlWithParameters();
+        Console.WriteLine(sql);
+    }
 }

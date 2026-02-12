@@ -160,6 +160,7 @@ namespace LightORM.Providers
             });
             return this;
         }
+
         public IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns)
         {
             sqlBuilder.Expressions.Add(new ExpressionInfo()
@@ -198,6 +199,34 @@ namespace LightORM.Providers
             }
             return this;
         }
+
+        public IExpUpdate<T> UpdateByName(string propertyName, object? value = null)
+        {
+            if ((sqlBuilder.TargetObject is null && sqlBuilder.TargetObjects.Length == 0) && value is null)
+            {
+                throw new LightOrmException("未设置实体值，并且value是null");
+            }
+            sqlBuilder.AddMember(propertyName, value);
+            return this;
+        }
+
+        public IExpUpdate<T> UpdateByNames(string[] propertyNames, object[]? values = null)
+        {
+            if ((sqlBuilder.TargetObject is null && sqlBuilder.TargetObjects.Length == 0) && values is null)
+            {
+                throw new LightOrmException("未设置实体值，并且values是null");
+            }
+            if (values is not null && propertyNames.Length != values.Length)
+            {
+                throw new LightOrmException("参数数量和列数量不匹配");
+            }
+            for (int i = 0; i < propertyNames.Length; i++)
+            {
+                sqlBuilder.AddMember(propertyNames[i], values?[i]);
+            }
+            return this;
+        }
+
         public string ToSql()
         {
             var sql = sqlBuilder.ToSqlString(Database);
