@@ -116,8 +116,11 @@ internal static partial class TableContext
             realType = abstractTypeRels.GetOrAdd(type, static t =>
             {
                 var rt = reflectTables.Values.Where(x => t.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
-                if (rt is null) LightOrmException.Throw("无法解析的表");
-                return new AbstractTableType(rt!);
+                if (rt is null)
+                {
+                    throw new LightOrmException("无法解析的表");
+                }
+                return new AbstractTableType(rt);
             }).Type;
             return GetTableInfo(realType);
         }

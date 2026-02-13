@@ -2,11 +2,13 @@
 
 public class LightOrmException(string message) : Exception(message)
 {
+    [Obsolete]
     public static void Throw(string message) => throw new LightOrmException(message);
     /// <summary>
     /// Throws an <see cref="LightOrmException"/> if <paramref name="argument"/> is null.
     /// </summary>
     /// <exception cref="LightOrmException"></exception>
+    [Obsolete]
     public static void ThrowIfNull(object? argument, string message)
     {
         if (argument is null)

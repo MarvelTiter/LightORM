@@ -106,7 +106,10 @@ internal record InsertBuilder<T> : SqlBuilder
             return string.Empty;
         }
 
-        if (TargetObject == null) LightOrmException.Throw("insert null entity");
+        if (TargetObject == null)
+        {
+            throw new LightOrmException("insert null entity");
+        }
         ResolveExpressions(database);
         if (Members.Count == 0)
         {

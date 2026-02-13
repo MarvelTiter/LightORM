@@ -23,7 +23,7 @@ public static partial class SelectExtensions
         }
         if (keys.Count > 1)
         {
-            LightOrmException.Throw($"不能设置不同的目标数据库: {string.Join(", ", keys)}");
+            throw new LightOrmException($"不能设置不同的目标数据库: {string.Join(", ", keys)}");
         }
         return keys.FirstOrDefault();
     }
@@ -63,14 +63,14 @@ public static partial class SelectExtensions
         select.HandleResult(exp, null);
         return select;
     }
-#if NET10_0_OR_GREATER 
+#if NET10_0_OR_GREATER
     
     extension<T1>(IExpSelect<T1> select)
     {
         
     }
 #endif
-    
+
     #region 2个类型参数
 
     public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
@@ -100,7 +100,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    
+
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
     {
         select.HandleResult(exp, null);
@@ -143,7 +143,7 @@ public static partial class SelectExtensions
         }
         return select;
     }
-    
+
     public static IEnumerable<dynamic> ToDynamicList<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;

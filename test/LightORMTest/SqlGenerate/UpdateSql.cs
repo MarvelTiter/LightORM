@@ -1,5 +1,6 @@
 ﻿using LightORM.SqlExecutor;
 using LightORMTest;
+using Microsoft.Extensions.Primitives;
 using System.Threading.Tasks;
 
 namespace LightORMTest.SqlGenerate;
@@ -182,6 +183,40 @@ public class UpdateSql : TestBase
             UserId = "admin"
         };
         var sql = Db.Update(u).UpdateByName(nameof(User.Age), 20).ToSqlWithParameters();
+        Console.WriteLine(sql);
+    }
+
+    public enum Vip
+    {
+        None,
+        Vip,
+        SVip
+    }
+    [LightORM.LightTable(Name = "TEST_ENTITY")]
+    public class TestEntity
+    {
+        [LightORM.LightColumn(Name = "INT_VALUE")]
+        public int IntValue { get; set; }
+        [LightORM.LightColumn(Name = "STRING_VALUE")]
+        public string? StringValue { get; set; }
+        [LightORM.LightColumn(Name = "BOOL_VALUE")]
+        public bool BoolValue { get; set; }
+        [LightORM.LightColumn(Name = "DATETIME_VALUE")]
+        public DateTime? DateTimeValue { get; set; }
+        [LightORM.LightColumn(Name = "ENUM_VALUE")]
+        public Vip EnumValue { get; set; }
+        [LightORM.LightColumn(Name = "CUSTOM_VALUE")]
+        public string? CustomDisplay { get; set; }
+    }
+
+    [TestMethod]
+    public void UpdateByName2()
+    {
+        var entity = new TestEntity()
+        {
+            StringValue = "123"
+        };
+        var sql = Db.Update(entity).UpdateByName(nameof(TestEntity.StringValue)).ToSqlWithParameters();
         Console.WriteLine(sql);
     }
 

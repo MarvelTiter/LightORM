@@ -229,7 +229,10 @@ internal record DeleteBuilder<T> : SqlBuilder
             if (TargetObject is not null)
             {
                 var keyedColumns = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey || f.IsVersionColumn).ToArray();
-                if (keyedColumns.Length == 0) LightOrmException.Throw($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+                if (keyedColumns.Length == 0)
+                {
+                    throw new LightOrmException($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+                }
                 //var wheres = keyedColumns.Select(c =>
                 //{
                 //    DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);

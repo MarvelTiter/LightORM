@@ -202,8 +202,10 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
                 includeWhereExpression = mc.Arguments[1];
             }
         }
-
-        LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
+        if (string.IsNullOrEmpty(includePropertyName))
+        {
+            throw new LightOrmException("解析导航属性失败");
+        }
         var navCol = SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
         var parentWhereColumn = SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);

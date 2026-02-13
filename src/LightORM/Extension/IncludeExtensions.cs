@@ -23,7 +23,10 @@ public static class IncludeExtensions
                 includeWhereExpression = mc.Arguments[1];
             }
         }
-        LightOrmException.ThrowIfNull(includePropertyName, "解析导航属性失败");
+        if (string.IsNullOrEmpty(includePropertyName))
+        {
+            throw new LightOrmException("解析导航属性失败");
+        }
         var navCol = include.SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
         //var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);

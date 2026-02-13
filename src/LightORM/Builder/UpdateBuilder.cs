@@ -261,8 +261,14 @@ internal record UpdateBuilder<T> : SqlBuilder
         if (Where.Count == 0)
         {
             var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
-            if (primaryCol.Length == 0) LightOrmException.Throw("Where Condition is null and no primarykey");
-            if (TargetObject == null) LightOrmException.Throw("Where Condition is null and no entity");
+            if (primaryCol.Length == 0)
+            {
+                throw new LightOrmException($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+            }
+            if (TargetObject == null)
+            {
+                throw new LightOrmException("Where Condition is null and no entity");
+            }
             foreach (var item in primaryCol)
             {
                 var val = item.GetValue(TargetObject!);

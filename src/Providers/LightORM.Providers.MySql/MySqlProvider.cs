@@ -11,7 +11,7 @@ public sealed class MySqlProvider : BaseDatabaseProvider
 {
     public static MySqlProvider Create(string master, params string[] slaves) => new MySqlProvider(master, slaves);
     private readonly Lazy<IDatabaseTableHandler> lazyHandler;
-    private MySqlProvider(string master, params string[] slaves):base(master, slaves)
+    private MySqlProvider(string master, params string[] slaves) : base(master, slaves)
     {
         var match = Regex.Match(master, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);
         if (!match.Success)
@@ -36,9 +36,9 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         {
             throw new ArgumentException($"{nameof(dataTable)}为Null或零列零行.");
         }
-        if (!MasterConnectionString.ToLower().Contains("allowloadlocalinfile"))
+        if (!MasterConnectionString.Contains("allowloadlocalinfile", StringComparison.OrdinalIgnoreCase))
         {
-            LightOrmException.Throw("请在连接字符串配置AllowLoadLocalInfile=true;");
+            throw new LightOrmException("请在连接字符串配置AllowLoadLocalInfile=true;");
         }
         using var conn = (MySqlConnection)DbProviderFactory.CreateConnection()!;
         conn.ConnectionString = MasterConnectionString;

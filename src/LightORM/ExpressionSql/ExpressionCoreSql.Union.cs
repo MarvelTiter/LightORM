@@ -19,7 +19,10 @@ partial class ExpressionCoreSql
 
     public IExpSelect<T> Union<T>(params IExpSelect<T>[] selects)
     {
-        if (selects.Length == 0) LightOrmException.Throw("Union的数量为0");
+        if (selects.Length == 0)
+        {
+            throw new LightOrmException("Union的数量为0");
+        }
         if (selects.Length == 1) return selects[0];
         var first = selects[0];
         var sub = first.HandleSubQuery<T>();
@@ -33,7 +36,10 @@ partial class ExpressionCoreSql
 
     public IExpSelect<T> UnionAll<T>(params IExpSelect<T>[] selects)
     {
-        if (selects.Length == 0) LightOrmException.Throw("Union的数量为0");
+        if (selects.Length == 0)
+        {
+            throw new LightOrmException("Union的数量为0");
+        }
         if (selects.Length == 1) return selects[0];
         var first = selects[0];
         var sub = first.HandleSubQuery<T>();

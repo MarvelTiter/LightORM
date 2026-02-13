@@ -74,7 +74,9 @@ internal partial class ExpressionBuilder
         {
             ConstructorInfo[] Constructors = TargetType.GetConstructors();
             if (Constructors.Length != 1)
-                LightOrmException.Throw("Tuple must have one Constructor");
+            {
+                throw new LightOrmException("Tuple must have one Constructor");
+            }
             var Constructor = Constructors[0];
 
             var Parameters = Constructor.GetParameters();
