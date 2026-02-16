@@ -2,6 +2,7 @@
 using System.Threading;
 
 namespace LightORM;
+
 public partial interface ISqlExecutor
 {
     internal ConnectionPool Pool { get; }
@@ -87,10 +88,19 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="behavior">命令行为</param>
     /// <returns></returns>
-    DbDataReader ExecuteReader(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+    DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
 
+    /// <summary>
+    /// 多结果查询, 使用<see cref="MultipleResult"/>的<see cref="MultipleResult.Read{T}"/>或者<see cref="MultipleResult.ReadFirst{T}"/>或者对应的异步版本
+    /// </summary>
+    /// <param name="sql"></param>
+    /// <param name="dbParameters"></param>
+    /// <param name="commandType"></param>
+    /// <param name="behavior"></param>
+    /// <returns></returns>
+    MultipleResult QueryMultiple(string sql, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
     /// <summary>
     /// 执行数据集
     /// </summary>
@@ -118,8 +128,7 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行标量异步
@@ -139,10 +148,21 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
+    /// <param name="behavior">命令行为</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 多结果查询, 使用<see cref="MultipleResult"/>的<see cref="MultipleResult.Read{T}"/>或者<see cref="MultipleResult.ReadFirst{T}"/>或者对应的异步版本
+    /// </summary>
+    /// <param name="commandText"></param>
+    /// <param name="dbParameters"></param>
+    /// <param name="commandType"></param>
+    /// <param name="behavior"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<MultipleResult> QueryMultipleAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行数据集异步

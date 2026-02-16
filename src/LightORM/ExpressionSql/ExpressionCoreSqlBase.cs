@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using LightORM.DbStruct;
+using System.Buffers;
 
 namespace LightORM.ExpressionSql;
 
@@ -10,6 +11,85 @@ internal abstract class ExpressionCoreSqlBase
 {
     public abstract ISqlExecutor Ado { get; }
     public abstract ExpressionSqlOptions Options { get; }
+
+    public MultipleResult QueryMultiple(params IExpSelect[] selects)
+    {
+        if (selects.Length == 0)
+        {
+            throw new LightOrmException("selects 数量为0");
+        }
+        string[] sqls = ArrayPool<string>.Shared.Rent(selects.Length);
+        Dictionary<string, object> parameters = [];
+        try
+        {
+            for (var i = 0; i < selects.Length; i++)
+            {
+                var select = selects[i];
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.CustomDatabase);
+
+                if (select.SqlBuilder.DbParameters.Count > 0)
+                {
+                    sqls[i] = Ado.Database.CustomDatabase.RewriteParameterReferences(originSql, $"q{i}");
+
+                    foreach (var item in select.SqlBuilder.DbParameters)
+                    {
+                        parameters[$"q{i}_{item.Key}"] = item.Value;
+                    }
+                }
+                else
+                {
+                    sqls[i] = originSql;
+                }
+            }
+            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls);
+            var reader = Ado.ExecuteReader(sql, parameters);
+            return new MultipleResult(reader);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(sqls);
+        }
+    }
+
+    public async Task<MultipleResult> QueryMultipleAsync(IExpSelect[] selects, CancellationToken cancellationToken = default)
+    {
+        if (selects.Length == 0)
+        {
+            throw new LightOrmException("selects 数量为0");
+        }
+        string[] sqls = ArrayPool<string>.Shared.Rent(selects.Length);
+        Dictionary<string, object> parameters = [];
+        try
+        {
+            for (var i = 0; i < selects.Length; i++)
+            {
+                var select = selects[i];
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.CustomDatabase);
+
+                if (select.SqlBuilder.DbParameters.Count > 0)
+                {
+                    sqls[i] = Ado.Database.CustomDatabase.RewriteParameterReferences(originSql, $"q{i}");
+
+                    foreach (var item in select.SqlBuilder.DbParameters)
+                    {
+                        parameters[$"q{i}_{item.Key}"] = item.Value;
+                    }
+                }
+                else
+                {
+                    sqls[i] = originSql;
+                }
+            }
+            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls);
+            var reader = await Ado.ExecuteReaderAsync(sql, parameters, cancellationToken: cancellationToken);
+            return new MultipleResult(reader);
+        }
+        finally
+        {
+            ArrayPool<string>.Shared.Return(sqls);
+        }
+    }
+
     public IExpSelect<T> Select<T>() => new SelectProvider1<T>(Ado);
 
     #region insert

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
 
@@ -89,6 +90,17 @@ public abstract class CustomDatabase : ICustomDatabase
             keyWorks.Add(keyWord);
         }
     }
-    
+
+    public virtual string HandleMultipleQuerySql(params string[] sqls)
+    {
+        return string.Join(";", sqls);
+    }
+
+    public virtual string RewriteParameterReferences(string sql, string prefix)
+    {
+        // 将 @param 重写为 @q0_param
+        return Regex.Replace(sql, @$"{Prefix}(\w+)", $"{Prefix}{prefix}_$1");
+    }
+
     public virtual string DeleteTemplate => throw new NotImplementedException();
 }

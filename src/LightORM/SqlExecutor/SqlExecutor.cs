@@ -611,7 +611,7 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
         CommandResult commandResult;
@@ -627,12 +627,13 @@ internal partial class SqlExecutor : ISqlExecutor
             var start = StopwatchHelper.GetTimestamp();
             if (commandResult.NeedToReturn)
             {
-                reader = commandResult.Command.ExecuteReader(CommandBehavior.CloseConnection);
+                var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
+                reader = commandResult.Command.ExecuteReader(b);
 
             }
             else
             {
-                reader = commandResult.Command.ExecuteReader();
+                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
@@ -645,6 +646,54 @@ internal partial class SqlExecutor : ISqlExecutor
             if (ectx.IsHandled)
             {
                 return new EmptyDataReader();
+            }
+            throw;
+        }
+        finally
+        {
+
+        }
+    }
+
+    public MultipleResult QueryMultiple(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
+    {
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        CommandResult commandResult;
+        try
+        {
+            commandResult = PrepareCommand(commandType, ctx);
+            if (commandResult.Break)
+            {
+                return new(new EmptyDataReader());
+            }
+            DbDataReader reader;
+            Interceptor.NotifyBeforeExecute(ctx);
+            var start = StopwatchHelper.GetTimestamp();
+            if (behavior?.HasFlag(CommandBehavior.SingleResult) == true)
+            {
+                throw new LightOrmException("behavior 指定了 CommandBehavior.SingleResult, 不符合QueryMultiple的行为");
+            }
+            if (commandResult.NeedToReturn)
+            {
+                var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
+                reader = commandResult.Command.ExecuteReader(b);
+
+            }
+            else
+            {
+                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
+            }
+            ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
+            Interceptor.NotifyAfterExecute(ctx);
+            return new(new InternalDataReader(reader, commandResult, Pool));
+        }
+        catch (Exception ex)
+        {
+            var ectx = new SqlExecuteExceptionContext(ctx, ex);
+            Interceptor.NotifyException(ectx);
+            if (ectx.IsHandled)
+            {
+                return new(new EmptyDataReader());
             }
             throw;
         }
@@ -807,7 +856,7 @@ internal partial class SqlExecutor : ISqlExecutor
                 DisposeCommand(commandResult.Value);
         }
     }
-    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
+    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
         CommandResult? commandResult;
@@ -824,11 +873,12 @@ internal partial class SqlExecutor : ISqlExecutor
             var start = StopwatchHelper.GetTimestamp();
             if (r.NeedToReturn)
             {
+                var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
                 reader = await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                reader = await r.Command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
@@ -841,6 +891,54 @@ internal partial class SqlExecutor : ISqlExecutor
             if (ectx.IsHandled)
             {
                 return new EmptyDataReader();
+            }
+            throw;
+        }
+        finally
+        {
+
+        }
+    }
+
+    public async Task<MultipleResult> QueryMultipleAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
+    {
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        CommandResult commandResult;
+        try
+        {
+            commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
+            if (commandResult.Break)
+            {
+                return new(new EmptyDataReader());
+            }
+            DbDataReader reader;
+            Interceptor.NotifyBeforeExecute(ctx);
+            var start = StopwatchHelper.GetTimestamp();
+            if (behavior?.HasFlag(CommandBehavior.SingleResult) == true)
+            {
+                throw new LightOrmException("behavior 指定了 CommandBehavior.SingleResult, 不符合QueryMultiple的行为");
+            }
+            if (commandResult.NeedToReturn)
+            {
+                var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
+                reader = await commandResult.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
+
+            }
+            else
+            {
+                reader = await commandResult.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
+            }
+            ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
+            Interceptor.NotifyAfterExecute(ctx);
+            return new(new InternalDataReader(reader, commandResult, Pool));
+        }
+        catch (Exception ex)
+        {
+            var ectx = new SqlExecuteExceptionContext(ctx, ex);
+            Interceptor.NotifyException(ectx);
+            if (ectx.IsHandled)
+            {
+                return new(new EmptyDataReader());
             }
             throw;
         }

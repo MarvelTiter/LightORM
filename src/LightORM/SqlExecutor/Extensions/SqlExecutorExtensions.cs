@@ -6,12 +6,6 @@ namespace LightORM;
 
 public static partial class SqlExecutorExtensions
 {
-    //public static DbConnection GetConnection(this ISqlExecutor executor)
-    //{
-    //    var conn = executor.Database.DbProviderFactory.CreateConnection()!;
-    //    conn.ConnectionString = executor.Database.MasterConnectionString;
-    //    return conn;
-    //}
     public static IEnumerable<T> Query<T>(this ISqlExecutor self
         , string sql
         , object? param = null
@@ -75,7 +69,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = self.ExecuteReader(sql, param, commandType);
+            reader = self.ExecuteReader(sql, param, commandType, CommandBehavior.SingleRow | CommandBehavior.SingleResult);
             var des = BuildDeserializer<T>(reader);
             T? result = default;
             if (reader.Read())
@@ -104,7 +98,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, CommandBehavior.SingleResult, cancellationToken);
             var des = BuildDeserializer<T>(reader);
             List<T> list = [];
             while (await reader.ReadAsync(cancellationToken))
@@ -144,7 +138,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, CommandBehavior.SingleResult, cancellationToken);
             var des = DynamicDeserializer(reader);
             List<object> list = [];
             while (await reader.ReadAsync(cancellationToken))
@@ -184,7 +178,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, CommandBehavior.SingleResult, cancellationToken);
             var des = BuildDeserializer<T>(reader);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -222,7 +216,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, CommandBehavior.SingleResult, cancellationToken);
             var des = DynamicDeserializer(reader);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -260,7 +254,7 @@ public static partial class SqlExecutorExtensions
             {
                 self.UseExternalTransaction(trans);
             }
-            reader = await self.ExecuteReaderAsync(sql, param, commandType, cancellationToken);
+            reader = await self.ExecuteReaderAsync(sql, param, commandType, CommandBehavior.SingleRow | CommandBehavior.SingleResult, cancellationToken);
             var des = BuildDeserializer<T>(reader);
             T? result = default;
             if (await reader.ReadAsync(cancellationToken))

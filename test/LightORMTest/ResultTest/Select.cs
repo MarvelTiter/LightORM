@@ -11,9 +11,9 @@ public class Select : TestBase
 {
     private static async Task DoSomethingWithTempUserDataAsync(IExpressionContext db, Func<Task> action)
     {
-        db.Delete<User>().FullDelete(true).Execute();
-        db.Delete<UserRole>().FullDelete(true).Execute();
-        db.Delete<Role>().FullDelete(true).Execute();
+        db.Delete<User>().FullDelete().Execute();
+        db.Delete<UserRole>().FullDelete().Execute();
+        db.Delete<Role>().FullDelete().Execute();
         await db.Insert<User>().InsertEachAsync([new User()
         {
             UserId = "test01",
@@ -71,9 +71,9 @@ public class Select : TestBase
             RoleName = "超级管理员"
         }]);
         await action();
-        db.Delete<User>().FullDelete(true).Execute();
-        db.Delete<UserRole>().FullDelete(true).Execute();
-        db.Delete<Role>().FullDelete(true).Execute();
+        db.Delete<User>().FullDelete().Execute();
+        db.Delete<UserRole>().FullDelete().Execute();
+        db.Delete<Role>().FullDelete().Execute();
     }
     [TestMethod]
     public async Task Select_ToListAsync()
@@ -276,6 +276,21 @@ public class Select : TestBase
 
             dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync();
             Assert.AreEqual(1, dc);
+        });
+    }
+
+    [TestMethod]
+    public async Task MultiResultTest()
+    {
+        await DoSomethingWithTempUserDataAsync(Db, async () =>
+        {
+            using var multi = Db.QueryMultiple(Db.Select<User>(), Db.Select<Role>(), Db.Select<UserRole>());
+            var u = await multi.ReadListAsync<User>();
+            var r = await multi.ReadListAsync<Role>();
+            var ur = await multi.ReadListAsync<UserRole>();
+            Assert.HasCount(4, u);
+            Assert.HasCount(2, r);
+            Assert.HasCount(4, ur);
         });
     }
 }

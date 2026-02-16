@@ -271,6 +271,7 @@ internal partial class ExpressionBuilder
             TargetValueExpression = Expression.Condition(
             NullCheckExpression,
             Expression.Default(TargetMemberType),
+            //Nullable.GetUnderlyingType(TargetMemberType) is null ? ConvertedRecordFieldExpression : Expression.Convert(ConvertedRecordFieldExpression, TargetMemberType),
             ConvertedRecordFieldExpression,
             TargetMemberType
             );
@@ -330,7 +331,9 @@ internal partial class ExpressionBuilder
     private static Expression GetConversionExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture)
     {
         Expression TargetExpression;
-        if (TargetType == SourceType)
+        var (underlying, isnullable) = GetUnderlyingType(TargetType);
+        var converted = false;
+        if (TargetType == SourceType || underlying == SourceType)
         {
             TargetExpression = SourceExpression;
         }
@@ -342,7 +345,7 @@ internal partial class ExpressionBuilder
         {
             TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
         }
-        else if (TargetType == typeof(bool))
+        else if (TargetType == typeof(bool) || underlying == typeof(bool))
         {
             MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", [SourceType])!;
             TargetExpression = Expression.Call(ToBooleanMethod, SourceExpression);
@@ -354,6 +357,11 @@ internal partial class ExpressionBuilder
         else
         {
             TargetExpression = Expression.Convert(SourceExpression, TargetType);
+            converted = true;
+        }
+        if (isnullable && !converted)
+        {
+            TargetExpression = Expression.Convert(TargetExpression, TargetType);
         }
         return TargetExpression;
     }
@@ -378,7 +386,7 @@ internal partial class ExpressionBuilder
     }
     private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture)
     {
-        Type UnderlyingType = GetUnderlyingType(TargetType);
+        var (UnderlyingType, _) = GetUnderlyingType(TargetType);
         if (UnderlyingType.IsEnum)
         {
             MethodCallExpression ParsedEnumExpression = GetEnumParseExpression(SourceExpression, UnderlyingType);
@@ -463,9 +471,10 @@ internal partial class ExpressionBuilder
         }
     }
 
-    private static Type GetUnderlyingType(Type targetType)
+    private static (Type Type, bool IsNullable) GetUnderlyingType(Type targetType)
     {
-        return Nullable.GetUnderlyingType(targetType) ?? targetType;
+        var t = Nullable.GetUnderlyingType(targetType);
+        return (t ?? targetType, t is not null);
     }
 }
 

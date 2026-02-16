@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LightORM.Interfaces
 {
@@ -21,6 +22,10 @@ namespace LightORM.Interfaces
         bool UseIdentifierQuote { get; set; }
         bool IsKeyWord(string keyWork);
         void AddKeyWord(params string[] keyWords);
+
+        string HandleMultipleQuerySql(params string[] sqls);
+        string RewriteParameterReferences(string sql, string prefix);
         
+
     }
 }

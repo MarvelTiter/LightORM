@@ -5,7 +5,8 @@ namespace LightORM;
 public interface IContext
 {
     ISqlExecutor Ado { get; }
-
+    MultipleResult QueryMultiple(params IExpSelect[] selects);
+    Task<MultipleResult> QueryMultipleAsync(IExpSelect[] selects, CancellationToken cancellationToken);
 }
 
 /// <summary>
