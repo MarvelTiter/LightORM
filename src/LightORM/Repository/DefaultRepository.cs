@@ -14,7 +14,7 @@ internal sealed class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
 
     public DefaultRepository(IExpressionContext context)
     {
-        var tableInfo = TableContext.GetTableInfo(typeof(TEntity));
+        var tableInfo = TableContext.GetTableInfo<TEntity>();
         var dbKey = tableInfo?.TargetDatabase ?? GetSingleKey(context.Options);
         this.context = context.CreateScoped(dbKey);
     }
