@@ -23,7 +23,7 @@ namespace LightORM.Interfaces
         bool IsKeyWord(string keyWork);
         void AddKeyWord(params string[] keyWords);
 
-        string HandleMultipleQuerySql(params string[] sqls);
+        string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters);
         string RewriteParameterReferences(string sql, string prefix);
         
 

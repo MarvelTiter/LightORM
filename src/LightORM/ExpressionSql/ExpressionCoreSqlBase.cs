@@ -41,7 +41,7 @@ internal abstract class ExpressionCoreSqlBase
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls);
+            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls, parameters);
             var reader = Ado.ExecuteReader(sql, parameters);
             return new MultipleResult(reader);
         }
@@ -80,7 +80,7 @@ internal abstract class ExpressionCoreSqlBase
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls);
+            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls, parameters);
             var reader = await Ado.ExecuteReaderAsync(sql, parameters, cancellationToken: cancellationToken);
             return new MultipleResult(reader);
         }

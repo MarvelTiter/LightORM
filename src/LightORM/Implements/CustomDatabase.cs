@@ -91,7 +91,7 @@ public abstract class CustomDatabase : ICustomDatabase
         }
     }
 
-    public virtual string HandleMultipleQuerySql(params string[] sqls)
+    public virtual string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
     {
         return string.Join(";", sqls);
     }
@@ -99,7 +99,7 @@ public abstract class CustomDatabase : ICustomDatabase
     public virtual string RewriteParameterReferences(string sql, string prefix)
     {
         // 将 @param 重写为 @q0_param
-        return Regex.Replace(sql, @$"{Prefix}(\w+)", $"{Prefix}{prefix}_$1");
+        return Regex.Replace(sql, @$"{Prefix}(\w+)", m => $"{Prefix}{prefix}_{m.Groups[1].Value}");
     }
 
     public virtual string DeleteTemplate => throw new NotImplementedException();
