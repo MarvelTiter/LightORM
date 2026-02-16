@@ -41,16 +41,19 @@ internal static class DbParameterReader
         var dic = (Dictionary<string, object>)obj;
         foreach (var item in dic)
         {
-            if (item.Value is IDbDataParameter)
+            if (item.Value is IDbDataParameter p)
             {
-                continue;
+                cmd.Parameters.Add(p);
             }
-            var p = cmd.CreateParameter(item.Key);
-            var value = item.Value;
-            var (finalValue, dbType) = GetDbTypeAndValue(value);
-            p.DbType = dbType;
-            p.Value = finalValue;
-            cmd.Parameters.Add(p);
+            else
+            {
+                p = cmd.CreateParameter(item.Key);
+                var value = item.Value;
+                var (finalValue, dbType) = GetDbTypeAndValue(value);
+                p.DbType = dbType;
+                p.Value = finalValue;
+                cmd.Parameters.Add(p);
+            }
         }
 
         static (object? finalValue, DbType dbType) GetDbTypeAndValue(object? value)
