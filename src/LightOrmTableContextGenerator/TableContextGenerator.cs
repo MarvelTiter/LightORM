@@ -3,11 +3,23 @@ using Generators.Shared.Builder;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 namespace LightOrmTableContextGenerator;
+
+//internal class MappingDefinitions
+//{
+//    private Name name;
+//    //public string GetName() => name.
+//    private ConcurrentDictionary<string, AttributeData> attributes = [];
+//    private struct Name
+//    {
+//        public const string AttributeType = "LightORM.Attributes.Mapping.ColumnNameMappingAttribute";
+//    }
+//}
 
 [Generator(LanguageNames.CSharp)]
 public class TableContextGenerator : IIncrementalGenerator
@@ -29,6 +41,7 @@ public class TableContextGenerator : IIncrementalGenerator
             var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
             int i = 0;
             List<INamedTypeSymbol> flatTypes = [];
+            //var customMap = ctxSymbol.GetAttributes("LightORM.Attributes.Mapping.MappingBaseAttribute", true).ToArray();
             foreach (var t in allTableType)
             {
                 // 生成  {Type}Context.g.cs
@@ -88,7 +101,7 @@ public class TableContextGenerator : IIncrementalGenerator
         lightTable.GetNamedValue("DatabaseKey", out var dbKey);
         lightTable.GetNamedValue("Schema", out var schema);
         members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("TargetDatabase").Lambda($"{(dbKey == null ? "null" : $"\"{dbKey}\"")}"));
-        members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("Schema").Lambda($"{(dbKey == null ? "null": $"\"{schema}\"")}"));
+        members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("Schema").Lambda($"{(dbKey == null ? "null" : $"\"{schema}\"")}"));
         // public string? Description => null;
         var desValue = "null";
         if (des?.GetNamedValue("Description", out var description) == true)
@@ -176,7 +189,7 @@ public class TableContextGenerator : IIncrementalGenerator
             .AddParameter("global::System.Data.IDataReader reader")
             .ReturnType(target.ToDisplayString())
             .AddBody("throw new NotImplementedException()");
-        
+
         //static string GetValueExpression(string instanceName, IPropertySymbol property, string indexVar)
         //{
         //    if (property.Type.TypeKind == TypeKind.Array
@@ -223,23 +236,26 @@ public class TableContextGenerator : IIncrementalGenerator
         foreach (var p in columns)
         {
             if (p.Type.TypeKind == TypeKind.Class
-                && p.Type.SpecialType == SpecialType.None
-                && p.HasAttribute(LightFlatAttributeFullName))
+                && p.Type.SpecialType == SpecialType.None)
             {
+                if (!p.HasAttribute(LightFlatAttributeFullName))
+                {
+                    continue;
+                }
                 var flattedProps = p.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
                 var flatType = p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
                 foreach (var item in flattedProps)
                 {
                     var fr = ScanProperty(item);
-                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate})""");
+                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert})""");
                 }
                 //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
                 //bodies.Add($"gen_{p.Name}.IsAggregated = true");
-                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true)""");
+                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true)""");
                 continue;
             }
             var r = ScanProperty(p);
-            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate})""");
+            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert})""");
         }
         bodies.Add("return cols");
         bodies = [
@@ -289,7 +305,6 @@ public class TableContextGenerator : IIncrementalGenerator
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);
             _ = p.GetAttribute("LightORM.LightColumnAttribute", out var lightCol);
-            _ = p.GetAttribute("LightORM.IgnoreAttribute", out var ignore);
             _ = p.GetAttribute("LightORM.LightNavigateAttribute", out var nav);
             var customName = "null";
 
@@ -301,11 +316,8 @@ public class TableContextGenerator : IIncrementalGenerator
             {
                 customName = $"\"{cname}\"";
             }
-            var primaryKey = GetBoolValue(lightCol, "PrimaryKey", () =>
-            {
-                return key == null ? "false" : "true";
-            });
-            var isnotmap = (ignore != null || notmap != null) ? "true" : "false";
+            var primaryKey = GetBoolValue(lightCol, "PrimaryKey", () => key != null ? "true" : "false");
+            var isnotmap = GetBoolValue(lightCol, "Ignore", () => notmap != null ? "true" : "false");
             var autoincrement = GetBoolValue(lightCol, "AutoIncrement");
             var notnull = GetBoolValue(lightCol, "NotNull");
             var len = GetAttributeValueOrNull(lightCol, "Length");
@@ -316,6 +328,7 @@ public class TableContextGenerator : IIncrementalGenerator
             var canInit = (p.SetMethod is not null) ? "true" : "false";
             var version = GetBoolValue(lightCol, "Version");
             var ignoreUpdate = GetBoolValue(lightCol, "IgnoreUpdate");
+            var ignoreInsert = GetBoolValue(lightCol, "IgnoreInsert");
             var navInfo = "null";
             if (nav != null)
             {
@@ -358,7 +371,8 @@ public class TableContextGenerator : IIncrementalGenerator
                 CanInit = canInit,
                 NavInfo = navInfo,
                 IsVersion = version,
-                IgnoreUpdate = ignoreUpdate
+                IgnoreUpdate = ignoreUpdate,
+                IgnoreInsert = ignoreInsert
             };
         }
     }

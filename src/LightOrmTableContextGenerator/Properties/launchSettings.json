@@ -1,11 +1,8 @@
 {
   "profiles": {
-    "LightOrmTableContextGenerator": {
-      "commandName": "Project"
-    },
     "lightorm": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\..\\test\\TestProject1\\TestProject1.csproj"
+      "targetProject": "..\\..\\test\\LightORMTest\\LightORMTest.csproj"
     }
   }
 }

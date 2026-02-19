@@ -14,6 +14,7 @@ public interface ITableColumnInfo
     string? Comment { get; }
     bool IsVersionColumn { get; }
     bool IsIgnoreUpdate { get; }
+    bool IsIgnoreInsert { get; }
     bool CanRead { get; }
     bool CanWrite { get; }
     bool CanInit { get; }

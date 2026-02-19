@@ -2,6 +2,7 @@
 using LightORM.Extension;
 
 namespace LightORM.Models;
+
 public static class ColumnInfoExtensions
 {
     public static object? GetValue(this ITableColumnInfo col, object target)
@@ -32,6 +33,7 @@ public sealed record ColumnInfo : ITableColumnInfo
     public string? Comment { get; set; }
     public bool IsVersionColumn { get; set; }
     public bool IsIgnoreUpdate { get; set; }
+    public bool IsIgnoreInsert { get; set; }
     //public PropertyInfo Property { get; set; }
     //public Type PropertyType { get; set; }
     //public Type UnderlyingType { get; set; }
@@ -75,6 +77,7 @@ public sealed record ColumnInfo : ITableColumnInfo
         , bool isAggregaredProp
         , bool isVersionColumn
         , bool isIgnoreUpdate
+        , bool isIgnoreInsert
         )
     {
         TableType = owner;
@@ -101,6 +104,7 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsAggregatedProperty = isAggregaredProp;
         IsVersionColumn = isVersionColumn;
         IsIgnoreUpdate = isIgnoreUpdate;
+        IsIgnoreInsert = isIgnoreInsert;
     }
 
     public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
@@ -124,12 +128,12 @@ public sealed record ColumnInfo : ITableColumnInfo
         //    DatabaseGeneratedOption = databaseGeneratedAttribute.DatabaseGeneratedOption;
         //}
         var colAttr = property.GetAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
-        IsNotMapped = property.HasAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() || property.HasAttribute<IgnoreAttribute>();
+        IsNotMapped = lightColAttr?.Ignore ?? property.HasAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>();
         IsPrimaryKey = property.HasAttribute<System.ComponentModel.DataAnnotations.KeyAttribute>() || (lightColAttr?.PrimaryKey ?? false);
         CustomName = lightColAttr?.Name ?? colAttr?.Name;
 #else
-        IsNotMapped = property.HasAttribute<IgnoreAttribute>();
-        IsPrimaryKey = (lightColAttr?.PrimaryKey ?? false);
+        IsNotMapped = lightColAttr?.Ignore ?? false;
+        IsPrimaryKey = lightColAttr?.PrimaryKey ?? false;
         CustomName = lightColAttr?.Name;
 #endif
 
@@ -140,6 +144,7 @@ public sealed record ColumnInfo : ITableColumnInfo
         Comment = lightColAttr?.Comment;
         IsVersionColumn = lightColAttr?.Version ?? false;
         IsIgnoreUpdate = lightColAttr?.IgnoreUpdate ?? false;
+        IsIgnoreInsert = lightColAttr?.IgnoreInsert ?? false;
 
         var navigateInfo = property.GetAttribute<LightNavigateAttribute>();
         if (navigateInfo != null)

@@ -25,6 +25,32 @@ internal record InsertBuilder<T> : SqlBuilder
     }
     public bool IsBatchInsert { get; set; }
     bool batchDone;
+    private ITableColumnInfo[] GetInsertColumns()
+    {
+        if (Members.Count == 0)
+        {
+            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.AutoIncrement && !c.IsAggregated && !c.IsIgnoreInsert).Select(c => c.PropertyName));
+        }
+        var cols = MainTable.TableEntityInfo.Columns
+             .Where(c =>
+             {
+                 if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(c.PropertyName))
+                 {
+                     return false;
+                 }
+                 if (c.IsNotMapped || c.IsNavigate)
+                 {
+                     return false;
+                 }
+                 // 如果是默认行为, 前面已经排除了IsIgnoreInsert的列, 如果是指定更新列, 就应该忽略IsIgnoreInsert
+                 if (!Members.Contains(c.PropertyName))
+                 {
+                     return false;
+                 }
+                 return c.GetValue(TargetObject!) != null;
+             });
+        return [.. cols];
+    }
     public void CreateInsertBatchSql(ICustomDatabase database)
     {
         if (batchDone)
@@ -33,16 +59,9 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         ResolveExpressions(database);
 
-        if (Members.Count == 0)
-        {
-            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.AutoIncrement && !c.IsAggregated).Select(c => c.PropertyName));
-        }
-        var insertColumns = MainTable.TableEntityInfo.Columns
-            .Where(c => !IgnoreMembers.Contains(c.PropertyName))
-            .Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate).ToArray();
+        var insertColumns = GetInsertColumns();
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
-        //var insert = $"INSERT INTO {GetTableName(database, MainTable, false)} {N}({string.Join(", ", insertColumns.Select(c => database.AttachEmphasis(c.ColumnName)))}) {N}VALUES {N}";
         foreach (var item in BatchInfos)
         {
             StringBuilder sb = CreateInsertBuilder();//new(insert);//
@@ -101,7 +120,6 @@ internal record InsertBuilder<T> : SqlBuilder
         if (IsBatchInsert)
         {
             CreateInsertBatchSql(database);
-            //return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
             // ToSqlString由内部或者测试项目调用，批量情况下查看SQL使用BatchInfos属性
             return string.Empty;
         }
@@ -111,31 +129,9 @@ internal record InsertBuilder<T> : SqlBuilder
             throw new LightOrmException("insert null entity");
         }
         ResolveExpressions(database);
-        if (Members.Count == 0)
-        {
-            Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.IsAggregated && !c.AutoIncrement).Select(c => c.PropertyName));
-        }
-        var insertColumns = MainTable.TableEntityInfo.Columns
-            //.Where(c => Members.Contains(c.PropertyName) && !c.IsNotMapped && !c.IsNavigate)
-            //.Where(c => !IgnoreMembers.Contains(c.PropertyName))
-            //.Where(c => c.GetValue(TargetObject!) != null)
-            .Where(c =>
-            {
-                if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(c.PropertyName))
-                {
-                    return false;
-                }
-                if (c.IsNotMapped || c.IsNavigate)
-                {
-                    return false;
-                }
-                if (!Members.Contains(c.PropertyName))
-                {
-                    return false;
-                }
-                return c.GetValue(TargetObject!) != null;
-            })
-            .ToArray();
+
+        var insertColumns = GetInsertColumns();
+
         StringBuilder columns = new();
         StringBuilder values = new();
         if (insertColumns.Length == 0)

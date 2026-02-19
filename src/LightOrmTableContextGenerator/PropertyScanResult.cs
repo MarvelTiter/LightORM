@@ -20,4 +20,5 @@ struct PropertyScanResult
     public string NavInfo { get; set; }
     public string IsVersion { get; set; }
     public string IgnoreUpdate { get; set; }
+    public string IgnoreInsert { get; set; }
 }
