@@ -18,4 +18,56 @@ public class DbMethodTest : TestBase
         var r2 = exp.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(r1.SqlString);
     }
+
+    [TestMethod]
+    public void T()
+    {
+        using var jdcScoped = Db.CreateMainDbScoped();
+        var job = new { JOB_ID = 123 };
+        string[] where = ["0102"];
+        var sql = jdcScoped.Update<JobFile>()
+              .Set(f => f.JFL_OK, 0)
+              .Set(f => f.JFL_EXIST, 0)
+              .Where(f => f.JOB_ID == job.JOB_ID)
+              .Where(f => where.Contains(f.FLT_ID!.Trim())).ToSqlWithParameters();
+        Console.WriteLine(sql);
+
+        var sql2 = jdcScoped.Update<JobFile>()
+              .Set(f => f.JFL_OK, 0)
+              .Set(f => f.JFL_EXIST, 0)
+              .Where(f => f.JOB_ID == job.JOB_ID)
+              .Where(f => where.Contains(f.FLT_ID!.Trim())).ToSqlWithParameters();
+        Console.WriteLine(sql2);
+    }
+
+    [LightTable(Name = "JOBFILES")]
+    public class JobFile
+    {
+        public int JOB_ID { get; set; }
+
+        public string? FLT_ID { get; set; }
+
+        public string? FLT_CATEGORY { get; set; }
+
+        public int JFL_EXIST { get; set; }
+
+        public int? JFL_OK { get; set; }
+
+        public int? JFL_NO { get; set; }
+
+        public DateTime? JFL_DATE { get; set; }
+
+        public int? JFL_NEED { get; set; }
+
+        public string? JFL_REMARK { get; set; }
+
+        public string? JFL_NAME { get; set; }
+
+        [LightColumn(Ignore = true)]
+        public int Rotate { get; set; }
+        [LightColumn(Ignore = true)]
+        public bool Uploading { get; set; }
+        [LightColumn(Ignore = true)]
+        public long Timestamp { get; set; } = DateTime.Now.Ticks;
+    }
 }

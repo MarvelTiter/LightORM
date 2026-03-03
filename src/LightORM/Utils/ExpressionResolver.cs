@@ -100,7 +100,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public int Level => Context.Level;
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
-    public Expression? NavigateWhereExpression { get; set; }
+    public Expression[]? NavigateWhereExpression { get; set; }
     public string? MemberOfNavigateMember { get; set; }
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;

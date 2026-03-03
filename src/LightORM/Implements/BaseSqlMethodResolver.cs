@@ -468,7 +468,7 @@ namespace LightORM.Implements
             resolver.Visit(methodCall.Arguments[0]);
             //resolver.Sql.Clear();
             //resolver.Visit(methodCall.Arguments[1]);
-            resolver.NavigateWhereExpression = methodCall.Arguments[1];
+            resolver.NavigateWhereExpression = [methodCall.Arguments[1]];
         }
 
         public virtual void WhereIf(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -481,7 +481,7 @@ namespace LightORM.Implements
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
             //resolver.Visit(methodCall.Arguments[1]);
-            resolver.NavigateWhereExpression = methodCall.Arguments[1];
+            resolver.NavigateWhereExpression = [methodCall.Arguments[1]];
         }
 
         public virtual void Any(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -492,7 +492,8 @@ namespace LightORM.Implements
             }
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
-            resolver.NavigateWhereExpression = methodCall.Arguments[1];
+            if (methodCall.Arguments.Count > 1)
+                resolver.NavigateWhereExpression = [methodCall.Arguments[1]];
         }
 
         #endregion

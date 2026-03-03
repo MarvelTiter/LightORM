@@ -12,7 +12,7 @@ public interface IExpressionResolver
     bool UseNavigate { get; set; }
     public List<WindowFnSpecification>? WindowFnPartials { get; set; }
     SqlResolveOptions Options { get; }
-    Expression? NavigateWhereExpression { get; set; }
+    Expression[]? NavigateWhereExpression { get; set; }
     Expression? Visit(Expression? expression);
     Expression? Body { get; }
     ReadOnlyCollection<ParameterExpression>? Parameters { get; }

@@ -206,7 +206,8 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                 });
-                var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
+                //var n = result.Members?.FirstOrDefault(m => m != navColumn.PropertyName);
+                var n = result.MemberOfNavigateMember;
                 if (n is not null)
                 {
                     var c = targetTable.GetColumn(n);

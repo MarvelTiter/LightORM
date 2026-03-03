@@ -27,29 +27,14 @@ internal static class ExpressionResolverPool
 
     private static void ResetResolver(ExpressionResolver resolver, SqlResolveOptions options, ResolveContext context)
     {
+        // 重置字段
+        resolver.Options = options;
+        resolver.Context = context;
         // 重用StringBuilder，只需Clear
         resolver.Sql.Clear();
         resolver.Sql.EnsureCapacity(128); // 恢复初始容量
 
-        // 清空列表，重用底层数组
-        resolver.DbParameters.Clear();
-        resolver.Members.Clear();
-        resolver.ResolvedMembers.Clear();
-        resolver.NavigateMembers?.Clear();
-        resolver.WindowFnPartials?.Clear();
-
-        // 重置字段
-        resolver.Options = options;
-        resolver.Context = context;
-        resolver.IsNot = false;
-        resolver.UseNavigate = false;
-        resolver.NavigateDeep = 0;
-        resolver.Parameters = null;
-        resolver.ParameterPositionIndex = 0;
-        resolver.ResolveNullValue = false;
-        resolver.UseAs = true;
-        resolver.IsVisitConvert = false;
-        resolver.ContainVariable = false;
+        
     }
 
     private static void ClearResolver(ExpressionResolver resolver)
@@ -63,5 +48,24 @@ internal static class ExpressionResolverPool
 
         if (resolver.ResolvedMembers.Capacity > 16)
             resolver.ResolvedMembers = new List<string>(4);
+
+        // 清空列表，重用底层数组
+        resolver.DbParameters.Clear();
+        resolver.Members.Clear();
+        resolver.ResolvedMembers.Clear();
+        resolver.NavigateMembers?.Clear();
+        resolver.WindowFnPartials?.Clear();
+        resolver.NavigateWhereExpression = null;
+
+        resolver.IsNot = false;
+        resolver.UseNavigate = false;
+        resolver.NavigateDeep = 0;
+        resolver.Parameters = null;
+        resolver.ParameterPositionIndex = 0;
+        resolver.ResolveNullValue = false;
+        resolver.UseAs = true;
+        resolver.IsVisitConvert = false;
+        resolver.ContainVariable = false;
+        resolver.MemberOfNavigateMember = null;
     }
 }

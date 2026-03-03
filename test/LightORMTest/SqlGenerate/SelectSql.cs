@@ -187,6 +187,13 @@ public partial class SelectSql : TestBase
             .Where(u => u.City.Name.StartsWith("D"))
             .ToSql();
         Console.WriteLine(sql);
+
+        var sql2 = Db.Select<User>()
+            // 两种写法都可以
+            //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
+            .Where(u => u.City.Name.StartsWith("D"))
+            .ToSql();
+        Console.WriteLine(sql2);
     }
 
     #endregion
