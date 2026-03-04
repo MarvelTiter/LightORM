@@ -10,9 +10,9 @@ namespace LightORM.Utils;
 
 internal class ResolveHelper
 {
-    public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? option, string name, ref int index)
+    public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? _, string name, ref int index)
     {
-        var p = $"{context?.ParameterPrefix}{name}_{option?.ParameterPartialIndex}_{index}";
+        var p = $"{context?.ParameterPrefix}{name}_{index}";
         index += 1;
         return p;
     }

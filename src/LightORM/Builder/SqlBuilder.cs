@@ -92,12 +92,12 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
         ResolveCtx = new ResolveContext(database);
         BeforeResolveExpressions(ResolveCtx);
-        var index = 0;
+        //var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values.Where(item => !item.Completed))
         {
             //item.ResolveOptions!.DbType = DbType;
             //item.ResolveOptions = item.ResolveOptions with { ParameterPartialIndex = index };
-            item.ResolveOptions.ParameterPartialIndex = index;
+            //item.ResolveOptions.ParameterPartialIndex = index;
             var result = item.Expression.Resolve(item.ResolveOptions, ResolveCtx);
             item.Completed = true;
             if (!string.IsNullOrEmpty(item.Template))
@@ -107,7 +107,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             HandleResult(database, item, result);
             if (result.DbParameters != null)
                 DbParameterInfos.AddRange(result.DbParameters);
-            index++;
+            //index++;
         }
     }
     protected abstract void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result);
