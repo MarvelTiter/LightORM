@@ -28,6 +28,7 @@ namespace LightORM.Providers
             sqlBuilder.IsBatchDelete = true;
         }
 
+        public void UpdateTableName(string tableName) => sqlBuilder.MainTable.OverriddenTableName = tableName;
 
         public int Execute()
         {

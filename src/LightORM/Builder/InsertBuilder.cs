@@ -157,7 +157,7 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         columns.RemoveLast(1);
         values.RemoveLast(1);
-        StringBuilder sb = new("INSERT INTO");
+        StringBuilder sb = new("INSERT INTO ");
         //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
         sb.AppendTableName(database, MainTable, false).AppendLine();
         sb.Append('(');

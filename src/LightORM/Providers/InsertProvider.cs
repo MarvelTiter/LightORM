@@ -26,6 +26,8 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         sqlBuilder.IsBatchInsert = true;
     }
 
+    public void UpdateTableName(string tableName) => sqlBuilder.MainTable.OverriddenTableName = tableName;
+
     public void SetTargetObject(T? entity)
     {
         sqlBuilder.TargetObject = entity;

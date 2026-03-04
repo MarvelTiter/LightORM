@@ -26,6 +26,8 @@ namespace LightORM.Providers
             sqlBuilder.TargetObjects = entities;
         }
 
+        public void UpdateTableName(string tableName) => sqlBuilder.MainTable.OverriddenTableName = tableName;
+
         public int Execute()
         {
             var sql = sqlBuilder.ToSqlString(Database);

@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using LightORM.Providers;
 using LightORM.Repository;
 
 namespace LightORM;
@@ -73,6 +74,51 @@ public static class ExpressionContextExtension
     public static IExpSelect<T> Select<T>(this IContext context, string tableName)
     {
         return new SelectProvider1<T>(tableName, context.Ado);
+    }
+
+    public static IExpInsert<T> Insert<T>(this IContext context, string tableName, params T[] values)
+    {
+        InsertProvider<T>? p;
+        if (values.Length == 1)
+        {
+            p = new InsertProvider<T>(context.Ado, values[0]);
+        }
+        else
+        {
+            p = new InsertProvider<T>(context.Ado, values);
+        }
+        p.UpdateTableName(tableName);
+        return p;
+    }
+
+    public static IExpUpdate<T> Update<T>(this IContext context, string tableName, params T[] values)
+    {
+        UpdateProvider<T>? p;
+        if (values.Length == 1)
+        {
+            p = new UpdateProvider<T>(context.Ado, values[0]);
+        }
+        else
+        {
+            p = new UpdateProvider<T>(context.Ado, values);
+        }
+        p.UpdateTableName(tableName);
+        return p;
+    }
+
+    public static IExpDelete<T> Delete<T>(this IContext context, string tableName, params T[] values)
+    {
+        DeleteProvider<T>? p;
+        if (values.Length == 1)
+        {
+            p = new DeleteProvider<T>(context.Ado, values[0]);
+        }
+        else
+        {
+            p = new DeleteProvider<T>(context.Ado, values);
+        }
+        p.UpdateTableName(tableName);
+        return p;
     }
 
     /// <summary>

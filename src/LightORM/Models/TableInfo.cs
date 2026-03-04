@@ -1,4 +1,5 @@
 ﻿namespace LightORM.Models;
+
 public class TableInfo
 {
     private const string ALIAS = "abcdefghijklmnopqrstuvwyz";
@@ -20,10 +21,10 @@ public class TableInfo
     }
     private TableInfo(string? tableName, Type type, int index) : this(type, index)
     {
-        overriddenTableName = tableName;
+        OverriddenTableName = tableName;
     }
-    private readonly string? overriddenTableName;
-    public string TableName => overriddenTableName ?? TableEntityInfo.TableName;
+
+    public string TableName => OverriddenTableName ?? TableEntityInfo.TableName;
     public string? Schema => TableEntityInfo.Schema;
     /// <summary>
     /// 表类型
@@ -60,4 +61,5 @@ public class TableInfo
     /// 表信息
     /// </summary>
     public ITableEntityInfo TableEntityInfo { get; }
+    public string? OverriddenTableName { get; set; }
 }

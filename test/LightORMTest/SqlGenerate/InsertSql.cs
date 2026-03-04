@@ -33,8 +33,14 @@ public class InsertSql : TestBase
     [TestMethod]
     public void Insert_Flat_Entity()
     {
-        var sql = Db.Insert(new UserFlat()).ToSql();
+        var sql = Db.Insert("OT", new UserFlat()).ToSql();
+        var sql2 = Db.Insert( new UserFlat()).ToSql();
+        var sql3 = Db.Insert("OT", new UserFlat()).ToSql();
+        var sql4 = Db.Insert( new UserFlat()).ToSql();
         Console.WriteLine(sql);
+        Console.WriteLine(sql2);
+        Console.WriteLine(sql3);
+        Console.WriteLine(sql4);
     }
 
     [TestMethod]
