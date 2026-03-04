@@ -9,6 +9,7 @@ namespace LightORMTest.Models;
 [LightTable(Name = "PRODUCTS")]
 public class Product
 {
+    public int Id { get; set; }
     [LightColumn(Name = "PRODUCT_ID", PrimaryKey = true, AutoIncrement = true, Comment = "产品ID")]
     public int ProductId { get; set; }
     [LightColumn(Name = "CATEGORY_ID", Comment = "产品类型")]

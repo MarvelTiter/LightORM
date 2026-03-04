@@ -15,20 +15,20 @@ namespace LightORM;
 
 internal static class ExpressionExtensions
 {
-    private static readonly ConcurrentDictionary<ulong, ExpressionResolvedResult> expressionResolvedResultCache = new();
+    private static readonly ConcurrentDictionary<(SqlAction, ulong), ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
-
         //resolve.Visit(expression);
         //return new ExpressionResolvedResult(resolve);
         //var resolve = new ExpressionResolver(options, context);
         bool enableCache = ExpressionSqlOptions.Instance.Value.EnableExpressionCache;
-        ulong key = 0;
+        ulong hash = 0;
         if (enableCache)
         {
-            key = ExpressionHasher.Default.ComputeHash64(expression);
-            Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {key}");
+            hash = ExpressionHasher.Default.ComputeHash64(expression);
+            Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {hash}");
         }
+        var key = (options.SqlAction, hash);
         if (enableCache && expressionResolvedResultCache.TryGetValue(key, out var result))
         {
             //result.DbParameters
