@@ -76,7 +76,7 @@ internal static class CustomDatabaseExtensions
         }
         else
         {
-            if (ti.Schema is not null)
+            if (ti.Schema is not null && !string.IsNullOrWhiteSpace(ti.Schema))
             {
                 sql.AppendEmphasis(ti.Schema, database).Append('.');
             }

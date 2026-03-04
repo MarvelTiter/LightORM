@@ -124,19 +124,34 @@ internal abstract record SqlBuilder : ISqlBuilder
     //TODO Oracle?
     protected static string NpTableName(ICustomDatabase database, TableInfo table)
     {
+        //if (table.TableEntityInfo.IsTempTable)
+        //{
+        //    return table.TableEntityInfo.TableName;
+        //}
+        //var tablename = table.TableName;
+        //if (!tablename.Contains('.'))
+        //{
+        //    return database.AttachEmphasis(tablename);
+        //}
+        //else
+        //{
+        //    var prs = tablename.Split('.');
+        //    return string.Join(".", prs.Select(database.AttachEmphasis));
+        //}
         if (table.TableEntityInfo.IsTempTable)
         {
             return table.TableEntityInfo.TableName;
         }
-        var tablename = table.TableName;
-        if (!tablename.Contains('.'))
-        {
-            return database.AttachEmphasis(tablename);
-        }
         else
         {
-            var prs = tablename.Split('.');
-            return string.Join(".", prs.Select(database.AttachEmphasis));
+            if (table.Schema is not null && !string.IsNullOrWhiteSpace(table.Schema))
+            {
+                return $"{database.AttachEmphasis(table.Schema)}.{database.AttachEmphasis(table.TableName)}";
+            }
+            else
+            {
+                return database.AttachEmphasis(table.TableName);
+            }
         }
     }
 

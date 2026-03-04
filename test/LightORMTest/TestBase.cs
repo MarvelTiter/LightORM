@@ -24,7 +24,7 @@ public class TestBase
         {
             Configura(option);
             option.UseInterceptor<LightOrmAop>();
-            //option.SetTableContext(TableContext);
+            option.SetTableContext(TableContext);
         });
 
         Services = services.BuildServiceProvider();
