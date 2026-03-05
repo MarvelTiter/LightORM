@@ -299,20 +299,21 @@ internal partial class ExpressionBuilder
             GetValueMethod = DataRecord_GetValue;
 
         Expression RecordFieldExpression;
+        var ordinal = Expression.Constant(Ordinal, typeof(int));
         if (ReferenceEquals(RecordFieldType, typeof(byte[])))
         {
-            RecordFieldExpression = Expression.Call(GetValueMethod, [recordInstanceExp, Expression.Constant(Ordinal, typeof(int))]);
+            RecordFieldExpression = Expression.Call(GetValueMethod, [recordInstanceExp, ordinal]);
         }
         else if (IsUnsignType(RecordFieldType))
         {
             RecordFieldExpression = Expression.Call(
                 GetValueMethod,
-                [recordInstanceExp, Expression.Constant(Ordinal, typeof(int))]
+                [recordInstanceExp, ordinal]
             );
         }
         else
         {
-            RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, Expression.Constant(Ordinal, typeof(int)));
+            RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, ordinal);
         }
         return RecordFieldExpression;
         static bool IsUnsignType(Type type)
