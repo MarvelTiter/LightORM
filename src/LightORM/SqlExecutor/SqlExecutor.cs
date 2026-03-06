@@ -244,14 +244,14 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         if (context.NestLevel > 0)
         {
-            context.NestLevel--;
-            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTran： {context.Id} -> {context.NestLevel}");
 #if NET6_0_OR_GREATER
             if (context.Transaction.SupportsSavepoints)
             {
                 context.Transaction.Rollback($"savePoint{context.NestLevel}");
             }
 #endif
+            context.NestLevel--;
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTran： {context.Id} -> {context.NestLevel}");
             return;
         }
         try
@@ -371,12 +371,12 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         if (context.NestLevel > 0)
         {
-            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
-            context.NestLevel--;
             if (context.Transaction.SupportsSavepoints)
             {
                 await context.Transaction.RollbackAsync($"savePoint{context.NestLevel}", cancellationToken).ConfigureAwait(false);
             }
+            Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {context.Id} -> {context.NestLevel}");
+            context.NestLevel--;
             return;
         }
         try

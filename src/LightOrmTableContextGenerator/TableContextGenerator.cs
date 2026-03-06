@@ -235,13 +235,11 @@ public class TableContextGenerator : IIncrementalGenerator
         var tableType = $"typeof({owner.ToDisplayString()})";
         foreach (var p in columns)
         {
+            // 处理 Flat 属性
             if (p.Type.TypeKind == TypeKind.Class
-                && p.Type.SpecialType == SpecialType.None)
+                && p.Type.SpecialType == SpecialType.None
+                && p.HasAttribute(LightFlatAttributeFullName))
             {
-                if (!p.HasAttribute(LightFlatAttributeFullName))
-                {
-                    continue;
-                }
                 var flattedProps = p.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
                 var flatType = p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
                 foreach (var item in flattedProps)

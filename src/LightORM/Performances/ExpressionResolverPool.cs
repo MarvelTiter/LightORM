@@ -43,8 +43,10 @@ internal static class ExpressionResolverPool
         if (resolver.Sql.Capacity > 4096)
             resolver.Sql = new StringBuilder(128);
 
-        if (resolver.DbParameters.Capacity > 32)
-            resolver.DbParameters = new List<DbParameterInfo>(8);
+        //if (resolver.DbParameters.Capacity > 32)
+        //    resolver.DbParameters = new List<DbParameterInfo>(8);
+
+        resolver.DbParameters.Clear();
 
         if (resolver.ResolvedMembers.Capacity > 16)
             resolver.ResolvedMembers = new List<string>(4);
@@ -61,7 +63,7 @@ internal static class ExpressionResolverPool
         resolver.UseNavigate = false;
         resolver.NavigateDeep = 0;
         resolver.Parameters = null;
-        resolver.ParameterPositionIndex = 0;
+        //resolver.ParameterPositionIndex = 0;
         resolver.ResolveNullValue = false;
         resolver.UseAs = true;
         resolver.IsVisitConvert = false;

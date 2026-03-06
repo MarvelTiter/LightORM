@@ -56,6 +56,46 @@ internal class ResolveHelper
         throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
     }
 
+    public static T ExtractInstanceValueWithName<T>(Expression expression, out string name)
+    {
+        if (expression is ConstantExpression ce && ce.Value is T index)
+        {
+            name = "Const";
+            return index;
+        }
+        var members = new Stack<MemberInfo>();
+        Expression? current = expression;
+
+        // 向下遍历，收集 MemberInfo
+        while (current is MemberExpression memberExpr)
+        {
+            members.Push(memberExpr.Member);
+            current = memberExpr.Expression;
+        }
+        object? value;
+
+        if (current is ConstantExpression constExpr)
+        {
+            value = constExpr.Value;
+        }
+        else if (current is null)
+        {
+            value = null;
+        }
+        else
+        {
+            throw new LightOrmException($"数组索引表达式必须以常量或者Null结尾，但得到: {current?.GetType().Name}: {current}");
+        }
+
+        value = GetValueByExpression(members, value, out name);
+
+        if (value is T t)
+        {
+            return t;
+        }
+        throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
+    }
+
     public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
 
     private static readonly ConcurrentDictionary<string, Func<object?, object?>> getterCache = [];

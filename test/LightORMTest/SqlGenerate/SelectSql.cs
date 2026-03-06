@@ -618,4 +618,14 @@ public partial class SelectSql : TestBase
             .ToSql();
         Console.WriteLine(sql);
     }
+
+    [TestMethod]
+    public void TestWithSameDbParameter()
+    {
+        var p = new { Time = DateTime.Now };
+        var sql = Db.Select<User>()
+            .Where(u => u.ModifyTime > p.Time && u.ModifyTime < p.Time)
+            .ToSqlWithParameters();
+        Console.WriteLine(sql);
+    }
 }

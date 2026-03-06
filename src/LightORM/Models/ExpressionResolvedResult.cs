@@ -21,7 +21,7 @@ internal record ExpressionResolvedResult
     /// <summary>
     /// 解析到的参数
     /// </summary>
-    public List<DbParameterInfo>? DbParameters { get; set; }
+    public List<ResolvedValueInfo>? DbParameters { get; set; }
     /// <summary>
     /// 解析到的成员
     /// </summary>

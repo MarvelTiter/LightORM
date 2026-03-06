@@ -108,7 +108,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                     var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
                     Where.Add(eeResult.SqlString!);
                     if (eeResult.DbParameters?.Count > 0)
-                        DbParameterInfos.AddRange(eeResult.DbParameters);
+                        ResolvedValues.AddRange(eeResult.DbParameters);
                 }
             }
             else

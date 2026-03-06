@@ -25,7 +25,7 @@ internal record InsertBuilder<T> : SqlBuilder
     }
     public bool IsBatchInsert { get; set; }
     bool batchDone;
-    private ITableColumnInfo[] GetInsertColumns()
+    private ITableColumnInfo[] GetInsertColumns(bool checkInstanceValue)
     {
         if (Members.Count == 0)
         {
@@ -47,7 +47,14 @@ internal record InsertBuilder<T> : SqlBuilder
                  {
                      return false;
                  }
-                 return c.GetValue(TargetObject!) != null;
+                 if (checkInstanceValue)
+                 {
+                     return c.GetValue(TargetObject!) != null;
+                 }
+                 else
+                 {
+                     return true;
+                 }
              });
         return [.. cols];
     }
@@ -59,7 +66,7 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         ResolveExpressions(database);
 
-        var insertColumns = GetInsertColumns();
+        var insertColumns = GetInsertColumns(false);
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
         foreach (var item in BatchInfos)
@@ -130,7 +137,7 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         ResolveExpressions(database);
 
-        var insertColumns = GetInsertColumns();
+        var insertColumns = GetInsertColumns(true);
 
         StringBuilder columns = new();
         StringBuilder values = new();

@@ -15,7 +15,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     public Dictionary<string, object> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
-    public List<DbParameterInfo> DbParameterInfos { get; set; } = [];
+    public HashSet<ResolvedValueInfo> ResolvedValues { get; set; } = [];
     public bool? IsParameterized { get; set; } = true;
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
@@ -35,7 +35,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     {
         //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
         // TODO 非参数化查询
-        foreach (var item in DbParameterInfos)
+        foreach (var item in ResolvedValues)
         {
             if (item.Type == ExpValueType.Null || item.Value is null)
             {
@@ -106,7 +106,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
             HandleResult(database, item, result);
             if (result.DbParameters != null)
-                DbParameterInfos.AddRange(result.DbParameters);
+                ResolvedValues.AddRange(result.DbParameters);
             //index++;
         }
     }

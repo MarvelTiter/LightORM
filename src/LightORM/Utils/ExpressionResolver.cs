@@ -89,7 +89,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 {
     public SqlResolveOptions Options { get; set; } = options;
     public ResolveContext Context { get; set; } = context;
-    public List<DbParameterInfo> DbParameters { get; set; } = [];
+    public HashSet<ResolvedValueInfo> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder(128);
     public Stack<MemberInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
@@ -173,9 +173,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         set => isVisitConvert = value;
     }
 
-    int parameterPositionIndex = 0;
-    public int ParameterPositionIndex { get => parameterPositionIndex; set => parameterPositionIndex = value; }
+    //int parameterPositionIndex = 0;
+    //public int ParameterPositionIndex { get => parameterPositionIndex; set => parameterPositionIndex = value; }
 
+    //private enum VisitBinaryState
+    //{
+    //    None,
+    //    Left,
+    //    Right,
+    //}
+    //private VisitBinaryState binaryState;
+    string? resolvedPropertyName = null;
     Expression? VisitLambda(LambdaExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: LambdaExpression: {exp}");
@@ -198,11 +206,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
             var index = ResolveHelper.ExtractInstanceValue<int>(exp.Right);
-            var array = ResolveHelper.ExtractInstanceValue<Array>(exp.Left);
+            var array = ResolveHelper.ExtractInstanceValueWithName<Array>(exp.Left, out var name);
             var arrayValue = array!.GetValue(index);
-            var pname = ResolveHelper.FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
+            //var pname = ResolveHelper.FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
+            var pname = $"{Context.ParameterPrefix}{name}";
             Sql.Append(pname);
-            DbParameters.Add(new(pname, arrayValue, ExpValueType.Other));
+            DbParameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
             ContainVariable = true;
             return null;
         }
@@ -210,10 +219,11 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             Sql.Append('(');
         }
-
+        resolvedPropertyName = null;
         Visit(exp.Left);
         var insertIndex = Sql.Length;
         Visit(exp.Right);
+        resolvedPropertyName = null;
         var op = exp.NodeType.OperatorParser(ResolveNullValue);
         Sql.Insert(insertIndex, op);
 
@@ -221,7 +231,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             Sql.Append(')');
         }
-
         return null;
 
 
@@ -451,6 +460,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             //{
             //    UseAs = col.ColumnName != col.PropertyName;
             //}
+            resolvedPropertyName = col.PropertyName;
             if (Options.RequiredTableAlias)
             {
                 Sql.Append(table.Alias);
@@ -475,7 +485,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             //value = GetValue(Members, value, out var name);
             //VariableValue(value, name);
             var v = ResolveHelper.GetValueByExpression(Members, value, out var propNames);
-            var pn = ResolveHelper.FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
+            //var pn = ResolveHelper.FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
+            var pn = $"{Context.ParameterPrefix}{propNames}";
             Sql.Append(pn);
             VariableValue(v, pn);
             ContainVariable = true;
@@ -490,27 +501,27 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             if (v == null)
             {
-                DbParameters.Add(new(bn, null, ExpValueType.Null));
+                DbParameters.Add(new(bn, null, ExpValueType.Null, resolvedPropertyName));
             }
             else if (v is IEnumerable && v is not string)
             {
-                DbParameters.Add(new(bn, v, ExpValueType.Collection));
+                DbParameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
             }
             else if (v is bool)
             {
                 if (IsNot)
                 {
-                    DbParameters.Add(new(bn, v, ExpValueType.BooleanReverse));
+                    DbParameters.Add(new(bn, v, ExpValueType.BooleanReverse, resolvedPropertyName));
                     IsNot = false;
                 }
                 else
                 {
-                    DbParameters.Add(new(bn, v, ExpValueType.Boolean));
+                    DbParameters.Add(new(bn, v, ExpValueType.Boolean, resolvedPropertyName));
                 }
             }
             else
             {
-                DbParameters.Add(new(bn, v, ExpValueType.Other));
+                DbParameters.Add(new(bn, v, ExpValueType.Other, resolvedPropertyName));
             }
         }
 

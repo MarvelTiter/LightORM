@@ -72,7 +72,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                             var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
                             navSqlBuilder.Where.Add(eeResult.SqlString!);
                             if (eeResult.DbParameters?.Count > 0)
-                                DbParameterInfos.AddRange(eeResult.DbParameters);
+                                ResolvedValues.AddRange(eeResult.DbParameters);
                         }
                     }
                     else

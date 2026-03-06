@@ -16,8 +16,9 @@ namespace LightORM.Utils;
 
 internal class ExpressionValueExtract : ExpressionVisitor, IResetable
 {
-    private readonly List<DbParameterInfo> parameters = [];
+    private readonly HashSet<ResolvedValueInfo> parameters = [];
     private int parameterIndex = 0;
+    private string? resolvedPropertyName = null;
     private readonly Stack<MemberInfo> members = [];
     public static ExpressionValueExtract Default => ExpressionVisitorPool<ExpressionValueExtract>.Rent();
     private ResolveContext? context;
@@ -29,8 +30,9 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         members.Clear();
         context = null;
         option = null;
+        resolvedPropertyName = null;
     }
-    public List<DbParameterInfo> Extract(Expression? exp)
+    public List<ResolvedValueInfo> Extract(Expression? exp)
     {
         try
         {
@@ -38,14 +40,14 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
             {
                 Visit(exp);
             }
-            return [..parameters];
+            return [.. parameters];
         }
         finally
         {
             ExpressionVisitorPool<ExpressionValueExtract>.Return(this);
         }
     }
-    public List<DbParameterInfo> Extract(Expression? exp, SqlResolveOptions option, ResolveContext context)
+    public List<ResolvedValueInfo> Extract(Expression? exp, SqlResolveOptions option, ResolveContext context)
     {
         try
         {
@@ -55,7 +57,7 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
                 this.option = option;
                 Visit(exp);
             }
-            return [..parameters];
+            return [.. parameters];
         }
         finally
         {
@@ -69,15 +71,18 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         {
             //var index = Convert.ToInt32(Expression.Lambda(node.Right).Compile().DynamicInvoke());
             var index = ResolveHelper.ExtractInstanceValue<int>(node.Right);
-            var array = ResolveHelper.ExtractInstanceValue<Array>(node.Left);
+            var array = ResolveHelper.ExtractInstanceValueWithName<Array>(node.Left, out var name);
             var arrayValue = array!.GetValue(index);
-            var pname = ResolveHelper.FormatDbParameterName(context, option, $"Arr{index}", ref parameterIndex);
-            parameters.Add(new(pname, arrayValue, ExpValueType.Other));
+            //var pname = ResolveHelper.FormatDbParameterName(context, option, $"Arr{index}", ref parameterIndex);
+            var pname = $"{context?.ParameterPrefix}{name}";
+            parameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
         }
         else
         {
+            resolvedPropertyName = null;
             Visit(node.Left);
             Visit(node.Right);
+            resolvedPropertyName = null;
         }
         return node;
     }
@@ -92,6 +97,7 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
     {
         if (node.Expression?.NodeType == ExpressionType.Parameter)
         {
+            resolvedPropertyName = node.Member.Name;
             members.Clear();
         }
         else
@@ -109,7 +115,8 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         if (members.Count > 0 && value != null)
         {
             value = ResolveHelper.GetValueByExpression(members, value, out var name);
-            var bn = ResolveHelper.FormatDbParameterName(context, option, name, ref parameterIndex);
+            //var bn = ResolveHelper.FormatDbParameterName(context, option, name, ref parameterIndex);
+            var bn = $"{context?.ParameterPrefix}{name}";
             VariableValue(value, bn);
         }
 
@@ -119,21 +126,21 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         {
             if (v == null)
             {
-                parameters.Add(new DbParameterInfo(bn, null, ExpValueType.Null));
+                parameters.Add(new ResolvedValueInfo(bn, null, ExpValueType.Null, resolvedPropertyName));
                 return;
             }
 
             if (v is IEnumerable && v is not string)
             {
-                parameters.Add(new(bn, v, ExpValueType.Collection));
+                parameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
             }
             else if (v is bool)
             {
-                parameters.Add(new(bn, v, ExpValueType.Boolean));
+                parameters.Add(new(bn, v, ExpValueType.Boolean, resolvedPropertyName));
             }
             else
             {
-                parameters.Add(new(bn, v, ExpValueType.Other));
+                parameters.Add(new(bn, v, ExpValueType.Other, resolvedPropertyName));
             }
         }
     }

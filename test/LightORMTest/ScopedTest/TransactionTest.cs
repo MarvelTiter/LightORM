@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace LightORMTest.ScopedTest;
 
@@ -41,7 +42,7 @@ public class TransactionTest : TestBase
             string[] powers = [.. role.Powers.Select(p => p.PermissionId).Distinct()];
             var d = await scoped.Delete<RolePermission>().Where(r => r.RoleId == roleId).ExecuteAsync();
             var i = 0;
-            
+
             var ef = await scoped.Insert<RolePermission>([..powers.Select(p => new RolePermission()
             {
                 RoleId = roleId,
@@ -70,5 +71,29 @@ public class TransactionTest : TestBase
         await scoped.Select<UserRole>().ToListAsync();
         await scoped.SwitchDatabase("v").Select<UserRole>().ToListAsync();
         await scoped.CommitTransactionAsync("v");
+    }
+
+    [TestMethod]
+    public async Task TestTransactionScope()
+    {
+        //await Db.Insert(new User()
+        //{
+        //    Id = 1,
+        //    Age = 20,
+        //    IsLock = true,
+        //    Password = "password",
+        //    Sign = SignType.Vip,
+        //    UserName = "username",
+        //    UserId = "admin",
+        //}).ExecuteAsync();
+
+        using var tc = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        var user = (await Db.Select<User>().FirstAsync()) ?? throw new Exception("没有查询到结果");
+
+        await Db.Update<User>(user)
+            .Set(u => u.Age, 18)
+            .Where(u => u.UserId == user.UserId && u.Version == user.Version)
+            .ExecuteAsync();
+        tc.Complete();
     }
 }

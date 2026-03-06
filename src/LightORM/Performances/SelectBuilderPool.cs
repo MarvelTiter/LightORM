@@ -46,7 +46,7 @@ internal class SelectBuilderPool
         builder.Unions.Clear();
         builder.DbParameters.Clear();
         builder.Where.Clear();
-        builder.DbParameterInfos.Clear();
+        builder.ResolvedValues.Clear();
 
         // 重置其他字段
         builder.PageIndex = 0;

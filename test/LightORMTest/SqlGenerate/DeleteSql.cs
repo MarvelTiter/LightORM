@@ -40,7 +40,7 @@ public class DeleteSql : TestBase
         var name = "admin";
         var age = 10;
         var sql = Db.Delete<User>()
-            .Where(s => s.UserRoles.Where(ur => ur.RoleName.StartsWith(name)).Any())
+            .Where(s => s.UserRoles.Any(ur => ur.RoleName.StartsWith(name)))
             .ToSqlWithParameters();
         Console.WriteLine(sql);
 

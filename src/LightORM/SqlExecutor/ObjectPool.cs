@@ -40,16 +40,16 @@ internal abstract class ObjectPool<T> : IDisposable
         {
             if (ValidateObject(item))
             {
-                Debug.WriteLine("借用了连接-快速对象");
+                Debug.WriteLine("借用了实例-快速对象");
                 return item;
             }
             item.Dispose();
-            return CreateNewConnection();
+            return CreateNewObject();
         }
         while (_items.TryDequeue(out var ci))
         {
             item = ci.Object;
-            Debug.WriteLine("借用了连接-队列");
+            Debug.WriteLine("借用了实例-队列");
             Interlocked.Decrement(ref _numItems);
             if (ValidateObject(item))
                 return item;
@@ -57,7 +57,7 @@ internal abstract class ObjectPool<T> : IDisposable
             item.Dispose();
         }
 
-        return CreateNewConnection();
+        return CreateNewObject();
     }
 
     public virtual void Return(T item)
@@ -75,13 +75,13 @@ internal abstract class ObjectPool<T> : IDisposable
         // 快速路径尝试
         if (_fastItem == null && Interlocked.CompareExchange(ref _fastItem, item, null) == null)
         {
-            Debug.WriteLine("归还了对象-快速对象");
+            Debug.WriteLine("归还了实例-快速对象");
             return;
         }
         if (Interlocked.Increment(ref _numItems) <= _maxCapacity)
         {
             _items.Enqueue(new(item));
-            Debug.WriteLine("归还了对象-队列");
+            Debug.WriteLine("归还了实例-队列");
             return;
         }
         Interlocked.Decrement(ref _numItems);
@@ -97,7 +97,7 @@ internal abstract class ObjectPool<T> : IDisposable
             HealchCheck();
         }
     }
-    private T CreateNewConnection()
+    private T CreateNewObject()
     {
         Debug.WriteLine("创建了新的对象");
         return _createFunc();

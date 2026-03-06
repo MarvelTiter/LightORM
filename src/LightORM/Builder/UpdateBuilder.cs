@@ -54,7 +54,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 }
                 else
                 {
-                    var member = result.Members!.First();
+                    var member = result.Members![0];
                     Members.Add(member);
                     DbParameters.Add(member, v.Value);
                 }
@@ -306,7 +306,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 }
             }
         }
-        var versionColumn = MainTable.TableEntityInfo.Columns.Where(c => c.IsVersionColumn).FirstOrDefault();
+        var versionColumn = MainTable.TableEntityInfo.Columns.FirstOrDefault(c => c.IsVersionColumn);
         if (versionColumn is not null)
         {
             if (TargetObject is not null)
@@ -314,14 +314,27 @@ internal record UpdateBuilder<T> : SqlBuilder
                 var version = versionColumn.GetValue(TargetObject);
                 var newVersion = VersionPlus(version);
                 DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
+                if (!WhereMembers.Contains(versionColumn.PropertyName))
+                {
 #if NET462
                 if (!DbParameters.ContainsKey(versionColumn.PropertyName))
                 {
                     DbParameters.Add(versionColumn.PropertyName, version!);
                 }
 #else
-                DbParameters.TryAdd(versionColumn.PropertyName, version!);
+                    DbParameters.TryAdd(versionColumn.PropertyName, version!);
 #endif
+                }
+            }
+            else
+            {
+                var verValue = ResolvedValues.FirstOrDefault(d => d.PropertyName == versionColumn.PropertyName);
+                if (verValue == default)
+                {
+                    throw new LightOrmException("未提供实体，也没有显式添加版本列条件，无法获取更新版本列");
+                }
+                var newVersion = VersionPlus(verValue.Value);
+                DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
             }
         }
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
