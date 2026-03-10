@@ -2,16 +2,18 @@
 using System.Text;
 
 namespace LightORM.Implements;
+
 internal static class IExpressionInfoExtension
 {
     public static bool IsAlreadySetSelect(this ExpressionInfoProvider expressionInfo)
         => expressionInfo.ExpressionInfos.Values.Any(e => e.ResolveOptions == SqlResolveOptions.Select);
 
-    public static void Update(this ExpressionInfoProvider expressionInfo, Action<ExpressionInfo> update)
+    public static void Update(this ExpressionInfoProvider expressionInfo, Func<ExpressionInfo, bool> predicate, Action<ExpressionInfo> update)
     {
         foreach (var item in expressionInfo.ExpressionInfos.Values)
         {
-            update(item);
+            if (predicate(item))
+                update(item);
         }
     }
 }
@@ -19,7 +21,7 @@ internal static class IExpressionInfoExtension
 internal class ExpressionInfoProvider //: IExpressionInfo
 {
     private static readonly ConcurrentDictionary<string, string> cacheResults = [];
-    public bool Completed => ExpressionInfos.Values.All(e => e.Completed);
+    //public bool Completed => ExpressionInfos.Values.All(e => e.Completed);
 
     private readonly StringBuilder labels = new();
 

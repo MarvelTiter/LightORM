@@ -434,12 +434,9 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
         var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
         HandleSelectInsert(table.TableName, result.SqlString!);
         //var sql = SqlBuilder.ToSqlString();
-        SqlBuilder.Expressions.Update(e =>
+        SqlBuilder.Expressions.Update(e => e.ResolveOptions == SqlResolveOptions.Select, e =>
         {
-            if (e.ResolveOptions == SqlResolveOptions.Select)
-            {
-                e.ResolveOptions = SqlResolveOptions.Select with { UseColumnAlias = false };
-            }
+            e.ResolveOptions = SqlResolveOptions.Select with { UseColumnAlias = false };
         });
         return new SelectInsertProvider<TInsertTable>(Executor, SqlBuilder);
         //return Executor.ExecuteNonQuery(sql, SqlBuilder.DbParameters);

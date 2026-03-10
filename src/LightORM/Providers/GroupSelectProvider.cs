@@ -20,11 +20,7 @@ namespace LightORM.Providers
         public IExpSelectGroup<TGroup, TTables> Having(Expression<Func<IExpSelectGrouping<TGroup, TTables>, bool>> exp)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
-            SqlBuilder.Expressions.Add(new()
-            {
-                Expression = flatExp,
-                ResolveOptions = SqlResolveOptions.Having
-            });
+            SqlBuilder.Expressions.Add(new(SqlResolveOptions.Having, flatExp));
             return this;
         }
 
@@ -66,7 +62,7 @@ namespace LightORM.Providers
             SqlBuilder.IsRollup = true;
             return this;
         }
-        
+
         public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);

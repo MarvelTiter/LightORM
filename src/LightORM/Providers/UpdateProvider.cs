@@ -110,12 +110,7 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = exp,
-                ResolveOptions = SqlResolveOptions.Update,
-                AdditionalParameter = new SpecificValue()
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue()));
             return this;
         }
 
@@ -134,12 +129,7 @@ namespace LightORM.Providers
             {
                 throw new LightOrmException("不支持多字段设置");
             }
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = exp,
-                ResolveOptions = SqlResolveOptions.Update,
-                AdditionalParameter = new SpecificValue() { Value = value }
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue() { Value = value }));
 
             return this;
         }
@@ -155,41 +145,25 @@ namespace LightORM.Providers
 
         public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = columns,
-                ResolveOptions = SqlResolveOptions.Update,
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, columns));
             return this;
         }
 
         public IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = columns,
-                ResolveOptions = SqlResolveOptions.Update,
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, columns));
             return this;
         }
 
         public IExpUpdate<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = columns,
-                ResolveOptions = SqlResolveOptions.UpdateIgnore
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateIgnore, columns));
             return this;
         }
 
         public IExpUpdate<T> Where(Expression<Func<T, bool>> exp)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo()
-            {
-                Expression = exp,
-                ResolveOptions = SqlResolveOptions.UpdateWhere
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateWhere, exp));
             return this;
         }
 

@@ -111,12 +111,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
 
     public TSelect Count(out long total)
     {
-        var count = new ExpressionInfo()
-        {
-            Expression = null,
-            ResolveOptions = SqlResolveOptions.Select,
-            Template = "COUNT(*)"
-        };
+        var count = new ExpressionInfo(SqlResolveOptions.Select, null, "COUNT(*)");
         SqlBuilder.Expressions.Add(count);
         total = this.InternalToList<int>().First();
         SqlBuilder.Expressions.Remove(count);

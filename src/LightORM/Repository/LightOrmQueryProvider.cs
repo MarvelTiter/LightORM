@@ -2,6 +2,7 @@
 using LightORM.Utils.Vistors;
 
 namespace LightORM.Repository;
+
 internal class LightOrmQueryProvider : IQueryProvider
 {
     private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();
@@ -45,11 +46,7 @@ internal class LightOrmQueryProvider : IQueryProvider
         {
             expression = LinqExpressionFlattener.Default.Flatten(lambda!);
         }
-        var exp = new ExpressionInfo
-        {
-            ResolveOptions = option,
-            Expression = expression
-        };
+        var exp = new ExpressionInfo(option, expression);
         action?.Invoke(exp);
         select.Expressions.Add(exp);
         return ReturnOrCreateQuery<TElement>(methodCallExpression, this);
@@ -59,11 +56,7 @@ internal class LightOrmQueryProvider : IQueryProvider
     {
         LambdaExpression joinCondition = BuildJoinConditionLambda(methodCallExpression);
         var joinType = joinCondition.Parameters[1].Type;
-        var exp = new ExpressionInfo
-        {
-            ResolveOptions = SqlResolveOptions.Join,
-            Expression = joinCondition,
-        };
+        var exp = new ExpressionInfo(SqlResolveOptions.Join, joinCondition);
         select.Expressions.Add(exp);
         select.Joins.Add(new JoinInfo()
         {
@@ -89,11 +82,7 @@ internal class LightOrmQueryProvider : IQueryProvider
     {
         keySelector = GetKeySelectorLambda(methodCallExpression);
         //var elementSelector = GetElementSelectorLambda(methodCallExpression);
-        var exp = new ExpressionInfo()
-        {
-            Expression = keySelector,
-            ResolveOptions = SqlResolveOptions.Group,
-        };
+        var exp = new ExpressionInfo(SqlResolveOptions.Group, keySelector);
         select.Expressions.Add(exp);
         return ReturnOrCreateQuery<TElement>(methodCallExpression, this);
 
@@ -130,11 +119,7 @@ internal class LightOrmQueryProvider : IQueryProvider
         {
             lambda = FlatGrouping.Default.Flat(lambda!, keySelector);
         }
-        var exp = new ExpressionInfo
-        {
-            ResolveOptions = SqlResolveOptions.Select,
-            Expression = lambda
-        };
+        var exp = new ExpressionInfo(SqlResolveOptions.Select, lambda);
         select.Expressions.Add(exp);
         return ReturnOrCreateQuery<TElement>(methodCallExpression, this);
     }

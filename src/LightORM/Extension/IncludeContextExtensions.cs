@@ -122,24 +122,12 @@ namespace LightORM.Extension
                 });
             }
             ParameterExpression[] all = [.. selectSql.AllTables().Select(t => Expression.Parameter(t.Type))];
-            selectSql.Expressions.Add(new ExpressionInfo
-            {
-                Expression = BuildSelectAllExpression(all),
-                ResolveOptions = SqlResolveOptions.Select,
-            });
+            selectSql.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Select, BuildSelectAllExpression(all)));
 
-            selectSql.Expressions.Add(new ExpressionInfo
-            {
-                Expression = BuildMainWhereExpression(item, include.ParentWhereColumn!, all),
-                ResolveOptions = SqlResolveOptions.Where,
-            });
+            selectSql.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, BuildMainWhereExpression(item, include.ParentWhereColumn!, all)));
             if (include.IncludeWhereExpression is not null)
             {
-                selectSql.Expressions.Add(new()
-                {
-                    Expression = BuildIncludeNavigateExpression(selectSql, include.IncludeWhereExpression),
-                    ResolveOptions = SqlResolveOptions.Where
-                });
+                selectSql.Expressions.Add(new(SqlResolveOptions.Where, BuildIncludeNavigateExpression(selectSql, include.IncludeWhereExpression)));
             }
             return selectSql;
         }

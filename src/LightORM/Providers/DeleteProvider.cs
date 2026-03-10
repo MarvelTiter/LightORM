@@ -121,11 +121,7 @@ namespace LightORM.Providers
 
         public IExpDelete<T> Where(Expression<Func<T, bool>> exp)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo
-            {
-                ResolveOptions = SqlResolveOptions.DeleteWhere,
-                Expression = exp,
-            });
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.DeleteWhere, exp));
             return this;
         }
 

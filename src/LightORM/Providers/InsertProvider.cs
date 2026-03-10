@@ -37,11 +37,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
 
     public IExpInsert<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
     {
-        sqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = columns,
-            ResolveOptions = SqlResolveOptions.InsertIgnore,
-        });
+        sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.InsertIgnore, columns));
         return this;
     }
 
@@ -58,11 +54,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
 
     public IExpInsert<T> InsertColumns<TColumns>(Expression<Func<T, TColumns>> columns)
     {
-        sqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = columns,
-            ResolveOptions = SqlResolveOptions.Insert,
-        });
+        sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Insert, columns));
         return this;
     }
 
@@ -72,12 +64,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         {
             throw new LightOrmException("不支持多字段设置");
         }
-        sqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = field,
-            ResolveOptions = SqlResolveOptions.Update,
-            AdditionalParameter = new SpecificValue() { Value = value }
-        });
+        sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, field, additionalParameter: new SpecificValue() { Value = value }));
 
         return this;
     }
@@ -184,7 +171,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
-        
+
     public string ToSql()
     {
         var sql = sqlBuilder.ToSqlString(Database);
