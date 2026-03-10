@@ -12,11 +12,40 @@ internal record InsertBuilder<T> : SqlBuilder
     HashSet<string> Members { get; set; } = [];
 
     public bool IsReturnIdentity { get; set; }
+
+    public void AddMember(string member, object? value)
+    {
+        Members.Add(member);
+        if (value is not null)
+        {
+#if NET462
+            if (!DbParameters.ContainsKey(member))
+            {
+                DbParameters.Add(member, value);
+            }
+#else
+            DbParameters.TryAdd(member, value);
+#endif
+        }
+    }
+
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Insert)
         {
-            Members.AddRange(result.Members!);
+            if (expInfo.AdditionalParameter is null)
+            {
+                Members.AddRange(result.Members!);
+            }
+            else if (expInfo.AdditionalParameter is SpecificValue v)
+            {
+                if (v.Value is not null)
+                {
+                    var member = result.Members![0];
+                    Members.Add(member);
+                    DbParameters.Add(member, v.Value);
+                }
+            }
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Ignore)
         {
@@ -25,11 +54,16 @@ internal record InsertBuilder<T> : SqlBuilder
     }
     public bool IsBatchInsert { get; set; }
     bool batchDone;
-    private ITableColumnInfo[] GetInsertColumns(bool checkInstanceValue)
+    private ITableColumnInfo[] GetInsertColumns()
     {
         if (Members.Count == 0)
         {
             Members.AddRange(MainTable.TableEntityInfo.Columns.Where(c => !c.IsNavigate && !c.IsNotMapped && !c.AutoIncrement && !c.IsAggregated && !c.IsIgnoreInsert).Select(c => c.PropertyName));
+        }
+        else
+        {
+            var necessaryColumns = MainTable.TableEntityInfo.Columns.Where(c => (c.IsPrimaryKey && !c.AutoIncrement) || c.IsVersionColumn).Select(c => c.PropertyName);
+            Members.AddRange(necessaryColumns);
         }
         var cols = MainTable.TableEntityInfo.Columns
              .Where(c =>
@@ -47,17 +81,11 @@ internal record InsertBuilder<T> : SqlBuilder
                  {
                      return false;
                  }
-                 if (checkInstanceValue)
-                 {
-                     return c.GetValue(TargetObject!) != null;
-                 }
-                 else
-                 {
-                     return true;
-                 }
+                 return true;
              });
         return [.. cols];
     }
+
     public void CreateInsertBatchSql(ICustomDatabase database)
     {
         if (batchDone)
@@ -66,21 +94,20 @@ internal record InsertBuilder<T> : SqlBuilder
         }
         ResolveExpressions(database);
 
-        var insertColumns = GetInsertColumns(false);
+        var insertColumns = GetInsertColumns();
 
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
         foreach (var item in BatchInfos)
         {
             StringBuilder sb = CreateInsertBuilder();//new(insert);//
-            bool firstRow = true;
-            foreach (var dic in item.Parameters)
+            for (int i = 0; i < item.Parameters.Count; i++)
             {
-                if (!firstRow)
+                List<SimpleColumn>? dic = item.Parameters[i];
+                if (i > 0)
                 {
                     sb.Append(',');
                     sb.AppendLine();
                 }
-                firstRow = false;
                 sb.Append('(');
                 foreach (var c in dic)
                 {
@@ -121,7 +148,6 @@ internal record InsertBuilder<T> : SqlBuilder
         }
     }
 
-
     public override string ToSqlString(ICustomDatabase database)
     {
         if (IsBatchInsert)
@@ -131,13 +157,13 @@ internal record InsertBuilder<T> : SqlBuilder
             return string.Empty;
         }
 
-        if (TargetObject == null)
+        if (TargetObject == null && DbParameters.Count == 0)
         {
-            throw new LightOrmException("insert null entity");
+            throw new LightOrmException("插入的实体为空或者没有需要插入的值");
         }
         ResolveExpressions(database);
 
-        var insertColumns = GetInsertColumns(true);
+        var insertColumns = GetInsertColumns();
 
         StringBuilder columns = new();
         StringBuilder values = new();
@@ -145,19 +171,40 @@ internal record InsertBuilder<T> : SqlBuilder
         {
             throw new LightOrmException("需要插入的列数为0");
         }
-        foreach (var item in insertColumns)
+        for (int i = 0; i < insertColumns.Length; i++)
         {
+            ITableColumnInfo? item = insertColumns[i];
+            if (!DbParameters.TryGetValue(item.PropertyName, out object? val))
+            {
+                if (TargetObject is null)
+                {
+                    if (item.IsVersionColumn)
+                    {
+                        val = VersionDefaultValue(item.ColumnType);
+                    }
+                    else
+                    {
+                        throw new LightOrmException($"无法获取{item.PropertyName}的值，因为插入实体是null，并且参数字典也未包含该值");
+                    }
+                }
+                else
+                {
+                    val = item.GetValue(TargetObject);
+                    if (val is null)
+                        continue;
+                }
+                DbParameters.Add(item.PropertyName, val);
+            }
             columns.AppendEmphasis(item.ColumnName, database);
             columns.Append(',');
-            var val = item.GetValue(TargetObject!);
             if (val is bool b)
             {
                 var boolValue = database.HandleBooleanValue(b);
                 values.Append(boolValue);
+                DbParameters.Remove(item.PropertyName);
             }
             else
             {
-                DbParameters.Add(item.PropertyName, val!);
                 values.WithPrefix(item.PropertyName, database);
             }
             values.Append(',');

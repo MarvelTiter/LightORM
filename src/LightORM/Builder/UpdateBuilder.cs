@@ -3,11 +3,6 @@ using System.Text;
 
 namespace LightORM.Builder;
 
-internal struct UpdateValue
-{
-    public object? Value { get; set; }
-}
-
 internal record UpdateBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
@@ -46,7 +41,7 @@ internal record UpdateBuilder<T> : SqlBuilder
             {
                 Members.AddRange(result.Members!);
             }
-            else if (expInfo.AdditionalParameter is UpdateValue v)
+            else if (expInfo.AdditionalParameter is SpecificValue v)
             {
                 if (v.Value is null)
                 {

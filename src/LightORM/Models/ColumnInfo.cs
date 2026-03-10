@@ -23,6 +23,7 @@ public sealed record ColumnInfo : ITableColumnInfo
 {
     //public ITableEntityInfo Table { get; set; }
     public Type TableType { get; }
+    public Type ColumnType { get; }
     public string ColumnName => CustomName ?? PropertyName;
     public string PropertyName { get; set; }
     public string? CustomName { get; set; }
@@ -59,6 +60,7 @@ public sealed record ColumnInfo : ITableColumnInfo
     //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
     //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
     public ColumnInfo(Type owner
+        , Type propertyType
         , string propname
         , string? customname
         , bool isprimary
@@ -81,6 +83,7 @@ public sealed record ColumnInfo : ITableColumnInfo
         )
     {
         TableType = owner;
+        ColumnType = propertyType;
         PropertyName = propname;
         CustomName = customname;
         IsPrimaryKey = isprimary;
@@ -111,6 +114,7 @@ public sealed record ColumnInfo : ITableColumnInfo
     {
         TableType = owner;
         PropertyName = property.Name;
+        ColumnType = property.PropertyType;
         //Property = property;
         //PropertyType = property.PropertyType;
         var underlying = Nullable.GetUnderlyingType(property.PropertyType);

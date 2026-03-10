@@ -119,25 +119,8 @@ internal abstract record SqlBuilder : ISqlBuilder
         return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {ti.Alias}" : "")}";
     }
 
-
-
-    //TODO Oracle?
     protected static string NpTableName(ICustomDatabase database, TableInfo table)
     {
-        //if (table.TableEntityInfo.IsTempTable)
-        //{
-        //    return table.TableEntityInfo.TableName;
-        //}
-        //var tablename = table.TableName;
-        //if (!tablename.Contains('.'))
-        //{
-        //    return database.AttachEmphasis(tablename);
-        //}
-        //else
-        //{
-        //    var prs = tablename.Split('.');
-        //    return string.Join(".", prs.Select(database.AttachEmphasis));
-        //}
         if (table.TableEntityInfo.IsTempTable)
         {
             return table.TableEntityInfo.TableName;
@@ -169,6 +152,26 @@ internal abstract record SqlBuilder : ISqlBuilder
             string s when Guid.TryParse(s, out _) => Guid.NewGuid().ToString(),
             _ => throw new NotSupportedException("不支持的Version列类型"),
         };
+    }
+
+    private static readonly Dictionary<Type, object> typeDefaults = new(8)
+    {
+        [typeof(int)] = 0,
+        [typeof(long)] = 0,
+        [typeof(double)] = 0,
+        [typeof(float)] = 0,
+        [typeof(DateTime)] = DateTime.UtcNow,
+        [typeof(DateTimeOffset)] = DateTimeOffset.UtcNow,
+        [typeof(Guid)] = Guid.NewGuid(),
+        [typeof(string)] = Guid.NewGuid(),
+    };
+    protected static object VersionDefaultValue(Type type)
+    {
+        if (typeDefaults.TryGetValue(type, out var value))
+        {
+            return value;
+        }
+        throw new NotSupportedException("不支持的Version列类型");
     }
 
     ///// <summary>

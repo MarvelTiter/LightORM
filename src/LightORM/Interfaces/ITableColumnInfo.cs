@@ -4,6 +4,7 @@ public interface ITableColumnInfo
 {
     //ITableEntityInfo Table { get; }
     Type TableType { get; }
+    Type ColumnType { get; }
     string ColumnName { get; }
     string PropertyName { get; }
     string? CustomName { get; }

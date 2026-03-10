@@ -119,4 +119,18 @@ public class InsertSql : TestBase
             throw;
         }
     }
+
+    [TestMethod]
+    public void TestInsertByName()
+    {
+        int hour = DateTime.Now.Hour;
+        //User? u = new()
+        //{
+        //    UserId = UID,
+        //    Age = hour,
+        //    LastLogin = DateTime.Now,
+        //};
+        var sql = Db.Insert<User>().InsertByNames(["UserId", "Age", "LastLogin"], [UID, hour, DateTime.Now]).ToSqlWithParameters();
+        Console.WriteLine(sql);
+    }
 }

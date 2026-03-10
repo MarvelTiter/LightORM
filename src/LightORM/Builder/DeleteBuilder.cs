@@ -64,12 +64,8 @@ internal record DeleteBuilder<T> : SqlBuilder
                             List<ParameterExpression> ps = [.. navSqlBuilder.AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
                             ps.RemoveAt(ps.Count - 1);
                             var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
-                            var ee = new ExpressionInfo()
-                            {
-                                ResolveOptions = SqlResolveOptions.Where,
-                                Expression = newWhereExpression,
-                            };
-                            var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
+                            //var ee = new ExpressionInfo(SqlResolveOptions.Where, newWhereExpression);
+                            var eeResult = newWhereExpression.Resolve(SqlResolveOptions.Where, ResolveCtx!);
                             navSqlBuilder.Where.Add(eeResult.SqlString!);
                             if (eeResult.DbParameters?.Count > 0)
                                 ResolvedValues.AddRange(eeResult.DbParameters);
@@ -202,7 +198,9 @@ internal record DeleteBuilder<T> : SqlBuilder
             return string.Empty;
             //return string.Join(",", BatchInfos?.Select(b => b.Sql) ?? []);
         }
+
         ResolveExpressions(database);
+
         if (FullDelete)
         {
             if (Truncate)
@@ -214,67 +212,65 @@ internal record DeleteBuilder<T> : SqlBuilder
                 return $"DELETE FROM {GetTableName(database, MainTable, false)}";
             }
         }
-        else
-        {
-            if (Where.Count == 0 && TargetObject is null)
-            {
-                throw new LightOrmException("Where Condition is null and not provider a entity value");
-            }
-            StringBuilder sql;
-            sql = new("DELETE FROM ");
-            //sql.AppendLine(GetTableName(database, MainTable, false));
-            sql.AppendTableName(database, MainTable, false).AppendLine();
-            // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件
-            bool first = true;
-            if (TargetObject is not null)
-            {
-                var keyedColumns = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey || f.IsVersionColumn).ToArray();
-                if (keyedColumns.Length == 0)
-                {
-                    throw new LightOrmException($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
-                }
-                //var wheres = keyedColumns.Select(c =>
-                //{
-                //    DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
-                //    return $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.ColumnName)}";
-                //});
-                //Where.AddRange(wheres);
-                sql.Append("WHERE ");
-                foreach (var col in keyedColumns)
-                {
-                    if (Members.Contains(col.PropertyName))
-                    {
-                        continue;
-                    }
-                    DbParameters.Add(col.PropertyName, col.GetValue(TargetObject)!);
-                    if (!first)
-                    {
-                        sql.Append(" AND ");
-                    }
-                    first = false;
-                    sql.Append('(');
-                    sql.AppendEmphasis(col.ColumnName, database);
-                    sql.Append(" = ");
-                    sql.WithPrefix(col.PropertyName, database);
-                    sql.Append(')');
-                }
-            }
 
-            if (Where.Count > 0)
+        if (Where.Count == 0 && TargetObject is null)
+        {
+            throw new LightOrmException("Where Condition is null and not provider a entity value");
+        }
+        StringBuilder sql;
+        sql = new("DELETE FROM ");
+        //sql.AppendLine(GetTableName(database, MainTable, false));
+        sql.AppendTableName(database, MainTable, false).AppendLine();
+        // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件
+        bool first = true;
+        if (TargetObject is not null)
+        {
+            var keyedColumns = MainTable.TableEntityInfo.Columns.Where(f => f.IsPrimaryKey || f.IsVersionColumn).ToArray();
+            if (keyedColumns.Length == 0)
             {
-                if (first)
+                throw new LightOrmException($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
+            }
+            //var wheres = keyedColumns.Select(c =>
+            //{
+            //    DbParameters.Add(c.ColumnName, c.GetValue(TargetObject!)!);
+            //    return $"{database.AttachEmphasis(c.ColumnName)} = {database.AttachPrefix(c.ColumnName)}";
+            //});
+            //Where.AddRange(wheres);
+            sql.Append("WHERE ");
+            foreach (var col in keyedColumns)
+            {
+                if (Members.Contains(col.PropertyName))
                 {
-                    sql.Append("WHERE ");
+                    continue;
                 }
-                else
+                DbParameters.Add(col.PropertyName, col.GetValue(TargetObject)!);
+                if (!first)
                 {
                     sql.Append(" AND ");
                 }
-                //sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
-                sql.AppendJoined(Where, " AND ");
+                first = false;
+                sql.Append('(');
+                sql.AppendEmphasis(col.ColumnName, database);
+                sql.Append(" = ");
+                sql.WithPrefix(col.PropertyName, database);
+                sql.Append(')');
             }
-            HandleSqlParameters(sql, database);
-            return sql.Trim();
         }
+
+        if (Where.Count > 0)
+        {
+            if (first)
+            {
+                sql.Append("WHERE ");
+            }
+            else
+            {
+                sql.Append(" AND ");
+            }
+            //sql.AppendLine($"WHERE {string.Join(" AND ", Where)}");
+            sql.AppendJoined(Where, " AND ");
+        }
+        HandleSqlParameters(sql, database);
+        return sql.Trim();
     }
 }

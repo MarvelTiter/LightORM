@@ -245,15 +245,17 @@ public class TableContextGenerator : IIncrementalGenerator
                 foreach (var item in flattedProps)
                 {
                     var fr = ScanProperty(item);
-                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert})""");
+                    var propertyType = $"typeof({item.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
+                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert})""");
                 }
                 //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
                 //bodies.Add($"gen_{p.Name}.IsAggregated = true");
-                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true)""");
+                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},typeof({flatType}), "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true)""");
                 continue;
             }
             var r = ScanProperty(p);
-            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert})""");
+            var pt = $"typeof({p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
+            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{pt}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert})""");
         }
         bodies.Add("return cols");
         bodies = [

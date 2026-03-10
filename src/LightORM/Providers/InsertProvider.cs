@@ -35,6 +35,89 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         sqlBuilder.IsBatchInsert = false;
     }
 
+    public IExpInsert<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
+    {
+        sqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = columns,
+            ResolveOptions = SqlResolveOptions.InsertIgnore,
+        });
+        return this;
+    }
+
+    public IExpInsert<T> NoParameter()
+    {
+        return this;
+    }
+
+    public IExpInsert<T> ReturnIdentity()
+    {
+        sqlBuilder.IsReturnIdentity = true;
+        return this;
+    }
+
+    public IExpInsert<T> InsertColumns<TColumns>(Expression<Func<T, TColumns>> columns)
+    {
+        sqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = columns,
+            ResolveOptions = SqlResolveOptions.Insert,
+        });
+        return this;
+    }
+
+    public IExpInsert<T> Set<TField>(Expression<Func<T, TField>> field, TField value)
+    {
+        if (field.Body.NodeType == ExpressionType.New || field.Body.NodeType == ExpressionType.MemberInit)
+        {
+            throw new LightOrmException("不支持多字段设置");
+        }
+        sqlBuilder.Expressions.Add(new ExpressionInfo()
+        {
+            Expression = field,
+            ResolveOptions = SqlResolveOptions.Update,
+            AdditionalParameter = new SpecificValue() { Value = value }
+        });
+
+        return this;
+    }
+
+    public IExpInsert<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> field, TField value)
+    {
+        if (condition)
+        {
+            return Set(field, value);
+        }
+        return this;
+    }
+
+    public IExpInsert<T> InsertByName(string propertyName, object? value = null)
+    {
+        if ((sqlBuilder.TargetObject is null && sqlBuilder.TargetObjects.Length == 0) && value is null)
+        {
+            throw new LightOrmException("未设置实体值，并且value是null");
+        }
+        sqlBuilder.AddMember(propertyName, value);
+        return this;
+    }
+
+    public IExpInsert<T> InsertByNames(string[] propertyNames, object[]? values = null)
+    {
+        if ((sqlBuilder.TargetObject is null && sqlBuilder.TargetObjects.Length == 0) && values is null)
+        {
+            throw new LightOrmException("未设置实体值，并且values是null");
+        }
+        if (values is not null && propertyNames.Length != values.Length)
+        {
+            throw new LightOrmException("参数数量和列数量不匹配");
+        }
+        for (int i = 0; i < propertyNames.Length; i++)
+        {
+            sqlBuilder.AddMember(propertyNames[i], values?[i]);
+        }
+        return this;
+    }
+
     public int Execute()
     {
         var sql = sqlBuilder.ToSqlString(Database);
@@ -101,38 +184,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
-
-    public IExpInsert<T> IgnoreColumns<TIgnore>(Expression<Func<T, TIgnore>> columns)
-    {
-        sqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = columns,
-            ResolveOptions = SqlResolveOptions.InsertIgnore,
-        });
-        return this;
-    }
-
-    public IExpInsert<T> NoParameter()
-    {
-        return this;
-    }
-
-    public IExpInsert<T> ReturnIdentity()
-    {
-        sqlBuilder.IsReturnIdentity = true;
-        return this;
-    }
-
-    public IExpInsert<T> SetColumns<TSet>(Expression<Func<T, TSet>> columns)
-    {
-        sqlBuilder.Expressions.Add(new ExpressionInfo()
-        {
-            Expression = columns,
-            ResolveOptions = SqlResolveOptions.Insert,
-        });
-        return this;
-    }
-
+        
     public string ToSql()
     {
         var sql = sqlBuilder.ToSqlString(Database);

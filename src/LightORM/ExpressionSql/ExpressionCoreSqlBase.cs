@@ -98,6 +98,10 @@ internal abstract class ExpressionCoreSqlBase
 
     public IExpInsert<T> Insert<T>(params T[] entities)
     {
+        if (entities.Length == 0)
+        {
+            return CreateInsertProvider(default(T));
+        }
         if (entities.Length == 1)
         {
             return CreateInsertProvider(entities[0]);
@@ -119,6 +123,10 @@ internal abstract class ExpressionCoreSqlBase
 
     public IExpUpdate<T> Update<T>(params T[] entities)
     {
+        if (entities.Length == 0)
+        {
+            return CreateUpdateProvider(default(T));
+        }
         if (entities.Length == 1)
         {
             return CreateUpdateProvider(entities[0]);

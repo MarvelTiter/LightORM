@@ -114,7 +114,7 @@ namespace LightORM.Providers
             {
                 Expression = exp,
                 ResolveOptions = SqlResolveOptions.Update,
-                AdditionalParameter = new UpdateValue()
+                AdditionalParameter = new SpecificValue()
             });
             return this;
         }
@@ -138,7 +138,7 @@ namespace LightORM.Providers
             {
                 Expression = exp,
                 ResolveOptions = SqlResolveOptions.Update,
-                AdditionalParameter = new UpdateValue() { Value = value }
+                AdditionalParameter = new SpecificValue() { Value = value }
             });
 
             return this;

@@ -11,8 +11,7 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
 {
     public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
     {
-        // TODO 达梦 TableSpace
-        var tableSpace = option?.OracleTableSpace != null ? $"TABLESPACE {option.OracleTableSpace}" : "";
+        var tableSpace = option.OracleTableSpace != null ? $"TABLESPACE {option.OracleTableSpace}" : "";
 
         #region Table
 

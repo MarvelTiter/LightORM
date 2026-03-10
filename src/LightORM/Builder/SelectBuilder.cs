@@ -100,12 +100,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                     List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
                     ps.RemoveAt(ps.Count - 1);
                     var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
-                    var ee = new ExpressionInfo()
-                    {
-                        ResolveOptions = SqlResolveOptions.Where,
-                        Expression = newWhereExpression,
-                    };
-                    var eeResult = ee.Expression.Resolve(ee.ResolveOptions, ResolveCtx!);
+                    var eeResult = newWhereExpression.Resolve(SqlResolveOptions.Where, ResolveCtx!);
                     Where.Add(eeResult.SqlString!);
                     if (eeResult.DbParameters?.Count > 0)
                         ResolvedValues.AddRange(eeResult.DbParameters);
@@ -423,6 +418,11 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
     }
 
+    /// <summary>
+    /// 预估sql长度
+    /// </summary>
+    /// <param name="currentLevel"></param>
+    /// <returns></returns>
     int EstimateSqlLength(int currentLevel = 0)
     {
         int total = 0;

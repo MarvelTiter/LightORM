@@ -153,8 +153,8 @@ internal static class SelectHandleExtensions
         var table = TableInfo.Create<TTemp>();
         if (alias != null)
         {
-            LightOrmException.Throw("暂不支持自定义表别名");
             table.Alias = alias;
+            throw new LightOrmException("暂不支持自定义表别名");
         }
         builder.SelectedTables.Add(table);
         builder.HandleTempsRecursion(select.SqlBuilder);
