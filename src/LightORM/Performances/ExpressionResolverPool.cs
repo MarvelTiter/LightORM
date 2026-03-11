@@ -30,11 +30,6 @@ internal static class ExpressionResolverPool
         // 重置字段
         resolver.Options = options;
         resolver.Context = context;
-        // 重用StringBuilder，只需Clear
-        resolver.Sql.Clear();
-        resolver.Sql.EnsureCapacity(128); // 恢复初始容量
-
-        
     }
 
     private static void ClearResolver(ExpressionResolver resolver)
@@ -42,14 +37,17 @@ internal static class ExpressionResolverPool
         // 清空但不释放大数组，如果太大，重建
         if (resolver.Sql.Capacity > 4096)
             resolver.Sql = new StringBuilder(128);
-
-        //if (resolver.DbParameters.Capacity > 32)
-        //    resolver.DbParameters = new List<DbParameterInfo>(8);
-
-        resolver.DbParameters.Clear();
-
+        else
+        {
+            resolver.Sql.Clear();
+            resolver.Sql.EnsureCapacity(128);
+        }
+        
         if (resolver.ResolvedMembers.Capacity > 16)
             resolver.ResolvedMembers = new List<string>(4);
+
+        resolver.Options = null!;
+        resolver.Context = null!;
 
         // 清空列表，重用底层数组
         resolver.DbParameters.Clear();
