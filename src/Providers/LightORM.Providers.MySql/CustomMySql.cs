@@ -4,9 +4,9 @@ using System.Text;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class CustomMySql() : CustomDatabase(new MySqlMethodResolver())
+public sealed class CustomMySql(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
 {
-    internal static readonly CustomMySql Instance = new CustomMySql();
+    internal static readonly CustomMySql Instance = new CustomMySql(new MySqlMethodResolver(), new());
     public override string Prefix => "?";
     public override string Emphasis => "``";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)

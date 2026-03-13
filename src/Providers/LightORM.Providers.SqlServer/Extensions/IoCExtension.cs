@@ -10,23 +10,24 @@ public static class IoCExtension
         => options.UseSqlServer("MainDb", version, masterConnectString, slaveConnectStrings);
     public static void UseSqlServer(this IExpressionContextSetup options, string? key, SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
     {
-        var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
-        options.SetDatabase(key, DbBaseType.SqlServer, provider);
+        //var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
+        //options.SetDatabase(key, DbBaseType.SqlServer, provider);
+        UseSqlServer(options, version, set =>
+        {
+            set.DbKey = key;
+            set.MasterConnectionString = masterConnectString;
+            set.SalveConnectionStrings = slaveConnectStrings;
+        });
     }
     public static void UseSqlServer(this IExpressionContextSetup options, SqlServerVersion version, Action<IDbOption> setting)
     {
-        var custom = new CustomSqlServer(version);
-        var dbOption = new DataBaseOption(custom);
+        var dbOption = new DataBaseOption(new SqlServerMethodResolver(version));
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
-        var provider = SqlServerProvider.Create(custom,dbOption.MasterConnectionString!, dbOption.SalveConnectionStrings ?? []);
-        if (dbOption.NewFactory is not null)
-        {
-            provider.DbProviderFactory = dbOption.NewFactory;
-        }
+        var provider = SqlServerProvider.Create(version, dbOption);
         options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.SqlServer, provider);
     }
 }

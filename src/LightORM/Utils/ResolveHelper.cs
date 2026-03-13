@@ -23,13 +23,13 @@ internal class ResolveHelper
         {
             return index;
         }
-        var members = new Stack<MemberInfo>();
+        var members = new Stack<MemberPathInfo>();
         Expression? current = expression;
 
         // 向下遍历，收集 MemberInfo
         while (current is MemberExpression memberExpr)
         {
-            members.Push(memberExpr.Member);
+            members.Push(new(memberExpr.Member));
             current = memberExpr.Expression;
         }
         object? value;
@@ -63,13 +63,13 @@ internal class ResolveHelper
             name = "Const";
             return index;
         }
-        var members = new Stack<MemberInfo>();
+        var members = new Stack<MemberPathInfo>();
         Expression? current = expression;
 
         // 向下遍历，收集 MemberInfo
         while (current is MemberExpression memberExpr)
         {
-            members.Push(memberExpr.Member);
+            members.Push(new(memberExpr.Member));
             current = memberExpr.Expression;
         }
         object? value;
@@ -96,12 +96,12 @@ internal class ResolveHelper
         throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
     }
 
-    public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
+    public static object? GetValue(Stack<MemberPathInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
 
     private static readonly ConcurrentDictionary<string, Func<object?, object?>> getterCache = [];
-    public static object? GetValueByExpression(Stack<MemberInfo> memberInfos, object? value, out string name)
+    public static object? GetValueByExpression(Stack<MemberPathInfo> memberInfos, object? value, out string name)
     {
-        name = string.Join("_", memberInfos.Where(m => !m.Name.StartsWith("CS$<>8__locals")).Select(m => m.Name));
+        name = string.Join("_", memberInfos.Where(m => !m.Member.Name.StartsWith("CS$<>8__locals")).Select(m => m.Member.Name));
         if (value is null) return null;
         var type = value.GetType();
         var memberKey = $"{type.FullName}_{name}";
@@ -113,13 +113,13 @@ internal class ResolveHelper
         return func.Invoke(value);
     }
 
-    private static Func<object?, object?> CreateGetter(Type type, Stack<MemberInfo> memberInfos)
+    private static Func<object?, object?> CreateGetter(Type type, Stack<MemberPathInfo> memberInfos)
     {
         var param = Expression.Parameter(typeof(object), "obj");
         Expression body = Expression.Convert(param, type);
         while (memberInfos.Count > 0)
         {
-            body = Expression.MakeMemberAccess(body, memberInfos.Pop());
+            body = Expression.MakeMemberAccess(body, memberInfos.Pop().Member);
         }
         body = Expression.Convert(body, typeof(object));
         var lambda = Expression.Lambda<Func<object?, object?>>(body, param);

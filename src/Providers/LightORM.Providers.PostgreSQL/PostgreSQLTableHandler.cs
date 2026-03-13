@@ -9,9 +9,11 @@ using LightORM.Providers.PostgreSQL.TableStructure;
 
 namespace LightORM.Providers.PostgreSQL;
 
-public sealed class PostgreSQLTableHandler
+public sealed class PostgreSQLTableHandler(TableOptions tableOptions)
     : BaseDatabaseHandler<PostgreSQLTableWriter>
 {
+    public override TableOptions Options => tableOptions;
+
     public override string GetTablesSql()
     {
         return """

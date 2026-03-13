@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace LightORM.Providers.SqlServer;
 
@@ -16,31 +17,42 @@ public enum SqlServerVersion
 
 public sealed class SqlServerProvider : BaseDatabaseProvider
 {
-    public static SqlServerProvider Create(SqlServerVersion version, string master, params string[] slaves)
-        => new(version, master, slaves);
-    public static SqlServerProvider Create(ICustomDatabase customDatabase, string master, params string[] slaves)
-        => new(customDatabase, master, slaves);
+    private static DataBaseOption? defaultOption;
+    public static DataBaseOption GetDefaultOption(SqlServerVersion version) => defaultOption ??= new(new SqlServerMethodResolver(version));
+
+    public static SqlServerProvider Create(SqlServerVersion version, DataBaseOption option)
+        => new(version, option);
+
+    public static SqlServerProvider Create(SqlServerVersion version, Action<DataBaseOption> setting)
+    {
+        var dbOption = new DataBaseOption(new SqlServerMethodResolver(version));
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+        }
+        return Create(version, dbOption);
+    }
+
     private SqlServerProvider(SqlServerVersion version
-        , string master
-        , params string[] slaves): base(master, slaves)
+        , DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
-        CustomDatabase = new CustomSqlServer(version);
+        DbHandler = new SqlServerTableHandler(option.GenerateOption);
+        CustomDatabase = new CustomSqlServer(version, option.MethodResolver, option.GenerateOption);
+        CustomDatabase.AddKeyWord(option.Keyworks);
+        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;
     }
-    private SqlServerProvider(ICustomDatabase customDatabase
-        , string master
-        , params string[] slaves): base(master, slaves)
-    {
-        CustomDatabase = customDatabase;
-    }
+
     public override DbBaseType DbBaseType => DbBaseType.SqlServer;
 
     public override ICustomDatabase CustomDatabase { get; }
 
-    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public override IDatabaseTableHandler DbHandler { get; } = new SqlServerTableHandler();
-    
-    public override DbProviderFactory DbProviderFactory { get; set; } = SqlClientFactory.Instance;
+    public override IDatabaseTableHandler DbHandler { get; }
+
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

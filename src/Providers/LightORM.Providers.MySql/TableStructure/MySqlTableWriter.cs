@@ -9,7 +9,7 @@ namespace LightORM.Providers.MySql.TableStructure;
 
 public class MySqlTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
@@ -44,7 +44,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR"))
@@ -59,7 +59,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         return $"{DbEmphasis(option, column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
         string? typeFullName;
         if (type.DataType.IsEnum)
@@ -90,7 +90,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         };
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"`{name}`";
+    protected override string DbEmphasis(TableOptions option, string name) => $"`{name}`";
 
     private static object CheckDefaultValue(DbColumn column)
     {

@@ -9,7 +9,7 @@ namespace LightORM.Providers.PostgreSQL.TableStructure;
 
 public class PostgreSQLTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -22,9 +22,9 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
 """);
 
         // PostgreSQL 的表空间语法与 Oracle 不同
-        if (!string.IsNullOrEmpty(option.PostgreSQLTableSpace))
+        if (!string.IsNullOrEmpty(option.TableSpace))
         {
-            sql.Append($" TABLESPACE {option.PostgreSQLTableSpace}");
+            sql.Append($" TABLESPACE {option.TableSpace}");
         }
         sql.AppendLine(";");
         #endregion
@@ -97,7 +97,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
 
@@ -114,7 +114,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return $"{DbEmphasis(option, column.Name)} {dataType}{identity}{defaultValue}{notNull}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
         string? typeFullName;
         if (type.DataType.IsEnum)
@@ -144,7 +144,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         };
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"\"{name}\"";
+    protected override string DbEmphasis(TableOptions option, string name) => $"\"{name}\"";
 
     private static string FormatDefaultValue(object value, string dataType)
     {

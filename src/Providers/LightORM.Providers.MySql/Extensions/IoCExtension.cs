@@ -8,22 +8,24 @@ public static class IoCExtension
         => options.UseMySql("MainDb", masterConnectString, slaveConnectStrings);
     public static void UseMySql(this IExpressionContextSetup options, string? key, string masterConnectString, params string[] slaveConnectStrings)
     {
-        var provider = MySqlProvider.Create(masterConnectString, slaveConnectStrings);
-        options.SetDatabase(key, DbBaseType.MySql, provider);
+        //var provider = MySqlProvider.Create(masterConnectString, slaveConnectStrings);
+        //options.SetDatabase(key, DbBaseType.MySql, provider);
+        UseMySql(options, set =>
+        {
+            set.DbKey = key;
+            set.MasterConnectionString = masterConnectString;
+            set.SalveConnectionStrings = slaveConnectStrings;
+        });
     }
     public static void UseMySql(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(CustomMySql.Instance);
+        var dbOption = new DataBaseOption(new MySqlMethodResolver());
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
-        var provider = MySqlProvider.Create(dbOption.MasterConnectionString!, dbOption.SalveConnectionStrings ?? []);
-        if (dbOption.NewFactory is not null)
-        {
-            provider.DbProviderFactory = dbOption.NewFactory;
-        }
+        var provider = MySqlProvider.Create(dbOption);
         options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.MySql, provider);
     }
 }

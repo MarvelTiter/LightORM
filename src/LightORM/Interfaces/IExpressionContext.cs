@@ -77,8 +77,8 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
 /// </summary>
 public interface ITableAction
 {
-    string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null);
-    Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
+    string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableOptions>? action = null);
+    Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableOptions>? action = null, CancellationToken cancellationToken = default);
 
     Task<IList<DbStruct.ReadedTable>> GetTablesAsync(IDatabaseProvider provider);
     Task<DbStruct.ReadedTable> GetTableStructAsync(IDatabaseProvider provider, DbStruct.ReadedTable table);
@@ -89,8 +89,8 @@ public interface ITableAction
 /// </summary>
 public interface IDefinedTableAction
 {
-    string? CreateTableSql<T>(Action<TableGenerateOption>? action = null);
-    Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default);
+    string? CreateTableSql<T>(Action<TableOptions>? action = null);
+    Task<bool> CreateTableAsync<T>(Action<TableOptions>? action = null, CancellationToken cancellationToken = default);
     Task<IList<DbStruct.ReadedTable>> GetTablesAsync();
     Task<DbStruct.ReadedTable> GetTableStructAsync(DbStruct.ReadedTable table);
     Task<bool> DropTableAsync<T>(CancellationToken cancellationToken = default);

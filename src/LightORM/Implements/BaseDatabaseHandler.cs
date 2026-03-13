@@ -7,13 +7,13 @@ public abstract class BaseDatabaseHandler<TWriter> : IDatabaseTableHandler
     where TWriter : WriteTableFromType, new()
 {
     protected TWriter Writer { get; } = new();
-
-    public IEnumerable<string> GenerateDbTable<T>(TableGenerateOption option)
+    public abstract TableOptions Options { get; }
+    public IEnumerable<string> GenerateDbTable<T>()
     {
         try
         {
             var info = typeof(T).CollectDbTableInfo();
-            return Writer.BuildTableSql(option, info);
+            return Writer.BuildTableSql(Options, info);
         }
         catch (Exception)
         {
@@ -27,7 +27,7 @@ public abstract class BaseDatabaseHandler<TWriter> : IDatabaseTableHandler
     public abstract bool ParseDataType(ReadedTableColumn column, out string type);
     public virtual string GetDropTableSql(string tableName)
     {
-        return $"DROP TABLE {Writer.DbEmphasisInternal(tableName)}";
+        return $"DROP TABLE {Writer.DbEmphasisInternal(Options, tableName)}";
     }
 }
 

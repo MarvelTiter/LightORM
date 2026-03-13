@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.PostgreSQL;
 
-internal class CustomPostgreSQL() : CustomDatabase(new PostgreSQLMethodResolver())
+internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
 {
-    internal readonly static CustomPostgreSQL Instance = new CustomPostgreSQL();
+    internal readonly static CustomPostgreSQL Instance = new(new PostgreSQLMethodResolver(), new());
 
     public override string Prefix => "@";
 

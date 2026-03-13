@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
@@ -8,6 +9,7 @@ public abstract class CustomDatabase : ICustomDatabase
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }
     public ISqlMethodResolver MethodResolver { get; }
+    //public IJsonColumnHandler JsonHandler { get; }
     public bool UseIdentifierQuote { get; set; } = true;
 
     private readonly HashSet<string> keyWorks = new(StringComparer.OrdinalIgnoreCase)
@@ -46,12 +48,18 @@ public abstract class CustomDatabase : ICustomDatabase
     protected CustomDatabase(ISqlMethodResolver resolver)
     {
         MethodResolver = resolver;
+        //JsonHandler = GetJsonHandler();
         // ReSharper disable once VirtualMemberCallInConstructor
         foreach (var keyWord in AddAdditionalKeyWords())
         {
             keyWorks.Add(keyWord);
         }
     }
+
+    //protected virtual IJsonColumnHandler GetJsonHandler()
+    //{
+    //    throw new NotSupportedException();
+    //}
 
     protected virtual IEnumerable<string> AddAdditionalKeyWords()
     {
@@ -83,12 +91,9 @@ public abstract class CustomDatabase : ICustomDatabase
         return keyWorks.Contains(keyWork);
     }
 
-    public void AddKeyWord(params string[] keyWords)
+    public void AddKeyWord(IEnumerable<string> keyworks)
     {
-        foreach (var keyWord in keyWords)
-        {
-            keyWorks.Add(keyWord);
-        }
+        this.keyWorks.UnionWith(keyworks);
     }
 
     public virtual string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
@@ -103,4 +108,9 @@ public abstract class CustomDatabase : ICustomDatabase
     }
 
     public virtual string DeleteTemplate => throw new NotImplementedException();
+
+    public virtual void HandleJsonColumn(JsonColumnContext context)
+    {
+        throw new NotSupportedException();
+    }
 }

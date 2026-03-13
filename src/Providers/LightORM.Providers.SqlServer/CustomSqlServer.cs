@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class CustomSqlServer(SqlServerVersion version) : CustomDatabase(new SqlServerMethodResolver(version))
+public sealed class CustomSqlServer(SqlServerVersion version, ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
 {
     public SqlServerVersion Version { get; } = version;
     public override string Prefix => "@";

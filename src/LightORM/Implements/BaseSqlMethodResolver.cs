@@ -617,6 +617,15 @@ namespace LightORM.Implements
 
         #endregion
 
+        #region json
+
+        public virtual void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+
         private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<IExpSelect, ReadOnlyCollection<Expression>, string> action)
         {
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())

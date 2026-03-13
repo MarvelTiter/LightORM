@@ -33,7 +33,6 @@ internal partial class ExpressionSqlOptions
     private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
     private static int poolSize = Environment.ProcessorCount * 4;
     private static int objectPoolSize = Environment.ProcessorCount * 8;
-    internal static TableGenerateOption StaticTableGenOption { get; set; } = new();
 
     private static string? defaultDbKey;
     private static bool useParameterized = true;
@@ -118,14 +117,12 @@ internal partial class ExpressionSqlOptions
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
     public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
-    public TableGenerateOption TableGenOption { get; set; }
 
     public ExpressionSqlOptions()
     {
         DatabaseProviders = databaseProviders;
         CustomDatabases = customDatabases;
         DatabaseHandlers = databaseHandlers;
-        TableGenOption = StaticTableGenOption;
         allInterceptors = stateLessInterceptors.Values;
     }
 
@@ -205,10 +202,9 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
     {
         throw new NotImplementedException();
     }
-    public IExpressionContextSetup TableConfiguration(Action<TableGenerateOption> action)
+    public IExpressionContextSetup TableConfiguration(Action<TableOptions> action)
     {
-        action.Invoke(ExpressionSqlOptions.StaticTableGenOption);
-        return this;
+        throw new NotSupportedException();
     }
 
     public ExpressionSqlOptions Build(IServiceProvider? provider)

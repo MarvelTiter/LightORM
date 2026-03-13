@@ -28,6 +28,8 @@ public interface ITableColumnInfo
     string? AggregateProp { get; }
     bool IsAggregated { get; }
     bool IsAggregatedProperty { get; }
+    bool IsJsonColumn { get;}
+    JsonRootType JsonRootType { get; }
     //object? GetValue(object target);
     //void SetValue(object target, object value);
 }

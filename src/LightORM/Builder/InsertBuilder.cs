@@ -197,6 +197,7 @@ internal record InsertBuilder<T> : SqlBuilder
             }
             columns.AppendEmphasis(item.ColumnName, database);
             columns.Append(',');
+            // TODO: 处理JSON列的插入
             if (val is bool b)
             {
                 var boolValue = database.HandleBooleanValue(b);

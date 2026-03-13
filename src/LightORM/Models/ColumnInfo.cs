@@ -57,6 +57,10 @@ public sealed record ColumnInfo : ITableColumnInfo
 
     public string? AggregateProp { get; set; }
 
+    public bool IsJsonColumn { get; set; }
+
+    public JsonRootType JsonRootType { get; set; }
+
     //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
     //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
     public ColumnInfo(Type owner
@@ -80,6 +84,7 @@ public sealed record ColumnInfo : ITableColumnInfo
         , bool isVersionColumn
         , bool isIgnoreUpdate
         , bool isIgnoreInsert
+        , bool isJsonMap
         )
     {
         TableType = owner;
@@ -108,6 +113,9 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsVersionColumn = isVersionColumn;
         IsIgnoreUpdate = isIgnoreUpdate;
         IsIgnoreInsert = isIgnoreInsert;
+        IsJsonColumn = isJsonMap;
+        // TODO 在生成器中处理
+        JsonRootType = ColumnType.IsEnumerableType() ? JsonRootType.Array : JsonRootType.Object;
     }
 
     public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
@@ -166,6 +174,8 @@ public sealed record ColumnInfo : ITableColumnInfo
         AggregateType = aggregateType;
         IsAggregated = isAggregated;
         IsAggregatedProperty = isAggregaredProp;
+        IsJsonColumn = property.HasAttribute<LightJsonMapAttribute>();
+        JsonRootType = ColumnType.IsEnumerableType() ? JsonRootType.Array : JsonRootType.Object;
     }
 }
 

@@ -4,31 +4,48 @@ using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace LightORM.Providers.MySql;
 
 public sealed class MySqlProvider : BaseDatabaseProvider
 {
-    public static MySqlProvider Create(string master, params string[] slaves) => new MySqlProvider(master, slaves);
-    private readonly Lazy<IDatabaseTableHandler> lazyHandler;
-    private MySqlProvider(string master, params string[] slaves) : base(master, slaves)
+    public static MySqlProvider Create(DataBaseOption option) => new (option);
+
+    public static MySqlProvider Create(Action<DataBaseOption> setting)
     {
+        var dbOption = new DataBaseOption(new MySqlMethodResolver());
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+        }
+        return Create(dbOption);
+    }
+
+    private MySqlProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    {
+        var master = option.MasterConnectionString!;
         var match = Regex.Match(master, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);
         if (!match.Success)
         {
             throw new Exception("未能在连接字符串中发现目标数据库!");
         }
-        lazyHandler = new(() => new MySqlTableHandler(match.Value));
+        DbHandler = new MySqlTableHandler(master, option.GenerateOption);
+        CustomDatabase = new CustomMySql(option.MethodResolver, option.GenerateOption);
+        CustomDatabase.AddKeyWord(option.Keyworks);
+        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DbProviderFactory = option.NewFactory ?? MySqlConnectorFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.MySql;
 
-    public override ICustomDatabase CustomDatabase { get; } = CustomMySql.Instance;
+    public override ICustomDatabase CustomDatabase { get; }
 
-    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
+    public override IDatabaseTableHandler DbHandler { get; }
 
-    public override DbProviderFactory DbProviderFactory { get; set; } = MySqlConnectorFactory.Instance;
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

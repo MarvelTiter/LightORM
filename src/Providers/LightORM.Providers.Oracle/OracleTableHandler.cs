@@ -9,9 +9,10 @@ using LightORM.Providers.Oracle.TableStructure;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleTableHandler
+public sealed class OracleTableHandler(TableOptions tableOptions)
     : BaseDatabaseHandler<OracleTableWriter>
 {
+    public override TableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         return "select table_name TableName from user_tab_columns group by table_name order by table_name";

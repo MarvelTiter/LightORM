@@ -4,9 +4,9 @@ using System.Text;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class CustomDameng() : CustomDatabase(new DamengMethodResolver())
+public sealed class CustomDameng(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
 {
-    internal static readonly CustomDameng Instance = new CustomDameng();
+    internal static readonly CustomDameng Instance = new CustomDameng(new DamengMethodResolver(), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)

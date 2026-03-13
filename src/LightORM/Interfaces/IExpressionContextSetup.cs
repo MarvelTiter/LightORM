@@ -12,7 +12,8 @@ public interface IExpressionContextSetup
     IExpressionContextSetup SetTableContext(ITableContext context);
     IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase;
     IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new();
-    IExpressionContextSetup TableConfiguration(Action<TableGenerateOption> action);
+    [Obsolete("使用IDbOption配置")]
+    IExpressionContextSetup TableConfiguration(Action<TableOptions> action);
     // IExpressionContextSetup UseIdentifierQuote(bool value = true);
 
 }

@@ -43,13 +43,13 @@ internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : E
         GC.SuppressFinalize(this);
     }
 
-    public string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null)
+    public string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableOptions>? action = null)
     {
         using var ado = new SqlExecutor.SqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
         return InternalCreateTableSql<T>(ado, Options, action);
     }
 
-    public async Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default)
+    public async Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableOptions>? action = null, CancellationToken cancellationToken = default)
     {
         using var ado = new SqlExecutor.SqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
         return await InternalCreateTableAsync<T>(ado, Options, action, cancellationToken);

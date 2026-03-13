@@ -9,9 +9,9 @@ namespace LightORM.Providers.Oracle.TableStructure;
 
 public class OracleTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
-        var tableSpace = option?.OracleTableSpace != null ? $"TABLESPACE {option.OracleTableSpace}" : "";
+        var tableSpace = option?.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
 
         #region Table
 
@@ -106,7 +106,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
 
         #endregion
 
-        if (!option.OracleOverVersion)
+        if (!option.OverVersion)
         {
             // 序列 + 触发器自增
             var increments = table.Columns.Where(col => col.AutoIncrement);
@@ -133,7 +133,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         }
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR"))
@@ -142,12 +142,12 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         }
 
         string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement && option.OracleOverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
+        string identity = column.AutoIncrement && option.OverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
         string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
         return $"{DbEmphasis(option, column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
         string? typeFullName;
         if (type.DataType.IsEnum)
@@ -178,7 +178,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         };
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"\"{name.ToUpper()}\"";
+    protected override string DbEmphasis(TableOptions option, string name) => $"\"{name.ToUpper()}\"";
 
     private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
     {
@@ -208,10 +208,10 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
-    private string AttachUserId(TableGenerateOption option, string name)
+    private string AttachUserId(TableOptions option, string name)
     {
-        if (option.OracleUserId != null)
-            return $"\"{option.OracleUserId}\".\"{name.ToUpper()}\"";
+        if (option.UserId != null)
+            return $"\"{option.UserId}\".\"{name.ToUpper()}\"";
         else
             return DbEmphasis(option, name);
     }

@@ -160,6 +160,7 @@ internal partial class ExpressionBuilder
 
             Expression CreateCustomEntiry()
             {
+                // TODO: 处理JSON列的反序列化
                 // 属性处理 Property
                 List<MemberBinding> Bindings = [];
                 // 处理普通属性

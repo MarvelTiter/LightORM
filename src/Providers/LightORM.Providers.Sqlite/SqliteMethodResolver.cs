@@ -190,4 +190,14 @@ public sealed class SqliteMethodResolver : BaseSqlMethodResolver
         resolver.Visit(methodCall.Arguments[1]);
         resolver.Sql.Append(')');
     }
+
+    public override void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("JSON_EXTRACT(");
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(") == ");
+        resolver.Visit(methodCall.Arguments[2]);
+    }
 }

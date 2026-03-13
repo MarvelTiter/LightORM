@@ -61,8 +61,6 @@ internal static class ExpressionResolverPool
         resolver.UseNavigate = false;
         resolver.NavigateDeep = 0;
         resolver.Parameters = null;
-        //resolver.ParameterPositionIndex = 0;
-        resolver.ResolveNullValue = false;
         resolver.UseAs = true;
         resolver.IsVisitConvert = false;
         resolver.ContainVariable = false;
