@@ -71,6 +71,17 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            if (option.JSONBackend == Models.JSONBackend.Binary)
+            {
+                return "BLOB";
+            }
+            else
+            {
+                return "TEXT";
+            }
+        }
         if (type.DataType == typeof(byte) || type.DataType == typeof(byte?)
                                           || type.DataType == typeof(sbyte) || type.DataType == typeof(sbyte?)
                                           || type.DataType == typeof(short) || type.DataType == typeof(short?)

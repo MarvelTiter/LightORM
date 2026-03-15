@@ -7,9 +7,13 @@ using System.Threading.Tasks;
 
 namespace LightORM.Models;
 
-public readonly record struct JsonColumnContext(StringBuilder Sql
-    , ITableColumnInfo Column
+public readonly record struct JsonColumnContext(ITableColumnInfo Column
+    , IExpressionResolver Resolver
     , Stack<MemberPathInfo> Members
-    , ResolveContext Context
-    , SqlResolveOptions Options
-    , TableInfo Table);
+    , TableInfo Table)
+{
+    public StringBuilder Sql => Resolver.Sql;
+    public ResolveContext Context => Resolver.Context;
+    public SqlResolveOptions Options => Resolver.Options;
+
+}

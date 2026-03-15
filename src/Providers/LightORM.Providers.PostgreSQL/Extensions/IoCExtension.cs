@@ -20,7 +20,7 @@ public static class IoCExtension
     }
     public static void UsePostgreSQL(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(new PostgreSQLMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

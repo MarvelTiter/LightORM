@@ -1,7 +1,16 @@
-﻿namespace LightORM.SqlExecutor;
+﻿using System.Collections.Concurrent;
+
+namespace LightORM.SqlExecutor;
 
 internal partial class ExpressionBuilder
 {
+    private static ConcurrentDictionary<Type, byte> JsonMaps { get; } = [];
+    public static void AddJsonTypeMap(Type type)
+    {
+        JsonMaps.TryAdd(type, 0);
+    }
+    public static bool ContainsJsonType(Type type) => JsonMaps.ContainsKey(type);
+
     public static string CustomStringToBoolean(string valueString)
     {
         return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? "True" : "False";
@@ -35,5 +44,17 @@ internal partial class ExpressionBuilder
     {
         var value = Reader.GetInt64(Column);
         return value >= 0 ? (ulong)value : throw new OverflowException("Negative value cannot be converted to ulong");
+    }
+
+    public static T? RecordFieldStringDeserializer<T>(string value)
+    {
+        var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+        return jsonHandler.Deserialize<T>(value);
+    }
+
+    public static T? RecordFieldBytesDeserializer<T>(byte[] value)
+    {
+        var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+        return jsonHandler.Deserialize<T>(value);
     }
 }

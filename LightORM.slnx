@@ -2,6 +2,7 @@
   <Folder Name="/doc/">
     <File Path=".github/workflows/push_nuget.yml" />
     <File Path="doc/版本日志.md" />
+    <File Path="examples.md" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/items/">

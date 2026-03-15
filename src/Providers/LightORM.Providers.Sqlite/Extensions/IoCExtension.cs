@@ -10,8 +10,6 @@ public static class IoCExtension
         => UseSqlite(options, "MainDb", masterConnectString, slaveConnectStrings);
     public static void UseSqlite(this IExpressionContextSetup options, string? key, string masterConnectString, params string[] slaveConnectStrings)
     {
-        //var provider = SqliteProvider.Create(masterConnectString, slaveConnectStrings);
-        //options.SetDatabase(key, DbBaseType.Sqlite, provider);
         UseSqlite(options, set =>
         {
             set.DbKey = key;
@@ -21,7 +19,7 @@ public static class IoCExtension
     }
     public static void UseSqlite(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(new SqliteMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

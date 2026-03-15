@@ -113,4 +113,6 @@ public abstract class CustomDatabase : ICustomDatabase
     {
         throw new NotSupportedException();
     }
+
+    public virtual void HandleJsonParameter(StringBuilder sql) { }
 }

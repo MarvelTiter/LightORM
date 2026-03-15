@@ -155,14 +155,7 @@ internal static partial class TableContext
 
             var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
             entityInfo.Columns = [.. propertyColumnInfos];
-            //if (entityInfo.IsAnonymousType)
-            //{
-            //    entityInfo.Alias = $"t{StaticCache<TableEntity>.Count}";
-            //}
-            //else
-            //{
-            //    entityInfo.Alias = $"r{StaticCache<TableEntity>.Count}";
-            //}
+           
             return entityInfo;
         });
         // 拷贝

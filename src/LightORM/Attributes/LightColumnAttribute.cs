@@ -47,4 +47,8 @@ public class LightColumnAttribute : Attribute
     /// 忽略插入
     /// </summary>
     public bool IgnoreInsert { get; set; }
+    ///// <summary>
+    ///// 显式指定数据库类型
+    ///// </summary>
+    //public string? DbType { get; set; }
 }

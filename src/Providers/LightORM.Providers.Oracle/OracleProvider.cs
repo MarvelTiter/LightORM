@@ -9,10 +9,10 @@ namespace LightORM.Providers.Oracle;
 
 public sealed class OracleProvider : BaseDatabaseProvider
 {
-    public static OracleProvider Create(DataBaseOption option) => new (option);
+    public static OracleProvider Create(DataBaseOption option) => new(option);
     public static OracleProvider Create(Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new OracleMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -20,23 +20,25 @@ public sealed class OracleProvider : BaseDatabaseProvider
         }
         return Create(dbOption);
     }
-    private OracleProvider(DataBaseOption option):base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private OracleProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new OracleTableHandler(option.GenerateOption);
-        CustomDatabase = new CustomOracle(option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new OracleMethodResolver();
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomOracle(sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.Oracle;
 
-    public override ICustomDatabase CustomDatabase { get; } 
+    public override ICustomDatabase CustomDatabase { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
     public override IDatabaseTableHandler DbHandler { get; }
 
-    public override DbProviderFactory DbProviderFactory { get; } 
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

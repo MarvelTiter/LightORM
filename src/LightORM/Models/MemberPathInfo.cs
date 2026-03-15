@@ -27,6 +27,8 @@ public readonly struct Indexer
         indexers.Push(this);
     }
 
+    public readonly int Count => indexers?.Count ?? 0;
+
     public readonly object Value => valueIndex switch
     {
         0 => intIndex!.Value,
@@ -46,42 +48,18 @@ public readonly struct Indexer
         this.indexers.Push(other);
     }
 
-    public void Format(StringBuilder sql)
+    public void Format(Action<Indexer> action)
     {
         if (indexers.Count == 1)
         {
-            if (IsIntValue)
-            {
-                sql.Append('[');
-                sql.Append(IntValue);
-                sql.Append(']');
-
-            }
-            else if (IsStringValue)
-            {
-                sql.Append("[\"");
-                sql.Append(StringValue);
-                sql.Append("\"]");
-            }
+            action(this);
             return;
         }
 
         while(indexers.Count > 0)
         {
             var indexer = indexers.Pop();
-            if (indexer.IsIntValue)
-            {
-                sql.Append('[');
-                sql.Append(indexer.IntValue);
-                sql.Append(']');
-
-            }
-            else if (indexer.IsStringValue)
-            {
-                sql.Append("[\"");
-                sql.Append(indexer.StringValue);
-                sql.Append("\"]");
-            }
+            action(indexer);
         }
     }
 
@@ -91,6 +69,5 @@ public readonly struct Indexer
 
 public readonly record struct MemberPathInfo(MemberInfo Member)
 {
-    public bool Root { get; init; } = false;
     public Indexer IndexValue { get; init; }
 }

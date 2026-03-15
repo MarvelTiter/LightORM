@@ -17,15 +17,12 @@ public enum SqlServerVersion
 
 public sealed class SqlServerProvider : BaseDatabaseProvider
 {
-    private static DataBaseOption? defaultOption;
-    public static DataBaseOption GetDefaultOption(SqlServerVersion version) => defaultOption ??= new(new SqlServerMethodResolver(version));
-
     public static SqlServerProvider Create(SqlServerVersion version, DataBaseOption option)
         => new(version, option);
 
     public static SqlServerProvider Create(SqlServerVersion version, Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new SqlServerMethodResolver(version));
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -38,7 +35,9 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         , DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new SqlServerTableHandler(option.GenerateOption);
-        CustomDatabase = new CustomSqlServer(version, option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new SqlServerMethodResolver(version);
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomSqlServer(version, sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;

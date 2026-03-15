@@ -25,6 +25,8 @@ public class TestBase
             Configura(option);
             option.UseInterceptor<LightOrmAop>();
             option.SetTableContext(TableContext);
+            option.ConfigJsonHandler<JsonHandler>();
+            
         });
 
         Services = services.BuildServiceProvider();
@@ -98,5 +100,23 @@ public class LightOrmAop : AdoInterceptorBase
     public override void OnPrepareCommand(SqlExecuteContext context)
     {
         //Debug.WriteLine($"{context.TraceId}:{context.Elapsed}");
+    }
+}
+
+public class JsonHandler : ILightJsonHelper
+{
+    public T? Deserialize<T>(string json)
+    {
+        return System.Text.Json.JsonSerializer.Deserialize<T>(json);
+    }
+
+    public T? Deserialize<T>(byte[] json)
+    {
+        return System.Text.Json.JsonSerializer.Deserialize<T>(json);
+    }
+
+    public string Serialize<T>(T value)
+    {
+        return System.Text.Json.JsonSerializer.Serialize(value);
     }
 }

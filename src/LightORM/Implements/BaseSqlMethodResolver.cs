@@ -23,9 +23,26 @@ namespace LightORM.Implements
             var methodName = expression.Method.Name;
             if (!methods.TryGetValue(methodName, out var action))
             {
-                throw new NotSupportedException($"{this.GetType().Name}: {expression.Method.Name}, {expression.Method.GetParameters().Select(p => $"[{p.ParameterType}:{p.Name}]")}");
+                if (ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap)
+                {
+                    throw new NotSupportedException($"{this.GetType().Name}: {expression.Method.Name}, {expression.Method.GetParameters().Select(p => $"[{p.ParameterType}:{p.Name}]")}");
+                }
+                {
+                    //resolver.ExpStores ??= [];
+                    //resolver.ExpStores.Add(methodName, expression);
+                    if (expression.Object is not null)
+                        resolver.Visit(expression.Object);
+                    if (expression.Arguments.Count > 0)
+                    {
+                        for (int i = 0; i < expression.Arguments.Count; i++)
+                        {
+                            var arg = expression.Arguments[i];
+                            resolver.Visit(arg);
+                        }
+                    }
+                    return;
+                }
             }
-
             action.Invoke(resolver, expression);
         }
 
@@ -620,6 +637,11 @@ namespace LightORM.Implements
         #region json
 
         public virtual void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            throw new NotSupportedException();
+        }
+
+        public virtual void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
             throw new NotSupportedException();
         }

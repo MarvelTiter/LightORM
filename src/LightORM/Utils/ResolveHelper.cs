@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.Utils;
 
-internal class ResolveHelper
+public class ResolveHelper
 {
     public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? _, string name, ref int index)
     {
@@ -94,6 +94,46 @@ internal class ResolveHelper
             return t;
         }
         throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
+    }
+
+    public static Type? ExtracExpressionValueType(Expression expression)
+    {
+        if (expression is ConstantExpression ce)
+        {
+            return ce.Type;
+        }
+        else if (expression is UnaryExpression u && u.Operand is ConstantExpression uce)
+        {
+            return uce.Type;
+        }
+        var members = new Queue<MemberPathInfo>();
+        Expression? current = expression;
+
+        // 向下遍历，收集 MemberInfo
+        while (current is MemberExpression memberExpr)
+        {
+            members.Enqueue(new(memberExpr.Member));
+            current = memberExpr.Expression;
+        }
+
+        if (current is UnaryExpression unaryExpr)
+        {
+            current = unaryExpr.Operand;
+        }
+
+        if (current is not ConstantExpression && current is not null)
+        {
+            throw new LightOrmException($"数组索引表达式必须以常量或者Null结尾，但得到: {current?.GetType().Name}: {current}");
+        }
+        if (members.Count == 0) return null;
+        var outerMember = members.Dequeue().Member;
+        return outerMember.MemberType switch
+        {
+            MemberTypes.Property => ((PropertyInfo)outerMember).PropertyType,
+            MemberTypes.Field => ((FieldInfo)outerMember).FieldType,
+            _ => null
+        };
+
     }
 
     public static object? GetValue(Stack<MemberPathInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);

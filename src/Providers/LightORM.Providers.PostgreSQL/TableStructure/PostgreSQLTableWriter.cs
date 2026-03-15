@@ -1,4 +1,5 @@
 ﻿using LightORM.DbStruct;
+using LightORM.Providers.PostgreSQL.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -116,32 +117,15 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
-        string? typeFullName;
-        if (type.DataType.IsEnum)
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
+            if (option.SpecificJsonColumnDbType is not null)
+            {
+                return option.SpecificJsonColumnDbType;
+            }
+            return option.JSONBackend == Models.JSONBackend.Binary ? "JSONB" : "JSON";
         }
-        else
-        {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
-        }
-
-        return typeFullName switch
-        {
-            "System.Boolean" => "BOOLEAN",
-            "System.Byte" => "SMALLINT", // PostgreSQL 没有直接的 BYTE 类型
-            "System.Int16" => "SMALLINT",
-            "System.Int32" => "INTEGER",
-            "System.Int64" => "BIGINT",
-            "System.Single" => "REAL",
-            "System.Double" => "DOUBLE PRECISION",
-            "System.Decimal" => "NUMERIC",
-            "System.DateTime" => "TIMESTAMP",
-            "System.DateTimeOffset" => "TIMESTAMP WITH TIME ZONE",
-            "System.Guid" => "UUID",
-            "System.Byte[]" => "BYTEA",
-            _ => "TEXT", // PostgreSQL 的 TEXT 类型适合任意长度字符串
-        };
+        return type.DataType.TransformType();
     }
 
     protected override string DbEmphasis(TableOptions option, string name) => $"\"{name}\"";

@@ -6,5 +6,5 @@
 [AttributeUsage(AttributeTargets.Property)]
 public class LightJsonMapAttribute : Attribute
 {
-
+    //public string? DbType { get; set; }
 }

@@ -19,7 +19,7 @@ public static class IoCExtension
     }
     public static void UseDameng(this IExpressionContextSetup options, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(new DamengMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

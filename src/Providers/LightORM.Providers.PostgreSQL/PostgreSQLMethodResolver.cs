@@ -34,7 +34,7 @@ public sealed class PostgreSQLMethodResolver : BaseSqlMethodResolver
         else
         {
             resolver.Visit(methodCall.Object);
-            resolver.Sql.Append("::text");
+            resolver.Sql.Append("::TEXT");
         }
 
         static string ConvertFormatString(string format)
@@ -191,6 +191,47 @@ public sealed class PostgreSQLMethodResolver : BaseSqlMethodResolver
         resolver.Visit(methodCall.Arguments[0]);
         resolver.Sql.Append(',');
         resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(')');
+    }
+
+    public override void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        // json_col ->> 
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append("->>");
+        // 第二个参数：JSON 路径
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(" = ");
+        // 第三个参数：比较的值
+        resolver.Visit(methodCall.Arguments[2]);
+    }
+
+    public override void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("JSONB_SET");
+        resolver.Sql.Append('(');
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append("::JSONB");
+        resolver.Sql.Append(',');
+        // 第二个参数：JSON 路径
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(',');
+        // 第三个参数：要设置的值
+        var valueExp = methodCall.Arguments[2];
+        //var type = LightORM.Utils.ResolveHelper.ExtracExpressionValueType(valueExp);
+        //if (type == typeof(string))
+        //{
+        //    resolver.Sql.Append('"');
+        //    resolver.Visit(valueExp);
+        //    resolver.Sql.Append('"');
+        //}
+        //else
+        //{
+        //}
+        resolver.Visit(valueExp);
+        resolver.Sql.Append("::JSONB");
         resolver.Sql.Append(')');
     }
 }

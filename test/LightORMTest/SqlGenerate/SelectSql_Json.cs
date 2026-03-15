@@ -48,7 +48,7 @@ public class SelectSql_Json : TestBase
         var sql = Db.Select<JsonTestModel>()
              // JSON_EXTRACT(a.`JSON_DATA`,'$.NestArray[index].NestJson.Name') = 'test'
              //.Where(j => SqlFn.JsonQuery(j.Json!, $"$.NestArray[{index}].NestJson.Name", "test"))
-             .Where(j => j.Json!.NestArray![index].NestJson!.Name == "test")
+             .Where(j => j.Json!.NestList![index].NestJson!.Name == "test")
              .ToSqlWithParameters();
         Console.WriteLine(sql);
     }
@@ -58,7 +58,7 @@ public class SelectSql_Json : TestBase
     {
         var sql = Db.Select<JsonTestModel>()
              // JSON_EXTRACT(a.`JSON_DATA`,'$[0].Name') = 'test'
-             .Where(j => j.JsonArray![0].Name == "test")
+             .Where(j => j.JsonList![0].Name == "test")
              .ToSqlWithParameters();
         Console.WriteLine(sql);
     }
@@ -68,7 +68,7 @@ public class SelectSql_Json : TestBase
     {
         var sql = Db.Select<JsonTestModel>()
              // JSON_EXTRACT(a.`JSON_DATA`,'$[0].NestArray[1].NestJson.NestArray[2].Name') = 'test'
-             .Where(j => j.JsonArray![0].NestArray![1].NestJson!.NestArray![2].Name == "test")
+             .Where(j => j.JsonList![0].NestList![1].NestJson!.NestList![2].Name == "test")
              .ToSqlWithParameters();
         Console.WriteLine(sql);
     }

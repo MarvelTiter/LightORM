@@ -33,6 +33,7 @@ internal partial class ExpressionSqlOptions
     private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
     private static int poolSize = Environment.ProcessorCount * 4;
     private static int objectPoolSize = Environment.ProcessorCount * 8;
+    private static ILightJsonHelper? specificInstance;
 
     private static string? defaultDbKey;
     private static bool useParameterized = true;
@@ -90,14 +91,20 @@ internal partial class ExpressionSqlOptions
     {
         enableExpressionCache = enable;
     }
+    public static void SetSpecificJsonHandler(ILightJsonHelper instance)
+    {
+        specificInstance = instance;
+    }
+
 }
 
-internal partial class ExpressionSqlOptions
+internal partial class ExpressionSqlOptions : IJsonConfiguration
 {
     public static Lazy<ExpressionSqlOptions> Instance { get; }
     public int PoolSize => poolSize;
     public int InternalObjectPoolSize => objectPoolSize;
     public bool EnableExpressionCache => enableExpressionCache;
+    public bool ThrowExceptionWhileMethodResolveNotMap { get; set; }
     public string DefaultDbKey
     {
         get
@@ -117,6 +124,9 @@ internal partial class ExpressionSqlOptions
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
     public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
     public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
+    public Func<object, string>? Serializer { get; set; }
+    public Func<string, object>? Deserializer { get; set; }
+    public Func<byte[], object>? DeserializerBytes { get; set; }
 
     public ExpressionSqlOptions()
     {
@@ -124,6 +134,16 @@ internal partial class ExpressionSqlOptions
         CustomDatabases = customDatabases;
         DatabaseHandlers = databaseHandlers;
         allInterceptors = stateLessInterceptors.Values;
+    }
+
+    public ILightJsonHelper GetJsonHandler()
+    {
+        if (specificInstance is not null) return specificInstance;
+        if (Serializer is null || Deserializer is null || DeserializerBytes is null)
+        {
+            throw new LightOrmException("未配置ILightJsonHelper实例的情况下，Serializer和Deserializer和DeserializerBytes不能为null");
+        }
+        return specificInstance ??= new DefaultJsonHelper(Serializer, Deserializer, DeserializerBytes);
     }
 
     public ExpressionSqlOptions(IEnumerable<IAdoInterceptor> interceptors) : this()
@@ -141,6 +161,11 @@ internal partial class ExpressionSqlOptions
 
 internal partial class ExpressionOptionBuilder : IExpressionContextSetup
 {
+    public bool ThrowExceptionWhileMethodResolveNotMap
+    {
+        get => ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap;
+        set => ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap = value;
+    }
     public WeakReference<IServiceCollection>? WeakServices { get; set; }
     public IExpressionContextSetup SetDefault(string key)
     {
@@ -198,6 +223,16 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         return this;
     }
 
+    public IExpressionContextSetup ConfigJsonHandler<T>() where T : ILightJsonHelper, new()
+    {
+        ExpressionSqlOptions.SetSpecificJsonHandler(new T());
+        return this;
+    }
+    public IExpressionContextSetup ConfigJsonHandler(Action<IJsonConfiguration> config)
+    {
+        config.Invoke(ExpressionSqlOptions.Instance.Value);
+        return this;
+    }
     public IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new()
     {
         throw new NotImplementedException();
@@ -216,4 +251,6 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         }
         return new();
     }
+
+
 }

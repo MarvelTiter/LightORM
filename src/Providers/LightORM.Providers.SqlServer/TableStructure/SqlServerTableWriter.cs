@@ -89,7 +89,7 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
     protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         var dbType = ConvertToDbType(option, column);
-        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? option.DefaultStringLength})" : "")}";
+        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") && !column.IsJson ? $"({column.Length ?? option.DefaultStringLength})" : "")}";
         string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
         string notNull = column.NotNull ? " NOT NULL" : "";
         return $"{dataType}{identity}{notNull}";
@@ -97,6 +97,10 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            return "NVARCHAR(MAX)";
+        }
         string? typeFullName;
         if (type.DataType.IsEnum)
         {

@@ -5,7 +5,7 @@ using System.Text;
 namespace LightORMTest.Sqlite.SqlGenerate;
 
 [TestClass]
-public class SelectSql_Json: LightORMTest.SqlGenerate.SelectSql_Json
+public class SelectSql_Json : LightORMTest.SqlGenerate.SelectSql_Json
 {
     public override DbBaseType DbType => DbBaseType.Sqlite;
 

@@ -61,6 +61,10 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            return option.SpecificJsonColumnDbType ?? "JSON";
+        }
         string? typeFullName;
         if (type.DataType.IsEnum)
         {

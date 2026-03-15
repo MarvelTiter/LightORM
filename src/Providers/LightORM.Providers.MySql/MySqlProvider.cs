@@ -14,7 +14,7 @@ public sealed class MySqlProvider : BaseDatabaseProvider
 
     public static MySqlProvider Create(Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new MySqlMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -32,7 +32,9 @@ public sealed class MySqlProvider : BaseDatabaseProvider
             throw new Exception("未能在连接字符串中发现目标数据库!");
         }
         DbHandler = new MySqlTableHandler(master, option.GenerateOption);
-        CustomDatabase = new CustomMySql(option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new MySqlMethodResolver();
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomMySql(sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? MySqlConnectorFactory.Instance;

@@ -11,6 +11,7 @@ namespace LightORM.Interfaces;
 /// </summary>
 public interface ILightJsonHelper
 {
-    void Serialize<T>(T value);
+    string Serialize<T>(T value);
     T? Deserialize<T>(string json);
+    T? Deserialize<T>(byte[] json);
 }

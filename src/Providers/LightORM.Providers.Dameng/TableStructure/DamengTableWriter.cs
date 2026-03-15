@@ -123,6 +123,19 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            if (option.SpecificJsonColumnDbType is not null)
+            {
+                return option.SpecificJsonColumnDbType;
+            }
+            if (type.Length > 320000)
+            {
+                return "CLOB";
+            }
+            return option.JSONBackend == Models.JSONBackend.Binary ? "JSONB" : "JSON";
+        }
+
         string? typeFullName;
         if (type.DataType.IsEnum)
         {
@@ -132,7 +145,6 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         {
             typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
         }
-
         return typeFullName switch
         {
             "System.Boolean" => "CHAR(1)",

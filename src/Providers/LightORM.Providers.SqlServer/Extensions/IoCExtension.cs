@@ -21,7 +21,7 @@ public static class IoCExtension
     }
     public static void UseSqlServer(this IExpressionContextSetup options, SqlServerVersion version, Action<IDbOption> setting)
     {
-        var dbOption = new DataBaseOption(new SqlServerMethodResolver(version));
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {

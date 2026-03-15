@@ -27,6 +27,7 @@ namespace LightORM.Interfaces
         string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters);
         string RewriteParameterReferences(string sql, string prefix);
         void HandleJsonColumn(JsonColumnContext context);
+        void HandleJsonParameter(StringBuilder sql);
         //IJsonColumnHandler JsonHandler { get; }
     }
 }

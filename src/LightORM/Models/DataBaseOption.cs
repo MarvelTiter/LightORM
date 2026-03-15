@@ -2,16 +2,22 @@
 
 namespace LightORM.Models;
 
-public sealed class DataBaseOption(ISqlMethodResolver methodResolver) : IDbOption
+public sealed class DataBaseOption : IDbOption
 {
     public string? DbKey { get; set; }
     public string? MasterConnectionString { get; set; }
     public string[]? SalveConnectionStrings { get; set; }
-    public ISqlMethodResolver MethodResolver { get; } = methodResolver;
-    public DbProviderFactory? NewFactory { get; set; }
+        public DbProviderFactory? NewFactory { get; set; }
     public TableOptions GenerateOption { get; set; } = new();
     public HashSet<string> Keyworks { get; set; } = [];
     public bool IsUseIdentifierQuote { get; set; } = true;
+    public Action<ISqlMethodResolver>? SqlMethodConfiguration { get; set; }
+
+    public IDbOption ConfigurationMethodResolver(Action<ISqlMethodResolver> action)
+    {
+        SqlMethodConfiguration = action;
+        return this;
+    }
     public IDbOption AddDbKeyWords(params string[] keyWords)
     {
         Keyworks.UnionWith(keyWords);

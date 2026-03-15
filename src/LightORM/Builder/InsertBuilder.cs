@@ -95,7 +95,7 @@ internal record InsertBuilder<T> : SqlBuilder
         ResolveExpressions(database);
 
         var insertColumns = GetInsertColumns();
-
+        // TODO 批量插入对JSON列处理
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
         foreach (var item in BatchInfos)
         {
@@ -197,7 +197,7 @@ internal record InsertBuilder<T> : SqlBuilder
             }
             columns.AppendEmphasis(item.ColumnName, database);
             columns.Append(',');
-            // TODO: 处理JSON列的插入
+
             if (val is bool b)
             {
                 var boolValue = database.HandleBooleanValue(b);
@@ -206,7 +206,20 @@ internal record InsertBuilder<T> : SqlBuilder
             }
             else
             {
-                values.WithPrefix(item.PropertyName, database);
+                // 处理JSON列的插入
+                if (item.IsJsonColumn)
+                {
+                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+                    var jsonString = jsonHandler.Serialize(val);
+                    DbParameters[item.PropertyName] = jsonString;
+                    values.WithPrefix(item.PropertyName, database);
+                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
+                    database.HandleJsonParameter(values);
+                }
+                else
+                {
+                    values.WithPrefix(item.PropertyName, database);
+                }
             }
             values.Append(',');
         }

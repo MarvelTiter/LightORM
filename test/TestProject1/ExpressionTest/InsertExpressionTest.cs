@@ -11,7 +11,7 @@ public class InsertExpressionTest : TestBase
     {
         Expression<Func<User, object>> exp = u => u;
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
 
         var result = exp.Resolve(SqlResolveOptions.Insert, ctx);
         Console.WriteLine(result.SqlString);

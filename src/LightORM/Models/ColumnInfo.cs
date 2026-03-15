@@ -114,8 +114,11 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsIgnoreUpdate = isIgnoreUpdate;
         IsIgnoreInsert = isIgnoreInsert;
         IsJsonColumn = isJsonMap;
-        // TODO 在生成器中处理
         JsonRootType = ColumnType.IsEnumerableType() ? JsonRootType.Array : JsonRootType.Object;
+        if (isJsonMap)
+        {
+            ExpressionBuilder.AddJsonTypeMap(ColumnType);
+        }
     }
 
     public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
@@ -176,6 +179,14 @@ public sealed record ColumnInfo : ITableColumnInfo
         IsAggregatedProperty = isAggregaredProp;
         IsJsonColumn = property.HasAttribute<LightJsonMapAttribute>();
         JsonRootType = ColumnType.IsEnumerableType() ? JsonRootType.Array : JsonRootType.Object;
+        if (IsJsonColumn)
+        {
+            ExpressionBuilder.AddJsonTypeMap(ColumnType);
+        }
+        else
+        {
+            IsJsonColumn = ExpressionBuilder.ContainsJsonType(ColumnType);
+        }
     }
 }
 

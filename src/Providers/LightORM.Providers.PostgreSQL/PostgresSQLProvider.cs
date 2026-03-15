@@ -17,7 +17,7 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
 
     public static PostgreSQLProvider Create(Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new PostgreSQLMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -31,7 +31,9 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
     private PostgreSQLProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new PostgreSQLTableHandler(option.GenerateOption);
-        CustomDatabase = new CustomPostgreSQL(option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new PostgreSQLMethodResolver();
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomPostgreSQL(sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? Npgsql.NpgsqlFactory.Instance;

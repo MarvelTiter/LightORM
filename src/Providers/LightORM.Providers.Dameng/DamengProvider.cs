@@ -12,7 +12,7 @@ public sealed class DamengProvider : BaseDatabaseProvider
     public static DamengProvider Create(DataBaseOption option) => new(option);
     public static DamengProvider Create(Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new DamengMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -24,7 +24,9 @@ public sealed class DamengProvider : BaseDatabaseProvider
     private DamengProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new DamengTableHandler(option.GenerateOption);
-        CustomDatabase = new CustomDameng(option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new DamengMethodResolver(option.GenerateOption);
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomDameng(sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? DmClientFactory.Instance;

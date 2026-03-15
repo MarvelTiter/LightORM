@@ -149,6 +149,18 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
 
     protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            if (option.SpecificJsonColumnDbType is not null)
+            {
+                return option.SpecificJsonColumnDbType;
+            }
+            if (type.Length > 320000)
+            {
+                return "CLOB";
+            }
+            return "JSON";
+        }
         string? typeFullName;
         if (type.DataType.IsEnum)
         {

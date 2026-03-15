@@ -127,6 +127,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
+    public BinaryExpression? CurrentBinary => currentBinaryExpression;
     public bool ContainVariable { get; set; }
     public ReadOnlyCollection<ParameterExpression>? Parameters
     {
@@ -156,6 +157,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     private const string AS_LITERAL = " AS ";
     Expression? bodyExpression;
+    BinaryExpression? currentBinaryExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
     //string? lastResolvedColumnName;
     bool useAs = true;
@@ -180,6 +182,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         get => isVisitConvert;
         set => isVisitConvert = value;
     }
+
     bool specificHandleJson;
 
     Indexer resolvedIndex = default;
@@ -214,7 +217,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitBinary(BinaryExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
-
+        currentBinaryExpression = exp;
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
@@ -244,6 +247,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             Sql.Append(')');
         }
+        currentBinaryExpression = null;
         return null;
     }
 
@@ -271,10 +275,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 Indexer newIndex;
                 if (exp.Arguments[0].Type == typeof(int))
                 {
+                    // 数组索引
                     newIndex = ResolveHelper.ExtractInstanceValue<int>(exp.Arguments[0]);
                 }
                 else if (exp.Arguments[0].Type == typeof(string))
                 {
+                    // 属性访问、属性索引
                     newIndex = ResolveHelper.ExtractInstanceValue<string>(exp.Arguments[0]);
                 }
                 else
@@ -485,35 +491,41 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 var index = GetResolvedIndex();
                 if (index.HasValue)
                 {
-                    Members.Push(new(null!) { Root = true, IndexValue = index });
+                    Members.Push(new(null!) { IndexValue = index });
                 }
-                Context.Database.HandleJsonColumn(new(Sql, col, Members, Context, Options, table));
-            }
-            else
-            {
                 if (Members.Count > 0)
                 {
-                    if (Members.Count > 1)
-                    {
-                        throw new LightOrmException("聚合属性只能嵌套1层");
-                    }
-                    if (col.IsAggregated)
-                    {
-                        name = Members.Pop().Member.Name;
-                        col = table.GetColumnInfo(name);
-                    }
+                    Context.Database.HandleJsonColumn(new(col, this, Members, table));
+                    Members.Clear();
+                    return null;
                 }
-
-                resolvedPropertyName = col.PropertyName;
-                if (Options.RequiredTableAlias)
+                else
                 {
-                    Sql.Append(table.Alias);
-                    Sql.Append('.');
-                    //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
+                    ResolvedMembers.Add(col.PropertyName);
                 }
-                Sql.AppendEmphasis(col.ColumnName, Database);
-                //lastResolvedColumnName = col.ColumnName;
             }
+            if (Members.Count > 0)
+            {
+                if (Members.Count > 1)
+                {
+                    throw new LightOrmException("聚合属性只能嵌套1层");
+                }
+                if (col.IsAggregated)
+                {
+                    name = Members.Pop().Member.Name;
+                    col = table.GetColumnInfo(name);
+                }
+            }
+
+            resolvedPropertyName = col.PropertyName;
+            if (Options.RequiredTableAlias)
+            {
+                Sql.Append(table.Alias);
+                Sql.Append('.');
+                //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
+            }
+            Sql.AppendEmphasis(col.ColumnName, Database);
+            //lastResolvedColumnName = col.ColumnName;
             if (Options.SqlType == SqlPartial.Where)
             {
                 ResolvedMembers.Add(col.PropertyName);

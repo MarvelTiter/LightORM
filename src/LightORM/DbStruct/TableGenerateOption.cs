@@ -16,7 +16,8 @@ public record TableOptions
     public bool OverVersion { get; set; }
     public string? TableSpace { get; set; }
     public string? UserId { get; set; }
-    public JSONBackend JSONBackend { get; set; }
+    public JSONBackend JSONBackend { get; set; } = JSONBackend.Text;
+    public string? SpecificJsonColumnDbType { get; set; }
 
     private int defaultStringLength = 256;
     public int DefaultStringLength

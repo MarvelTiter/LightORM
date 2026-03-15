@@ -14,7 +14,7 @@ public sealed class SqliteProvider : BaseDatabaseProvider
 
     public static SqliteProvider Create(Action<DataBaseOption> setting)
     {
-        var dbOption = new DataBaseOption(new SqliteMethodResolver());
+        var dbOption = new DataBaseOption();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -26,7 +26,9 @@ public sealed class SqliteProvider : BaseDatabaseProvider
     private SqliteProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new SqliteTableHandler(option.GenerateOption);
-        CustomDatabase = new CustomSqlite(option.MethodResolver, option.GenerateOption);
+        var sqlMethodResolver = new SqliteMethodResolver(option.GenerateOption);
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomSqlite(sqlMethodResolver, option.GenerateOption);
         CustomDatabase.AddKeyWord(option.Keyworks);
         CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SQLiteFactory.Instance;

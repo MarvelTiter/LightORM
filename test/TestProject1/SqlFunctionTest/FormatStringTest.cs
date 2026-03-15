@@ -13,7 +13,7 @@ public class FormatStringTest: TestBase
         var seq = 0;
         Expression<Func<User, bool>> exp = u => u.UserName == $"{name}{seq}";
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -23,7 +23,7 @@ public class FormatStringTest: TestBase
     {
         Expression<Func<User, bool>> exp = u => u.UserName == $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
     }
