@@ -29,4 +29,5 @@ public struct DbColumn
     public object? Default { get; set; }
     public string? Comment { get; set; }
     public Type DataType { get; set; }
+    public bool IsJson { get; set; }
 }

@@ -84,6 +84,28 @@ internal static class ExpressionExtensions
             _ => throw new NotImplementedException("未实现的节点类型" + expressionNodeType)
         };
     }
+
+    public static string OperatorParser(this ExpressionType expressionNodeType)
+    {
+        return expressionNodeType switch
+        {
+            ExpressionType.And or
+            ExpressionType.AndAlso => " AND ",
+            ExpressionType.Equal => " = ",
+            ExpressionType.GreaterThan => " > ",
+            ExpressionType.GreaterThanOrEqual => " >= ",
+            ExpressionType.NotEqual => " <> ",
+            ExpressionType.Or or
+            ExpressionType.OrElse => " OR ",
+            ExpressionType.LessThan => " < ",
+            ExpressionType.LessThanOrEqual => " <= ",
+            ExpressionType.Add => " + ",
+            ExpressionType.Subtract => " - ",
+            ExpressionType.Multiply => " * ",
+            ExpressionType.Divide => " / ",
+            _ => throw new NotImplementedException("未实现的节点类型" + expressionNodeType)
+        };
+    }
 }
 internal class ExpressionResolver(SqlResolveOptions options, ResolveContext context) : IExpressionResolver
 {
@@ -91,7 +113,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public ResolveContext Context { get; set; } = context;
     public HashSet<ResolvedValueInfo> DbParameters { get; set; } = [];
     public StringBuilder Sql { get; set; } = new StringBuilder(128);
-    public Stack<MemberInfo> Members { get; set; } = [];
+    public Stack<MemberPathInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
     public List<WindowFnSpecification>? WindowFnPartials { get; set; }
     public bool IsNot { get; set; }
@@ -105,6 +127,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
+    public BinaryExpression? CurrentBinary => currentBinaryExpression;
     public bool ContainVariable { get; set; }
     public ReadOnlyCollection<ParameterExpression>? Parameters
     {
@@ -134,6 +157,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
     private const string AS_LITERAL = " AS ";
     Expression? bodyExpression;
+    BinaryExpression? currentBinaryExpression;
     ReadOnlyCollection<ParameterExpression>? parametersExpression;
     //string? lastResolvedColumnName;
     bool useAs = true;
@@ -151,20 +175,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         set => useAs = value;
     }
 
-    bool resolveNullValue;
-    public bool ResolveNullValue
-    {
-        get
-        {
-            if (resolveNullValue)
-            {
-                resolveNullValue = false;
-                return true;
-            }
-            return resolveNullValue;
-        }
-        set => resolveNullValue = value;
-    }
 
     bool isVisitConvert;
     public bool IsVisitConvert
@@ -173,16 +183,22 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         set => isVisitConvert = value;
     }
 
-    //int parameterPositionIndex = 0;
-    //public int ParameterPositionIndex { get => parameterPositionIndex; set => parameterPositionIndex = value; }
+    bool specificHandleJson;
 
-    //private enum VisitBinaryState
-    //{
-    //    None,
-    //    Left,
-    //    Right,
-    //}
-    //private VisitBinaryState binaryState;
+    Indexer resolvedIndex = default;
+    Indexer GetResolvedIndex(bool shouldReset = true)
+    {
+        try
+        {
+            return resolvedIndex;
+        }
+        finally
+        {
+            if (shouldReset)
+                resolvedIndex = default;
+        }
+    }
+
     string? resolvedPropertyName = null;
     Expression? VisitLambda(LambdaExpression exp)
     {
@@ -201,19 +217,20 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitBinary(BinaryExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: BinaryExpression: {exp}");
-
+        currentBinaryExpression = exp;
         // 数组访问
         if (exp.NodeType == ExpressionType.ArrayIndex)
         {
-            var index = ResolveHelper.ExtractInstanceValue<int>(exp.Right);
-            var array = ResolveHelper.ExtractInstanceValueWithName<Array>(exp.Left, out var name);
-            var arrayValue = array!.GetValue(index);
-            //var pname = ResolveHelper.FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
-            var pname = $"{Context.ParameterPrefix}{name}";
-            Sql.Append(pname);
-            DbParameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
-            ContainVariable = true;
-            return null;
+            resolvedIndex = ResolveHelper.ExtractInstanceValue<int>(exp.Right);
+            //var array = ResolveHelper.ExtractInstanceValueWithName<Array>(exp.Left, out var name);
+            //var arrayValue = array!.GetValue(index);
+            ////var pname = ResolveHelper.FormatDbParameterName(Context, Options, $"Arr{index}", ref parameterPositionIndex);
+            //var pname = $"{Context.ParameterPrefix}{name}";
+            //Sql.Append(pname);
+            //DbParameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
+            //ContainVariable = true;
+            //return null;
+            return exp.Left;
         }
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
@@ -221,19 +238,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         resolvedPropertyName = null;
         Visit(exp.Left);
-        var insertIndex = Sql.Length;
+        var op = exp.NodeType.OperatorParser();
+        Sql.Append(op);
         Visit(exp.Right);
         resolvedPropertyName = null;
-        var op = exp.NodeType.OperatorParser(ResolveNullValue);
-        Sql.Insert(insertIndex, op);
 
         if (Options.SqlType == SqlPartial.Where || Options.SqlType == SqlPartial.Join || Options.SqlType == SqlPartial.Select)
         {
             Sql.Append(')');
         }
+        currentBinaryExpression = null;
         return null;
-
-
     }
 
     Expression? VisitConditional(ConditionalExpression exp)
@@ -252,10 +267,37 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitMethodCall(MethodCallExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MethodCallExpression: {exp}");
-        Members.Clear();
-        if (exp.Method.Name.Equals("get_Item") && (exp.Method.DeclaringType?.FullName?.StartsWith("System.Collections.Generic") ?? false))
+        // 索引器
+        if (exp.Method.Name.Equals("get_Item"))
         {
+            if (exp.Arguments.Count > 0)
+            {
+                Indexer newIndex;
+                if (exp.Arguments[0].Type == typeof(int))
+                {
+                    // 数组索引
+                    newIndex = ResolveHelper.ExtractInstanceValue<int>(exp.Arguments[0]);
+                }
+                else if (exp.Arguments[0].Type == typeof(string))
+                {
+                    // 属性访问、属性索引
+                    newIndex = ResolveHelper.ExtractInstanceValue<string>(exp.Arguments[0]);
+                }
+                else
+                {
+                    throw new LightOrmException("当前仅支持int和string类型的索引器解析");
+                }
+                if (resolvedIndex.HasValue)
+                {
+                    resolvedIndex.Combine(newIndex);
+                }
+                else
+                {
+                    resolvedIndex = newIndex;
+                }
+            }
 
+            Visit(exp.Object);
         }
         else
         {
@@ -263,7 +305,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             {
                 return exp.Arguments[0];
             }
+            Members.Clear();
+            if (exp.Method.Name == "JsonQuery")
+            {
+                specificHandleJson = true;
+            }
             MethodResolver.Resolve(this, exp);
+            specificHandleJson = false;
         }
         return null;
     }
@@ -357,7 +405,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 IsVisitConvert = false;
                 var member = Members.Pop();
                 var table = Context.GetTable(exp);
-                var col = table.GetColumn(member.Name)!;
+                var col = table.GetColumn(member.Member.Name)!;
                 if (Options.RequiredTableAlias)
                 {
                     //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
@@ -415,7 +463,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         if (exp.Expression?.NodeType == ExpressionType.Parameter)
         {
-
             var paramExp = exp.Expression as ParameterExpression;
             //var pType = paramExp?.Type;
 
@@ -430,36 +477,46 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 {
                     if (Members.Count > 0)
                     {
-                        //ResolvedMembers.Add(Members.Pop().Name);
-                        MemberOfNavigateMember = Members.Pop().Name;
+                        MemberOfNavigateMember = Members.Pop().Member.Name;
                     }
                     Members.Clear();
                 }
-                //else
-                //{
-                //    return null;
-                //}
                 return null;
             }
-            // TODO 表达式扁平化处理后，只有聚合属性才有 p.XXX.XXX ?
+
+            // 表达式扁平化处理后，只有Json属性和聚合属性才有 p.XXX.XXX
+            if (col.IsJsonColumn && !specificHandleJson)
+            {
+                // 处理Json属性
+                var index = GetResolvedIndex();
+                if (index.HasValue)
+                {
+                    Members.Push(new(null!) { IndexValue = index });
+                }
+                if (Members.Count > 0)
+                {
+                    Context.Database.HandleJsonColumn(new(col, this, Members, table));
+                    Members.Clear();
+                    return null;
+                }
+                else
+                {
+                    ResolvedMembers.Add(col.PropertyName);
+                }
+            }
             if (Members.Count > 0)
             {
+                if (Members.Count > 1)
+                {
+                    throw new LightOrmException("聚合属性只能嵌套1层");
+                }
                 if (col.IsAggregated)
                 {
-                    name = Members.Pop().Name;
+                    name = Members.Pop().Member.Name;
                     col = table.GetColumnInfo(name);
                 }
             }
 
-            if (Options.SqlType == SqlPartial.Where)
-            {
-                ResolvedMembers.Add(col.PropertyName);
-            }
-
-            //if (!table.TableEntityInfo.IsAnonymousType)
-            //{
-            //    UseAs = col.ColumnName != col.PropertyName;
-            //}
             resolvedPropertyName = col.PropertyName;
             if (Options.RequiredTableAlias)
             {
@@ -469,10 +526,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             }
             Sql.AppendEmphasis(col.ColumnName, Database);
             //lastResolvedColumnName = col.ColumnName;
+            if (Options.SqlType == SqlPartial.Where)
+            {
+                ResolvedMembers.Add(col.PropertyName);
+            }
             Members.Clear();
             return null;
         }
-        Members.Push(exp.Member);
+        var isEndWithConst = EndWithConstant(exp.Expression);
+        // 检查exp.Expression是否为常量结尾
+        // 如果是，说明resolvedIndex有可能会再次被使用，这里不能重置，需要使用完成后再重置
+        Members.Push(new(exp.Member) { IndexValue = GetResolvedIndex(!isEndWithConst) });
         return exp.Expression ?? Expression.Constant(exp.Type.TypeDefaultValue(), exp.Type);
     }
 
@@ -482,10 +546,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         var value = exp.Value;
         if (Members.Count > 0)
         {
-            //value = GetValue(Members, value, out var name);
-            //VariableValue(value, name);
             var v = ResolveHelper.GetValueByExpression(Members, value, out var propNames);
-            //var pn = ResolveHelper.FormatDbParameterName(Context, Options, propNames, ref parameterPositionIndex);
             var pn = $"{Context.ParameterPrefix}{propNames}";
             Sql.Append(pn);
             VariableValue(v, pn);
@@ -503,9 +564,18 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             {
                 DbParameters.Add(new(bn, null, ExpValueType.Null, resolvedPropertyName));
             }
-            else if (v is IEnumerable && v is not string)
+            else if (v is IEnumerable ee && v is not string)
             {
-                DbParameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
+                var index = GetResolvedIndex();
+                if (index.HasValue && index.IsIntValue)
+                {
+                    var indexValue = ee.GetValueByIndex(index.IntValue);
+                    DbParameters.Add(new(bn, indexValue, ExpValueType.Other, resolvedPropertyName));
+                }
+                else
+                {
+                    DbParameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
+                }
             }
             else if (v is bool)
             {
@@ -529,8 +599,9 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             if (v == null)
             {
-                Sql.Append("NULL");
-                ResolveNullValue = true;
+                var name = Guid.NewGuid().ToString("N").Substring(8);
+                Sql.Append(name);
+                DbParameters.Add(new(name, null, ExpValueType.Null, resolvedPropertyName));
                 return;
             }
             if (bodyExpression?.NodeType == ExpressionType.Constant && exp.Type == typeof(bool))
@@ -567,61 +638,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
     }
 
-    //public static void FormatDbParameterName(StringBuilder sql, ResolveContext? context, SqlResolveOptions? option, string name, ref int index)
-    //{
-    //    //var p = $"{context?.ParameterPrefix}{name}_{option?.ParameterPartialIndex}_{index}";
-    //    //index += 1;
-    //    //return p;
-    //    sql.Append(context?.ParameterPrefix);
-    //    sql.Append(name);
-    //    sql.Append('_');
-    //    sql.Append(option?.ParameterPartialIndex);
-    //    sql.Append('_');
-    //    index += 1;
-    //    sql.Append(index);
-    //}
+    private static bool EndWithConstant(Expression? expression)
+    {
+        Expression? current = expression;
 
-    ///// <summary>
-    ///// 获取值
-    ///// </summary>
-    ///// <param name="memberInfos">成员信息</param>
-    ///// <param name="compilerVar">编译器变量值</param>
-    ///// <param name="memberName">成员名称</param>
-    ///// <returns></returns>
-    //[Obsolete]
-    //public static object? GetValue(Stack<MemberInfo> memberInfos, object? compilerVar, out string memberName)
-    //{
-    //    var names = new List<string>();
-    //    while (memberInfos.Count > 0)
-    //    {
-    //        var item = memberInfos.Pop();
-    //        if (!item.Name.StartsWith("CS$<>8__locals"))
-    //        {
-    //            names.Add(item.Name);
-    //        }
-
-    //        compilerVar = GetValue(item, compilerVar);
-    //    }
-    //    memberName = string.Join("_", names);
-    //    return compilerVar;
-    //}
-
-
-    ///// <summary>
-    ///// 获取值
-    ///// </summary>
-    ///// <param name="memberInfo">成员信息</param>
-    ///// <param name="obj">对象</param>
-    ///// <returns></returns>
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //[Obsolete]
-    //public static object? GetValue(MemberInfo memberInfo, object? obj)
-    //{
-    //    return memberInfo switch
-    //    {
-    //        PropertyInfo prop => prop.GetValue(obj),
-    //        FieldInfo field => field.GetValue(obj),
-    //        _ => throw new NotSupportedException($"不支持获取 {memberInfo.MemberType} 类型值.")
-    //    };
-    //}
+        while (current is MemberExpression memberExpr)
+        {
+            current = memberExpr.Expression;
+        }
+        return current is ConstantExpression;
+    }
 }

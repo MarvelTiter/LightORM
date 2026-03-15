@@ -9,7 +9,7 @@ namespace LightORM.Providers.SqlServer.TableStructure;
 
 public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -86,17 +86,21 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         var dbType = ConvertToDbType(option, column);
-        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") ? $"({column.Length ?? option.DefaultStringLength})" : "")}";
+        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") && !column.IsJson ? $"({column.Length ?? option.DefaultStringLength})" : "")}";
         string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
         string notNull = column.NotNull ? " NOT NULL" : "";
         return $"{dataType}{identity}{notNull}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            return "NVARCHAR(MAX)";
+        }
         string? typeFullName;
         if (type.DataType.IsEnum)
         {
@@ -126,7 +130,7 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
         };
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"[{name}]";
+    protected override string DbEmphasis(TableOptions option, string name) => $"[{name}]";
 
     private static object CheckDefaultValue(DbColumn column)
     {

@@ -3,25 +3,42 @@ using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace LightORM.Providers.Oracle;
 
 public sealed class OracleProvider : BaseDatabaseProvider
 {
-    public static OracleProvider Create(string master, params string[] slaves) => new OracleProvider(master, slaves);
-    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new OracleTableHandler());
-    private OracleProvider(string master, params string[] slaves):base(master,slaves)
+    public static OracleProvider Create(DataBaseOption option) => new(option);
+    public static OracleProvider Create(Action<DataBaseOption> setting)
     {
+        var dbOption = new DataBaseOption();
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+        }
+        return Create(dbOption);
+    }
+    private OracleProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    {
+        DbHandler = new OracleTableHandler(option.GenerateOption);
+        var sqlMethodResolver = new OracleMethodResolver();
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomOracle(sqlMethodResolver, option.GenerateOption);
+        CustomDatabase.AddKeyWord(option.Keyworks);
+        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.Oracle;
 
-    public override ICustomDatabase CustomDatabase { get; } = CustomOracle.Instance;
+    public override ICustomDatabase CustomDatabase { get; }
 
-    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
+    public override IDatabaseTableHandler DbHandler { get; }
 
-    public override DbProviderFactory DbProviderFactory { get; set; } = OracleClientFactory.Instance;
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

@@ -1,14 +1,16 @@
-﻿using LightORM.Implements;
+﻿using LightORM.Extension;
+using LightORM.Implements;
 using LightORM.Interfaces;
+using LightORM.Models;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Text;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class CustomOracle(): CustomDatabase(new OracleMethodResolver())
+public sealed class CustomOracle(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
 {
-    internal readonly static CustomOracle Instance = new CustomOracle();
+    internal readonly static CustomOracle Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
@@ -37,5 +39,76 @@ public sealed class CustomOracle(): CustomDatabase(new OracleMethodResolver())
 
         sb.AppendLine("END;");
         return sb.ToString();
+    }
+
+    public override void HandleJsonColumn(JsonColumnContext context)
+    {
+        if (context.Options.SqlType == SqlPartial.Update)
+        {
+            context.Sql.Append("JSON_TRANSFORM");
+            //context.Sql.Append("JSON_MERGEPATCH");
+            context.Sql.Append('(');
+            if (context.Options.RequiredTableAlias)
+            {
+                context.Sql.Append(context.Table.Alias);
+                context.Sql.Append('.');
+            }
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(",SET '$");
+            BuildJsonPath();
+            context.Sql.Append('\'');
+            context.Sql.Append('=');
+            context.Sql.Append(Prefix);
+            context.Sql.Append(context.Column.PropertyName);
+            context.Sql.Append(')');
+        }
+        else
+        {
+            context.Sql.Append("JSON_VALUE");
+            context.Sql.Append('(');
+            if (context.Options.RequiredTableAlias)
+            {
+                context.Sql.Append(context.Table.Alias);
+                context.Sql.Append('.');
+            }
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(",'$");
+            BuildJsonPath();
+            context.Sql.Append("')");
+        }
+
+        void BuildJsonPath()
+        {
+            while (context.Members.Count > 0)
+            {
+                var mi = context.Members.Pop();
+                if (mi.Member is not null)
+                {
+                    context.Sql.Append('.');
+                    context.Sql.Append(mi.Member.Name);
+                }
+                if (mi.IndexValue.HasValue)
+                {
+                    mi.IndexValue.Format(i =>
+                    {
+                        if (i.IsIntValue)
+                        {
+                            context.Sql.Append('[');
+                            context.Sql.Append(i.IntValue);
+                            context.Sql.Append(']');
+                        }
+                        else if (i.IsStringValue)
+                        {
+                            context.Sql.Append('.');
+                            context.Sql.Append(i.StringValue);
+                        }
+                    });
+                }
+                //if (context.Members.Count > 0)
+                //{
+                //    context.Sql.Append('.');
+                //}
+            }
+        }
     }
 }

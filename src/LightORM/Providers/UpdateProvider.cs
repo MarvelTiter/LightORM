@@ -134,6 +134,13 @@ namespace LightORM.Providers
             return this;
         }
 
+        public IExpUpdate<T> Set(Expression<Action<T>> exp)
+        {
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp));
+
+            return this;
+        }
+
         public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, TField value)
         {
             if (condition)

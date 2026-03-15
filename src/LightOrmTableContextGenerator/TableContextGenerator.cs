@@ -28,6 +28,7 @@ public class TableContextGenerator : IIncrementalGenerator
     public const string ContextInterfaceFullName = "LightORM.ITableContext";
     public const string LightTableAttributeFullName = "LightORM.LightTableAttribute";
     public const string LightFlatAttributeFullName = "LightORM.LightFlatAttribute";
+    public const string LightJsonMapAttributeFullName = "LightORM.LightJsonMapAttribute";
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -246,16 +247,16 @@ public class TableContextGenerator : IIncrementalGenerator
                 {
                     var fr = ScanProperty(item);
                     var propertyType = $"typeof({item.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
-                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert})""");
+                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert}, {fr.IsJson})""");
                 }
                 //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
                 //bodies.Add($"gen_{p.Name}.IsAggregated = true");
-                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},typeof({flatType}), "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true)""");
+                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},typeof({flatType}), "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true, false)""");
                 continue;
             }
             var r = ScanProperty(p);
             var pt = $"typeof({p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
-            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{pt}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert})""");
+            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{pt}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert}, {r.IsJson})""");
         }
         bodies.Add("return cols");
         bodies = [
@@ -306,6 +307,7 @@ public class TableContextGenerator : IIncrementalGenerator
             _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);
             _ = p.GetAttribute("LightORM.LightColumnAttribute", out var lightCol);
             _ = p.GetAttribute("LightORM.LightNavigateAttribute", out var nav);
+            _ = p.GetAttribute(LightJsonMapAttributeFullName, out var json);
             var customName = "null";
 
             if (lightCol.GetNamedValue("Name", out var cname))
@@ -330,6 +332,7 @@ public class TableContextGenerator : IIncrementalGenerator
             var ignoreUpdate = GetBoolValue(lightCol, "IgnoreUpdate");
             var ignoreInsert = GetBoolValue(lightCol, "IgnoreInsert");
             var navInfo = "null";
+            var isJson = json is null ? "false" : "true";
             if (nav != null)
             {
                 var ismulti = p.Type.HasInterfaceAll("System.Collections.IEnumerable") && p.Type.SpecialType == SpecialType.None;
@@ -372,7 +375,8 @@ public class TableContextGenerator : IIncrementalGenerator
                 NavInfo = navInfo,
                 IsVersion = version,
                 IgnoreUpdate = ignoreUpdate,
-                IgnoreInsert = ignoreInsert
+                IgnoreInsert = ignoreInsert,
+                IsJson = isJson
             };
         }
     }

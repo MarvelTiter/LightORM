@@ -17,16 +17,16 @@ namespace LightORM.Utils;
 internal class ExpressionValueExtract : ExpressionVisitor, IResetable
 {
     private readonly HashSet<ResolvedValueInfo> parameters = [];
-    private int parameterIndex = 0;
+    private int? resolvedIndex = null;
     private string? resolvedPropertyName = null;
-    private readonly Stack<MemberInfo> members = [];
+    private readonly Stack<MemberPathInfo> members = [];
     public static ExpressionValueExtract Default => ExpressionVisitorPool<ExpressionValueExtract>.Rent();
     private ResolveContext? context;
     private SqlResolveOptions? option;
     public void Reset()
     {
         parameters.Clear();
-        parameterIndex = 0;
+        resolvedIndex = null;
         members.Clear();
         context = null;
         option = null;
@@ -70,12 +70,13 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         if (node.NodeType == ExpressionType.ArrayIndex)
         {
             //var index = Convert.ToInt32(Expression.Lambda(node.Right).Compile().DynamicInvoke());
-            var index = ResolveHelper.ExtractInstanceValue<int>(node.Right);
-            var array = ResolveHelper.ExtractInstanceValueWithName<Array>(node.Left, out var name);
-            var arrayValue = array!.GetValue(index);
-            //var pname = ResolveHelper.FormatDbParameterName(context, option, $"Arr{index}", ref parameterIndex);
-            var pname = $"{context?.ParameterPrefix}{name}";
-            parameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
+            resolvedIndex = ResolveHelper.ExtractInstanceValue<int>(node.Right);
+            //var array = ResolveHelper.ExtractInstanceValueWithName<Array>(node.Left, out var name);
+            //var arrayValue = array!.GetValue(index);
+            ////var pname = ResolveHelper.FormatDbParameterName(context, option, $"Arr{index}", ref parameterIndex);
+            //var pname = $"{context?.ParameterPrefix}{name}";
+            //parameters.Add(new(pname, arrayValue, ExpValueType.Other, resolvedPropertyName));
+            Visit(node.Left);
         }
         else
         {
@@ -93,6 +94,19 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         return node;
     }
 
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        if (node.Method.Name.Equals("get_Item"))
+        {
+            // List索引访问
+            if (node.Arguments.Count > 0 && node.Arguments[0].Type == typeof(int))
+            {
+                resolvedIndex = ResolveHelper.ExtractInstanceValue<int>(node.Arguments[0]);
+            }
+        }
+        return base.VisitMethodCall(node);    
+    }
+
     protected override Expression VisitMember(MemberExpression node)
     {
         if (node.Expression?.NodeType == ExpressionType.Parameter)
@@ -102,7 +116,7 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         }
         else
         {
-            members.Push(node.Member);
+            members.Push(new(node.Member));
         }
         Visit(node.Expression);
         return node;
@@ -130,9 +144,18 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
                 return;
             }
 
-            if (v is IEnumerable && v is not string)
+            if (v is IEnumerable ee && v is not string)
             {
-                parameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
+                if (resolvedIndex.HasValue)
+                {
+                    var indexValue = ee.GetValueByIndex(resolvedIndex.Value);
+                    parameters.Add(new(bn, indexValue, ExpValueType.Other, resolvedPropertyName));
+                    resolvedIndex = null;
+                }
+                else
+                {
+                    parameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
+                }
             }
             else if (v is bool)
             {

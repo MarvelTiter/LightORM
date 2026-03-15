@@ -199,4 +199,34 @@ public sealed class OracleMethodResolver : BaseSqlMethodResolver
         resolver.Visit(methodCall.Arguments[1]);
         resolver.Sql.Append(')');
     }
+
+    public override void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("JSON_VALUE");
+        resolver.Sql.Append('(');
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        // 第二个参数：JSON 路径
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(") = ");
+        // 第三个参数：比较的值
+        resolver.Visit(methodCall.Arguments[2]);
+    }
+
+    public override void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append("JSON_TRANSFORM");
+        resolver.Sql.Append('(');
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        // 第二个参数：JSON 路径
+        resolver.Sql.Append("SET ");
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append('=');
+        // 第三个参数：要设置的值
+        resolver.Visit(methodCall.Arguments[2]);
+        resolver.Sql.Append(')');
+    }
 }

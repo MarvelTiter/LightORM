@@ -21,4 +21,5 @@ struct PropertyScanResult
     public string IsVersion { get; set; }
     public string IgnoreUpdate { get; set; }
     public string IgnoreInsert { get; set; }
+    public string IsJson { get; set; }
 }

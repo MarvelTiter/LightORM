@@ -3,26 +3,44 @@ using LightORM.Interfaces;
 using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace LightORM.Providers.Dameng;
 
 public sealed class DamengProvider : BaseDatabaseProvider
 {
-    public static DamengProvider Create(string master, params string[] slaves) => new DamengProvider(master, slaves);
-    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new DamengTableHandler());
-
-    private DamengProvider(string master, params string[] slaves) : base(master, slaves)
+    public static DamengProvider Create(DataBaseOption option) => new(option);
+    public static DamengProvider Create(Action<DataBaseOption> setting)
     {
-
+        var dbOption = new DataBaseOption();
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+        }
+        return Create(dbOption);
     }
+
+    private DamengProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    {
+        DbHandler = new DamengTableHandler(option.GenerateOption);
+        var sqlMethodResolver = new DamengMethodResolver(option.GenerateOption);
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomDameng(sqlMethodResolver, option.GenerateOption);
+        CustomDatabase.AddKeyWord(option.Keyworks);
+        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DbProviderFactory = option.NewFactory ?? DmClientFactory.Instance;
+    }
+
     public override DbBaseType DbBaseType => DbBaseType.Dameng;
-    public override ICustomDatabase CustomDatabase { get; } = CustomDameng.Instance;
 
-    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override ICustomDatabase CustomDatabase { get; }
 
-    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
+    public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
-    public override DbProviderFactory DbProviderFactory { get; set; } = DmClientFactory.Instance;
+    public override IDatabaseTableHandler DbHandler { get; }
+
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
+using LightORM.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class DamengMethodResolver : BaseSqlMethodResolver
+public sealed class DamengMethodResolver(TableOptions tableOptions) : BaseSqlMethodResolver
 {
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -202,6 +203,38 @@ public sealed class DamengMethodResolver : BaseSqlMethodResolver
         resolver.Visit(methodCall.Arguments[0]);
         resolver.Sql.Append(',');
         resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(')');
+    }
+
+
+    string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_VALUE" : "JSON_VALUE";
+    string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
+    public override void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append(Extract);
+        resolver.Sql.Append('(');
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        // 第二个参数：JSON 路径
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(") = ");
+        // 第三个参数：比较的值
+        resolver.Visit(methodCall.Arguments[2]);
+    }
+
+    public override void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
+    {
+        resolver.Sql.Append(Set);
+        resolver.Sql.Append('(');
+        // 第一个参数：JSON 列
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(',');
+        // 第二个参数：JSON 路径
+        resolver.Visit(methodCall.Arguments[1]);
+        resolver.Sql.Append(',');
+        // 第三个参数：要设置的值
+        resolver.Visit(methodCall.Arguments[2]);
         resolver.Sql.Append(')');
     }
 }

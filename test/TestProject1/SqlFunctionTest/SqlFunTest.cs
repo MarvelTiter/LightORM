@@ -22,7 +22,7 @@ public class SqlFunTest : TestBase
             RowNum = WinFn.RowNumber().PartitionBy(u.UserName).OrderBy(u.Age).Value()
         };
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -36,7 +36,7 @@ public class SqlFunTest : TestBase
             DateDiff = u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserName).OrderBy(u.Age).Value()
         };
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -49,7 +49,7 @@ public class SqlFunTest : TestBase
             Total = SqlFn.Count(SqlFn.Case<int?>().When(u.Age > 10).Then(u.Age).Else(0).End())
         };
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqlite.Instance, table);
+        var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }

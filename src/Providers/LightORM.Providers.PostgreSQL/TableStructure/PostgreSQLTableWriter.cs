@@ -1,4 +1,5 @@
 ﻿using LightORM.DbStruct;
+using LightORM.Providers.PostgreSQL.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace LightORM.Providers.PostgreSQL.TableStructure;
 
 public class PostgreSQLTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -22,9 +23,9 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
 """);
 
         // PostgreSQL 的表空间语法与 Oracle 不同
-        if (!string.IsNullOrEmpty(option.PostgreSQLTableSpace))
+        if (!string.IsNullOrEmpty(option.TableSpace))
         {
-            sql.Append($" TABLESPACE {option.PostgreSQLTableSpace}");
+            sql.Append($" TABLESPACE {option.TableSpace}");
         }
         sql.AppendLine(";");
         #endregion
@@ -97,7 +98,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
 
@@ -114,37 +115,20 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return $"{DbEmphasis(option, column.Name)} {dataType}{identity}{defaultValue}{notNull}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
-        string? typeFullName;
-        if (type.DataType.IsEnum)
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
-            typeFullName = Enum.GetUnderlyingType(type.DataType).FullName;
+            if (option.SpecificJsonColumnDbType is not null)
+            {
+                return option.SpecificJsonColumnDbType;
+            }
+            return option.JSONBackend == Models.JSONBackend.Binary ? "JSONB" : "JSON";
         }
-        else
-        {
-            typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
-        }
-
-        return typeFullName switch
-        {
-            "System.Boolean" => "BOOLEAN",
-            "System.Byte" => "SMALLINT", // PostgreSQL 没有直接的 BYTE 类型
-            "System.Int16" => "SMALLINT",
-            "System.Int32" => "INTEGER",
-            "System.Int64" => "BIGINT",
-            "System.Single" => "REAL",
-            "System.Double" => "DOUBLE PRECISION",
-            "System.Decimal" => "NUMERIC",
-            "System.DateTime" => "TIMESTAMP",
-            "System.DateTimeOffset" => "TIMESTAMP WITH TIME ZONE",
-            "System.Guid" => "UUID",
-            "System.Byte[]" => "BYTEA",
-            _ => "TEXT", // PostgreSQL 的 TEXT 类型适合任意长度字符串
-        };
+        return type.DataType.TransformType();
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"\"{name}\"";
+    protected override string DbEmphasis(TableOptions option, string name) => $"\"{name}\"";
 
     private static string FormatDefaultValue(object value, string dataType)
     {

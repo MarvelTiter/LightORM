@@ -165,13 +165,13 @@ internal abstract class ExpressionCoreSqlBase
 
     #region 数据库表操作
 
-    public string? CreateTableSql<T>(Action<TableGenerateOption>? action = null)
+    public string? CreateTableSql<T>(Action<TableOptions>? action = null)
     {
         var ado = Ado;
         return InternalCreateTableSql<T>(ado, Options, action);
     }
 
-    public async Task<bool> CreateTableAsync<T>(Action<TableGenerateOption>? action = null, CancellationToken cancellationToken = default)
+    public async Task<bool> CreateTableAsync<T>(Action<TableOptions>? action = null, CancellationToken cancellationToken = default)
     {
         var ado = Ado;
         return await InternalCreateTableAsync<T>(ado, Options, action, cancellationToken);
@@ -196,7 +196,7 @@ internal abstract class ExpressionCoreSqlBase
         return await InternalDropTableAsync(ado, t.TableName, cancellationToken);
     }
 
-    protected static string InternalCreateTableSql<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
+    protected static string InternalCreateTableSql<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
     {
         try
         {
@@ -208,7 +208,7 @@ internal abstract class ExpressionCoreSqlBase
         }
     }
 
-    protected static async Task<bool> InternalCreateTableAsync<T>(ISqlExecutor ado, ExpressionSqlOptions options, Action<TableGenerateOption>? action, CancellationToken cancellationToken)
+    protected static async Task<bool> InternalCreateTableAsync<T>(ISqlExecutor ado, ExpressionSqlOptions options, Action<TableOptions>? action, CancellationToken cancellationToken)
     {
         try
         {
@@ -260,18 +260,11 @@ internal abstract class ExpressionCoreSqlBase
         return true;
     }
 
-    private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableGenerateOption>? action = null)
+    private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
     {
         if (ado.Database.DbHandler is null)
             return [];
-        var o = option.TableGenOption;
-        if (action != null)
-        {
-            o = (TableGenerateOption)o.Clone();
-            action(o);
-        }
-
-        var tableSql = ado.Database.DbHandler.GenerateDbTable<T>(o);
+        var tableSql = ado.Database.DbHandler.GenerateDbTable<T>();
         return tableSql;
     }
 

@@ -2,9 +2,8 @@
 
 namespace LightORM;
 
-internal class ResolveContext
+public class ResolveContext
 {
-
     private readonly List<ITableEntityInfo> selectedTables = [];
     private readonly Dictionary<string, TableInfo> lambdaParameterInfos = [];
     private string? parameterPrefix;
@@ -12,7 +11,7 @@ internal class ResolveContext
     public ICustomDatabase Database { get; }
     public IEnumerable<TableInfo> Tables => lambdaParameterInfos.Values;
     public int Level { get; set; }
-    
+
     public ResolveContext(ICustomDatabase database, params ITableEntityInfo[] selectedTables)
     {
         //foreach (var item in selectedTables)

@@ -9,8 +9,8 @@ namespace LightORM.Interfaces
         ICustomDatabase CustomDatabase { get; }
         IDatabaseTableHandler DbHandler { get; }
         [Obsolete]
-        Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; }
-        string[] SlaveConnectionStrings { get; }
+        Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; }
+        string[]? SlaveConnectionStrings { get; }
         DbProviderFactory DbProviderFactory { get; }
         int BulkCopy(DataTable dataTable);
     }

@@ -1,4 +1,5 @@
 ﻿using LightORM.DbStruct;
+using System.Collections;
 
 namespace LightORM.Extension;
 
@@ -12,6 +13,14 @@ internal static class TypeExtension
     public static bool IsFlat(this Type? type)
     {
         return type?.HasAttribute<LightFlatAttribute>() == true;
+    }
+
+    public static bool IsEnumerableType(this Type? type, bool supportString = false)
+    {
+        if (type is null) return false;
+        if (!supportString && type == typeof(string)) 
+            return false;
+        return typeof(IEnumerable).IsAssignableFrom(type);
     }
 
     internal static DbTable CollectDbTableInfo(this Type tableType)
@@ -105,6 +114,7 @@ internal static class TypeExtension
                 Default = col.Default,
                 Comment = col.Comment,
                 DataType = propType,
+                IsJson = col.IsJsonColumn
             });
         }
         return columns;

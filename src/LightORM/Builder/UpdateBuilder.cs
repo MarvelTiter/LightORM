@@ -3,6 +3,10 @@ using System.Text;
 
 namespace LightORM.Builder;
 
+internal record struct BadValue
+{
+    public static readonly BadValue Instance = new BadValue();
+}
 internal record UpdateBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
@@ -12,6 +16,7 @@ internal record UpdateBuilder<T> : SqlBuilder
     HashSet<string> Members { get; set; } = [];
     HashSet<string> SetNullMembers { get; set; } = [];
     HashSet<string> WhereMembers { get; set; } = [];
+    Dictionary<string, string?> JsonUpdateSpecific { get; set; } = [];
     public bool IsBatchUpdate { get; internal set; }
     public void AddMember(string member, object? value)
     {
@@ -39,6 +44,12 @@ internal record UpdateBuilder<T> : SqlBuilder
         {
             if (expInfo.AdditionalParameter is null)
             {
+                // 从UpdateProvider的代码来看，使用SqlFn.JsonSet的话，一定是进入这个分支
+                if (result.Members?.Count == 1 && result.SqlString is not null)
+                {
+                    JsonUpdateSpecific.Add(result.Members[0], result.SqlString);
+                    DbParameters.Add(result.Members[0], BadValue.Instance);
+                }
                 Members.AddRange(result.Members!);
             }
             else if (expInfo.AdditionalParameter is SpecificValue v)
@@ -49,6 +60,18 @@ internal record UpdateBuilder<T> : SqlBuilder
                 }
                 else
                 {
+                    if (result.Members?.Count > 1)
+                    {
+                        var last = result.Members[result.Members.Count - 1];
+                        var col = MainTable.GetColumnInfo(last);
+                        if (col.IsJsonColumn)
+                        {
+                            JsonUpdateSpecific.Add(col.PropertyName, result.SqlString);
+                            DbParameters.Add(col.PropertyName, v.Value);
+                            Members.Add(last);
+                            return;
+                        }
+                    }
                     var member = result.Members![0];
                     Members.Add(member);
                     DbParameters.Add(member, v.Value);
@@ -74,12 +97,15 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
         ResolveExpressions(database);
 
-        //var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
-        // 筛选需要的列
+        // TODO 批量更新对JSON列处理
 
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(col =>
                    {
+                       if (col.IsJsonColumn)
+                       {
+                           return false;
+                       }
                        // 如果 IgnoreMembers 非空，排除被忽略的列
                        if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(col.PropertyName))
                            return false;
@@ -312,10 +338,10 @@ internal record UpdateBuilder<T> : SqlBuilder
                 if (!WhereMembers.Contains(versionColumn.PropertyName))
                 {
 #if NET462
-                if (!DbParameters.ContainsKey(versionColumn.PropertyName))
-                {
-                    DbParameters.Add(versionColumn.PropertyName, version!);
-                }
+                    if (!DbParameters.ContainsKey(versionColumn.PropertyName))
+                    {
+                        DbParameters.Add(versionColumn.PropertyName, version!);
+                    }
 #else
                     DbParameters.TryAdd(versionColumn.PropertyName, version!);
 #endif
@@ -342,18 +368,44 @@ internal record UpdateBuilder<T> : SqlBuilder
         foreach (var c in customCols)
         {
             // 处理一般列
-            if (!DbParameters.ContainsKey(c.PropertyName) && TargetObject is not null)
+            if (!DbParameters.TryGetValue(c.PropertyName, out var value))
             {
-                var value = c.GetValue(TargetObject);
+                if (TargetObject is not null)
+                    value = c.GetValue(TargetObject);
                 if (value is null)
                 {
                     continue;
                 }
-                DbParameters.Add(c.PropertyName, value);
             }
             sb.AppendEmphasis(c.ColumnName, database);
             sb.Append(" = ");
-            sb.WithPrefix(c.PropertyName, database);
+            if (c.IsJsonColumn)
+            {
+                if (JsonUpdateSpecific.TryGetValue(c.PropertyName, out var sql))
+                {
+                    // 指定更新
+                    sb.Append(sql);
+                    if (DbParameters[c.PropertyName] is BadValue)
+                    {
+                        DbParameters.Remove(c.PropertyName);
+                    }
+                }
+                else
+                {
+                    // 整体更新
+                    sb.WithPrefix(c.PropertyName, database);
+                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
+                    database.HandleJsonParameter(sb);
+                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+                    var jsonString = jsonHandler.Serialize(value);
+                    DbParameters[c.PropertyName] = jsonString;
+                }
+            }
+            else
+            {
+                sb.WithPrefix(c.PropertyName, database);
+                DbParameters.Add(c.PropertyName, value);
+            }
             sb.AppendLine(",");
         }
         foreach (var c in setNullCol)

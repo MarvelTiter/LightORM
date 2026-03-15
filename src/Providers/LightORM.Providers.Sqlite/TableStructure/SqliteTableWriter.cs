@@ -11,7 +11,7 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
 {
     private readonly ThreadLocal<bool> useAutoIncrement = new ThreadLocal<bool>(() => false);
 
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         DbColumn[] primaryKeys = [.. table.Columns.Where(col => col.PrimaryKey)];
@@ -49,7 +49,7 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         string identity = column.AutoIncrement ? $"AUTOINCREMENT" : "";
@@ -69,8 +69,19 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         return $"{DbEmphasis(option, column.Name)} {dataType} {notNull} {identity} {defaultValueClause}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            if (option.JSONBackend == Models.JSONBackend.Binary)
+            {
+                return "BLOB";
+            }
+            else
+            {
+                return "TEXT";
+            }
+        }
         if (type.DataType == typeof(byte) || type.DataType == typeof(byte?)
                                           || type.DataType == typeof(sbyte) || type.DataType == typeof(sbyte?)
                                           || type.DataType == typeof(short) || type.DataType == typeof(short?)
@@ -93,11 +104,15 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         {
             return "BLOB";
         }
+        else if (type.IsJson && option.JSONBackend == Models.JSONBackend.Binary)
+        {
+            return "BLOB";
+        }
         else
         {
             return "TEXT";
         }
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"`{name}`";
+    protected override string DbEmphasis(TableOptions option, string name) => $"`{name}`";
 }

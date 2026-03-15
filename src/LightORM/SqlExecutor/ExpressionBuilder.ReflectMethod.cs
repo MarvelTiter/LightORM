@@ -34,6 +34,8 @@ internal partial class ExpressionBuilder
     private static readonly MethodInfo CustomStringParseToBoolean = typeof(ExpressionBuilder).GetMethod(nameof(CustomStringToBoolean), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly MethodInfo Helper_GetBytes = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToBytes), BindingFlags.Public | BindingFlags.Static)!;
 
+    private static readonly MethodInfo StringDeserializer = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldStringDeserializer), BindingFlags.Public | BindingFlags.Static)!;
+    private static readonly MethodInfo BytesDeserializer = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldBytesDeserializer), BindingFlags.Public | BindingFlags.Static)!;
 
     readonly static Dictionary<Type, MethodInfo> typeMapMethod = new(37)
     {

@@ -11,7 +11,7 @@
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 	</PropertyGroup>
-	<Import Project="Versions.props"/>
+	<Import Project="Versions.props" />
 	<Import Project="..\..\SupportedFrameworks.props" />
 	<ItemGroup>
 		<None Include="..\..\Nuget.md">

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace LightORM.Extension;
 
-internal static class CustomDatabaseExtensions
+public static class CustomDatabaseExtensions
 {
 
     public static string AttachPrefix(this ICustomDatabase database, string name) => $"{database.Prefix}{name}";
@@ -55,18 +55,18 @@ internal static class CustomDatabaseExtensions
         return sql;
     }
 
-    public static StringBuilder AppendJoined(this StringBuilder sql, ref SlimList<string> values, string separator)
-    {
-        for (int i = 0; i < values.Count; i++)
-        {
-            if (i > 0)
-            {
-                sql.Append(separator);
-            }
-            sql.Append(values[i]);
-        }
-        return sql;
-    }
+    //public static StringBuilder AppendJoined(this StringBuilder sql, ref SlimList<string> values, string separator)
+    //{
+    //    for (int i = 0; i < values.Count; i++)
+    //    {
+    //        if (i > 0)
+    //        {
+    //            sql.Append(separator);
+    //        }
+    //        sql.Append(values[i]);
+    //    }
+    //    return sql;
+    //}
 
     public static StringBuilder AppendTableName(this StringBuilder sql, ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {

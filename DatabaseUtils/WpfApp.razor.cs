@@ -26,11 +26,11 @@ namespace DatabaseUtils
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            supportedDb.Add(DbBaseType.Dameng.Name, str => LightORM.Providers.Dameng.DamengProvider.Create(str));
-            supportedDb.Add(DbBaseType.Oracle.Name, str => LightORM.Providers.Oracle.OracleProvider.Create(str));
-            supportedDb.Add(DbBaseType.PostgreSQL.Name, str => LightORM.Providers.PostgreSQL.PostgreSQLProvider.Create(str));
-            supportedDb.Add(DbBaseType.MySql.Name, str => LightORM.Providers.MySql.MySqlProvider.Create(str));
-            supportedDb.Add(DbBaseType.SqlServer.Name, str => LightORM.Providers.SqlServer.SqlServerProvider.Create(SqlServerVersion.V1,str));
+            supportedDb.Add(DbBaseType.Dameng.Name, str => LightORM.Providers.Dameng.DamengProvider.Create(o => o.MasterConnectionString = str));
+            supportedDb.Add(DbBaseType.Oracle.Name, str => LightORM.Providers.Oracle.OracleProvider.Create(o => o.MasterConnectionString = str));
+            supportedDb.Add(DbBaseType.PostgreSQL.Name, str => LightORM.Providers.PostgreSQL.PostgreSQLProvider.Create(o => o.MasterConnectionString = str));
+            supportedDb.Add(DbBaseType.MySql.Name, str => LightORM.Providers.MySql.MySqlProvider.Create(o => o.MasterConnectionString = str));
+            supportedDb.Add(DbBaseType.SqlServer.Name, str => LightORM.Providers.SqlServer.SqlServerProvider.Create(SqlServerVersion.V1, o => o.MasterConnectionString = str));
         }
 
         async Task Connect()

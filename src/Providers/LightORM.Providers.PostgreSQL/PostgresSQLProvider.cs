@@ -7,26 +7,44 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LightORM.Implements;
+using LightORM.Models;
 
 namespace LightORM.Providers.PostgreSQL;
 
 public sealed class PostgreSQLProvider : BaseDatabaseProvider
 {
-    public static PostgreSQLProvider Create(string master, params string[] slaves) => new PostgreSQLProvider(master, slaves);
-    private static readonly Lazy<IDatabaseTableHandler> lazyHandler = new(() => new PostgreSQLTableHandler());
-    public override DbBaseType DbBaseType => DbBaseType.PostgreSQL;
+    public static PostgreSQLProvider Create(DataBaseOption option) => new(option);
 
-    private PostgreSQLProvider(string master, params string[] slaves) : base(master, slaves)
+    public static PostgreSQLProvider Create(Action<DataBaseOption> setting)
     {
+        var dbOption = new DataBaseOption();
+        setting.Invoke(dbOption);
+        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+        {
+            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+        }
+        return Create(dbOption);
     }
 
+    public override DbBaseType DbBaseType => DbBaseType.PostgreSQL;
 
-    public override ICustomDatabase CustomDatabase { get; } = CustomPostgreSQL.Instance;
+    private PostgreSQLProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    {
+        DbHandler = new PostgreSQLTableHandler(option.GenerateOption);
+        var sqlMethodResolver = new PostgreSQLMethodResolver();
+        option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
+        CustomDatabase = new CustomPostgreSQL(sqlMethodResolver, option.GenerateOption);
+        CustomDatabase.AddKeyWord(option.Keyworks);
+        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DbProviderFactory = option.NewFactory ?? Npgsql.NpgsqlFactory.Instance;
+    }
 
-    public override Func<TableGenerateOption, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+    public override ICustomDatabase CustomDatabase { get; }
 
-    public override IDatabaseTableHandler DbHandler => lazyHandler.Value;
-    public override DbProviderFactory DbProviderFactory { get; set; } = Npgsql.NpgsqlFactory.Instance;
+    public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
+
+    public override IDatabaseTableHandler DbHandler { get; }
+    public override DbProviderFactory DbProviderFactory { get; }
 
     public override int BulkCopy(DataTable dataTable)
     {

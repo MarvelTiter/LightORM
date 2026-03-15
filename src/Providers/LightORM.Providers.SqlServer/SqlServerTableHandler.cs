@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerTableHandler
+public sealed class SqlServerTableHandler(TableOptions tableOptions)
     : BaseDatabaseHandler<SqlServerTableWriter>
 {
-   
+    public override TableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         return "SELECT NAME TableName FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";
@@ -58,7 +58,7 @@ order by a.id,a.colorder
     /// <returns></returns>
     public override bool ParseDataType(ReadedTableColumn column, out string type)
     {
-         var dbType = column.DataType;
+        var dbType = column.DataType;
         var nullable = column.Nullable;
         if (string.IsNullOrWhiteSpace(dbType))
         {

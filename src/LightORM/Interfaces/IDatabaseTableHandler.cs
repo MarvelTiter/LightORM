@@ -4,7 +4,8 @@ namespace LightORM.Interfaces;
 
 public interface IDatabaseTableHandler
 {
-    IEnumerable<string> GenerateDbTable<T>(TableGenerateOption option);
+    TableOptions Options { get; }
+    IEnumerable<string> GenerateDbTable<T>();
     string GetTablesSql();
     string GetTableStructSql(string table);
     bool ParseDataType(ReadedTableColumn column, out string type);

@@ -9,9 +9,9 @@ namespace LightORM.Providers.Dameng.TableStructure;
 
 public class DamengTableWriter : LightORM.Implements.WriteTableFromType
 {
-    public override IEnumerable<string> BuildTableSql(TableGenerateOption option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
-        var tableSpace = option.OracleTableSpace != null ? $"TABLESPACE {option.OracleTableSpace}" : "";
+        var tableSpace = option.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
 
         #region Table
 
@@ -107,7 +107,7 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         #endregion
     }
 
-    protected override string BuildColumn(TableGenerateOption option, DbColumn column)
+    protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR"))
@@ -121,8 +121,21 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         return $"{DbEmphasis(option, column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
     }
 
-    protected override string ConvertToDbType(TableGenerateOption option, DbColumn type)
+    protected override string ConvertToDbType(TableOptions option, DbColumn type)
     {
+        if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
+        {
+            if (option.SpecificJsonColumnDbType is not null)
+            {
+                return option.SpecificJsonColumnDbType;
+            }
+            if (type.Length > 320000)
+            {
+                return "CLOB";
+            }
+            return option.JSONBackend == Models.JSONBackend.Binary ? "JSONB" : "JSON";
+        }
+
         string? typeFullName;
         if (type.DataType.IsEnum)
         {
@@ -132,7 +145,6 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         {
             typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
         }
-
         return typeFullName switch
         {
             "System.Boolean" => "CHAR(1)",
@@ -152,7 +164,7 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         };
     }
 
-    protected override string DbEmphasis(TableGenerateOption option, string name) => $"\"{name.ToUpper()}\"";
+    protected override string DbEmphasis(TableOptions option, string name) => $"\"{name.ToUpper()}\"";
 
     private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
     {
@@ -182,10 +194,10 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType
         return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
-    private string AttachUserId(TableGenerateOption option, string name)
+    private string AttachUserId(TableOptions option, string name)
     {
-        if (option.OracleUserId != null)
-            return $"\"{option.OracleUserId}\".\"{name.ToUpper()}\"";
+        if (option.UserId != null)
+            return $"\"{option.UserId}\".\"{name.ToUpper()}\"";
         else
             return DbEmphasis(option, name);
     }

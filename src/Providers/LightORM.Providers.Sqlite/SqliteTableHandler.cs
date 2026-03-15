@@ -5,9 +5,11 @@ using LightORM.Providers.Sqlite.TableStructure;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteTableHandler 
+public sealed class SqliteTableHandler(TableOptions generateOption) 
     : BaseDatabaseHandler<SqliteTableWriter>
 {
+    public override TableOptions Options => generateOption;
+
     public override string GetTablesSql()
     {
         throw new NotImplementedException();

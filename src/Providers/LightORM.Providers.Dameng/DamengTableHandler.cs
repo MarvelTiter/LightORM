@@ -5,10 +5,11 @@ using LightORM.Providers.Dameng.TableStructure;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class DamengTableHandler 
+public sealed class DamengTableHandler(TableOptions tableOptions) 
     : BaseDatabaseHandler<DamengTableWriter>
 
 {
+    public override TableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         throw new NotImplementedException();

@@ -2,20 +2,10 @@
 
 namespace LightORM.ExpressionSql;
 
-public class DbInitial : IDbInitial
+public class DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler) : IDbInitial
 {
-    private readonly ISqlExecutor executor;
-    private readonly IDatabaseTableHandler handler;
-
-    public DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler)
-    {
-        this.executor = executor;
-        this.handler = handler;
-    }
-
-    readonly TableGenerateOption tableOption = new TableGenerateOption();
-
-    public IDbInitial Configuration(Action<TableGenerateOption> option)
+    private readonly TableOptions tableOption = new();
+    public IDbInitial Configuration(Action<TableOptions> option)
     {
         option?.Invoke(tableOption);
         return this;
@@ -25,7 +15,7 @@ public class DbInitial : IDbInitial
     {
         try
         {
-            var sql = handler.GenerateDbTable<T>(tableOption);
+            var sql = handler.GenerateDbTable<T>();
             foreach (var s in sql)
             {
                 executor.ExecuteNonQuery(s);

@@ -529,11 +529,39 @@ public partial class SelectSql : TestBase
     {
         int[] arr = [10];
         int? i = GetIndex();
-        var ii = new { index = 5 };
-        var sql = Db.Select<User>()
-            .Where(u => u.Age == arr[0])
-            .ToSql();
-        Console.WriteLine(sql);
+        var ii = new { index = 0 };
+        var sql1 = Db.Select<User>()
+            .Where(u => u.Age == arr[ii.index])
+            .ToSqlWithParameters();
+        Console.WriteLine(sql1);
+
+        var sql2 = Db.Select<User>()
+            .Where(u => u.Age == arr[ii.index])
+            .ToSqlWithParameters();
+        Console.WriteLine(sql2);
+
+        int GetIndex()
+        {
+            return 3;
+        }
+    }
+
+    [TestMethod]
+    public void TestArrayAccess_List()
+    {
+        List<int> arr = [10];
+        int? i = GetIndex();
+        var ii = new { index = 0 };
+        var sql1 = Db.Select<User>()
+            .Where(u => u.Age == arr[ii.index])
+            .ToSqlWithParameters();
+        Console.WriteLine(sql1);
+
+        var sql2 = Db.Select<User>()
+            .Where(u => u.Age == arr[ii.index])
+            .ToSqlWithParameters();
+        Console.WriteLine(sql2);
+
         int GetIndex()
         {
             return 3;
@@ -547,16 +575,34 @@ public partial class SelectSql : TestBase
         var r1 = Run();
         arr = [9, 1, 3];
         var r2 = Run();
-        Console.WriteLine(r1.Item1);
-        Console.WriteLine(r2.Item1);
+        Console.WriteLine(r1);
+        Console.WriteLine(r2);
         return;
-        (string, Dictionary<string, object>?) Run()
+        string Run()
         {
             var select = Db.Select<User>()
             .Where(u => arr.Contains(u.Age));
-            var sql = select.ToSql();
-            var ps = select.SqlBuilder.DbParameters;
-            return (sql, ps);
+            var sql = select.ToSqlWithParameters();
+            return sql;
+        }
+    }
+
+    [TestMethod]
+    public void TestArrayContain_List()
+    {
+        List<int?> arr = [10, 11];
+        var r1 = Run();
+        arr = [9, 1, 3];
+        var r2 = Run();
+        Console.WriteLine(r1);
+        Console.WriteLine(r2);
+        return;
+        string Run()
+        {
+            var select = Db.Select<User>()
+            .Where(u => arr.Contains(u.Age));
+            var sql = select.ToSqlWithParameters();
+            return sql;
         }
     }
 
