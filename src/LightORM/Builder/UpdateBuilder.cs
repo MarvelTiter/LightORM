@@ -385,9 +385,16 @@ internal record UpdateBuilder<T> : SqlBuilder
                 {
                     // 指定更新
                     sb.Append(sql);
-                    if (DbParameters[c.PropertyName] is BadValue)
+                    if (DbParameters.TryGetValue(c.PropertyName, out var jv))
                     {
-                        DbParameters.Remove(c.PropertyName);
+                        if (jv is BadValue)
+                        {
+                            DbParameters.Remove(c.PropertyName);
+                        }
+                        else
+                        {
+                            database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                        }
                     }
                 }
                 else
@@ -395,7 +402,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                     // 整体更新
                     sb.WithPrefix(c.PropertyName, database);
                     // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    database.HandleJsonParameter(sb);
+                    database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
                     var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
                     var jsonString = jsonHandler.Serialize(value);
                     DbParameters[c.PropertyName] = jsonString;

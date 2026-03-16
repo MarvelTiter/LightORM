@@ -3,13 +3,8 @@ using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
 using LightORM.Providers.PostgreSQL.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.PostgreSQL;
 
@@ -35,9 +30,29 @@ internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions 
         return value ? "TRUE" : "FALSE";
     }
 
-    public override void HandleJsonParameter(StringBuilder sql)
+    public override void HandleJsonParameter(JsonColumnParameterContext context)
     {
-        sql.Append("::JSON");
+        if (context.ActionType == ActionType.Parameterized && context.Sql is not null)
+        {
+            context.Sql.Append("::JSON");
+        }
+        else if (context.ActionType == ActionType.ParameterValue && context.Parameters is not null && context.Column is not null)
+        {
+            if (!context.Parameters.TryGetValue(context.Column.PropertyName, out var value))
+            {
+                value = context.Value;
+            }
+            if (value is null) return;
+            if (context.JsonHelper is not null)
+            {
+                var json = context.JsonHelper.Serialize(value);
+                context.Parameters[context.Column.PropertyName] = json;
+            }
+            else
+            {
+                context.Parameters[context.Column.PropertyName] = $"\"{value}\"";
+            }
+        }
     }
 
     public override void HandleJsonColumn(JsonColumnContext context)

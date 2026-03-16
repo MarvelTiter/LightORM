@@ -25,7 +25,9 @@ public class JsonTest : LightORMTest.ResultTest.JsonTest
             Assert.IsNotNull(updated);
             Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
 
-            await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, "\"NewName\"").Where(j => j.Id == 5).ExecuteAsync();
+            var name = "NewName";
+
+            await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, name).Where(j => j.Id == 5).ExecuteAsync();
 
             var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name);
 

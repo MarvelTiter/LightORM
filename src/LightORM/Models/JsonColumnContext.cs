@@ -17,3 +17,28 @@ public readonly record struct JsonColumnContext(ITableColumnInfo Column
     public SqlResolveOptions Options => Resolver.Options;
 
 }
+
+public enum ActionType
+{
+    /// <summary>
+    /// 处理参数化，PgSql添加数据类型转换(::JSONB)
+    /// </summary>
+    Parameterized,
+    /// <summary>
+    /// 处理参数值，PgSql要讲值转成json对象
+    /// <para>
+    /// 'string' => '"string"'
+    /// </para>
+    /// </summary>
+    ParameterValue
+}
+
+public readonly record struct JsonColumnParameterContext(ActionType ActionType
+    , ITableColumnInfo? Column = null
+    , StringBuilder? Sql = null
+    , Dictionary<string, object>? Parameters = null
+    , ILightJsonHelper? JsonHelper = null
+    , object? Value = null)
+{
+
+}

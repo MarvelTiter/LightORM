@@ -214,7 +214,7 @@ internal record InsertBuilder<T> : SqlBuilder
                     DbParameters[item.PropertyName] = jsonString;
                     values.WithPrefix(item.PropertyName, database);
                     // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    database.HandleJsonParameter(values);
+                    database.HandleJsonParameter(new(ActionType.Parameterized, item, values, DbParameters));
                 }
                 else
                 {
