@@ -127,6 +127,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
     private ICustomDatabase Database => Context.Database;
     public Expression? Body => bodyExpression;
+    // TODO: 嵌套情况，需要优化
     public BinaryExpression? CurrentBinary => currentBinaryExpression;
     public bool ContainVariable { get; set; }
     public ReadOnlyCollection<ParameterExpression>? Parameters

@@ -47,8 +47,13 @@ internal record UpdateBuilder<T> : SqlBuilder
                 // 从UpdateProvider的代码来看，使用SqlFn.JsonSet的话，一定是进入这个分支
                 if (result.Members?.Count == 1 && result.SqlString is not null)
                 {
-                    JsonUpdateSpecific.Add(result.Members[0], result.SqlString);
-                    DbParameters.Add(result.Members[0], BadValue.Instance);
+                    // TODO 需要优化
+                    var col = MainTable.GetColumnInfo(result.Members[0]);
+                    if (col.IsJsonColumn)
+                    {
+                        JsonUpdateSpecific.Add(result.Members[0], result.SqlString);
+                        DbParameters.Add(result.Members[0], BadValue.Instance);
+                    }
                 }
                 Members.AddRange(result.Members!);
             }
@@ -95,7 +100,6 @@ internal record UpdateBuilder<T> : SqlBuilder
         {
             return;
         }
-        ResolveExpressions(database);
 
         // TODO 批量更新对JSON列处理
 
@@ -365,10 +369,12 @@ internal record UpdateBuilder<T> : SqlBuilder
         StringBuilder sb = new("UPDATE ");
         sb.AppendTableName(database, MainTable, false);
         sb.AppendLine(" SET   ");
+        bool valueFounded;
         foreach (var c in customCols)
         {
             // 处理一般列
-            if (!DbParameters.TryGetValue(c.PropertyName, out var value))
+            valueFounded = DbParameters.TryGetValue(c.PropertyName, out var value);
+            if (!valueFounded)
             {
                 if (TargetObject is not null)
                     value = c.GetValue(TargetObject);
@@ -411,7 +417,10 @@ internal record UpdateBuilder<T> : SqlBuilder
             else
             {
                 sb.WithPrefix(c.PropertyName, database);
-                DbParameters.Add(c.PropertyName, value);
+                if (!valueFounded)
+                {
+                    DbParameters.Add(c.PropertyName, value!);
+                }
             }
             sb.AppendLine(",");
         }
