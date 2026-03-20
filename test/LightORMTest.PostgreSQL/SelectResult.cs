@@ -5,7 +5,7 @@ using System.Text;
 namespace LightORMTest.PostgreSQL;
 
 [TestClass]
-public class SelectResult : LightORMTest.ResultTest.Select
+public class SelectResult : LightORMTest.ResultTest.ExecutionTest
 {
     public override DbBaseType DbType => DbBaseType.PostgreSQL;
 

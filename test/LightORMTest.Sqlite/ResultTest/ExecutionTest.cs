@@ -5,7 +5,7 @@ using System.Text;
 namespace LightORMTest.Sqlite.ResultTest;
 
 [TestClass]
-public class Select : LightORMTest.ResultTest.Select
+public class ExecutionTest : LightORMTest.ResultTest.ExecutionTest
 {
     public override DbBaseType DbType => DbBaseType.Sqlite;
 

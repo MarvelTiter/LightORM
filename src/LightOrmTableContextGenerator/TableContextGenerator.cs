@@ -38,26 +38,38 @@ public class TableContextGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(source, static (context, source) =>
         {
-            var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
-            var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
-            int i = 0;
-            List<INamedTypeSymbol> flatTypes = [];
-            //var customMap = ctxSymbol.GetAttributes("LightORM.Attributes.Mapping.MappingBaseAttribute", true).ToArray();
-            foreach (var t in allTableType)
+            try
             {
-                // 生成  {Type}Context.g.cs
-                var c = GenerateTypeContextClass(t, i, flatTypes);
-                if (c != null)
+                var ctxSymbol = (INamedTypeSymbol)source.TargetSymbol;
+                var allTableType = source.SemanticModel.Compilation.GetAllSymbols(LightTableAttributeFullName).ToArray();
+                int i = 0;
+                List<INamedTypeSymbol> flatTypes = [];
+                //var customMap = ctxSymbol.GetAttributes("LightORM.Attributes.Mapping.MappingBaseAttribute", true).ToArray();
+                foreach (var t in allTableType)
                 {
-                    var tt = c.ToString();
-                    context.AddSource(c);
-                    i++;
+                    // 生成  {Type}Context.g.cs
+                    var c = GenerateTypeContextClass(t, i, flatTypes);
+                    if (c != null)
+                    {
+                        var tt = c.ToString();
+                        context.AddSource(c);
+                        i++;
+                    }
                 }
-            }
 
-            var file = TableContextGeneratorHelpers.CreateAggregationContextClass(ctxSymbol, allTableType);
-            if (file != null)
-                context.AddSource(file);
+                var file = TableContextGeneratorHelpers.CreateAggregationContextClass(ctxSymbol, allTableType);
+                if (file != null)
+                    context.AddSource(file);
+            }
+            catch (Exception ex)
+            {
+                //var message = $"""
+                //{ex.Message}
+                //{ex.StackTrace}
+                //""";
+                context.ReportDiagnostic(DiagnosticDefinitions.TCG00002(source.TargetNode.GetLocation(), ex.Message));
+            }
+            
         });
 
     }
@@ -246,6 +258,10 @@ public class TableContextGenerator : IIncrementalGenerator
                 foreach (var item in flattedProps)
                 {
                     var fr = ScanProperty(item);
+                    if (item.Name == p.Name)
+                    {
+                        throw new InvalidOperationException($"{owner.ToDisplayString()}的聚合属性的子属性[{item.Name}]和聚合属性[{p.Name}]命名冲突");
+                    }
                     var propertyType = $"typeof({item.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
                     bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert}, {fr.IsJson})""");
                 }

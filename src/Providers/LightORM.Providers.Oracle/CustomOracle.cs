@@ -45,6 +45,8 @@ public sealed class CustomOracle(ISqlMethodResolver methodResolver, TableOptions
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(" = ");
             context.Sql.Append("JSON_TRANSFORM");
             //context.Sql.Append("JSON_MERGEPATCH");
             context.Sql.Append('(');

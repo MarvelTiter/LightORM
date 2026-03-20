@@ -4,8 +4,9 @@ namespace LightORM;
 
 public class ResolveContext
 {
+    readonly record struct ParameterKey(Type Type, string? Name);
     private readonly List<ITableEntityInfo> selectedTables = [];
-    private readonly Dictionary<string, TableInfo> lambdaParameterInfos = [];
+    private readonly Dictionary<ParameterKey, TableInfo> lambdaParameterInfos = [];
     private string? parameterPrefix;
     public string? ParameterPrefix => parameterPrefix;
     public ICustomDatabase Database { get; }
@@ -36,10 +37,11 @@ public class ResolveContext
     //internal void ModifyAlias(Action<ITableEntityInfo> action) => selectedTables.ForEach(action);
     public void HandleParameterExpression(ParameterExpression pExp, int index)
     {
-        var key = $"{pExp.Type.Name}_{pExp.Name}";
-        if (!lambdaParameterInfos.TryGetValue(key, out var p))
+        //var key = $"{pExp.Type}_{pExp.Name}";
+        var key = new ParameterKey(pExp.Type, pExp.Name);
+        if (!lambdaParameterInfos.TryGetValue(key, out _))
         {
-            p = TableInfo.Create(pExp.Type, index);
+            TableInfo? p = TableInfo.Create(pExp.Type, index);
             p.Name = pExp.Name;
             lambdaParameterInfos.Add(key, p);
         }
@@ -80,12 +82,13 @@ public class ResolveContext
         return table;
     }
 
-    public TableInfo GetTable(ParameterExpression pe)
+    public TableInfo GetTable(ParameterExpression pExp)
     {
         //var ti = lambdaParameterInfos.FirstOrDefault(p => p.Name == pe.Name && p.Type == pe.Type) ?? 
         //return ti;
 
-        var key = $"{pe.Type.Name}_{pe.Name}";
+        //var key = $"{pe.Type.Name}_{pe.Name}";
+        var key = new ParameterKey(pExp.Type, pExp.Name);
         if (lambdaParameterInfos.TryGetValue(key, out var ti))
         {
             return ti;

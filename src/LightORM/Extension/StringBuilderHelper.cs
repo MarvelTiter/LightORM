@@ -66,12 +66,12 @@ public static class StringBuilderHelper
     }
 
     public static int IndexOf(this StringBuilder stringBuilder
-        , string content
+        , ReadOnlySpan<char> content
         , int startIndex = 0
         , int count = -1)
     {
         if (stringBuilder == null) throw new ArgumentNullException(nameof(stringBuilder));
-        if (content == null) throw new ArgumentNullException(nameof(content));
+        if (content.IsEmpty) throw new ArgumentNullException(nameof(content));
 
         int sbLength = stringBuilder.Length;
         int valueLength = content.Length;
@@ -118,5 +118,21 @@ public static class StringBuilderHelper
         }
 
         return -1;
+    }
+
+    public static void ReplaceNull(this StringBuilder sql, string placeholder)
+    {
+        var parameterIndex = sql.IndexOf(placeholder);
+
+        if (sql[parameterIndex - 2] == '=')
+        {
+            //equal
+            sql.Replace($"= {placeholder}", "IS NULL");
+        }
+        else if (sql[parameterIndex - 3] == '<' && sql[parameterIndex - 2] == '>')
+        {
+            //not equal
+            sql.Replace($"<> {placeholder}", "IS NOT NULL");
+        }
     }
 }

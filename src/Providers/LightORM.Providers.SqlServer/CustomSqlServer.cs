@@ -54,6 +54,8 @@ public sealed class CustomSqlServer(SqlServerVersion version, ISqlMethodResolver
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(" = ");
             context.Sql.Append("JSON_MODIFY");
         }
         else

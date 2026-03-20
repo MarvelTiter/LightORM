@@ -13,8 +13,8 @@ partial class SqlFn
         return default!;
     }
 
-    public static void JsonSet(object field, string jsonPath, object value)
+    public static bool JsonSet(object field, string jsonPath, object value)
     {
-        //return default!;
+        return default!;
     }
 }

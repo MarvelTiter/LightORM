@@ -40,11 +40,11 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void UpdateColumns()
     {
-        var p = new Product();
-        var sql = Db.Update<Product>()
-            .UpdateColumns(() => new { p.ProductName, p.CategoryId })
+        var p = new Product() { ProductName = "PName", CategoryId = 11 };
+        var sql = Db.Update(p)
+            .UpdateColumns(p => new { p.ProductName, p.CategoryId })
             .Where(p => p.ProductId > 10)
-            .ToSql();
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //    UPDATE `Product` SET
@@ -58,12 +58,16 @@ public class UpdateSql : TestBase
     [TestMethod]
     public void UpdateColumn()
     {
-        var p = new Product();
+        var value = new Product()
+        {
+            ProductName = "Test"
+        };
         var sql = Db.Update<Product>()
-            .Set(p => p.ProductName, p.ProductName)
+            .Set(p => p.ProductName == value.ProductName)
+            .Set(p => p.CategoryId == 9)
             .SetNull(p => p.ProductCode)
             .Where(p => p.ProductId > 10)
-            .ToSql();
+            .ToSqlWithParameters();
         Console.WriteLine(sql);
         //var result = """
         //    UPDATE `Product` SET

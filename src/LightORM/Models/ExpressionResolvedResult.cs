@@ -1,19 +1,34 @@
-﻿namespace LightORM.Models;
+﻿using LightORM.Extension;
+
+namespace LightORM.Models;
 
 internal record ExpressionResolvedResult
 {
     public ExpressionResolvedResult(ExpressionResolver resolve)
     {
-        SqlString = resolve.Sql.ToString();
+        SqlString = ReplaceConstantValue(resolve);
         Members = [.. resolve.ResolvedMembers];
         MemberOfNavigateMember = resolve.MemberOfNavigateMember;
         UseNavigate = resolve.UseNavigate;
         NavigateDeep = resolve.NavigateDeep;
         NavigateMembers = [.. resolve.NavigateMembers];
         if (resolve.WindowFnPartials is not null)
-            WindowFnPartials = [..resolve.WindowFnPartials];
+            WindowFnPartials = [.. resolve.WindowFnPartials];
         NavigateWhereExpression = resolve.NavigateWhereExpression?.FirstOrDefault();
     }
+
+    private static string ReplaceConstantValue(ExpressionResolver resolve)
+    {
+        var constValues = resolve.DbParameters.Where(x => x.Type == ExpValueType.ConstantNull).ToArray();
+        for (int i = 0; i < constValues.Length; i++)
+        {
+            ResolvedValueInfo item = constValues[i];
+            resolve.Sql.ReplaceNull(item.Name);
+            resolve.DbParameters.Remove(item);
+        }
+        return resolve.Sql.ToString();
+    }
+
     /// <summary>
     /// 解析生成的sql语句
     /// </summary>
@@ -21,7 +36,7 @@ internal record ExpressionResolvedResult
     /// <summary>
     /// 解析到的参数
     /// </summary>
-    public List<ResolvedValueInfo>? DbParameters { get; set; }
+    public List<ResolvedValueInfo>? ResolvedValues { get; set; }
     /// <summary>
     /// 解析到的成员
     /// </summary>

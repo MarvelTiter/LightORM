@@ -85,6 +85,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
             context.SetParamPrefix("s");
         }
     }
+
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
@@ -102,8 +103,8 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
                     var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
                     var eeResult = newWhereExpression.Resolve(SqlResolveOptions.Where, ResolveCtx!);
                     Where.Add(eeResult.SqlString!);
-                    if (eeResult.DbParameters?.Count > 0)
-                        ResolvedValues.AddRange(eeResult.DbParameters);
+                    if (eeResult.ResolvedValues?.Count > 0)
+                        ResolvedValues.AddRange(eeResult.ResolvedValues);
                 }
             }
             else

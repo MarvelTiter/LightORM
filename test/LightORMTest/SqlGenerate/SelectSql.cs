@@ -508,10 +508,15 @@ public partial class SelectSql : TestBase
     [TestMethod]
     public void TestNull()
     {
-        var sql = Db.Select<User>()
+        var sql1 = Db.Select<User>()
             .Where(u => u.Age == null)
-            .ToSql();
-        Console.WriteLine(sql);
+            .ToSqlWithParameters();
+        Console.WriteLine(sql1);
+
+        var sql2 = Db.Select<User>()
+            .Where(u => u.Age == null)
+            .ToSqlWithParameters();
+        Console.WriteLine(sql2);
     }
 
     [TestMethod]

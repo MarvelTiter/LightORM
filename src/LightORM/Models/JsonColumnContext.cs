@@ -25,7 +25,7 @@ public enum ActionType
     /// </summary>
     Parameterized,
     /// <summary>
-    /// 处理参数值，PgSql要讲值转成json对象
+    /// 处理参数值，PgSql要将值转成json对象
     /// <para>
     /// 'string' => '"string"'
     /// </para>

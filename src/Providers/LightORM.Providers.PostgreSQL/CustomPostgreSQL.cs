@@ -59,6 +59,8 @@ internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions 
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(" = ");
             context.Sql.Append("JSONB_SET");
             context.Sql.Append('(');
             if (context.Options.RequiredTableAlias)

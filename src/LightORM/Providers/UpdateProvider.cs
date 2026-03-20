@@ -107,13 +107,6 @@ namespace LightORM.Providers
                 return await executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
             }
         }
-
-        public IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp)
-        {
-            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue()));
-            return this;
-        }
-
         public IExpUpdate<T> SetNullIf<TNull>(bool condition, Expression<Func<T, TNull>> exp)
         {
             if (condition)
@@ -123,23 +116,13 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
+        public IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp)
         {
-            if (exp.Body.NodeType == ExpressionType.New || exp.Body.NodeType == ExpressionType.MemberInit)
-            {
-                throw new LightOrmException("不支持多字段设置");
-            }
-            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue() { Value = value }));
-
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue()));
             return this;
         }
 
-        public IExpUpdate<T> Set(Expression<Action<T>> exp)
-        {
-            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp));
-
-            return this;
-        }
+        
 
         public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, TField value)
         {
@@ -150,10 +133,37 @@ namespace LightORM.Providers
             return this;
         }
 
+        public IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value)
+        {
+            if (exp.Body.NodeType == ExpressionType.New || exp.Body.NodeType == ExpressionType.MemberInit)
+            {
+                throw new LightOrmException("不支持多字段设置");
+            }
+
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp, additionalParameter: new SpecificValue() { Value = value }));
+
+            return this;
+        }
+
+        public IExpUpdate<T> Set(Expression<Func<T, bool>> exp)
+        {
+            if (exp.Body is not MethodCallExpression && exp.Body is not BinaryExpression)
+            {
+                throw new LightOrmException("Set表达式必须是二元表达式，如 p => p.PropertyName == value。或者方法调用");
+            }
+            if (exp.Body is BinaryExpression binary && binary.NodeType != ExpressionType.Equal)
+            {
+                throw new InvalidOperationException($"Set表达式只支持相等操作(==)，不支持{binary.NodeType}操作");
+            }
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, exp));
+            return this;
+        }
+
         public IExpUpdate<T> UpdateColumns(Expression<Func<object>> columns)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, columns));
-            return this;
+            //sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, columns));
+            //return this;
+            throw new NotImplementedException();
         }
 
         public IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns)
@@ -168,9 +178,15 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpUpdate<T> Where(Expression<Func<T, bool>> exp)
+        public IExpUpdate<T> WithVersion<TVersion>(Expression<Func<T, TVersion>> versionField, TVersion versionValue)
         {
-            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateWhere, exp));
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateVer, versionField, additionalParameter: new SpecificValue() { Value = versionValue }));
+            return this;
+        }
+
+        public IExpUpdate<T> WithVersion(object versionValue)
+        {
+            sqlBuilder.VersionInfo = new() { VersionValue = versionValue };
             return this;
         }
 
@@ -180,6 +196,12 @@ namespace LightORM.Providers
             {
                 return Where(exp);
             }
+            return this;
+        }
+
+        public IExpUpdate<T> Where(Expression<Func<T, bool>> exp)
+        {
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateWhere, exp));
             return this;
         }
 

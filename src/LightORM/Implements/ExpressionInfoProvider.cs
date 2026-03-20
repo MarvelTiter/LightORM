@@ -21,7 +21,7 @@ internal static class IExpressionInfoExtension
 internal class ExpressionInfoProvider //: IExpressionInfo
 {
     private static readonly ConcurrentDictionary<string, string> cacheResults = [];
-    //public bool Completed => ExpressionInfos.Values.All(e => e.Completed);
+    public bool IsCompleted => ExpressionInfos.Values.All(e => e.IsCompleted);
 
     private readonly StringBuilder labels = new();
 

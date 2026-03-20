@@ -1,14 +1,34 @@
 ﻿using LightORM.Extension;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace LightORM.Builder;
 
-internal record struct BadValue
+//internal readonly record struct BadValue
+//{
+//    public static readonly BadValue Instance = new();
+//}
+
+internal record struct VersionInfo
 {
-    public static readonly BadValue Instance = new BadValue();
+    public string? PropertyName { get; set; }
+    public object? VersionValue { get; set; }
 }
+
 internal record UpdateBuilder<T> : SqlBuilder
 {
+    private static readonly ConcurrentDictionary<string, ITableColumnInfo> columnCaches = [];
+
+    private static ITableColumnInfo GetColumn(TableInfo tableInfo, string propertyName)
+    {
+        if (!columnCaches.TryGetValue(propertyName, out var columnInfo))
+        {
+            columnInfo = tableInfo.GetColumnInfo(propertyName);
+            columnCaches[propertyName] = columnInfo;
+        }
+        return columnInfo;
+    }
+
     public new T? TargetObject { get; set; }
     public T[] TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
@@ -16,21 +36,16 @@ internal record UpdateBuilder<T> : SqlBuilder
     HashSet<string> Members { get; set; } = [];
     HashSet<string> SetNullMembers { get; set; } = [];
     HashSet<string> WhereMembers { get; set; } = [];
-    Dictionary<string, string?> JsonUpdateSpecific { get; set; } = [];
+    Dictionary<string, string?> UpdateSpecific { get; set; } = [];
     public bool IsBatchUpdate { get; internal set; }
+    public VersionInfo VersionInfo { get; set; }
+    public bool UseVersionColumn { get; private set; }
     public void AddMember(string member, object? value)
     {
         Members.Add(member);
         if (value is not null)
         {
-#if NET462
-            if (!DbParameters.ContainsKey(member))
-            {
-                DbParameters.Add(member, value);
-            }
-#else
             DbParameters.TryAdd(member, value);
-#endif
         }
     }
     protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
@@ -38,49 +53,104 @@ internal record UpdateBuilder<T> : SqlBuilder
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
             Where.Add(result.SqlString!);
-            WhereMembers.AddRange(result.Members?.Distinct() ?? []);
+            WhereMembers.AddRange(result.Members);
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Update)
         {
-            if (expInfo.AdditionalParameter is null)
+            /*
+             * AdditionalParameter为SpecificValue的情况分别是调用了下面这两个
+             * IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp) => 指定设置为Null的字段，可单个，可多个
+             * IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value) => 使用value设置指定单个字段的值
+             * 
+             * AdditionalParameter为Null的情况
+             * IExpUpdate<T> Set(Expression<Func<T, bool>> exp) => 使用BinaryExpression设置单个字段的值
+             * IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns) => 指定更新的字段，可单个，可多个
+             */
+            if (result.Members?.Count > 0)
             {
-                // 从UpdateProvider的代码来看，使用SqlFn.JsonSet的话，一定是进入这个分支
-                if (result.Members?.Count == 1 && result.SqlString is not null)
+                var propertyName = result.Members[0];
+                var col = GetColumn(MainTable, propertyName);
+                if (expInfo.AdditionalParameter is SpecificValue v)
                 {
-                    // TODO 需要优化
-                    var col = MainTable.GetColumnInfo(result.Members[0]);
-                    if (col.IsJsonColumn)
+                    if (v.Value is null)
                     {
-                        JsonUpdateSpecific.Add(result.Members[0], result.SqlString);
-                        DbParameters.Add(result.Members[0], BadValue.Instance);
+                        SetNullMembers.AddRange(result.Members);
                     }
-                }
-                Members.AddRange(result.Members!);
-            }
-            else if (expInfo.AdditionalParameter is SpecificValue v)
-            {
-                if (v.Value is null)
-                {
-                    SetNullMembers.AddRange(result.Members!);
+                    else
+                    {
+                        if (col.IsJsonColumn)
+                        {
+                            UpdateSpecific.Add(col.PropertyName, result.SqlString);
+                        }
+                        else
+                        {
+                            UpdateSpecific.Add(col.PropertyName, $"{result.SqlString} = {database.AttachPrefix(col.PropertyName)}");
+                        }
+                        DbParameters.Add(col.PropertyName, v.Value);
+                        Members.Add(col.PropertyName);
+                    }
                 }
                 else
                 {
-                    if (result.Members?.Count > 1)
+                    if (col.IsJsonColumn || result.SqlString?.Contains('=') == true)
                     {
-                        var last = result.Members[result.Members.Count - 1];
-                        var col = MainTable.GetColumnInfo(last);
-                        if (col.IsJsonColumn)
-                        {
-                            JsonUpdateSpecific.Add(col.PropertyName, result.SqlString);
-                            DbParameters.Add(col.PropertyName, v.Value);
-                            Members.Add(last);
-                            return;
-                        }
+                        UpdateSpecific.Add(col.PropertyName, result.SqlString);
+                        //DbParameters.Add(col.PropertyName, BadValue.Instance);
                     }
-                    var member = result.Members![0];
-                    Members.Add(member);
-                    DbParameters.Add(member, v.Value);
+                    Members.AddRange(result.Members);
                 }
+            }
+            else
+            {
+                throw new LightOrmException("未解析到属性");
+            }
+            //if (expInfo.AdditionalParameter is null)
+            //{
+            //    // 从UpdateProvider的代码来看，使用SqlFn.JsonSet或者调用SetNull，一定是进入这个分支
+            //    if (result.Members?.Count == 1 && result.SqlString is not null)
+            //    {
+            //        // TODO 需要优化
+            //        var col = GetColumn(MainTable, result.Members[0]);
+            //        if (col.IsJsonColumn)
+            //        {
+            //            UpdateSpecific.Add(result.Members[0], result.SqlString);
+            //            DbParameters.Add(result.Members[0], BadValue.Instance);
+            //        }
+            //    }
+            //    Members.AddRange(result.Members);
+            //}
+            //else if (expInfo.AdditionalParameter is SpecificValue v)
+            //{
+            //    if (v.Value is null)
+            //    {
+            //        SetNullMembers.AddRange(result.Members);
+            //    }
+            //    else
+            //    {
+            //        if (result.Members?.Count > 1)
+            //        {
+            //            var last = result.Members[result.Members.Count - 1];
+            //            var col = MainTable.GetColumnInfo(last);
+            //            if (col.IsJsonColumn)
+            //            {
+            //                UpdateSpecific.Add(col.PropertyName, result.SqlString);
+            //                DbParameters.Add(col.PropertyName, v.Value);
+            //                Members.Add(last);
+            //                return;
+            //            }
+            //        }
+            //        var member = result.Members![0];
+            //        Members.Add(member);
+            //        DbParameters.Add(member, v.Value);
+            //    }
+            //}
+        }
+        else if (expInfo.ResolveOptions.SqlType == SqlPartial.UpdateVersionColumn)
+        {
+            if (result.Members?.Count == 1 && expInfo.AdditionalParameter is SpecificValue sv && sv.Value is not null)
+            {
+                var name = result.Members[0];
+                VersionInfo = new() { PropertyName = name, VersionValue = sv.Value };
             }
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Ignore)
@@ -242,6 +312,7 @@ internal record UpdateBuilder<T> : SqlBuilder
             }
             return database.AttachPrefix(col.ParameterName);
         }
+
         string FormatStaticValue(object value)
         {
             return value switch
@@ -285,7 +356,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
         if (Where.Count == 0)
         {
-            var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey || c.IsVersionColumn).ToArray();
+            var primaryCol = MainTable.TableEntityInfo.Columns.Where(c => c.IsPrimaryKey).ToArray();
             if (primaryCol.Length == 0)
             {
                 throw new LightOrmException($"Where Condition is null and Model of [{MainTable.Type}] do not has a PrimaryKey");
@@ -300,7 +371,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 if (val == null) continue;
                 DbParameters.Add(item.PropertyName, val);
                 Where.Add($"({database.AttachEmphasis(item.ColumnName)} = {database.AttachPrefix(item.PropertyName)})");
-                WhereMembers.Add(item.PropertyName);
+                //WhereMembers.Add(item.PropertyName);
             }
         }
 
@@ -331,37 +402,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 }
             }
         }
-        var versionColumn = MainTable.TableEntityInfo.Columns.FirstOrDefault(c => c.IsVersionColumn);
-        if (versionColumn is not null)
-        {
-            if (TargetObject is not null)
-            {
-                var version = versionColumn.GetValue(TargetObject);
-                var newVersion = VersionPlus(version);
-                DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
-                if (!WhereMembers.Contains(versionColumn.PropertyName))
-                {
-#if NET462
-                    if (!DbParameters.ContainsKey(versionColumn.PropertyName))
-                    {
-                        DbParameters.Add(versionColumn.PropertyName, version!);
-                    }
-#else
-                    DbParameters.TryAdd(versionColumn.PropertyName, version!);
-#endif
-                }
-            }
-            else
-            {
-                var verValue = ResolvedValues.FirstOrDefault(d => d.PropertyName == versionColumn.PropertyName);
-                if (verValue == default)
-                {
-                    throw new LightOrmException("未提供实体，也没有显式添加版本列条件，无法获取更新版本列");
-                }
-                var newVersion = VersionPlus(verValue.Value);
-                DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
-            }
-        }
+
         var customCols = MainTable.TableEntityInfo.Columns.Where(c => Members.Contains(c.PropertyName) && !SetNullMembers.Contains(c.PropertyName));
 
         var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName)).ToList();
@@ -372,6 +413,16 @@ internal record UpdateBuilder<T> : SqlBuilder
         bool valueFounded;
         foreach (var c in customCols)
         {
+            if (UpdateSpecific.TryGetValue(c.PropertyName, out var fieldSql))
+            {
+                sb.Append(fieldSql);
+                if (c.IsJsonColumn)
+                {
+                    database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                }
+                sb.AppendLine(",");
+                continue;
+            }
             // 处理一般列
             valueFounded = DbParameters.TryGetValue(c.PropertyName, out var value);
             if (!valueFounded)
@@ -385,43 +436,20 @@ internal record UpdateBuilder<T> : SqlBuilder
             }
             sb.AppendEmphasis(c.ColumnName, database);
             sb.Append(" = ");
+            sb.WithPrefix(c.PropertyName, database);
             if (c.IsJsonColumn)
             {
-                if (JsonUpdateSpecific.TryGetValue(c.PropertyName, out var sql))
-                {
-                    // 指定更新
-                    sb.Append(sql);
-                    if (DbParameters.TryGetValue(c.PropertyName, out var jv))
-                    {
-                        if (jv is BadValue)
-                        {
-                            DbParameters.Remove(c.PropertyName);
-                        }
-                        else
-                        {
-                            database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                        }
-                    }
-                }
-                else
-                {
-                    // 整体更新
-                    sb.WithPrefix(c.PropertyName, database);
-                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-                    var jsonString = jsonHandler.Serialize(value);
-                    DbParameters[c.PropertyName] = jsonString;
-                }
+                // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
+                database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+                var jsonString = jsonHandler.Serialize(value);
+                DbParameters[c.PropertyName] = jsonString;
             }
-            else
+            if (!valueFounded)
             {
-                sb.WithPrefix(c.PropertyName, database);
-                if (!valueFounded)
-                {
-                    DbParameters.Add(c.PropertyName, value!);
-                }
+                DbParameters.Add(c.PropertyName, value!);
             }
+
             sb.AppendLine(",");
         }
         foreach (var c in setNullCol)
@@ -431,21 +459,8 @@ internal record UpdateBuilder<T> : SqlBuilder
             sb.AppendEmphasis(c.ColumnName, database);
             sb.AppendLine(" = NULL,");
         }
-        if (versionColumn is not null)
-        {
-            // 处理版本列
-            sb.AppendEmphasis(versionColumn.ColumnName, database);
-            sb.Append(" = ");
-            sb.WithPrefix($"{versionColumn.PropertyName}_n", database);
-            sb.AppendLine(",");
-            //sb.AppendLine($"{database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}_new")},");
-            if (!WhereMembers.Contains(versionColumn.PropertyName))
-            {
-                var versonCondition = $"({database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}")})";
-                if (!string.IsNullOrEmpty(versonCondition))
-                    Where.Add(versonCondition);
-            }
-        }
+        HandleVersionColumn(sb, database);
+
         sb.RemoveLast(N.Length + 1);
         sb.AppendLine();
         //sb.AppendLine($"WHERE {string.Join(" AND ", Where)}");
@@ -453,5 +468,58 @@ internal record UpdateBuilder<T> : SqlBuilder
         sb.AppendJoined(Where, " AND ");
         HandleSqlParameters(sb, database);
         return sb.Trim();
+    }
+
+
+    private void HandleVersionColumn(StringBuilder sb, ICustomDatabase database)
+    {
+        if (TargetObject is null && VersionInfo == default)
+        {
+            return;
+        }
+        ITableColumnInfo? versionColumn = null;
+        if (VersionInfo.PropertyName is not null)
+        {
+            versionColumn = GetColumn(MainTable, VersionInfo.PropertyName);
+        }
+        else
+        {
+            versionColumn = MainTable.TableEntityInfo.Columns.FirstOrDefault(c => c.IsVersionColumn);
+        }
+        if (versionColumn is null)
+        {
+            return;
+        }
+        // 使用了实体更新，或者直接使用了WithVersion设置版本列
+        UseVersionColumn = (TargetObject is not null) || (VersionInfo.VersionValue is not null);
+        if (WhereMembers.Contains(versionColumn.PropertyName))
+        {
+            throw new LightOrmException($"请勿在Where条件添加Version列({versionColumn.PropertyName})的条件判断，如有必要，请使用WithVersion方法");
+        }
+        var oldVersion = GetOldVersionValue();
+        var newVersion = VersionPlus(oldVersion);
+        DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
+        DbParameters.TryAdd(versionColumn.PropertyName, oldVersion);
+
+        // 处理版本列
+        sb.AppendEmphasis(versionColumn.ColumnName, database);
+        sb.Append(" = ");
+        sb.WithPrefix($"{versionColumn.PropertyName}_n", database);
+        sb.AppendLine(",");
+
+        Where.Add($"({database.AttachEmphasis(versionColumn.ColumnName)} = {database.AttachPrefix($"{versionColumn.PropertyName}")})");
+
+        object GetOldVersionValue()
+        {
+            if (VersionInfo.VersionValue is not null)
+            {
+                return VersionInfo.VersionValue;
+            }
+            if (TargetObject is not null)
+            {
+                return versionColumn.GetValue(TargetObject)!;
+            }
+            throw new LightOrmException("使用了实体更新，或者直接使用了WithVersion设置版本列，但是未提供版本值");
+        }
     }
 }

@@ -7,7 +7,7 @@ using System.Text;
 namespace LightORMTest.SqlServer.ResultTest;
 
 [TestClass]
-public class Select : LightORMTest.ResultTest.Select
+public class Select : LightORMTest.ResultTest.ExecutionTest
 {
     public override DbBaseType DbType => DbBaseType.SqlServer;
 
