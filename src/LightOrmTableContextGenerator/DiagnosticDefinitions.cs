@@ -19,4 +19,17 @@ internal class DiagnosticDefinitions
                     category: typeof(TableContextGenerator).FullName!,
                     defaultSeverity: DiagnosticSeverity.Error,
                     isEnabledByDefault: true), location);
+
+    /// <summary>
+    /// 需要实现 IAutoMap 接口
+    /// </summary>
+    /// <param name="location"></param>
+    /// <returns></returns>
+    public static Diagnostic TCG00002(Location? location, string message) => Diagnostic.Create(new DiagnosticDescriptor(
+                    id: "TCG00002",
+                    title: "发生异常",
+                    messageFormat: message,
+                    category: typeof(TableContextGenerator).FullName!,
+                    defaultSeverity: DiagnosticSeverity.Error,
+                    isEnabledByDefault: true), location);
 }

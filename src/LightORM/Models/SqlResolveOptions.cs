@@ -16,6 +16,7 @@ public enum SqlPartial
     SelectFunc,
     Insert,
     Update,
+    UpdateVersionColumn,
     Delete,
     UpdatePartial,
     Ignore,
@@ -56,6 +57,7 @@ public record SqlResolveOptions(SqlAction SqlAction, SqlPartial SqlType)
     public static SqlResolveOptions Where { get; } = new SqlResolveOptions(SqlAction.Select, SqlPartial.Where);
     public static SqlResolveOptions Insert { get; } = new SqlResolveOptions(SqlAction.Insert, SqlPartial.Insert);
     public static SqlResolveOptions Update { get; } = new SqlResolveOptions(SqlAction.Update, SqlPartial.Update);
+    public static SqlResolveOptions UpdateVer { get; } = new SqlResolveOptions(SqlAction.Update, SqlPartial.UpdateVersionColumn);
     public static SqlResolveOptions Having { get; } = new SqlResolveOptions(SqlAction.Select, SqlPartial.Having);
     public static SqlResolveOptions Delete { get; } = new SqlResolveOptions(SqlAction.Delete, SqlPartial.Delete);
     public static SqlResolveOptions UpdateWhere { get; } = new SqlResolveOptions(SqlAction.Update, SqlPartial.Where);

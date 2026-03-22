@@ -215,6 +215,8 @@ public sealed class MySqlMethodResolver : BaseSqlMethodResolver
 
     public override void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(" = ");
         resolver.Sql.Append("JSON_SET");
         resolver.Sql.Append('(');
         // 第一个参数：JSON 列

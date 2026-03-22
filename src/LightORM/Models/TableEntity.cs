@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Collections.Concurrent;
 
 namespace LightORM.Models;
 internal record TableEntity : ITableEntityInfo
@@ -23,4 +24,14 @@ internal record TableEntity : ITableEntityInfo
     public string? Description { get; set; }
     public ITableColumnInfo[] Columns { get; set; } = [];
 
+    //private readonly ConcurrentDictionary<string, ITableColumnInfo> columnMap = new();
+    //public ITableColumnInfo GetColumnInfo(string propertyName)
+    //{
+    //    if (!columnMap.TryGetValue(propertyName, out var column))
+    //    {
+    //        column = Columns.First(i => i.PropertyName == propertyName);
+    //        columnMap.TryAdd(propertyName, column);
+    //    }
+    //    return column;
+    //}
 }

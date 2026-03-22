@@ -64,7 +64,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         {
             throw new LightOrmException("不支持多字段设置");
         }
-        sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Update, field, additionalParameter: new SpecificValue() { Value = value }));
+        sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Insert, field, additionalParameter: new SpecificValue() { Value = value }));
 
         return this;
     }

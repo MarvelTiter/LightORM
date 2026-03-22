@@ -27,6 +27,8 @@ public sealed class CustomDameng(ISqlMethodResolver methodResolver, TableOptions
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(" = ");
             context.Sql.Append(Set);
         }
         else

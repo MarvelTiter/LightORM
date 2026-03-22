@@ -34,23 +34,12 @@ internal abstract record SqlBuilder : ISqlBuilder
     protected void HandleSqlParameters(StringBuilder sql, ICustomDatabase database)
     {
         //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
-        // TODO 非参数化查询
+        //var uniqueParameters = ResolvedValues.RemoveProperty();
         foreach (var item in ResolvedValues)
         {
             if (item.Type == ExpValueType.Null || item.Value is null)
             {
-                var parameterIndex = sql.IndexOf(item.Name);
-
-                if (sql[parameterIndex - 2] == '=')
-                {
-                    //equal
-                    sql.Replace($"= {item.Name}", "IS NULL");
-                }
-                else if (sql[parameterIndex - 3] == '<' && sql[parameterIndex - 2] == '>')
-                {
-                    //not equal
-                    sql.Replace($"<> {item.Name}", "IS NOT NULL");
-                }
+                sql.ReplaceNull(item.Name);
                 continue;
             }
             if (item.Type == ExpValueType.Boolean)
@@ -86,23 +75,25 @@ internal abstract record SqlBuilder : ISqlBuilder
     }
     protected void ResolveExpressions(ICustomDatabase database)
     {
+        if (Expressions.IsCompleted)
+        {
+            return;
+        }
         ResolveCtx = new ResolveContext(database);
         BeforeResolveExpressions(ResolveCtx);
-        //var index = 0;
         foreach (var item in Expressions.ExpressionInfos.Values)
         {
-            //item.ResolveOptions!.DbType = DbType;
-            //item.ResolveOptions = item.ResolveOptions with { ParameterPartialIndex = index };
-            //item.ResolveOptions.ParameterPartialIndex = index;
+            if (item.IsCompleted) 
+                continue;
             var result = item.Expression.Resolve(item.ResolveOptions, ResolveCtx);
             if (!string.IsNullOrEmpty(item.Template))
             {
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
             HandleResult(database, item, result);
-            if (result.DbParameters != null)
-                ResolvedValues.AddRange(result.DbParameters);
-            //index++;
+            if (result.ResolvedValues != null)
+                ResolvedValues.AddRange(result.ResolvedValues);
+            item.IsCompleted = true;
         }
     }
     protected abstract void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result);
@@ -168,50 +159,4 @@ internal abstract record SqlBuilder : ISqlBuilder
         }
         throw new NotSupportedException("不支持的Version列类型");
     }
-
-    ///// <summary>
-    ///// 过滤SQL值以防止注入
-    ///// </summary>
-    //private static string SanitizeSqlValue(object value)
-    //{
-    //    if (value == null) return "NULL";
-
-    //    switch (value)
-    //    {
-    //        case string s:
-    //            // 转义单引号并包裹在引号中
-    //            return "'" + s.Replace("'", "''") + "'";
-
-    //        case DateTime dt:
-    //            // 日期时间格式化
-    //            return "'" + dt.ToString("yyyy-MM-dd HH:mm:ss.fff") + "'";
-
-    //        case DateTimeOffset dto:
-    //            return "'" + dto.ToString("yyyy-MM-dd HH:mm:ss.fff zzz") + "'";
-
-    //        case Guid guid:
-    //            return "'" + guid.ToString() + "'";
-
-    //        case byte[] bytes:
-    //            // 二进制数据转为十六进制字符串
-    //            return "0x" + BitConverter.ToString(bytes).Replace("-", "");
-
-    //        case IFormattable formattable:
-    //            // 数字类型直接ToString
-    //            return formattable.ToString(null, CultureInfo.InvariantCulture);
-
-    //        case IEnumerable enumerable when value is not string:
-    //            // 处理集合类型
-    //            var items = new List<string>();
-    //            foreach (var item in enumerable)
-    //            {
-    //                items.Add(SanitizeSqlValue(item));
-    //            }
-    //            return "(" + string.Join(", ", items) + ")";
-
-    //        default:
-    //            // 其他类型直接ToString并转义
-    //            return "'" + value.ToString().Replace("'", "''") + "'";
-    //    }
-    //}
 }

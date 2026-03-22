@@ -27,6 +27,7 @@
 
 internal record ExpressionInfo
 {
+    public bool IsCompleted { get; set; }
     public ExpressionInfo(SqlResolveOptions option, Expression? expression, string? template = null, object? additionalParameter = null)
     {
         Id = Guid.NewGuid().ToString();

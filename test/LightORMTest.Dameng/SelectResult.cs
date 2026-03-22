@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace LightORMTest.Dameng;
 
 [TestClass]
-public class SelectResult : LightORMTest.ResultTest.Select
+public class SelectResult : LightORMTest.ResultTest.ExecutionTest
 {
     public override DbBaseType DbType => DbBaseType.Dameng;
 

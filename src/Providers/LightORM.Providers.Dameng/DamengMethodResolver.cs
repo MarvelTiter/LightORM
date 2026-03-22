@@ -225,6 +225,8 @@ public sealed class DamengMethodResolver(TableOptions tableOptions) : BaseSqlMet
 
     public override void JsonSet(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
+        resolver.Visit(methodCall.Arguments[0]);
+        resolver.Sql.Append(" = ");
         resolver.Sql.Append(Set);
         resolver.Sql.Append('(');
         // 第一个参数：JSON 列

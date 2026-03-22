@@ -18,7 +18,6 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
 {
     private readonly HashSet<ResolvedValueInfo> parameters = [];
     private int? resolvedIndex = null;
-    private string? resolvedPropertyName = null;
     private readonly Stack<MemberPathInfo> members = [];
     public static ExpressionValueExtract Default => ExpressionVisitorPool<ExpressionValueExtract>.Rent();
     private ResolveContext? context;
@@ -30,7 +29,6 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         members.Clear();
         context = null;
         option = null;
-        resolvedPropertyName = null;
     }
     public List<ResolvedValueInfo> Extract(Expression? exp)
     {
@@ -80,10 +78,8 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         }
         else
         {
-            resolvedPropertyName = null;
             Visit(node.Left);
             Visit(node.Right);
-            resolvedPropertyName = null;
         }
         return node;
     }
@@ -111,7 +107,6 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
     {
         if (node.Expression?.NodeType == ExpressionType.Parameter)
         {
-            resolvedPropertyName = node.Member.Name;
             members.Clear();
         }
         else
@@ -140,7 +135,7 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
         {
             if (v == null)
             {
-                parameters.Add(new ResolvedValueInfo(bn, null, ExpValueType.Null, resolvedPropertyName));
+                parameters.Add(new ResolvedValueInfo(bn, null, ExpValueType.Null));
                 return;
             }
 
@@ -149,21 +144,21 @@ internal class ExpressionValueExtract : ExpressionVisitor, IResetable
                 if (resolvedIndex.HasValue)
                 {
                     var indexValue = ee.GetValueByIndex(resolvedIndex.Value);
-                    parameters.Add(new(bn, indexValue, ExpValueType.Other, resolvedPropertyName));
+                    parameters.Add(new(bn, indexValue, ExpValueType.Other));
                     resolvedIndex = null;
                 }
                 else
                 {
-                    parameters.Add(new(bn, v, ExpValueType.Collection, resolvedPropertyName));
+                    parameters.Add(new(bn, v, ExpValueType.Collection));
                 }
             }
             else if (v is bool)
             {
-                parameters.Add(new(bn, v, ExpValueType.Boolean, resolvedPropertyName));
+                parameters.Add(new(bn, v, ExpValueType.Boolean));
             }
             else
             {
-                parameters.Add(new(bn, v, ExpValueType.Other, resolvedPropertyName));
+                parameters.Add(new(bn, v, ExpValueType.Other));
             }
         }
     }

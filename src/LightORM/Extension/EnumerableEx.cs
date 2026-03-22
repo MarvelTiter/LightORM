@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace LightORM.Extension;
 
@@ -13,4 +8,15 @@ internal static class EnumerableEx
     {
         return e.Cast<object>().ElementAt(index);
     }
+
+    public static HashSet<ResolvedValueInfoWithoutProperty> RemoveProperty(this HashSet<ResolvedValueInfo> source)
+    {
+        var newHashset = new HashSet<ResolvedValueInfoWithoutProperty>();
+        foreach (var item in source)
+        {
+            newHashset.Add(new(item.Name, item.Value, item.Type));
+        }
+        return newHashset;
+    }
+
 }
