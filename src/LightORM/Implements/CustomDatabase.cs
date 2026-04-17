@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
 
-public abstract class CustomDatabase : ICustomDatabase
+public abstract class CustomDatabase : IDatabaseAdapter
 {
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }

@@ -18,6 +18,7 @@
   </Folder>
   <Folder Name="/src/Providers/">
     <Project Path="src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj" />
+    <Project Path="src/Providers/LightORM.Providers.KingbaseES/LightORM.Providers.KingbaseES.csproj" Id="ced8fb8b-11af-4bb3-8399-8c00bc698f8a" />
     <Project Path="src/Providers/LightORM.Providers.MySql/LightORM.Providers.MySql.csproj" />
     <Project Path="src/Providers/LightORM.Providers.Oracle/LightORM.Providers.Oracle.csproj" />
     <Project Path="src/Providers/LightORM.Providers.PostgreSQL/LightORM.Providers.PostgreSQL.csproj" />

@@ -28,7 +28,7 @@ internal partial class ExpressionSqlOptions
 {
     // 共享不可变的数据
     private readonly static ConcurrentDictionary<string, IDatabaseProvider> databaseProviders = [];
-    private readonly static ConcurrentDictionary<string, ICustomDatabase> customDatabases = [];
+    private readonly static ConcurrentDictionary<string, IDatabaseAdapter> customDatabases = [];
     private readonly static ConcurrentDictionary<string, IDatabaseTableHandler> databaseHandlers = [];
     private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
     private static int poolSize = Environment.ProcessorCount * 4;
@@ -53,7 +53,7 @@ internal partial class ExpressionSqlOptions
 
         if (!customDatabases.TryGetValue(dbBaseType.Name, out _))
         {
-            customDatabases.TryAdd(dbBaseType.Name, provider.CustomDatabase);
+            customDatabases.TryAdd(dbBaseType.Name, provider.DatabaseAdapter);
         }
 
         if (!databaseHandlers.TryGetValue(dbBaseType.Name, out _))
@@ -122,7 +122,7 @@ internal partial class ExpressionSqlOptions : IJsonConfiguration
     private readonly ICollection<IAdoInterceptor> allInterceptors;
     public ICollection<IAdoInterceptor> Interceptors => allInterceptors;
     public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
-    public ConcurrentDictionary<string, ICustomDatabase> CustomDatabases { get; }
+    public ConcurrentDictionary<string, IDatabaseAdapter> CustomDatabases { get; }
     public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
     public Func<object, string>? Serializer { get; set; }
     public Func<string, object>? Deserializer { get; set; }

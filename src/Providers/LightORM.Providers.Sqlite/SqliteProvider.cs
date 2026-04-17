@@ -28,9 +28,9 @@ public sealed class SqliteProvider : BaseDatabaseProvider
         DbHandler = new SqliteTableHandler(option.GenerateOption);
         var sqlMethodResolver = new SqliteMethodResolver(option.GenerateOption);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        CustomDatabase = new CustomSqlite(sqlMethodResolver, option.GenerateOption);
-        CustomDatabase.AddKeyWord(option.Keyworks);
-        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter = new CustomSqlite(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter.AddKeyWord(option.Keyworks);
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SQLiteFactory.Instance;
     }
 
@@ -38,7 +38,7 @@ public sealed class SqliteProvider : BaseDatabaseProvider
 
     public override DbProviderFactory DbProviderFactory { get; }
 
-    public override ICustomDatabase CustomDatabase { get; }
+    public override IDatabaseAdapter DatabaseAdapter { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 

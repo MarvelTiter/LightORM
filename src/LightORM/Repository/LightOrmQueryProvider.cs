@@ -142,13 +142,13 @@ internal class LightOrmQueryProvider : IQueryProvider
 
     public object Execute(Expression expression)
     {
-        var sql = select.ToSqlString(ado.Database.CustomDatabase);
+        var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
         return ado.ExecuteReader(sql, select.DbParameters);
     }
 
     public TResult Execute<TResult>(Expression expression)
     {
-        var sql = select.ToSqlString(ado.Database.CustomDatabase);
+        var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
         var def = ado.Query<TResult>(sql, select.DbParameters).FirstOrDefault();
         if (def == null && expression is MethodCallExpression method && method.Arguments.Count > 1)
         {

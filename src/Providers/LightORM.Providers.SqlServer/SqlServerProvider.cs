@@ -37,15 +37,15 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         DbHandler = new SqlServerTableHandler(option.GenerateOption);
         var sqlMethodResolver = new SqlServerMethodResolver(version);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        CustomDatabase = new CustomSqlServer(version, sqlMethodResolver, option.GenerateOption);
-        CustomDatabase.AddKeyWord(option.Keyworks);
-        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter = new CustomSqlServer(version, sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter.AddKeyWord(option.Keyworks);
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;
     }
 
     public override DbBaseType DbBaseType => DbBaseType.SqlServer;
 
-    public override ICustomDatabase CustomDatabase { get; }
+    public override IDatabaseAdapter DatabaseAdapter { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
@@ -66,13 +66,13 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         using var trans = conn.BeginTransaction();
         var sqlBulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity, trans)
         {
-            DestinationTableName = CustomDatabase.Emphasis.Insert(1, dataTable.TableName),
+            DestinationTableName = DatabaseAdapter.Emphasis.Insert(1, dataTable.TableName),
             BulkCopyTimeout = 120
         };
 
         foreach (DataColumn item in dataTable.Columns)
         {
-            sqlBulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(item.ColumnName, CustomDatabase.Emphasis.Insert(1, item.ColumnName)));
+            sqlBulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(item.ColumnName, DatabaseAdapter.Emphasis.Insert(1, item.ColumnName)));
         }
         try
         {

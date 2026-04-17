@@ -26,15 +26,15 @@ public sealed class DamengProvider : BaseDatabaseProvider
         DbHandler = new DamengTableHandler(option.GenerateOption);
         var sqlMethodResolver = new DamengMethodResolver(option.GenerateOption);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        CustomDatabase = new CustomDameng(sqlMethodResolver, option.GenerateOption);
-        CustomDatabase.AddKeyWord(option.Keyworks);
-        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter = new CustomDameng(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter.AddKeyWord(option.Keyworks);
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? DmClientFactory.Instance;
     }
 
     public override DbBaseType DbBaseType => DbBaseType.Dameng;
 
-    public override ICustomDatabase CustomDatabase { get; }
+    public override IDatabaseAdapter DatabaseAdapter { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
@@ -55,14 +55,14 @@ public sealed class DamengProvider : BaseDatabaseProvider
         using var transcation = (DmTransaction)conn.BeginTransaction();
         var bulkCopy = new DmBulkCopy(conn, DmBulkCopyOptions.Default, transcation)
         {
-            DestinationTableName = CustomDatabase.Emphasis.Insert(1, dataTable.TableName),
+            DestinationTableName = DatabaseAdapter.Emphasis.Insert(1, dataTable.TableName),
             BulkCopyTimeout = 120
         };
 
         for (int i = 0; i < dataTable.Columns.Count; i++)
         {
             var col = dataTable.Columns[i];
-            var mapping = new DmBulkCopyColumnMapping(i, CustomDatabase.Emphasis.Insert(1, col.ColumnName));
+            var mapping = new DmBulkCopyColumnMapping(i, DatabaseAdapter.Emphasis.Insert(1, col.ColumnName));
             bulkCopy.ColumnMappings.Add(mapping);
         }
         int effectedRows = 0;

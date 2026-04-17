@@ -31,7 +31,7 @@ internal abstract record SqlBuilder : ISqlBuilder
     }
     protected ResolveContext? ResolveCtx { get; set; }
 
-    protected void HandleSqlParameters(StringBuilder sql, ICustomDatabase database)
+    protected void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
     {
         //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
         //var uniqueParameters = ResolvedValues.RemoveProperty();
@@ -73,7 +73,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
         }
     }
-    protected void ResolveExpressions(ICustomDatabase database)
+    protected void ResolveExpressions(IDatabaseAdapter database)
     {
         if (Expressions.IsCompleted)
         {
@@ -96,16 +96,16 @@ internal abstract record SqlBuilder : ISqlBuilder
             item.IsCompleted = true;
         }
     }
-    protected abstract void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result);
+    protected abstract void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result);
 
-    public abstract string ToSqlString(ICustomDatabase database);
+    public abstract string ToSqlString(IDatabaseAdapter database);
 
-    public static string GetTableName(ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
+    public static string GetTableName(IDatabaseAdapter database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {
         return $"{NpTableName(database, ti)}{((useAlias && !string.IsNullOrEmpty(ti.Alias)) ? $" {ti.Alias}" : "")}";
     }
 
-    protected static string NpTableName(ICustomDatabase database, TableInfo table)
+    protected static string NpTableName(IDatabaseAdapter database, TableInfo table)
     {
         if (table.TableEntityInfo.IsTempTable)
         {

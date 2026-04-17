@@ -6,7 +6,7 @@ namespace LightORM.Providers.Select
     {
         private readonly ISqlExecutor executor;
         private readonly SelectBuilder builder;
-        private ICustomDatabase Database => executor.Database.CustomDatabase;
+        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
         public SelectInsertProvider(ISqlExecutor executor, SelectBuilder builder)
         {
             this.executor = executor;

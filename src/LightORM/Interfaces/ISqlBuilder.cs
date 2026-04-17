@@ -34,7 +34,7 @@ namespace LightORM.Interfaces
         /// 到Sql字符串
         /// </summary>
         /// <returns></returns>
-        string ToSqlString(ICustomDatabase database);
+        string ToSqlString(IDatabaseAdapter database);
     }
 
     public interface ISelectSqlBuilder : ISqlBuilder

@@ -6,7 +6,7 @@ namespace LightORM.Interfaces
     {
         DbBaseType DbBaseType { get; }
         string MasterConnectionString { get; }
-        ICustomDatabase CustomDatabase { get; }
+        IDatabaseAdapter DatabaseAdapter { get; }
         IDatabaseTableHandler DbHandler { get; }
         [Obsolete]
         Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; }

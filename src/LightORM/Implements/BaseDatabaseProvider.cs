@@ -11,7 +11,7 @@ public abstract class BaseDatabaseProvider : IDatabaseProvider
     }
     public abstract DbBaseType DbBaseType { get; }
     public string MasterConnectionString { get; }
-    public abstract ICustomDatabase CustomDatabase { get; }
+    public abstract IDatabaseAdapter DatabaseAdapter { get; }
 
     public abstract IDatabaseTableHandler DbHandler { get; }
 

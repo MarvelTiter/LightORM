@@ -9,11 +9,11 @@ public class ResolveContext
     private readonly Dictionary<ParameterKey, TableInfo> lambdaParameterInfos = [];
     private string? parameterPrefix;
     public string? ParameterPrefix => parameterPrefix;
-    public ICustomDatabase Database { get; }
+    public IDatabaseAdapter Database { get; }
     public IEnumerable<TableInfo> Tables => lambdaParameterInfos.Values;
     public int Level { get; set; }
 
-    public ResolveContext(ICustomDatabase database, params ITableEntityInfo[] selectedTables)
+    public ResolveContext(IDatabaseAdapter database, params ITableEntityInfo[] selectedTables)
     {
         //foreach (var item in selectedTables)
         //{
@@ -22,7 +22,7 @@ public class ResolveContext
         Database = database;
         this.selectedTables.AddRange(selectedTables);
     }
-    public ResolveContext(ICustomDatabase database)
+    public ResolveContext(IDatabaseAdapter database)
     {
         Database = database;
     }

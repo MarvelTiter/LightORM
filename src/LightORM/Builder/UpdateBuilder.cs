@@ -48,7 +48,7 @@ internal record UpdateBuilder<T> : SqlBuilder
             DbParameters.TryAdd(member, value);
         }
     }
-    protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
+    protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
@@ -164,7 +164,7 @@ internal record UpdateBuilder<T> : SqlBuilder
     //{
 
     //}
-    private void CreateUpdateBatchSql(ICustomDatabase database)
+    private void CreateUpdateBatchSql(IDatabaseAdapter database)
     {
         if (batchDone)
         {
@@ -346,7 +346,7 @@ internal record UpdateBuilder<T> : SqlBuilder
         }
     }
 
-    public override string ToSqlString(ICustomDatabase database)
+    public override string ToSqlString(IDatabaseAdapter database)
     {
         ResolveExpressions(database);
         if (IsBatchUpdate)
@@ -471,7 +471,7 @@ internal record UpdateBuilder<T> : SqlBuilder
     }
 
 
-    private void HandleVersionColumn(StringBuilder sb, ICustomDatabase database)
+    private void HandleVersionColumn(StringBuilder sb, IDatabaseAdapter database)
     {
         if (TargetObject is null && VersionInfo == default)
         {

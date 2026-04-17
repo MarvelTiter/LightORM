@@ -58,7 +58,7 @@ public static partial class SelectExtensions
     public static DataTable ToDataTable<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
@@ -66,7 +66,7 @@ public static partial class SelectExtensions
     public static Task<DataTable> ToDataTableAsync<{{argsStr}}>(this IExpSelect<{{argsStr}}> select, Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         select.HandleResult(exp, null);
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
@@ -104,7 +104,7 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
@@ -113,7 +113,7 @@ public static partial class SelectExtensions
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.CustomDatabase);
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
         return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }

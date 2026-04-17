@@ -8,7 +8,7 @@ namespace LightORM.Providers
         public SelectBuilder SqlBuilder { get; }
         public LambdaExpression KeySelector { get; }
         public ISqlExecutor Executor { get; }
-        public ICustomDatabase Database => Executor.Database.CustomDatabase;
+        public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
         public bool IsSubQuery { get; set; }
 
         public GroupSelectProvider(ISqlExecutor executor, SelectBuilder builder, LambdaExpression keySelector)

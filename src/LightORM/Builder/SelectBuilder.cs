@@ -86,7 +86,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
     }
 
-    protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
+    protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
@@ -157,7 +157,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
     }
 
-    private void ScanNavigate(ICustomDatabase database, ExpressionResolvedResult result, TableInfo mainTableInfo)
+    private void ScanNavigate(IDatabaseAdapter database, ExpressionResolvedResult result, TableInfo mainTableInfo)
     {
         foreach (var navColumn in mainTableInfo.GetNavigateColumns())
         {
@@ -223,7 +223,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
     }
 
-    private void BuildFromString(StringBuilder sql, ICustomDatabase database)
+    private void BuildFromString(StringBuilder sql, IDatabaseAdapter database)
     {
         if (SelectedTables.Count == 1)
         {
@@ -245,7 +245,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         sql.AppendLine();
     }
 
-    public override string ToSqlString(ICustomDatabase database)
+    public override string ToSqlString(IDatabaseAdapter database)
     {
         //SubQuery?.ResolveExpressions();
         var estimatedSize = EstimateSqlLength();
@@ -259,7 +259,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
     }
 
-    public void Build(StringBuilder sql, ICustomDatabase database, int currentLevel)
+    public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
         ResolveExpressions(database);
         

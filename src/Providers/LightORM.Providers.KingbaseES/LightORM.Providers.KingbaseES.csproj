@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>MarvelTiter</Authors>
+		<Description>LightORM 人大金仓扩展</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+	</PropertyGroup>
+	<Import Project="Versions.props"/>
+	<Import Project="..\..\SupportedFrameworks.props" />
+	<ItemGroup>
+		<None Include="..\..\Nuget.md">
+			<PackagePath>\</PackagePath>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="*" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+	
+</Project>
