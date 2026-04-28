@@ -8,9 +8,9 @@ using System.Text;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class CustomOracle(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
+public sealed class OracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
-    internal readonly static CustomOracle Instance = new(new OracleMethodResolver(), new());
+    internal readonly static OracleAdapter Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)

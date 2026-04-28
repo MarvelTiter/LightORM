@@ -34,7 +34,7 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         DbHandler = new MySqlTableHandler(master, option.GenerateOption);
         var sqlMethodResolver = new MySqlMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomMySql(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomMySqlAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? MySqlConnectorFactory.Instance;

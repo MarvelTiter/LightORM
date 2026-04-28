@@ -1,67 +1,42 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
+using LightORM.Interfaces.ExpSql;
 using LightORM.Models;
+using Microsoft.Extensions.Options;
 using System.Text;
 
-namespace LightORM.Providers.SqlServer;
+namespace LightORM.Providers.Sqlite;
 
-public sealed class CustomSqlServer(SqlServerVersion version, ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabase(methodResolver)
+public sealed class CustomSqliteAdapter(ISqlMethodResolver methodResolver, TableOptions options) : CustomDatabaseAdapter(methodResolver)
 {
-    public SqlServerVersion Version { get; } = version;
+    /// <summary>
+    /// 测试用
+    /// </summary>
+    internal readonly static CustomSqliteAdapter TestInstance = new(new SqliteMethodResolver(new()), new());
     public override string Prefix => "@";
-    public override string Emphasis => "[]";
-
+    public override string Emphasis => "``";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
     {
-        if (Version == SqlServerVersion.Over2012)
-        {
-            sql.AppendLine($"OFFSET {builder.Skip} ROWS");
-            sql.AppendLine($"FETCH NEXT {builder.Take} ROWS ONLY");
-        }
-        else
-        {
-            var orderByString = "";
-            var orderByType = "";
-            if (builder.OrderBy.Count == 0)
-            {
-                var col = builder.MainTable.TableEntityInfo.Columns.First(c => c.IsPrimaryKey);
-                orderByString = $"Sub.{col.ColumnName}";
-                orderByType = " ASC";
-            }
-            else
-            {
-                orderByString = string.Join(",", builder.OrderBy.Select(s => s.Split('.')[1]));
-                orderByType = (builder.AdditionalValue == null ? "" : $" {builder.AdditionalValue}");
-            }
-            sql.Insert(6, " TOP (100) PERCENT");
-            sql.Insert(0, $"SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM (\n");
-            sql.AppendLine("  ) Sub");
-            // 子查询筛选 ROWNO
-            sql.Insert(0, "SELECT * FROM (\n");
-            sql.AppendLine(") Paging");
-            sql.AppendLine($"WHERE Paging.ROWNO > {builder.Skip}");
-            sql.Append($"AND Paging.ROWNO <= {builder.Skip + builder.Take}");
-        }
+        sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
     }
-    public override string HandleBooleanValueForBulkCopy(bool value)
-    {
-        return value ? "true" : "false";
-    }
-    public override string ReturnIdentitySql() => "SELECT SCOPE_IDENTITY()";
+    public override string ReturnIdentitySql() => "SELECT LAST_INSERT_ROWID()";
 
+    string Extract => options.JSONBackend == JSONBackend.Binary ? "JSONB_EXTRACT" : "JSON_EXTRACT";
+    string Set => options.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
     public override void HandleJsonColumn(JsonColumnContext context)
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
             context.Sql.AppendEmphasis(context.Column.ColumnName, this);
             context.Sql.Append(" = ");
-            context.Sql.Append("JSON_MODIFY");
+            context.Sql.Append(Set);
         }
         else
         {
-            context.Sql.Append("JSON_VALUE");
+            context.Sql.Append(Extract);
         }
+        // 字段名称，属性路径都是一样的
         context.Sql.Append('(');
         if (context.Options.RequiredTableAlias)
         {
@@ -70,6 +45,10 @@ public sealed class CustomSqlServer(SqlServerVersion version, ISqlMethodResolver
         }
         context.Sql.AppendEmphasis(context.Column.ColumnName, this);
         context.Sql.Append(",'$");
+        //if (context.Column.JsonRootType == JsonRootType.Object)
+        //{
+        //    context.Sql.Append('.');
+        //}
         while (context.Members.Count > 0)
         {
             var mi = context.Members.Pop();

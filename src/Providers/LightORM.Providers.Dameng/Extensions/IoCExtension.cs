@@ -26,6 +26,6 @@ public static class IoCExtension
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
         var provider = DamengProvider.Create(dbOption);
-        options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.Dameng, provider);
+        options.SetDatabase(dbOption.DbKey ?? "MainDb", DamengProvider.Dameng, provider);
     }
 }

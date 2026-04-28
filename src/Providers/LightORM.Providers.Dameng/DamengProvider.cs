@@ -9,6 +9,7 @@ namespace LightORM.Providers.Dameng;
 
 public sealed class DamengProvider : BaseDatabaseProvider
 {
+    public static readonly DbBaseType Dameng = new ("Dameng");
     public static DamengProvider Create(DataBaseOption option) => new(option);
     public static DamengProvider Create(Action<DataBaseOption> setting)
     {
@@ -26,13 +27,13 @@ public sealed class DamengProvider : BaseDatabaseProvider
         DbHandler = new DamengTableHandler(option.GenerateOption);
         var sqlMethodResolver = new DamengMethodResolver(option.GenerateOption);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomDameng(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomDamengAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? DmClientFactory.Instance;
     }
-
-    public override DbBaseType DbBaseType => DbBaseType.Dameng;
+    
+    public override DbBaseType DbBaseType => Dameng;
 
     public override IDatabaseAdapter DatabaseAdapter { get; }
 

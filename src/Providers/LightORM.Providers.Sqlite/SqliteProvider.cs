@@ -28,7 +28,7 @@ public sealed class SqliteProvider : BaseDatabaseProvider
         DbHandler = new SqliteTableHandler(option.GenerateOption);
         var sqlMethodResolver = new SqliteMethodResolver(option.GenerateOption);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomSqlite(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomSqliteAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SQLiteFactory.Instance;

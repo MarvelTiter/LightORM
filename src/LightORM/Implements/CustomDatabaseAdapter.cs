@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
 
-public abstract class CustomDatabase : IDatabaseAdapter
+public abstract class CustomDatabaseAdapter : IDatabaseAdapter
 {
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }
@@ -45,7 +45,7 @@ public abstract class CustomDatabase : IDatabaseAdapter
         "COMMENT", "TYPE", "STATUS", "SESSION", "VALUE"
     };
 
-    protected CustomDatabase(ISqlMethodResolver resolver)
+    protected CustomDatabaseAdapter(ISqlMethodResolver resolver)
     {
         MethodResolver = resolver;
         //JsonHandler = GetJsonHandler();

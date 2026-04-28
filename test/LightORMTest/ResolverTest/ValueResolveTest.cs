@@ -23,7 +23,7 @@ public class ValueResolveTest
         {
             var p = "ad";
             Expression<Func<User, bool>> where = u => u.Age > a.A && u.UserName.Contains(p);
-            var context = new ResolveContext(CustomSqlite.TestInstance);
+            var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
             var result = where.Resolve(SqlResolveOptions.Where, context);
             Assert.IsNotNull(result.ResolvedValues);
             Assert.HasCount(2, result.ResolvedValues);
@@ -39,7 +39,7 @@ public class ValueResolveTest
         int? i = GetIndex();
         var ii = new { index = 5 };
 
-        var context = new ResolveContext(CustomSqlite.TestInstance);
+        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
 
         Expression<Func<User, bool>> where1 = u => u.Age == arr[i.Value];
         var nullableInt = where1.Resolve(SqlResolveOptions.Where, context);
@@ -63,7 +63,7 @@ public class ValueResolveTest
         string s = "ad";
         var ii = new { index = 5 };
 
-        var context = new ResolveContext(CustomSqlite.TestInstance);
+        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
 
         Expression<Func<User, bool>> withVariable = u => u.Age > arr[i.Value] && u.Age < arr[ii.index] && u.UserName.Contains(s);
         var result1 = withVariable.Resolve(SqlResolveOptions.Where, context);
@@ -96,7 +96,7 @@ public class ValueResolveTest
     public void ResolveCacheArrayContain()
     {
         int[] arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-        var context = new ResolveContext(CustomSqlite.TestInstance);
+        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
         Expression<Func<User, bool>> inArray = u => arr.Contains(u.Age!.Value);
         var result1 = inArray.Resolve(SqlResolveOptions.Where, context);
         var result2 = inArray.Resolve(SqlResolveOptions.Where, context);

@@ -15,7 +15,7 @@ public class ConstantExpressionTest
     public void TestConstantNullValue()
     {
         Expression<Func<User, bool>> exp = u => u.Age == null;
-        var result = exp.Resolve(SqlResolveOptions.Where, new ResolveContext(LightORM.Providers.Sqlite.CustomSqlite.TestInstance));
+        var result = exp.Resolve(SqlResolveOptions.Where, new ResolveContext(LightORM.Providers.Sqlite.CustomSqliteAdapter.TestInstance));
         Console.WriteLine(result.SqlString);
         Assert.IsTrue(result.SqlString == "(`a`.`AGE` IS NULL)");
     }
@@ -23,7 +23,7 @@ public class ConstantExpressionTest
     [TestMethod]
     public void TestVaribleValue()
     {
-        var resolveCtx = new ResolveContext(LightORM.Providers.Sqlite.CustomSqlite.TestInstance);
+        var resolveCtx = new ResolveContext(LightORM.Providers.Sqlite.CustomSqliteAdapter.TestInstance);
         var resolveOption = SqlResolveOptions.Where;
         var age = 10;
         Expression<Func<User, bool>> exp = u => u.Age > age;
