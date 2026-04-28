@@ -6,16 +6,16 @@ namespace LightORM.Extension;
 public static class CustomDatabaseExtensions
 {
 
-    public static string AttachPrefix(this ICustomDatabase database, string name) => $"{database.Prefix}{name}";
+    public static string AttachPrefix(this IDatabaseAdapter database, string name) => $"{database.Prefix}{name}";
 
-    public static StringBuilder WithPrefix(this StringBuilder sql, string name, ICustomDatabase database)
+    public static StringBuilder WithPrefix(this StringBuilder sql, string name, IDatabaseAdapter database)
     {
         sql.Append(database.Prefix);
         sql.Append(name);
         return sql;
     }
 
-    public static string AttachEmphasis(this ICustomDatabase database, string name)
+    public static string AttachEmphasis(this IDatabaseAdapter database, string name)
     {
         if (database.UseIdentifierQuote || database.IsKeyWord(name))
         {
@@ -24,7 +24,7 @@ public static class CustomDatabaseExtensions
         return name;
     }
 
-    public static StringBuilder AppendEmphasis(this StringBuilder sql, string name, ICustomDatabase database)
+    public static StringBuilder AppendEmphasis(this StringBuilder sql, string name, IDatabaseAdapter database)
     {
         if (database.Emphasis.Length != 2)
         {
@@ -68,7 +68,7 @@ public static class CustomDatabaseExtensions
     //    return sql;
     //}
 
-    public static StringBuilder AppendTableName(this StringBuilder sql, ICustomDatabase database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
+    public static StringBuilder AppendTableName(this StringBuilder sql, IDatabaseAdapter database, TableInfo ti, bool useAlias = true, bool useEmphasis = true)
     {
         if (ti.TableEntityInfo.IsTempTable)
         {
@@ -89,7 +89,7 @@ public static class CustomDatabaseExtensions
         return sql;
     }
 
-    public static ICustomDatabase GetDbCustom(this DbBaseType type)
+    public static IDatabaseAdapter GetDbCustom(this DbBaseType type)
     {
         if (!ExpressionSqlOptions.Instance.Value.CustomDatabases.TryGetValue(type.Name, out var custom))
         {

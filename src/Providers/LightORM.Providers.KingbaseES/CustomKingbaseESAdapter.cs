@@ -2,15 +2,15 @@
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
-using LightORM.Providers.PostgreSQL.Utils;
+using LightORM.Providers.KingbaseES.Utils;
 using System.Reflection;
 using System.Text;
 
-namespace LightORM.Providers.PostgreSQL;
+namespace LightORM.Providers.KingbaseES;
 
-internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
-    internal readonly static CustomPostgreSQL Instance = new(new PostgreSQLMethodResolver(), new());
+    internal readonly static CustomKingbaseESAdapter Instance = new(new KingbaseESMethodResolver(), new());
 
     public override string Prefix => "@";
 

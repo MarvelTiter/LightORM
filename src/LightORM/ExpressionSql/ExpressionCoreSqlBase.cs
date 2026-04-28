@@ -25,11 +25,11 @@ internal abstract class ExpressionCoreSqlBase
             for (var i = 0; i < selects.Length; i++)
             {
                 var select = selects[i];
-                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.CustomDatabase);
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.DatabaseAdapter);
 
                 if (select.SqlBuilder.DbParameters.Count > 0)
                 {
-                    sqls[i] = Ado.Database.CustomDatabase.RewriteParameterReferences(originSql, $"q{i}");
+                    sqls[i] = Ado.Database.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
 
                     foreach (var item in select.SqlBuilder.DbParameters)
                     {
@@ -41,7 +41,7 @@ internal abstract class ExpressionCoreSqlBase
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls, parameters);
+            var sql = Ado.Database.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
             var reader = Ado.ExecuteReader(sql, parameters);
             return new MultipleResult(reader);
         }
@@ -64,11 +64,11 @@ internal abstract class ExpressionCoreSqlBase
             for (var i = 0; i < selects.Length; i++)
             {
                 var select = selects[i];
-                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.CustomDatabase);
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.DatabaseAdapter);
 
                 if (select.SqlBuilder.DbParameters.Count > 0)
                 {
-                    sqls[i] = Ado.Database.CustomDatabase.RewriteParameterReferences(originSql, $"q{i}");
+                    sqls[i] = Ado.Database.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
 
                     foreach (var item in select.SqlBuilder.DbParameters)
                     {
@@ -80,7 +80,7 @@ internal abstract class ExpressionCoreSqlBase
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.CustomDatabase.HandleMultipleQuerySql(sqls, parameters);
+            var sql = Ado.Database.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
             var reader = await Ado.ExecuteReaderAsync(sql, parameters, cancellationToken: cancellationToken);
             return new MultipleResult(reader);
         }

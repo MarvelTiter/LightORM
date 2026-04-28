@@ -72,7 +72,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -91,7 +91,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -186,7 +186,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
                 resolver.Sql.AppendLine(")");
                 return;
             }
@@ -662,7 +662,7 @@ namespace LightORM.Implements
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.CustomDatabase, resolver.Level + 1);
+                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
                 resolver.Sql.Append(')');
                 return true;
             }

@@ -16,7 +16,7 @@ namespace TestProject1.ExpressionTest
         {
             Expression<Func<User, int?>> exp = u => u.Age > 10 ? 1 : null;
             var table = TableContext.GetTableInfo(typeof(User))!;
-            var ctx = new ResolveContext(CustomSqlite.TestInstance, table);
+            var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
             var result = exp.Resolve(SqlResolveOptions.Select, ctx);
             Console.WriteLine(result.SqlString);
         }

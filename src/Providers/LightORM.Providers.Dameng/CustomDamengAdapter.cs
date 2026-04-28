@@ -1,29 +1,28 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
-using LightORM.Interfaces.ExpSql;
 using LightORM.Models;
 using Microsoft.Extensions.Options;
 using System.Text;
 
-namespace LightORM.Providers.Sqlite;
+namespace LightORM.Providers.Dameng;
 
-public sealed class CustomSqlite(ISqlMethodResolver methodResolver, TableOptions options) : CustomDatabase(methodResolver)
+public sealed class CustomDamengAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
-    /// <summary>
-    /// 测试用
-    /// </summary>
-    internal readonly static CustomSqlite TestInstance = new(new SqliteMethodResolver(new()), new());
-    public override string Prefix => "@";
-    public override string Emphasis => "``";
+    internal static readonly CustomDamengAdapter TestInstance = new CustomDamengAdapter(new DamengMethodResolver(new()), new());
+    public override string Prefix => ":";
+    public override string Emphasis => "\"\"";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
     {
-        sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
+        sql.Insert(0, $"SELECT ROWNUM as ROWNO, SubMax.* FROM (\n");
+        sql.AppendLine($") SubMax WHERE ROWNUM <= {builder.Skip + builder.Take}");
+        sql.Insert(0, "SELECT * FROM (\n");
+        sql.AppendLine($") SubMin WHERE SubMin.ROWNO > {builder.Skip}");
     }
-    public override string ReturnIdentitySql() => "SELECT LAST_INSERT_ROWID()";
+    public override string ReturnIdentitySql() => "SELECT @@IDENTITY";
 
-    string Extract => options.JSONBackend == JSONBackend.Binary ? "JSONB_EXTRACT" : "JSON_EXTRACT";
-    string Set => options.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
+    string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_VALUE" : "JSON_VALUE";
+    string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
     public override void HandleJsonColumn(JsonColumnContext context)
     {
         if (context.Options.SqlType == SqlPartial.Update)
@@ -36,7 +35,6 @@ public sealed class CustomSqlite(ISqlMethodResolver methodResolver, TableOptions
         {
             context.Sql.Append(Extract);
         }
-        // 字段名称，属性路径都是一样的
         context.Sql.Append('(');
         if (context.Options.RequiredTableAlias)
         {
@@ -45,10 +43,6 @@ public sealed class CustomSqlite(ISqlMethodResolver methodResolver, TableOptions
         }
         context.Sql.AppendEmphasis(context.Column.ColumnName, this);
         context.Sql.Append(",'$");
-        //if (context.Column.JsonRootType == JsonRootType.Object)
-        //{
-        //    context.Sql.Append('.');
-        //}
         while (context.Members.Count > 0)
         {
             var mi = context.Members.Pop();

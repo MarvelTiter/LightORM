@@ -8,7 +8,7 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly UpdateBuilder<T> sqlBuilder;
-        private ICustomDatabase Database => executor.Database.CustomDatabase;
+        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;

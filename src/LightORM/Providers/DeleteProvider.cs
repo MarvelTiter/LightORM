@@ -8,7 +8,7 @@ namespace LightORM.Providers
     {
         private readonly ISqlExecutor executor;
         private readonly DeleteBuilder<T> sqlBuilder;
-        private ICustomDatabase Database => executor.Database.CustomDatabase;
+        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
         //public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
         //public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
         public DeleteProvider(ISqlExecutor executor, T? entity)

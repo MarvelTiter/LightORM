@@ -29,7 +29,7 @@ internal record InsertBuilder<T> : SqlBuilder
         }
     }
 
-    protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
+    protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Insert)
         {
@@ -86,7 +86,7 @@ internal record InsertBuilder<T> : SqlBuilder
         return [.. cols];
     }
 
-    public void CreateInsertBatchSql(ICustomDatabase database)
+    public void CreateInsertBatchSql(IDatabaseAdapter database)
     {
         if (batchDone)
         {
@@ -148,7 +148,7 @@ internal record InsertBuilder<T> : SqlBuilder
         }
     }
 
-    public override string ToSqlString(ICustomDatabase database)
+    public override string ToSqlString(IDatabaseAdapter database)
     {
         if (IsBatchInsert)
         {

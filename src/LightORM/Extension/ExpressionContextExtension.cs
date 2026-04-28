@@ -48,7 +48,7 @@ public static class ExpressionContextExtension
                     if (value is bool b)
                     {
                         // bool类型特殊处理
-                        row[col.ColumnName] = ado.Database.CustomDatabase.HandleBooleanValueForBulkCopy(b);
+                        row[col.ColumnName] = ado.Database.DatabaseAdapter.HandleBooleanValueForBulkCopy(b);
                         continue;
                     }
                     row[col.ColumnName] = Convert.ChangeType(value, type);

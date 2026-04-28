@@ -48,7 +48,7 @@ namespace LightORM.Extension
 
         private static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
         {
-            var database = executor.Database.CustomDatabase;
+            var database = executor.Database.DatabaseAdapter;
             SelectBuilder includeBuilder = BuildIncludeSqlBuilder(database, item, include);
             var selectedType = include.NavigateInfo!.NavigateType;
             string sql = includeBuilder.ToSqlString(database);
@@ -73,14 +73,14 @@ namespace LightORM.Extension
             context.ThenInclude?.BindIncludeDatas(executor, result);
         }
 
-        public static SelectBuilder BuildIncludeSqlBuilder(ICustomDatabase database, object item, IncludeInfo include)
+        public static SelectBuilder BuildIncludeSqlBuilder(IDatabaseAdapter database, object item, IncludeInfo include)
         {
             //var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
             var includeBuilder = BuildSql(database, include, item);
             return includeBuilder;
         }
 
-        private static SelectBuilder BuildSql(ICustomDatabase database, IncludeInfo include, object item)
+        private static SelectBuilder BuildSql(IDatabaseAdapter database, IncludeInfo include, object item)
         {
             SelectBuilder selectSql = SelectBuilder.GetSelectBuilder();
             var selectedType = include.NavigateInfo!.NavigateType;

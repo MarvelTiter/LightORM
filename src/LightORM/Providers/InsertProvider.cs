@@ -8,7 +8,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
 {
     private readonly ISqlExecutor executor;
     private readonly InsertBuilder<T> sqlBuilder;
-    private ICustomDatabase Database => executor.Database.CustomDatabase;
+    private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
     public InsertProvider(ISqlExecutor executor, T? entity)
     {
         this.executor = executor;

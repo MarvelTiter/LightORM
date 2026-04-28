@@ -13,7 +13,7 @@ internal record DeleteBuilder<T> : SqlBuilder
     public bool Truncate { get; set; }
     HashSet<string> Members { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
-    protected override void HandleResult(ICustomDatabase database, ExpressionInfo expInfo, ExpressionResolvedResult result)
+    protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)
         {
@@ -112,7 +112,7 @@ internal record DeleteBuilder<T> : SqlBuilder
             }
         }
     }
-    private void CreateBatchDeleteSql(ICustomDatabase database)
+    private void CreateBatchDeleteSql(IDatabaseAdapter database)
     {
         if (batchDone)
         {
@@ -189,7 +189,7 @@ internal record DeleteBuilder<T> : SqlBuilder
         }
         batchDone = true;
     }
-    public override string ToSqlString(ICustomDatabase database)
+    public override string ToSqlString(IDatabaseAdapter database)
     {
         if (IsBatchDelete)
         {

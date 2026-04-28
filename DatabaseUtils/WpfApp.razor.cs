@@ -26,7 +26,7 @@ namespace DatabaseUtils
         protected override void OnInitialized()
         {
             base.OnInitialized();
-            supportedDb.Add(DbBaseType.Dameng.Name, str => LightORM.Providers.Dameng.DamengProvider.Create(o => o.MasterConnectionString = str));
+            supportedDb.Add("Dameng", str => LightORM.Providers.Dameng.DamengProvider.Create(o => o.MasterConnectionString = str));
             supportedDb.Add(DbBaseType.Oracle.Name, str => LightORM.Providers.Oracle.OracleProvider.Create(o => o.MasterConnectionString = str));
             supportedDb.Add(DbBaseType.PostgreSQL.Name, str => LightORM.Providers.PostgreSQL.PostgreSQLProvider.Create(o => o.MasterConnectionString = str));
             supportedDb.Add(DbBaseType.MySql.Name, str => LightORM.Providers.MySql.MySqlProvider.Create(o => o.MasterConnectionString = str));

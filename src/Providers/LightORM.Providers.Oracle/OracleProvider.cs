@@ -25,14 +25,14 @@ public sealed class OracleProvider : BaseDatabaseProvider
         DbHandler = new OracleTableHandler(option.GenerateOption);
         var sqlMethodResolver = new OracleMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        CustomDatabase = new CustomOracle(sqlMethodResolver, option.GenerateOption);
-        CustomDatabase.AddKeyWord(option.Keyworks);
-        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter = new OracleAdapter(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter.AddKeyWord(option.Keyworks);
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.Oracle;
 
-    public override ICustomDatabase CustomDatabase { get; }
+    public override IDatabaseAdapter DatabaseAdapter { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
@@ -51,13 +51,13 @@ public sealed class OracleProvider : BaseDatabaseProvider
         conn.Open();
         using var bulkcopy = new OracleBulkCopy(conn, OracleBulkCopyOptions.UseInternalTransaction)
         {
-            DestinationTableName = CustomDatabase.Emphasis.Insert(1, dataTable.TableName),
+            DestinationTableName = DatabaseAdapter.Emphasis.Insert(1, dataTable.TableName),
             BulkCopyTimeout = 120
         };
 
         foreach (DataColumn item in dataTable.Columns)
         {
-            bulkcopy.ColumnMappings.Add(new OracleBulkCopyColumnMapping(item.ColumnName, CustomDatabase.Emphasis.Insert(1, item.ColumnName)));
+            bulkcopy.ColumnMappings.Add(new OracleBulkCopyColumnMapping(item.ColumnName, DatabaseAdapter.Emphasis.Insert(1, item.ColumnName)));
         }
         try
         {

@@ -34,14 +34,14 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         DbHandler = new MySqlTableHandler(master, option.GenerateOption);
         var sqlMethodResolver = new MySqlMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        CustomDatabase = new CustomMySql(sqlMethodResolver, option.GenerateOption);
-        CustomDatabase.AddKeyWord(option.Keyworks);
-        CustomDatabase.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter = new CustomMySqlAdapter(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter.AddKeyWord(option.Keyworks);
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? MySqlConnectorFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.MySql;
 
-    public override ICustomDatabase CustomDatabase { get; }
+    public override IDatabaseAdapter DatabaseAdapter { get; }
 
     public override Func<TableOptions, IDatabaseTableHandler>? TableHandler { get; } = option => throw new NotSupportedException();
 
