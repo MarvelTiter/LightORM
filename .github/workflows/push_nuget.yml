@@ -59,3 +59,8 @@ jobs:
         dotnet build ./src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj -c Release
         dotnet pack ./src/Providers/LightORM.Providers.Dameng/LightORM.Providers.Dameng.csproj -c Release -o publish/Dameng
         dotnet nuget push 'publish/Dameng/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate 
+    - name: KingbaseES Provider
+      run: |
+        dotnet build ./src/Providers/LightORM.Providers.KingbaseES/LightORM.Providers.KingbaseES.csproj -c Release
+        dotnet pack ./src/Providers/LightORM.Providers.KingbaseES/LightORM.Providers.KingbaseES.csproj -c Release -o publish/KingbaseES
+        dotnet nuget push 'publish/KingbaseES/*.nupkg' -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate 
