@@ -321,7 +321,7 @@ internal record UpdateBuilder<T> : SqlBuilder
                 string s => $"'{s.Replace("'", "''")}'",
 
                 // 布尔值：根据 SQL 标准，多数数据库用 1/0，PostgreSQL 用 true/false
-                bool b => database.HandleBooleanValue(b),
+                bool b => database.FormatBooleanValue(b),
 
                 // 整数类型
                 sbyte or byte or short or ushort or int or uint or long or ulong => $"{value}",

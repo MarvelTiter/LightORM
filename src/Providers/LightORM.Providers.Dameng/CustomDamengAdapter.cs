@@ -19,7 +19,15 @@ public sealed class CustomDamengAdapter(ISqlMethodResolver methodResolver, Table
         sql.Insert(0, "SELECT * FROM (\n");
         sql.AppendLine($") SubMin WHERE SubMin.ROWNO > {builder.Skip}");
     }
-    public override string ReturnIdentitySql() => "SELECT @@IDENTITY";
+    public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        // Dameng 使用 TO_DATE 函数来处理日期值
+        sql.Append("TO_DATE('");
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
+    }
 
     string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_VALUE" : "JSON_VALUE";
     string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";

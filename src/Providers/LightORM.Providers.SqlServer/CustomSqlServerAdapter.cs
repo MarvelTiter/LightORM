@@ -48,7 +48,15 @@ public sealed class CustomSqlServerAdapter(SqlServerVersion version, ISqlMethodR
     {
         return value ? "true" : "false";
     }
-    public override string ReturnIdentitySql() => "SELECT SCOPE_IDENTITY()";
+    public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT SCOPE_IDENTITY()");
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        //CONVERT(DATETIME, 'yyyy-MM-dd HH:mm:ss', 120)
+        sql.Append("CONVERT(DATETIME, '");
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        sql.Append("', 120)");
+    }
 
     public override void HandleJsonColumn(JsonColumnContext context)
     {

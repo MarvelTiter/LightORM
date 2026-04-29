@@ -25,7 +25,7 @@ public sealed class OracleProvider : BaseDatabaseProvider
         DbHandler = new OracleTableHandler(option.GenerateOption);
         var sqlMethodResolver = new OracleMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new OracleAdapter(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomOracleAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;

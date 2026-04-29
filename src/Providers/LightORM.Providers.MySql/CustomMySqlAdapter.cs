@@ -15,7 +15,15 @@ public sealed class CustomMySqlAdapter(ISqlMethodResolver methodResolver, TableO
     {
         sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
     }
-    public override string ReturnIdentitySql() => "SELECT @@IDENTITY";
+    public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        //STR_TO_DATE('', '%Y-%m-%d %H:%i:%s')
+        sql.Append("STR_TO_DATE('");
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        sql.Append("', '%Y-%m-%d %H:%i:%s')");
+    }
 
     public override void HandleJsonColumn(JsonColumnContext context)
     {
@@ -53,7 +61,7 @@ public sealed class CustomMySqlAdapter(ISqlMethodResolver methodResolver, TableO
             BuildJsonPath();
             context.Sql.Append('\'');
         }
-        
+
         void BuildJsonPath()
         {
             while (context.Members.Count > 0)

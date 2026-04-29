@@ -200,8 +200,9 @@ internal record InsertBuilder<T> : SqlBuilder
 
             if (val is bool b)
             {
-                var boolValue = database.HandleBooleanValue(b);
-                values.Append(boolValue);
+                //var boolValue = database.HandleBooleanValue(b);
+                //values.Append(boolValue);
+                database.HandleBooleanValue(values, b);
                 DbParameters.Remove(item.PropertyName);
             }
             else
@@ -239,7 +240,8 @@ internal record InsertBuilder<T> : SqlBuilder
         if (IsReturnIdentity)
         {
             sb.Append(';');
-            sb.Append(database.ReturnIdentitySql());
+            //sb.Append(database.ReturnIdentitySql());
+            database.ReturnIdentitySql(sb);
         }
         HandleSqlParameters(sb, database);
         return sb.Trim();

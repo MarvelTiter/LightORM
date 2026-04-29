@@ -71,19 +71,26 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
         throw new NotSupportedException();
     }
 
-    public virtual string ReturnIdentitySql()
+    public virtual void ReturnIdentitySql(StringBuilder sql)
     {
         throw new NotSupportedException();
     }
 
-    public virtual string HandleBooleanValue(bool value)
+    public virtual void HandleBooleanValue(StringBuilder sql, bool value)
+    {
+        sql.Append(value ? '1' : '0');
+    }
+
+    public virtual string FormatBooleanValue(bool value)
     {
         return value ? "1" : "0";
     }
 
+    public abstract void HandleDateValue(StringBuilder sql, DateTime dateTime);
+
     public virtual string HandleBooleanValueForBulkCopy(bool value)
     {
-        return HandleBooleanValue(value);
+        return FormatBooleanValue(value);
     }
 
     public bool IsKeyWord(string keyWork)

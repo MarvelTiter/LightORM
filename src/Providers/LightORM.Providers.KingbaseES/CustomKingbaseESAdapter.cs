@@ -25,9 +25,21 @@ internal class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, TableO
         sql.Append(builder.Skip);
     }
 
-    public override string HandleBooleanValue(bool value)
+    public override void HandleBooleanValue(StringBuilder sql, bool value)
+    {
+        sql.Append(value ? "TRUE" : "FALSE");
+    }
+
+    public override string FormatBooleanValue(bool value)
     {
         return value ? "TRUE" : "FALSE";
+    }
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        sql.Append("TO_TIMESTAMP('");
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
     public override void HandleJsonParameter(JsonColumnParameterContext context)

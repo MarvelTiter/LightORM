@@ -576,6 +576,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     DbParameters.Add(new(bn, v, ExpValueType.Boolean));
                 }
             }
+            
             else
             {
                 DbParameters.Add(new(bn, v, ExpValueType.Other));
@@ -607,13 +608,17 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 {
                     if (IsNot)
                     {
-                        Sql.Append(Database.HandleBooleanValue(!b));
+                        Database.HandleBooleanValue(Sql, !b);
                         IsNot = false;
                     }
                     else
                     {
-                        Sql.Append(Database.HandleBooleanValue(b));
+                        Database.HandleBooleanValue(Sql, b);
                     }
+                }
+                else if (v is DateTime dt)
+                {
+                    Database.HandleDateValue(Sql, dt);
                 }
                 else
                 {

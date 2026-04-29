@@ -62,7 +62,7 @@ public class SqlFunTest : TestBase
             Result = SqlFn.Join(u.Age > 10 ? u.UserName : "").Separator("|").Distinct().OrderBy(u.UserId).Value()
         };
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(OracleAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomOracleAdapter.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -75,7 +75,7 @@ public class SqlFunTest : TestBase
             Result = SqlFn.Abs(u.Age)
         };
         var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(OracleAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomOracleAdapter.Instance, table);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }

@@ -20,7 +20,12 @@ public sealed class CustomSqliteAdapter(ISqlMethodResolver methodResolver, Table
     {
         sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
     }
-    public override string ReturnIdentitySql() => "SELECT LAST_INSERT_ROWID()";
+    public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT LAST_INSERT_ROWID()");
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+    }
 
     string Extract => options.JSONBackend == JSONBackend.Binary ? "JSONB_EXTRACT" : "JSON_EXTRACT";
     string Set => options.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";

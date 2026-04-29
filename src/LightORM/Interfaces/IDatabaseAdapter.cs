@@ -13,8 +13,10 @@ namespace LightORM.Interfaces
         ///// </summary>
         //string DeleteTemplate { get; }
         void Paging(ISelectSqlBuilder builder, StringBuilder sql);
-        string ReturnIdentitySql();
-        string HandleBooleanValue(bool value);
+        void ReturnIdentitySql(StringBuilder sql);
+        void HandleBooleanValue(StringBuilder sql, bool value);
+        string FormatBooleanValue(bool value);
+        void HandleDateValue(StringBuilder sql, DateTime value);
         string HandleBooleanValueForBulkCopy(bool value);
         ISqlMethodResolver MethodResolver { get; }
         /// <summary>

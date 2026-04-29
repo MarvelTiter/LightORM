@@ -44,11 +44,11 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
             if (item.Type == ExpValueType.Boolean)
             {
-                sql.Replace(item.Name, database.HandleBooleanValue((bool)item.Value));
+                sql.Replace(item.Name, database.FormatBooleanValue((bool)item.Value));
             }
             else if (item.Type == ExpValueType.BooleanReverse)
             {
-                sql.Replace(item.Name, database.HandleBooleanValue(!(bool)item.Value));
+                sql.Replace(item.Name, database.FormatBooleanValue(!(bool)item.Value));
             }
             else if (item.Type == ExpValueType.Collection)
             {
@@ -83,7 +83,7 @@ internal abstract record SqlBuilder : ISqlBuilder
         BeforeResolveExpressions(ResolveCtx);
         foreach (var item in Expressions.ExpressionInfos.Values)
         {
-            if (item.IsCompleted) 
+            if (item.IsCompleted)
                 continue;
             var result = item.Expression.Resolve(item.ResolveOptions, ResolveCtx);
             if (!string.IsNullOrEmpty(item.Template))

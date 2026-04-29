@@ -12,6 +12,15 @@ public class DbMethodTest : TestBase
     [TestMethod]
     public void TestToString()
     {
+
+        var p = Expression.Parameter(typeof(JobFile), "p");
+        var propExp = Expression.Property(p, nameof(JobFile.JFL_DATE));
+        var valueExp = Expression.Constant(DateTime.Now, typeof(DateTime?));
+        var body = Expression.MakeBinary(ExpressionType.Equal, propExp, valueExp);
+        var lambda = Expression.Lambda<Func<JobFile, bool>>(body, p);
+
+        var rr = lambda.Resolve(SqlResolveOptions.Where, ResolveCtx);
+
         var today = DateTime.Now;
         Expression<Func<User, bool>> exp = u => u.LastLogin!.Value.ToString("yyyy-MM-dd") == today.ToString("yyyy-MM-dd");
         var r1 = exp.Resolve(SqlResolveOptions.Where, ResolveCtx);

@@ -8,9 +8,9 @@ using System.Text;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+public sealed class CustomOracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
-    internal readonly static OracleAdapter Instance = new(new OracleMethodResolver(), new());
+    internal readonly static CustomOracleAdapter Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
@@ -19,6 +19,13 @@ public sealed class OracleAdapter(ISqlMethodResolver methodResolver, TableOption
         sql.AppendLine($") SubMax WHERE ROWNUM <= {builder.Skip + builder.Take}");
         sql.Insert(0, "SELECT * FROM (\n");
         sql.AppendLine($") SubMin WHERE SubMin.ROWNO > {builder.Skip}");
+    }
+
+    public override void HandleDateValue(StringBuilder sql, DateTime dateTime)
+    {
+        sql.Append("TO_DATE('");
+        sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
+        sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
     public override string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
