@@ -31,7 +31,7 @@ public static class StringBuilderHelper
 
     public static string Trim(this StringBuilder stringBuilder, params char[] chars)
     {
-#if NET462_OR_GREATER
+#if NET462_OR_GREATER || NETSTANDARD2_0_OR_GREATER
         if (stringBuilder == null)
             throw new ArgumentNullException(nameof(stringBuilder));
 #else

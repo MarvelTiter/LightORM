@@ -18,14 +18,7 @@ internal record InsertBuilder<T> : SqlBuilder
         Members.Add(member);
         if (value is not null)
         {
-#if NET462
-            if (!DbParameters.ContainsKey(member))
-            {
-                DbParameters.Add(member, value);
-            }
-#else
             DbParameters.TryAdd(member, value);
-#endif
         }
     }
 

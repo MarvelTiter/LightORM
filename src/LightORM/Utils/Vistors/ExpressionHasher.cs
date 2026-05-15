@@ -448,7 +448,7 @@ internal class ExpressionHasher : ExpressionVisitor, IResetable
 
         static ulong DoubleToUInt64Bits(double value)
         {
-#if NET462
+#if NET462 || NETSTANDARD2_0_OR_GREATER
             return (ulong)BitConverter.DoubleToInt64Bits(value);
 #else
             return BitConverter.DoubleToUInt64Bits(value);
@@ -457,7 +457,7 @@ internal class ExpressionHasher : ExpressionVisitor, IResetable
 
         static long SingleToInt64Bits(float value)
         {
-#if NET462
+#if NET462 || NETSTANDARD2_0_OR_GREATER
             return BitConverter.DoubleToInt64Bits(value);
 #else
             return (long)BitConverter.SingleToUInt32Bits(value);
