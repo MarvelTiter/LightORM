@@ -1,11 +1,37 @@
 ﻿using Generators.Shared;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using System;
 using System.Linq;
 using System.Text;
 
 namespace LightOrmExtensionGenerator
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
+    /// <param name="t1"></param>
+    /// <param name="t2"></param>
+    public class TypeSet<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+T1,
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+T2
+>(T1 t1, T2 t2)
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public T1 Tb1 { get; } = t1;
+        public T2 Tb2 { get; } = t2;
+
+    }
     public abstract class GeneratorBase : IIncrementalGenerator
     {
         public const string TargetAttribute = "LightORM.DbEntity.Attributes.SelectExtensionAttribute";
@@ -30,6 +56,10 @@ namespace LightOrmExtensionGenerator
                     """);
                 foreach (var item in attrs)
                 {
+                    if (!Enable(item))
+                    {
+                        continue;
+                    }
                     var result = Handler(item);
                     codes.AppendLine(result);
                 }
@@ -38,12 +68,24 @@ namespace LightOrmExtensionGenerator
         }
 
         public abstract string Handler(AttributeData data);
+        public virtual bool Enable(AttributeData data)
+        {
+            var count = (int)data.GetNamedValue("ArgumentCount")!;
+            return count > 2 && count < 17;
+        }
         public abstract string FileName();
         public virtual string Namespace() => "LightORM";
         protected static string GetTypesString(int count)
         {
             var args = Enumerable.Range(1, count).Select(i => $"T{i}");
             var argsStr = string.Join(", ", args);
+            return argsStr;
+        }
+
+        protected static string GetTypesString(int count, Func<int, string> func, string separator)
+        {
+            var args = Enumerable.Range(1, count).Select(func);
+            var argsStr = string.Join(separator, args);
             return argsStr;
         }
     }

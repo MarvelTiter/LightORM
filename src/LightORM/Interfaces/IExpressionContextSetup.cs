@@ -11,7 +11,11 @@ public interface IExpressionContextSetup
     IExpressionContextSetup SetEnableExpressionCache(bool enable);
     IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider);
     IExpressionContextSetup SetTableContext(ITableContext context);
-    IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase;
+    IExpressionContextSetup UseInterceptor<
+#if NET8_0_OR_GREATER
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        T>() where T : AdoInterceptorBase;
     IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new();
 
     IExpressionContextSetup ConfigJsonHandler<T>() where T : ILightJsonHelper, new();

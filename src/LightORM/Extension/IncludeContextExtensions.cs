@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace LightORM.Extension
@@ -8,25 +9,13 @@ namespace LightORM.Extension
         private readonly static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
         private readonly static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
         private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault), Type.EmptyTypes)!;
-        //public static void BindIncludeData<T>(this IncludeContext context, ISqlExecutor executor,T data)
-        //{
-        //    foreach (IncludeInfo include in context.Includes)
-        //    {
-        //        Do(context, executor, data!, include);
-        //    }
-        //}
-        //public static void BindIncludeDatas<T>(this IncludeContext context, ISqlExecutor executor, IList<T> datas)
-        //{
-        //    foreach (var item in datas)
-        //    {
-        //        foreach (IncludeInfo include in context.Includes)
-        //        {
-        //            Do(context, executor, item!, include);
-        //        }
-        //    }
-        //}
+
+#if NET8_0_OR_GREATER
+
+#endif
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
+            // TODO 在TableContext生成器中，增加Include相关方法的生成
             if (data is IEnumerable datas)
             {
                 foreach (object item in datas)
@@ -45,7 +34,9 @@ namespace LightORM.Extension
                 }
             }
         }
+#if NET8_0_OR_GREATER
 
+#endif
         private static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
         {
             var database = executor.Database.DatabaseAdapter;
@@ -75,7 +66,6 @@ namespace LightORM.Extension
 
         public static SelectBuilder BuildIncludeSqlBuilder(IDatabaseAdapter database, object item, IncludeInfo include)
         {
-            //var mainWhere = BuildMainWhereExpression(item, include.ParentWhereColumn!);
             var includeBuilder = BuildSql(database, include, item);
             return includeBuilder;
         }
@@ -85,8 +75,6 @@ namespace LightORM.Extension
             SelectBuilder selectSql = SelectBuilder.GetSelectBuilder();
             var selectedType = include.NavigateInfo!.NavigateType;
             selectSql.SelectedTables.Add(TableInfo.Create(selectedType));
-            //selectSql.DbParameterStartIndex = include.ExpressionResolvedResult!.DbParameters?.Count ?? 0;
-            //selectSql.DbParameters.TryAddDictionary(include.ExpressionResolvedResult!.DbParameters);
 
             var mainNav = selectSql.MainTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
             var mainCol = selectSql.MainTable.GetColumnInfo(mainNav.MainName!);
@@ -131,12 +119,17 @@ namespace LightORM.Extension
             }
             return selectSql;
         }
+#if NET8_0_OR_GREATER
 
+#endif
         private static LambdaExpression BuildSelectAllExpression(ParameterExpression[] allTables)
         {
             var lambda = Expression.Lambda(allTables[0], allTables);
             return lambda;
         }
+#if NET8_0_OR_GREATER
+
+#endif
         private static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col, ParameterExpression[] allTables)
         {
             var p = allTables.Last();

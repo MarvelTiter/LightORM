@@ -13,6 +13,8 @@
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 		<IncludeSymbols>False</IncludeSymbols>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<IsAotCompatible>true</IsAotCompatible>
+		<NoWarn>1591</NoWarn>
 	</PropertyGroup>
 	<Import Project="Versions.props" />
 	<ItemGroup>

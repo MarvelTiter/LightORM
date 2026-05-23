@@ -155,7 +155,7 @@ internal static partial class TableContext
 
             var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
             entityInfo.Columns = [.. propertyColumnInfos];
-           
+
             return entityInfo;
         });
         // 拷贝

@@ -24,7 +24,11 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         currentResultSet++;
     }
 
-    public IEnumerable<T> Read<T>()
+    public IEnumerable<T> Read<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>()
     {
         Check();
         Func<IDataReader, T> deserializer = ExpressionBuilder.BuildDeserializer<T>(reader);
@@ -34,7 +38,11 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         }
     }
 
-    public async IAsyncEnumerable<T> ReadAsync<T>()
+    public async IAsyncEnumerable<T> ReadAsync<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>()
     {
         Check();
         Func<IDataReader, T> deserializer = ExpressionBuilder.BuildDeserializer<T>(reader);
@@ -44,7 +52,11 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         }
     }
 
-    public async Task<IList<T>> ReadListAsync<T>()
+    public async Task<IList<T>> ReadListAsync<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>()
     {
         Check();
         Func<IDataReader, T> deserializer = ExpressionBuilder.BuildDeserializer<T>(reader);
@@ -57,7 +69,11 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         return results;
     }
 
-    public T? ReadFirst<T>()
+    public T? ReadFirst<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>()
     {
         Check();
         if (reader.Read())
@@ -69,7 +85,11 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         return default;
     }
 
-    public async Task<T?> ReadFirstAsync<T>()
+    public async Task<T?> ReadFirstAsync<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>()
     {
         Check();
         if (await reader.ReadAsync())

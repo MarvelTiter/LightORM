@@ -3,6 +3,9 @@
 public interface ITableColumnInfo
 {
     //ITableEntityInfo Table { get; }
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
     Type TableType { get; }
     Type ColumnType { get; }
     string ColumnName { get; }
@@ -24,6 +27,9 @@ public interface ITableColumnInfo
     NavigateInfo? NavigateInfo { get; }
     bool IsNotMapped { get; }
     bool IsPrimaryKey { get; }
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
     Type? AggregateType { get; }
     string? AggregateProp { get; }
     bool IsAggregated { get; }

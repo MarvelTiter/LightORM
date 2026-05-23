@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Performances;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace LightORM.Builder;
@@ -85,7 +86,12 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
             context.SetParamPrefix("s");
         }
     }
-
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling."
+        , Justification = "根据已知类型构建导航条件 Expression.Lambda")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code"
+        , Justification = "根据已知类型构建导航条件 从表达式中获取MemberName构建Expression.Property")]
+#endif
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)

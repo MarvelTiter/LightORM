@@ -11,7 +11,11 @@ internal partial class ExpressionBuilder
 {
     private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
 
-    public static Func<IDataReader, T> BuildDeserializer<T>(DbDataReader reader)
+    public static Func<IDataReader, T> BuildDeserializer<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    T>(DbDataReader reader)
     {
         var type = typeof(T);
 
@@ -62,7 +66,11 @@ internal partial class ExpressionBuilder
     /// <param name="reader"></param>
     /// <param name="Culture"></param>
     /// <returns></returns>
-    private static Func<IDataReader, Target> BuildFunc<Target>(DbDataReader reader, CultureInfo Culture)
+    private static Func<IDataReader, Target> BuildFunc<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    Target>(DbDataReader reader, CultureInfo Culture)
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);

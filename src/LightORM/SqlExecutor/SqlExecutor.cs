@@ -1051,17 +1051,21 @@ internal partial class SqlExecutor : ISqlExecutor
     }
 
     private static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
-    internal static Action<DbCommand>? GetInit(Type commandType)
+    internal static Action<DbCommand>? GetInit(
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type commandType)
     {
         if (commandType == null)
         {
             return null;
         }
 
-        return commandInitCache.GetOrAdd(commandType, t =>
+        if (!commandInitCache.TryGetValue(commandType, out var action))
         {
-            MethodInfo? setBindName = GetBasicPropertySetter(t, "BindByName", typeof(bool));
-            MethodInfo? setInit = GetBasicPropertySetter(t, "InitialLONGFetchSize", typeof(int));
+            MethodInfo? setBindName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+            MethodInfo? setInit = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
             if (setBindName is null && setInit is null)
             {
                 return null;
@@ -1073,7 +1077,7 @@ internal partial class SqlExecutor : ISqlExecutor
              * }
              */
             ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
-            List<Expression> body = new List<Expression>();
+            List<Expression> body = [];
             if (setBindName != null)
             {
                 UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
@@ -1087,11 +1091,17 @@ internal partial class SqlExecutor : ISqlExecutor
                 body.Add(setter2Exp);
             }
             var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
-            return lambda.Compile();
-        });
+            action = lambda.Compile();
+            commandInitCache.TryAdd(commandType, action);
+        }
+        return action;
     }
 
-    internal static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
+    internal static MethodInfo? GetBasicPropertySetter(
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type declaringType, string name, Type expectedType)
     {
         PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
         if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)

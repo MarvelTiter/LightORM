@@ -96,6 +96,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             item.IsCompleted = true;
         }
     }
+
     protected abstract void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result);
 
     public abstract string ToSqlString(IDatabaseAdapter database);

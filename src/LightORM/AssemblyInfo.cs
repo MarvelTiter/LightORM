@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
 [assembly: InternalsVisibleTo("LightORMTest.PostgreSQL")]
+[assembly: SelectExtension(ArgumentCount = 2)]
 [assembly: SelectExtension(ArgumentCount = 3)]
 [assembly: SelectExtension(ArgumentCount = 4)]
 [assembly: SelectExtension(ArgumentCount = 5)]
@@ -19,6 +20,7 @@ using System.Runtime.CompilerServices;
 [assembly: SelectExtension(ArgumentCount = 14)]
 [assembly: SelectExtension(ArgumentCount = 15)]
 [assembly: SelectExtension(ArgumentCount = 16)]
+[assembly: SelectExtension(ArgumentCount = 17)]
 
 namespace LightORM.AssemblyControl
 {

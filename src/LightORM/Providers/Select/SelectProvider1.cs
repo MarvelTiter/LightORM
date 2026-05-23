@@ -185,8 +185,6 @@ internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSe
 
     internal IExpInclude<T1, TMember> CreateIncludeProvider<TMember>(Expression exp)
     {
-        //var option = SqlResolveOptions.Select;
-        //var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
         string? includePropertyName = null;
         Expression? includeWhereExpression = null;
         if (exp is MemberExpression m)
