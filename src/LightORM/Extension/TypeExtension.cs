@@ -76,7 +76,7 @@ internal static class TypeExtension
         {
             indexs.Add(new()
             {
-                Columns = item.Indexs.Select(p => columns.FirstOrDefault(c => c.PropName == p).Name) ?? Enumerable.Empty<string>(),
+                Columns = item.Indexs?.Select(p => columns.FirstOrDefault(c => c.PropName == p).Name) ?? [],
                 DbIndexType = item.DbIndexType,
                 Name = item.Name
             });

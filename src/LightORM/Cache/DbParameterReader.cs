@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -11,7 +12,11 @@ internal static class DbParameterReader
     private static readonly ConcurrentDictionary<Certificate, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
     public static Action<IDbCommand, object> GetDbParameterReader(string commandText
         , string prefix
-        , Type paramaterType)
+        ,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type paramaterType)
     {
         if (paramaterType == typeof(Dictionary<string, object>))
         {
@@ -21,7 +26,11 @@ internal static class DbParameterReader
         return cacheReaders.GetOrAdd(cer, key => CreateReader(key.DbPrefix, key.Sql, key.ParameterType));
     }
 
-    public static Dictionary<string, object> ObjectToDictionary(string prefix, string sql, object? value)
+    public static Dictionary<string, object> ObjectToDictionary<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(string prefix, string sql, T? value)
     {
         if (value is null)
         {
@@ -31,7 +40,7 @@ internal static class DbParameterReader
         {
             return d;
         }
-        var cer = new Certificate(sql, prefix, value.GetType());
+        var cer = new Certificate(sql, prefix, typeof(T));
         var func = readObjectToDicCache.GetOrAdd(cer, key => CreateObjectToDictionary(key.DbPrefix, key.Sql, key.ParameterType));
         return func.Invoke(value);
     }
@@ -85,7 +94,16 @@ internal static class DbParameterReader
     static readonly MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
     static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
     static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, object>).GetMethod("Add")!;
-    public static Action<IDbCommand, object> CreateReader(string prefix, string commandText, Type parameterType)
+
+#if NET8_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(IDataParameter))]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "已通过DynamicDependency配置")]
+#endif
+    public static Action<IDbCommand, object> CreateReader(string prefix, string commandText,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type parameterType)
     {
         /*
          * (cmd, obj) => { 
@@ -123,7 +141,7 @@ internal static class DbParameterReader
                 Expression.Call(cmdExp, createParameterMethodInfo));
             // temp.ParameterName = prop.Name
             var nameAssignExp = Expression.Assign(
-                Expression.Property(tempExp, "ParameterName"),
+                Expression.Property(tempExp, nameof(IDbDataParameter.ParameterName)),
                 Expression.Constant(prop.Name, typeof(string)));
 
             var propAccess = Expression.Property(paramExp, prop);
@@ -149,11 +167,11 @@ internal static class DbParameterReader
                 finalValueExp = Expression.Convert(propAccess, typeof(object));
             }
 
-            var valueExp = Expression.Property(tempExp, "Value");
+            var valueExp = Expression.Property(tempExp, nameof(IDbDataParameter.Value));
 
             // temp.Value = p.PropertyValue
             var valueAssignExp = Expression.Assign(
-                Expression.Property(tempExp, "Value"),
+                Expression.Property(tempExp, nameof(IDbDataParameter.Value)),
                 finalValueExp);
             if (!typeMapDbType.TryGetValue(realType, out var dbType))
             {
@@ -162,7 +180,7 @@ internal static class DbParameterReader
 
             //temp.DbType = dbType;
             var dbTypeAssignExp = Expression.Assign(
-                Expression.Property(tempExp, "DbType"),
+                Expression.Property(tempExp, nameof(IDbDataParameter.DbType)),
                 Expression.Constant(dbType, typeof(DbType)));
             // cmd.Parameters.Add(temp)
             var addToList = Expression.Call(Expression.Property(cmdExp, parameterCollection), listAddMethodInfo, tempExp);

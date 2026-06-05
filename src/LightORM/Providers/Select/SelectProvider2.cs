@@ -1,9 +1,12 @@
 ﻿using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
 
-internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
+internal sealed class SelectProvider2<
+    //[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+    T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
 {
     public SelectProvider2(ISqlExecutor executor, SelectBuilder? builder = null)
         : base(executor, builder)
@@ -217,6 +220,7 @@ internal sealed class SelectProvider2<T1, T2> : SelectProvider0<IExpSelect<T1, T
 
     public IExpSelectGroup<TGroup, TypeSet<T1, T2>> GroupBy<TGroup>(Expression<Func<TypeSet<T1, T2>, TGroup>> exp)
     {
+        
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         return this.GroupByHandle<TGroup, TypeSet<T1, T2>>(flatExp);
     }

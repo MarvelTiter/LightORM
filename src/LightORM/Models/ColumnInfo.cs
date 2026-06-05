@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using LightORM.Extension;
 
 namespace LightORM.Models;
@@ -22,6 +23,9 @@ public static class ColumnInfoExtensions
 public sealed record ColumnInfo : ITableColumnInfo
 {
     //public ITableEntityInfo Table { get; set; }
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
     public Type TableType { get; }
     public Type ColumnType { get; }
     public string ColumnName => CustomName ?? PropertyName;
@@ -51,6 +55,9 @@ public sealed record ColumnInfo : ITableColumnInfo
     public bool CanRead { get; set; }
     public bool CanWrite { get; set; }
     public bool CanInit { get; set; }
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
     public Type? AggregateType { get; }
     public bool IsAggregated { get; }
     public bool IsAggregatedProperty { get; }
@@ -63,7 +70,11 @@ public sealed record ColumnInfo : ITableColumnInfo
 
     //public object? GetValue(object target) => throw new Exception();//Table.GetValue(this, target);
     //public void SetValue(object target, object value) => throw new Exception();// Table.SetValue(this, target, value);
-    public ColumnInfo(Type owner
+    public ColumnInfo(
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type owner
         , Type propertyType
         , string propname
         , string? customname
@@ -78,7 +89,11 @@ public sealed record ColumnInfo : ITableColumnInfo
         , bool canWrite
         , bool canInit
         , NavigateInfo? navigationInfo
-        , Type? aggregateType
+        ,
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    Type? aggregateType
         , bool isAggregated
         , bool isAggregaredProp
         , bool isVersionColumn
@@ -120,7 +135,10 @@ public sealed record ColumnInfo : ITableColumnInfo
             ExpressionBuilder.AddJsonTypeMap(ColumnType);
         }
     }
-
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2069", Justification = "反射创建ColumnInfo不支持AOT，考虑使用LightOrmTableContextGenerator.TableContextGenerator生成器")]
+    [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072", Justification = "反射创建ColumnInfo不支持AOT，考虑使用LightOrmTableContextGenerator.TableContextGenerator生成器")]
+#endif
     public ColumnInfo(Type owner, PropertyInfo property, Type? aggregateType, bool isAggregated, bool isAggregaredProp)
     {
         TableType = owner;

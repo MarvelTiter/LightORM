@@ -72,6 +72,7 @@ internal partial class ExpressionSqlOptions
 
     public static void SetTableContext(ITableContext context)
     {
+        AOTSupported = true;
         TableContext.StaticContext = context;
     }
 

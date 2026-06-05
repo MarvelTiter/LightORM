@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Data.Common;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -8,6 +9,7 @@ namespace LightORM.Interfaces
     {
         string Prefix { get; }
         string Emphasis { get; }
+        void DbCommandInit(DbCommand dbCommand);
         ///// <summary>
         ///// 获取删除语句的模板，将提供两个参数，{0} 表示表名，{1} 表示别名
         ///// </summary>

@@ -4,6 +4,7 @@ using LightORM.Interfaces;
 using LightORM.Models;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
+using System.Data.Common;
 using System.Text;
 
 namespace LightORM.Providers.Oracle;
@@ -13,6 +14,17 @@ public sealed class CustomOracleAdapter(ISqlMethodResolver methodResolver, Table
     internal readonly static CustomOracleAdapter Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
+
+    public override void DbCommandInit(DbCommand dbCommand)
+    {
+        if (dbCommand is OracleCommand oracleCommand)
+        {
+            oracleCommand.BindByName = true;
+            oracleCommand.InitialLONGFetchSize = -1;
+            //oracleCommand.InitialLOBFetchSize = -1;
+        }
+    }
+
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
     {
         sql.Insert(0, $"SELECT ROWNUM as ROWNO, SubMax.* FROM (\n");

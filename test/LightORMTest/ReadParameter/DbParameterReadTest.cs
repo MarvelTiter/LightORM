@@ -20,10 +20,10 @@ public class DbParameterReadTest
             Name = "Marvel"
         };
         var dic = DbParameterReader.ObjectToDictionary("@", "@Date, @Age, @Name", p1);
-        var dic2 = DbParameterReader.ObjectToDictionary("@", "@Date, @Age, @Name", p1);
+        _ = DbParameterReader.ObjectToDictionary("@", "@Date, @Age, @Name", p1);
         Assert.IsTrue((DateTime)dic["Date"] == p1.Date);
-        Assert.IsTrue((int)dic["Age"] == p1.Age);
-        Assert.IsTrue((string)dic["Name"] == p1.Name);
+        Assert.AreEqual(p1.Age, (int)dic["Age"]);
+        Assert.AreEqual(p1.Name, (string)dic["Name"]);
     }
     enum TestE
     {

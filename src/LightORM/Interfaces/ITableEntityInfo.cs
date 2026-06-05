@@ -1,4 +1,6 @@
-﻿namespace LightORM.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LightORM.Interfaces;
 
 public interface ITableEntityInfo
 {
@@ -18,7 +20,11 @@ public interface ITableEntityInfo
     
 }
 
-public interface ITableEntityInfo<T> : ITableEntityInfo
+public interface ITableEntityInfo<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
+    T> : ITableEntityInfo
 {
     Func<IDataReader, T>? DataReaderDeserializer { get; }
 }

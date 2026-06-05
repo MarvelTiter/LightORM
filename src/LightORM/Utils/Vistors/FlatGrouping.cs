@@ -1,5 +1,6 @@
 ﻿using LightORM;
 using LightORM.Performances;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Utils.Vistors;
 
@@ -31,8 +32,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
                 // 并且 TTables 是 TypeSet<T1,T2,....> 
                 if (p.Count == 1 && p[0].Type.GenericTypeArguments[1].Name.StartsWith("TypeSet`"))
                 {
-                    var type = p[0].Type.GenericTypeArguments[1];
-                    var tp = type.GetProperties().Where(p => p.Name.StartsWith("Tb")).Select((p, i) => Expression.Parameter(p.PropertyType, $"p{i}")).ToArray();
+                    var tp = p[0].Type.GenericTypeArguments[1].GetGenericArguments().Select((p, i) => Expression.Parameter(p, $"p{i}")).ToArray();
                     groupTypeIndex = tp.Length;
                     parameters = [.. tp, p[0]];
                 }
@@ -54,7 +54,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
             this.keySelector = keySelector;
             TryAddSelectorParameters();
             var body = Visit(exp.Body);
-            return Expression.Lambda(body, parameters);
+            return SafeCreateLambda(body, parameters);
         }
         finally
         {
@@ -94,7 +94,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
             {
                 if (parameters[widx - 1].Type != parent.Type) //解决 BaseEntity + AsTable 时报错
                     parameters[widx - 1] = Expression.Parameter(parent.Type, parameters[widx - 1].Name);
-                return Expression.Property(parameters[widx - 1], node.Member.Name);
+                return SafeCreateProperty(parameters[widx - 1], node.Member.Name);
             }
             // w.Group.XXX 或者 w.Key.XXX
             else if (parent?.Member.Name == "Group" || parent?.Member.Name == "Key")
@@ -122,7 +122,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
                 {
                     parameters[0] = Expression.Parameter(parent.Type, parameters[0].Name);
                 }
-                return Expression.Property(parameters[0], node.Member.Name);
+                return SafeCreateProperty(parameters[0], node.Member.Name);
             }
         }
 
@@ -154,5 +154,23 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
         }
 
         return base.VisitMember(node);
+    }
+
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL3050", Justification = "TypeSet或IExpSelectGrouping 的泛型参数和成员由用户显式编写，AOT 安全")]
+#endif
+    private static LambdaExpression SafeCreateLambda(Expression body, IEnumerable<ParameterExpression> parameters)
+    {
+        return Expression.Lambda(body, parameters);
+    }
+
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "TypeSet或IExpSelectGrouping 的成员由用户显式编写，AOT 静态分析可跟踪")]
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "TypeSet或IExpSelectGrouping 的成员由用户显式编写，AOT 安全")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "TypeSet或IExpSelectGrouping 的成员由用户显式编写，AOT 安全")]
+#endif
+    private static MemberExpression SafeCreateProperty(Expression expression, string propertyName)
+    {
+        return Expression.Property(expression, propertyName);
     }
 }

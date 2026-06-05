@@ -1,5 +1,7 @@
 ﻿global using static LightORM.AssemblyControl.DebugControl;
+global using static LightORM.AssemblyControl.AOTControl;
 using LightORM.DbEntity.Attributes;
+using LightORM.Extension;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("InjectTest")]
 [assembly: InternalsVisibleTo("TestProject1")]
@@ -29,5 +31,26 @@ namespace LightORM.AssemblyControl
         public static readonly bool ShowExpressionResolveDebugInfo = false;
         public static readonly bool ShowSqlExecutorDebugInfo = true;
         public static readonly bool ShowExpressionHashCodeDebugInfo = true;
+    }
+
+    internal static class AOTControl
+    {
+        public static bool AOTSupported = false;
+
+        public static void EnsureReflectionAccess(Type type)
+        {
+#if NET8_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported && !type.IsAnonymous())
+            {
+                if (!AOTSupported)
+                    throw new NotSupportedException($"""
+                        当前环境不支持动态代码生成，无法通过反射访问类型成员。 +
+                        类型: {type.FullName}
+                        解决方案：SetTableContext配置生成器生成的上下文。
+                        匿名类型（如 Select/GroupBy 投影）不受此限制。
+                        """);
+            }
+#endif
+        }
     }
 }

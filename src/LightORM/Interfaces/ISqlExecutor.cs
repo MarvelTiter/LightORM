@@ -70,7 +70,7 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    int ExecuteNonQuery(string commandText, object? dbParameters = default, CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行标量

@@ -1,4 +1,5 @@
 ﻿using LightORM.Utils.Vistors;
+using System.Threading;
 
 namespace LightORM;
 
@@ -28,6 +29,19 @@ public static partial class SelectExtensions
         return keys.FirstOrDefault();
     }
 
+    public static T? ExecuteScalar<T>(this IExpSelect select)
+    {
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteScalar<T>(sql, parameters);
+    }
+
+    public static Task<T?> ExecuteScalarAsync<T>(this IExpSelect select, CancellationToken cancellationToken = default)
+    {
+        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+        var parameters = select.SqlBuilder.DbParameters;
+        return select.Executor.ExecuteScalarAsync<T>(sql, parameters, cancellationToken: cancellationToken);
+    }
 
     public static IEnumerable<dynamic> ToDynamicList<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {
@@ -35,11 +49,11 @@ public static partial class SelectExtensions
         return select.ToList<MapperRow>();
     }
 
-    public static async Task<IList<dynamic>> ToDynamicListAsync<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
+    public static async Task<IList<dynamic>> ToDynamicListAsync<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         select.HandleResult(exp, null);
-        var list = await select.ToListAsync<MapperRow>();
-        return list.Cast<dynamic>().ToList();
+        var list = await select.ToListAsync<MapperRow>(cancellationToken);
+        return [.. list.Cast<dynamic>()];
     }
 
     public static DataTable ToDataTable<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
@@ -50,12 +64,12 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public static Task<DataTable> ToDataTableAsync<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
+    public static Task<DataTable> ToDataTableAsync<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         select.HandleResult(exp, null);
         var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteDataTableAsync(sql, parameters);
+        return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
 
     public static IExpSelect<T1> SelectColumns<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
@@ -64,10 +78,10 @@ public static partial class SelectExtensions
         return select;
     }
 #if NET10_0_OR_GREATER
-    
+
     extension<T1>(IExpSelect<T1> select)
     {
-        
+
     }
 #endif
 
@@ -107,10 +121,10 @@ public static partial class SelectExtensions
         return select.InternalToList<MapperRow>();
     }
 
-    public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default)
     {
         select.HandleResult(exp, null);
-        var list = await select.InternalToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>(cancellationToken: cancellationToken);
         return [.. list.Cast<dynamic>()];
     }
 
@@ -122,12 +136,12 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public static Task<DataTable> ToDataTableAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)
+    public static Task<DataTable> ToDataTableAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default)
     {
         select.HandleResult(exp, null);
         var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteDataTableAsync(sql, parameters);
+        return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
 
     #region TypeSet
@@ -151,11 +165,11 @@ public static partial class SelectExtensions
         return select.InternalToList<MapperRow>();
     }
 
-    public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
+    public static async Task<IList<dynamic>> ToDynamicListAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
-        var list = await select.InternalToListAsync<MapperRow>();
+        var list = await select.InternalToListAsync<MapperRow>(cancellationToken: cancellationToken);
         return [.. list.Cast<dynamic>()];
     }
 
@@ -168,13 +182,13 @@ public static partial class SelectExtensions
         return select.Executor.ExecuteDataTable(sql, parameters);
     }
 
-    public static Task<DataTable> ToDataTableAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp)
+    public static Task<DataTable> ToDataTableAsync<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         select.HandleResult(flatExp, null);
         var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteDataTableAsync(sql, parameters);
+        return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
     }
 
     #endregion

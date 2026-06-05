@@ -1,6 +1,7 @@
 ﻿
 
 using LightORM.Implements;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 
@@ -54,30 +55,36 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect WithParameters<TParameter>(TParameter parameters)
-    {
-        //if (parameters is not null)
-        //{
-        //    if (parameters is not IDictionary<string, object> dic)
-        //    {
-        //        var reader = DbParameterReader.CreateReadToDictionary("", typeof(TParameter));
-        //        dic = reader.Invoke(parameters);
-        //    }
-        //    SqlBuilder.DbParameters.TryAddDictionary(dic);
-        //}
 
+
+    #endregion
+
+    #region original sql
+
+    public TSelect WithParameters<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(TParameter parameters)
+    {
         SqlBuilder.TryAddParameters(Database.Prefix, "", parameters);
         return (this as TSelect)!;
     }
-
-    public TSelect Where(string sql, object? parameters = default!)
+    public TSelect Where<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.Where.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-
-    public TSelect WhereIf(bool condition, string sql, object? parameters = default!)
+    public TSelect WhereIf<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(bool condition, string sql, TParameter parameters)
     {
         if (condition)
         {
@@ -85,23 +92,65 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
-    public TSelect GroupBy(string sql, object? parameters = default!)
+    public TSelect GroupBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.GroupBy.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect Having(string sql, object? parameters = default!)
+    public TSelect Having<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         //SqlBuilder
         SqlBuilder.Having.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect OrderBy(string sql, object? parameters = default!)
+    public TSelect OrderBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.OrderBy.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
+        return (this as TSelect)!;
+    }
+
+    public TSelect Where(string sql)
+    {
+        SqlBuilder.Where.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect WhereIf(bool condition, string sql)
+    {
+        if (condition)
+        {
+            return Where(sql);
+        }
+        return (this as TSelect)!;
+    }
+    public TSelect GroupBy(string sql)
+    {
+        SqlBuilder.GroupBy.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect Having(string sql)
+    {
+        //SqlBuilder
+        SqlBuilder.Having.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect OrderBy(string sql)
+    {
+        SqlBuilder.OrderBy.Add(sql);
         return (this as TSelect)!;
     }
 

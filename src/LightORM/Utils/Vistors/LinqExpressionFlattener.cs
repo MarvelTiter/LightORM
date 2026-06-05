@@ -16,8 +16,7 @@ internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
         _transparentParameter = null;
     }
 #if NET8_0_OR_GREATER
-    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling."
-        , Justification = "扁平化闭包表达式")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "扁平化闭包表达式")]
 #endif
     public LambdaExpression Flatten(LambdaExpression lambda)
     {
@@ -55,8 +54,7 @@ internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
         }
     }
 #if NET8_0_OR_GREATER
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code"
-        , Justification = "扁平化闭包表达式")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "扁平化闭包表达式")]
 #endif
     protected override Expression VisitMember(MemberExpression node)
     {

@@ -11,9 +11,9 @@ internal partial class ExpressionBuilder
     }
     public static bool ContainsJsonType(Type type) => JsonMaps.ContainsKey(type);
 
-    public static string CustomStringToBoolean(string valueString)
+    public static bool CustomStringToBoolean(string valueString)
     {
-        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? "True" : "False";
+        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? true : false;
     }
     public static byte[] RecordFieldToBytes(IDataRecord Reader, int Column)
     {

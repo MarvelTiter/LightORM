@@ -5,7 +5,11 @@ using System.Threading;
 
 namespace LightORM.Repository;
 
-internal sealed class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
+internal sealed class DefaultRepository<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+TEntity> : ILightOrmRepository<TEntity>
 {
     private static readonly ParameterExpression parameterExpression = Expression.Parameter(typeof(TEntity), "entity");
     private static readonly Lazy<ConcurrentDictionary<PropertyInfo, PrimaryKeyExpressionBuilder>> keyBuilders = new(CreateKeyBuilders);
@@ -204,19 +208,11 @@ internal sealed class DefaultRepository<TEntity> : ILightOrmRepository<TEntity>
         if (string.IsNullOrEmpty(primaryKey))
         {
             var pkType = value.GetType();
-            builder = keyBuilders.Value.FirstOrDefault(k => k.Key.PropertyType == pkType).Value;
-            if (builder == null)
-            {
-                throw new LightOrmException($"未找到类型为{pkType}的主键");
-            }
+            builder = keyBuilders.Value.FirstOrDefault(k => k.Key.PropertyType == pkType).Value ?? throw new LightOrmException($"未找到类型为{pkType}的主键");
         }
         else
         {
-            builder = keyBuilders.Value.FirstOrDefault(k => k.Key.Name == primaryKey).Value;
-            if (builder == null)
-            {
-                throw new LightOrmException($"未找到名称为{primaryKey}的主键");
-            }
+            builder = keyBuilders.Value.FirstOrDefault(k => k.Key.Name == primaryKey).Value ?? throw new LightOrmException($"未找到名称为{primaryKey}的主键");
         }
 
         return builder.CreatePrimaryKeyExpression(parameterExpression, value);

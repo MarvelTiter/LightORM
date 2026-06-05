@@ -2,7 +2,11 @@
 
 namespace LightORM.Repository;
 
-public interface ILightOrmRepository<TEntity>: IDisposable
+public interface ILightOrmRepository<
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    TEntity>: IDisposable
 {
     IQueryable<TEntity> Table { get; }
     IExpSelect<TEntity> ExpSelect { get; }

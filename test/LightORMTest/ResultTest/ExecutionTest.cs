@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,6 +23,7 @@ public class ExecutionTest : TestBase
             Age = 11,
             IsLock = false,
             Password = "helloworld",
+            Avator = Encoding.UTF8.GetBytes("test01")
         }, new User()
         {
             UserId = "test02",
@@ -29,6 +31,7 @@ public class ExecutionTest : TestBase
             Age = 9,
             IsLock = true,
             Password = "helloworld",
+            Avator = Encoding.UTF8.GetBytes("test02")
         }, new User()
         {
             UserId = "test03",
@@ -36,6 +39,7 @@ public class ExecutionTest : TestBase
             Age = 8,
             IsLock = false,
             Password = "helloworld",
+            Avator = Encoding.UTF8.GetBytes("test03")
         }, new User()
         {
             UserId = "test04",
@@ -79,7 +83,7 @@ public class ExecutionTest : TestBase
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
             // tolist
-            var list1 = await Db.Select<User>().OrderBy(u => u.Age).ToListAsync();
+            var list1 = await Db.Select<User>().OrderBy(u => u.Age).ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(4, list1);
             Assert.AreEqual(8, list1[0].Age);
             Assert.AreEqual(9, list1[1].Age);
@@ -92,12 +96,12 @@ public class ExecutionTest : TestBase
                 .Where(u => u.Age < age)
                 .Count(out var total)
                 .OrderByDesc(u => u.Age)
-                .ToListAsync();
+                .ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(2, list2);
             Assert.AreEqual(9, list2[0].Age);
 
             // to async enumerable list
-            var list3 = Db.Select<User>().ToEnumerableAsync();
+            var list3 = Db.Select<User>().ToEnumerableAsync(TestContext.CancellationToken);
             await foreach (var item in list3)
             {
                 Console.WriteLine($"{item.UserId} - {item.UserName}");
@@ -108,7 +112,7 @@ public class ExecutionTest : TestBase
             var result = await Db.Select<User>()
             .Include(u => u.UserRoles)
             .Where(u => u.UserId == "test01")
-            .FirstAsync();
+            .FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.UserRoles);
             Assert.AreEqual(1, result.UserRoles.Count());
@@ -116,7 +120,7 @@ public class ExecutionTest : TestBase
             result = await Db.Select<User>()
                 .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Ad")))
                 .Where(u => u.UserId == "test03")
-                .FirstAsync();
+                .FirstAsync(TestContext.CancellationToken);
 
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.UserRoles);
@@ -126,7 +130,7 @@ public class ExecutionTest : TestBase
             result = await Db.Select<User>()
                 .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("Su")))
                 .Where(u => u.UserId == "test03")
-                .FirstAsync();
+                .FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.UserRoles);
             Assert.AreEqual(1, result.UserRoles.Count());
@@ -135,19 +139,19 @@ public class ExecutionTest : TestBase
             #endregion
 
             // select string column
-            var list4 = await Db.Select<User>().ToListAsync(u => u.UserName);
+            var list4 = await Db.Select<User>().ToListAsync(u => u.UserName, TestContext.CancellationToken);
             Assert.HasCount(4, list4);
             Assert.AreEqual("Test1", list4[0]);
             Assert.AreEqual("Test2", list4[1]);
 
             // select int column
-            var list5 = await Db.Select<User>().ToListAsync(u => u.Age);
+            var list5 = await Db.Select<User>().ToListAsync(u => u.Age, TestContext.CancellationToken);
             Assert.HasCount(4, list5);
             Assert.AreEqual(9, list5[1]);
             Assert.AreEqual(8, list5[2]);
 
             // select anonymous type
-            var list6 = await Db.Select<User>().ToListAsync(u => new { u.UserId, u.UserName, u.Age });
+            var list6 = await Db.Select<User>().ToListAsync(u => new { u.UserId, u.UserName, u.Age }, TestContext.CancellationToken);
             Assert.HasCount(4, list6);
             Assert.AreEqual("test02", list6[1].UserId);
             Assert.AreEqual("Test2", list6[1].UserName);
@@ -171,17 +175,28 @@ public class ExecutionTest : TestBase
             // select projection
             var dto = await Db.Select<User>()
                 .Where(u => u.UserId == "test04")
-                .ToListAsync<UserDto>(u => new() { UserId = u.UserId, Sign = u.Sign });
+                .ToListAsync<UserDto>(u => new() { UserId = u.UserId, Sign = u.Sign }, TestContext.CancellationToken);
             Assert.HasCount(1, dto);
             Assert.AreEqual(SignType.Svip, dto[0].Sign);
 
             // multi arg
             int arg = 10;
-            var list8 = await Db.Select<User>().Where(u => u.Age < arg && u.Version < arg).ToListAsync();
+            var list8 = await Db.Select<User>().Where(u => u.Age < arg && u.Version < arg).ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(2, list8);
         });
     }
 
+    [TestMethod]
+    public async Task Select_Single_Column()
+    {
+        await DoSomethingWithTempUserDataAsync(Db, async () =>
+        {
+            var avatorData = await Db.Select<User>().Where(u => u.UserId.EndsWith("01")).SelectColumns(u => u.Avator).ExecuteScalarAsync<byte[]>(TestContext.CancellationToken);
+            Assert.IsNotNull(avatorData);
+            var avaStr = Encoding.UTF8.GetString(avatorData);
+            Assert.AreEqual("test01", avaStr);
+        });
+    }
 
     class UserDto
     {
@@ -194,23 +209,23 @@ public class ExecutionTest : TestBase
     {
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
-            var users = await Db.Select<User>().ToListAsync();
+            var users = await Db.Select<User>().ToListAsync(TestContext.CancellationToken);
             var oldValue = users.Sum(u => u.Age);
             foreach (var item in users)
             {
                 item.Age *= 2;
             }
             // 批量更新Age，并且更新password为指定值
-            await Db.Update([.. users]).UpdateColumns(u => u.Age).Set(u => u.Password, "123").ExecuteAsync();
-            var newUsers = await Db.Select<User>().ToListAsync();
+            await Db.Update([.. users]).UpdateColumns(u => u.Age).Set(u => u.Password, "123").ExecuteAsync(TestContext.CancellationToken);
+            var newUsers = await Db.Select<User>().ToListAsync(TestContext.CancellationToken);
             var newValue = newUsers.Sum(u => u.Age);
             Assert.IsTrue(newUsers.All(u => u.Password == "123"));
             Assert.AreEqual(oldValue * 2, newValue);
 
             // 通过实体更新指定字段的方式
             var first = newUsers.First();
-            await Db.Update(first).Set(u => u.Age, 19).Set(u => u.UserName == "Hello!").ExecuteAsync();
-            var newFirst = await Db.Select<User>().Where(u => u.Id == first.Id).FirstAsync();
+            await Db.Update(first).Set(u => u.Age, 19).Set(u => u.UserName == "Hello!").ExecuteAsync(TestContext.CancellationToken);
+            var newFirst = await Db.Select<User>().Where(u => u.Id == first.Id).FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(newFirst);
             Assert.AreEqual("Hello!", newFirst.UserName);
             Assert.AreEqual(19, newFirst.Age);
@@ -218,18 +233,18 @@ public class ExecutionTest : TestBase
 
             // 版本列测试
             Assert.AreEqual(2, newFirst.Version);
-            await Db.Update<User>().Set(u => u.Password == "321").Where(u => u.Id == newFirst.Id).ExecuteAsync();
-            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync();
+            await Db.Update<User>().Set(u => u.Password == "321").Where(u => u.Id == newFirst.Id).ExecuteAsync(TestContext.CancellationToken);
+            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync(TestContext.CancellationToken);
             Assert.AreEqual(2, newFirst!.Version);
             Assert.AreEqual("321", newFirst.Password);
 
-            await Db.Update<User>().Set(u => u.Password == "3212").Where(u => u.Id == newFirst.Id).WithVersion(newFirst.Version).ExecuteAsync();
-            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync();
+            await Db.Update<User>().Set(u => u.Password == "3212").Where(u => u.Id == newFirst.Id).WithVersion(newFirst.Version).ExecuteAsync(TestContext.CancellationToken);
+            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync(TestContext.CancellationToken);
             Assert.AreEqual(3, newFirst!.Version);
             Assert.AreEqual("3212", newFirst.Password);
 
-            await Db.Update<User>().Set(u => u.Password == "32123").Where(u => u.Id == newFirst.Id).WithVersion(u => u.Version, newFirst.Version).ExecuteAsync();
-            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync();
+            await Db.Update<User>().Set(u => u.Password == "32123").Where(u => u.Id == newFirst.Id).WithVersion(u => u.Version, newFirst.Version).ExecuteAsync(TestContext.CancellationToken);
+            newFirst = await Db.Select<User>().Where(u => u.Id == newFirst.Id).FirstAsync(TestContext.CancellationToken);
             Assert.AreEqual(4, newFirst!.Version);
             Assert.AreEqual("32123", newFirst.Password);
         });
@@ -240,26 +255,26 @@ public class ExecutionTest : TestBase
     {
         await DoSomethingWithTempUserDataAsync(Db, async () =>
         {
-            var users = await Db.Select<User>().ToListAsync();
+            var users = await Db.Select<User>().ToListAsync(TestContext.CancellationToken);
             var cc = users.Count;
             var less10 = users.Where(u => u.Age < 10).ToArray();
             // 批量删除
-            var dc = await Db.Delete(less10).ExecuteAsync();
-            users = await Db.Select<User>().ToListAsync();
+            var dc = await Db.Delete(less10).ExecuteAsync(TestContext.CancellationToken);
+            users = await Db.Select<User>().ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(cc - dc, users);
             var vip = users.Where(u => u.Sign == SignType.Svip).First();
 
-            dc = await Db.Delete(vip).Where(u => u.Age > 20).ExecuteAsync();
+            dc = await Db.Delete(vip).Where(u => u.Age > 20).ExecuteAsync(TestContext.CancellationToken);
             Assert.AreEqual(0, dc);
 
             var id = -1;
-            dc = await Db.Delete(vip).Where(u => u.Id == id).ExecuteAsync();
+            dc = await Db.Delete(vip).Where(u => u.Id == id).ExecuteAsync(TestContext.CancellationToken);
             Assert.AreEqual(0, dc);
 
-            dc = await Db.Delete(vip).ExecuteAsync();
+            dc = await Db.Delete(vip).ExecuteAsync(TestContext.CancellationToken);
             Assert.AreEqual(1, dc);
 
-            dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync();
+            dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync(TestContext.CancellationToken);
             Assert.AreEqual(1, dc);
         });
     }
@@ -278,4 +293,7 @@ public class ExecutionTest : TestBase
             Assert.HasCount(4, ur);
         });
     }
+
+    [NotNull]
+    public TestContext? TestContext { get; set; }
 }

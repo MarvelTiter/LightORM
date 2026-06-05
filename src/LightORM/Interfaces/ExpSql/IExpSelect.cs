@@ -1,6 +1,6 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
-#pragma warning disable CS0419
 namespace LightORM.Interfaces.ExpSql;
 
 public interface IExpSelect : ISql
@@ -55,13 +55,41 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     /// </summary>
     /// <param name="parameters"></param>
     /// <returns></returns>
-    TSelect WithParameters<TParameter>(TParameter parameters);
-
-    TSelect Where(string sql, object? parameters = default!);
-    TSelect WhereIf(bool condition, string sql, object? parameters = default!);
-    TSelect GroupBy(string sql, object? parameters = default!);
-    TSelect Having(string sql, object? parameters = default!);
-
+    TSelect WithParameters<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(TParameter parameters);
+    TSelect Where<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters);
+    TSelect WhereIf<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(bool condition, string sql, TParameter parameters);
+    TSelect GroupBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters);
+    TSelect Having<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters);
+    TSelect OrderBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters);
+    TSelect Where(string sql);
+    TSelect WhereIf(bool condition, string sql);
+    TSelect GroupBy(string sql);
+    TSelect Having(string sql);
+    TSelect OrderBy(string sql);
     #endregion
 }
 

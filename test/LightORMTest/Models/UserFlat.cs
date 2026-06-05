@@ -1,6 +1,4 @@
-﻿#nullable disable
-
-namespace LightORMTest.Models;
+﻿namespace LightORMTest.Models;
 
 [LightTable(Name = "USER_FLAT")]
 public class UserFlat

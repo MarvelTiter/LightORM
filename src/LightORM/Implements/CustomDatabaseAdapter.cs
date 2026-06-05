@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Data.Common;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -122,4 +123,6 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
     }
 
     public virtual void HandleJsonParameter(JsonColumnParameterContext context) { }
+
+    public virtual void DbCommandInit(DbCommand dbCommand) { }
 }

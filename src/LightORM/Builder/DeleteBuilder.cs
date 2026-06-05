@@ -17,8 +17,7 @@ internal record DeleteBuilder<T> : SqlBuilder
     HashSet<string> Members { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
 #if NET8_0_OR_GREATER
-    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling."
-        , Justification = "根据已知类型构建导航条件")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "根据已知类型构建导航条件")]
 #endif
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {

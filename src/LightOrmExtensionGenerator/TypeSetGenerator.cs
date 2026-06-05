@@ -42,7 +42,7 @@ namespace LightOrmExtensionGenerator
                     {
                         yield return $"""
                             //#if NET8_0_OR_GREATER
-                            //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+                            //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
                             //#endif
                             T{i}
                             """;
@@ -52,7 +52,7 @@ namespace LightOrmExtensionGenerator
                         yield return $"""
 
                             //#if NET8_0_OR_GREATER
-                            //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+                            //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
                             //#endif
                             T{i}
                             """;

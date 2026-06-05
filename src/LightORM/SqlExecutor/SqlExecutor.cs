@@ -86,8 +86,7 @@ internal partial class SqlExecutor : ISqlExecutor
     // 使用外部事务
     public void UseExternalTransaction(DbTransaction externalTransaction)
     {
-        if (externalTransaction == null)
-            throw new ArgumentNullException(nameof(externalTransaction));
+        ArgumentNullException.ThrowIfNull(externalTransaction);
 
         if (CurrentTransactionContext.Value != null)
             throw new InvalidOperationException("Already in a transaction context");
@@ -471,7 +470,7 @@ internal partial class SqlExecutor : ISqlExecutor
             conn.Open();
         }
         var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+        Database.DatabaseAdapter.DbCommandInit(command);
         if (context != null)
         {
             command.Transaction = context.Transaction;
@@ -519,7 +518,7 @@ internal partial class SqlExecutor : ISqlExecutor
         }
 
         var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+        Database.DatabaseAdapter.DbCommandInit(command);
 
         if (context != null)
         {
@@ -1028,88 +1027,97 @@ internal partial class SqlExecutor : ISqlExecutor
 
     internal static T? ChangeType<T>(object value)
     {
-        var conversionType = typeof(T);
-        if (value == null)
+        if (value is null || value is DBNull)
         {
             return default;
         }
-        var type = value.GetType();
-        if (type.Equals(typeof(Guid)) && conversionType.Equals(typeof(string)))
+        if (value is T typedValue)
         {
-            value = value.ToString()!;
+            return typedValue;
         }
-        if (conversionType.Equals(type))
+        var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+        var result = targetType switch
         {
-            return (T)value;
-        }
-        if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+            _ when targetType == typeof(string) => value.ToString(),
+            _ when targetType == typeof(int) => Convert.ToInt32(value),
+            _ when targetType == typeof(long) => Convert.ToInt64(value),
+            _ when targetType == typeof(short) => Convert.ToInt16(value),
+            _ when targetType == typeof(byte) => Convert.ToByte(value),
+            _ when targetType == typeof(decimal) => Convert.ToDecimal(value),
+            _ when targetType == typeof(double) => Convert.ToDouble(value),
+            _ when targetType == typeof(float) => Convert.ToSingle(value),
+            _ when targetType == typeof(bool) => Convert.ToBoolean(value),
+            _ when targetType == typeof(DateTime) => Convert.ToDateTime(value),
+            _ when targetType == typeof(Guid) => Guid.Parse(value.ToString()!),
+            _ when targetType == typeof(char) => Convert.ToChar(value),
+            _ when targetType.IsEnum => Enum.Parse(targetType, value.ToString()!, ignoreCase: true),
+            // 兜底——理论上不会走到这里
+            _ => Convert.ChangeType(value, targetType)
+        };
+        if (result is T finalResult)
         {
-            var nullableConverter = new NullableConverter(conversionType);
-            conversionType = nullableConverter.UnderlyingType;
+            return finalResult;
         }
-        return (T)Convert.ChangeType(value, conversionType);
+        return default;
     }
 
-    private static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
-    internal static Action<DbCommand>? GetInit(
-#if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
-#endif
-        Type commandType)
-    {
-        if (commandType == null)
-        {
-            return null;
-        }
+//    private readonly static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
+//    internal static Action<DbCommand>? GetInit(DbCommand commandObject)
+//    {
+//        if (commandObject is null)
+//        {
+//            return null;
+//        }
 
-        if (!commandInitCache.TryGetValue(commandType, out var action))
-        {
-            MethodInfo? setBindName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
-            MethodInfo? setInit = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
-            if (setBindName is null && setInit is null)
-            {
-                return null;
-            }
-            /*
-             * (DbCommand cmd) => {
-             *     (OracleCommand)cmd.set_BindByName(true);
-             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
-             * }
-             */
-            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
-            List<Expression> body = [];
-            if (setBindName != null)
-            {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
-                body.Add(setter1Exp);
-            }
-            if (setInit != null)
-            {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
-                body.Add(setter2Exp);
-            }
-            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
-            action = lambda.Compile();
-            commandInitCache.TryAdd(commandType, action);
-        }
-        return action;
-    }
+//        var commandType = commandObject.GetType();
+//        if (!commandInitCache.TryGetValue(commandType, out var action))
+//        {
+//            MethodInfo? setBindName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+//            MethodInfo? setInit = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+//            if (setBindName is null && setInit is null)
+//            {
+//                return null;
+//            }
+//            /*
+//             * (DbCommand cmd) => {
+//             *     (OracleCommand)cmd.set_BindByName(true);
+//             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
+//             * }
+//             */
+//            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
+//            List<Expression> body = [];
+//            if (setBindName != null)
+//            {
+//                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+//                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
+//                body.Add(setter1Exp);
+//            }
+//            if (setInit != null)
+//            {
+//                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+//                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
+//                body.Add(setter2Exp);
+//            }
+//            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
+//            action = lambda.Compile();
+//            commandInitCache.TryAdd(commandType, action);
+//        }
+//        return action;
+//    }
 
-    internal static MethodInfo? GetBasicPropertySetter(
-#if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
-#endif
-        Type declaringType, string name, Type expectedType)
-    {
-        PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-        if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
-        {
-            return property.GetSetMethod();
-        }
-        return null;
-    }
+//    internal static MethodInfo? GetBasicPropertySetter(
+//#if NET8_0_OR_GREATER
+//    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
+//#endif
+//        Type declaringType, string name, Type expectedType)
+//    {
+//        PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+//        if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
+//        {
+//            return property.GetSetMethod();
+//        }
+//        return null;
+//    }
 
     public object Clone()
     {

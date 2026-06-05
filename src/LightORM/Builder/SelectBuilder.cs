@@ -87,10 +87,8 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
     }
 #if NET8_0_OR_GREATER
-    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling."
-        , Justification = "根据已知类型构建导航条件 Expression.Lambda")]
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code"
-        , Justification = "根据已知类型构建导航条件 从表达式中获取MemberName构建Expression.Property")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "根据已知类型构建导航条件 Expression.Lambda")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "根据已知类型构建导航条件 从表达式中获取MemberName构建Expression.Property")]
 #endif
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -121,10 +119,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Join)
         {
             var joinInfo = Joins.FirstOrDefault(j => j.ExpressionId == expInfo.Id);
-            if (joinInfo != null)
-            {
-                joinInfo.Where = result.SqlString!;
-            }
+            joinInfo?.Where = result.SqlString!;
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Select)
         {
@@ -268,7 +263,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
         ResolveExpressions(database);
-        
+
         var ident = new string(' ', 4 * currentLevel);
         if (InsertInfo.HasValue)
         {

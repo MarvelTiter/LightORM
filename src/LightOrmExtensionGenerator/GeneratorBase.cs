@@ -7,31 +7,6 @@ using System.Text;
 
 namespace LightOrmExtensionGenerator
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T1"></typeparam>
-    /// <typeparam name="T2"></typeparam>
-    /// <param name="t1"></param>
-    /// <param name="t2"></param>
-    public class TypeSet<
-#if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
-#endif
-T1,
-#if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
-#endif
-T2
->(T1 t1, T2 t2)
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public T1 Tb1 { get; } = t1;
-        public T2 Tb2 { get; } = t2;
-
-    }
     public abstract class GeneratorBase : IIncrementalGenerator
     {
         public const string TargetAttribute = "LightORM.DbEntity.Attributes.SelectExtensionAttribute";

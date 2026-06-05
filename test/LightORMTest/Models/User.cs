@@ -38,6 +38,9 @@ public class User
     [LightColumn(Name = "VERSION", Version = true)]
     public int Version { get; set; }
 
+    [LightColumn(Name = "AVATOR", Comment = "头像")]
+    public byte[] Avator { get; set; }
+
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 

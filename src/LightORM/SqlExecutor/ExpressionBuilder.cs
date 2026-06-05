@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -352,7 +353,7 @@ internal partial class ExpressionBuilder
         }
         else if (TargetType == typeof(string))
         {
-            TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
+            TargetExpression = Expression.Call(SourceExpression, typeof(Convert).GetMethod("ToString", [SourceType])!);
         }
         else if (TargetType == typeof(bool) || underlying == typeof(bool))
         {
@@ -384,7 +385,7 @@ internal partial class ExpressionBuilder
         }
         else if (targetType == typeof(MemoryStream))
         {
-            ConstructorInfo ConstructorInfo = targetType.GetConstructor([typeof(byte[])])!;
+            ConstructorInfo ConstructorInfo = typeof(MemoryStream).GetConstructor([typeof(byte[])])!;
             TargetExpression = Expression.New(ConstructorInfo, sourceExpression);
         }
         else
@@ -404,33 +405,23 @@ internal partial class ExpressionBuilder
         }
         else
         {
-            Expression ParseExpression;
-            switch (UnderlyingType.FullName)
+            Expression ParseExpression = UnderlyingType.FullName switch
             {
-                case "System.Byte":
-                case "System.UInt16":
-                case "System.UInt32":
-                case "System.UInt64":
-                case "System.SByte":
-                case "System.Int16":
-                case "System.Int32":
-                case "System.Int64":
-                case "System.Double":
-                case "System.Decimal":
-                    ParseExpression = GetNumberParseExpression(SourceExpression, UnderlyingType, Culture);
-                    break;
-                case "System.DateTime":
-                    ParseExpression = GetDateTimeParseExpression(SourceExpression, UnderlyingType, Culture);
-                    break;
-                case "System.Boolean":
-                    ParseExpression = TryParseStringToBoolean(SourceExpression, UnderlyingType);
-                    break;
-                case "System.Char":
-                    ParseExpression = GetGenericParseExpression(SourceExpression, UnderlyingType);
-                    break;
-                default:
-                    throw new LightOrmException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType));
-            }
+                "System.Byte" => GetNumberParseExpression<byte>(SourceExpression, Culture),
+                "System.UInt16" => GetNumberParseExpression<ushort>(SourceExpression, Culture),
+                "System.UInt32" => GetNumberParseExpression<uint>(SourceExpression, Culture),
+                "System.UInt64" => GetNumberParseExpression<ulong>(SourceExpression, Culture),
+                "System.SByte" => GetNumberParseExpression<sbyte>(SourceExpression, Culture),
+                "System.Int16" => GetNumberParseExpression<short>(SourceExpression, Culture),
+                "System.Int32" => GetNumberParseExpression<int>(SourceExpression, Culture),
+                "System.Int64" => GetNumberParseExpression<long>(SourceExpression, Culture),
+                "System.Double" => GetNumberParseExpression<double>(SourceExpression, Culture),
+                "System.Decimal" => GetNumberParseExpression<decimal>(SourceExpression, Culture),
+                "System.DateTime" => GetDateTimeParseExpression(SourceExpression, Culture),
+                "System.Boolean" => TryParseStringToBoolean(SourceExpression),
+                "System.Char" => GetGenericParseExpression<char>(SourceExpression),
+                _ => throw new LightOrmException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType)),
+            };
             if (Nullable.GetUnderlyingType(TargetType) == null)
             {
                 return ParseExpression;
@@ -441,15 +432,19 @@ internal partial class ExpressionBuilder
                 return Expression.Convert(ParseExpression, TargetType);
             }
         }
-        Expression GetGenericParseExpression(Expression sourceExpression, Type type)
+        Expression GetGenericParseExpression<
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+#endif
+        T>(Expression sourceExpression)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string)])!;
+            MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string)])!;
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression]);
             return CallExpression;
         }
-        Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+        Expression GetDateTimeParseExpression(Expression sourceExpression, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
+            MethodInfo ParseMetod = typeof(DateTime).GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.DateTimeFormat, typeof(DateTimeFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
@@ -466,17 +461,21 @@ internal partial class ExpressionBuilder
             return CallExpression;
         }
 
-        MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+        MethodCallExpression GetNumberParseExpression<
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+#endif
+        T>(Expression sourceExpression, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
+            MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
         }
-        Expression TryParseStringToBoolean(Expression sourceExpression, Type type)
+
+        Expression TryParseStringToBoolean(Expression sourceExpression)
         {
-            var valueExpression = Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
-            return GetGenericParseExpression(valueExpression, type);
+            return Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
         }
     }
 
