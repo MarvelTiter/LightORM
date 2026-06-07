@@ -149,7 +149,7 @@ internal class LightOrmQueryProvider : IQueryProvider
     public TResult Execute<TResult>(Expression expression)
     {
         var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
-        var def = ado.Query<TResult>(sql, select.DbParameters).FirstOrDefault();
+        var def = ado.Execute(sql, select.DbParameters).ToList<TResult>().FirstOrDefault();
         if (def == null && expression is MethodCallExpression method && method.Arguments.Count > 1)
         {
             var defaultValue = method.Arguments[1] as UnaryExpression;

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -10,6 +11,19 @@ internal static class DbParameterReader
 {
     private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object>> cacheReaders = [];
     private static readonly ConcurrentDictionary<Certificate, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
+    public static void HandleDbParameter(this SqlExecuteContext context, string prefix, DbCommand command)
+    {
+        if (string.IsNullOrWhiteSpace(context.Sql)) return;
+        command.CommandText = context.Sql;
+        command.CommandType = context.CommandType;
+        var dbParameters = context.Parameter;
+        if (dbParameters is not null && dbParameters is not NullDbParameter)
+        {
+            var action = GetDbParameterReader(context.Sql!, prefix, context.ParameterType);
+            action?.Invoke(command, dbParameters);
+        }
+    }
+
     public static Action<IDbCommand, object> GetDbParameterReader(string commandText
         , string prefix
         ,

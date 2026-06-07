@@ -33,14 +33,14 @@ public static partial class SelectExtensions
     {
         var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteScalar<T>(sql, parameters);
+        return select.Executor.ExecuteScalar(sql, parameters).As<T>();
     }
 
-    public static Task<T?> ExecuteScalarAsync<T>(this IExpSelect select, CancellationToken cancellationToken = default)
+    public static async Task<T?> ExecuteScalarAsync<T>(this IExpSelect select, CancellationToken cancellationToken = default)
     {
         var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
         var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteScalarAsync<T>(sql, parameters, cancellationToken: cancellationToken);
+        return (await select.Executor.ExecuteScalarAsync(sql, parameters, cancellationToken: cancellationToken)).As<T>();
     }
 
     public static IEnumerable<dynamic> ToDynamicList<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)

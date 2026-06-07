@@ -37,6 +37,15 @@ namespace LightORM.AssemblyControl
     {
         public static bool AOTSupported = false;
 
+        public static bool IsAOTRuntime =>
+#if NET8_0_OR_GREATER
+            !RuntimeFeature.IsDynamicCodeSupported && AOTSupported
+#else
+            false
+#endif
+            ;
+
+
         public static void EnsureReflectionAccess(Type type)
         {
 #if NET8_0_OR_GREATER

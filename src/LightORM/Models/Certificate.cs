@@ -8,9 +8,10 @@ internal record Certificate(string Sql, string DbPrefix,
 #endif
     Type ParameterType)
 {
-    //public string ConnectString { get; } = conn;
-    //public string Sql { get; } = commandText;
-    //public Type ParameterType { get; } = parameterType;
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    public Type ParameterType { get; } = ParameterType;
 
     public override string ToString()
     {

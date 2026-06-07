@@ -7,7 +7,11 @@ using System.Threading;
 
 namespace LightORM.Providers.Select;
 
-internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
+internal class SelectProvider0<TSelect,
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
     public SelectBuilder SqlBuilder { get; set; } = default!;
     public ISqlExecutor Executor { get; }
@@ -251,7 +255,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.Query<T1>(sql, parameters);
+        return Executor.Execute(sql, parameters).ToList<T1>();
     }
 
     public DataTable ToDataTable()

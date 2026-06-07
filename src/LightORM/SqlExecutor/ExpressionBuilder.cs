@@ -14,7 +14,7 @@ internal partial class ExpressionBuilder
 
     public static Func<IDataReader, T> BuildDeserializer<
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     T>(DbDataReader reader)
     {
@@ -69,7 +69,7 @@ internal partial class ExpressionBuilder
     /// <returns></returns>
     private static Func<IDataReader, Target> BuildFunc<
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     Target>(DbDataReader reader, CultureInfo Culture)
     {

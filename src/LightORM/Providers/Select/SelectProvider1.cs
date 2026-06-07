@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
@@ -10,7 +11,11 @@ internal sealed class SelectProvider0(ISqlExecutor executor) : SelectProvider0<I
 {
 }
 
-internal class SelectProvider1<T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
+internal class SelectProvider1<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 {
     public SelectProvider1(ISqlExecutor executor, SelectBuilder? builder = null)
         : base(executor, builder)
