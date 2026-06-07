@@ -29,19 +29,7 @@ public static partial class SelectExtensions
         return keys.FirstOrDefault();
     }
 
-    public static T? ExecuteScalar<T>(this IExpSelect select)
-    {
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
-        var parameters = select.SqlBuilder.DbParameters;
-        return select.Executor.ExecuteScalar(sql, parameters).As<T>();
-    }
-
-    public static async Task<T?> ExecuteScalarAsync<T>(this IExpSelect select, CancellationToken cancellationToken = default)
-    {
-        var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
-        var parameters = select.SqlBuilder.DbParameters;
-        return (await select.Executor.ExecuteScalarAsync(sql, parameters, cancellationToken: cancellationToken)).As<T>();
-    }
+    
 
     public static IEnumerable<dynamic> ToDynamicList<T1>(this IExpSelect<T1> select, Expression<Func<T1, object>> exp)
     {

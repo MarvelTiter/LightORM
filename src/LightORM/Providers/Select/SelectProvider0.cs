@@ -201,37 +201,37 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     public TMember? Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.InternalSingle<TMember>();
+        return this.ExecuteScalar<TMember>();
     }
 
     public TMember? Min<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.InternalSingle<TMember>();
+        return this.ExecuteScalar<TMember>();
     }
 
     public double Sum<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.InternalSingle<double>();
+        return this.ExecuteScalar<double>();
     }
 
     public int Count<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.InternalSingle<int>();
+        return this.ExecuteScalar<int>();
     }
 
     public int Count()
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.InternalSingle<int>();
+        return this.ExecuteScalar<int>();
     }
 
     public double Avg<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.InternalSingle<double>();
+        return this.ExecuteScalar<double>();
     }
 
     public virtual T1? First()
@@ -243,7 +243,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QuerySingle<T1>(sql, parameters);
+        return Executor.Execute(sql, parameters).Single<T1>();
     }
 
     public virtual IEnumerable<T1> ToList()
@@ -274,7 +274,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QuerySingleAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return await Executor.Execute(sql, parameters).SingleAsync<T1>(cancellationToken);
     }
 
     public virtual async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)
@@ -286,7 +286,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QueryListAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return await Executor.Execute(sql, parameters).ToListAsync<T1>(cancellationToken);
     }
 
     public IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default)
@@ -295,7 +295,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return Executor.Execute(sql, parameters).ToAsyncList<T1>(cancellationToken);
     }
 
     public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
@@ -308,37 +308,37 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.InternalSingleAsync<TMember>(cancellationToken);
+        return this.ExecuteScalarAsync<TMember>(cancellationToken);
     }
 
     public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.InternalSingleAsync<TMember>(cancellationToken);
+        return this.ExecuteScalarAsync<TMember>(cancellationToken);
     }
 
     public Task<double> SumAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.InternalSingleAsync<double>(cancellationToken);
+        return this.ExecuteScalarAsync<double>(cancellationToken);
     }
 
     public Task<int> CountAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.InternalSingleAsync<int>(cancellationToken);
+        return this.ExecuteScalarAsync<int>(cancellationToken);
     }
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.InternalSingleAsync<int>(cancellationToken);
+        return this.ExecuteScalarAsync<int>(cancellationToken);
     }
 
     public Task<double> AvgAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.InternalSingleAsync<double>(cancellationToken);
+        return this.ExecuteScalarAsync<double>(cancellationToken);
     }
 
     public async Task<bool> AnyAsync(CancellationToken cancellationToken = default)

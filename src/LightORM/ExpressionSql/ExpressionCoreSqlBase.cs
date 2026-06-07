@@ -1,9 +1,10 @@
-﻿using LightORM.Providers;
+﻿using LightORM.DbStruct;
+using LightORM.Providers;
 using Microsoft.Extensions.Options;
 using System;
-using System.Threading;
-using LightORM.DbStruct;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM.ExpressionSql;
 
@@ -90,7 +91,11 @@ internal abstract class ExpressionCoreSqlBase
         }
     }
 
-    public IExpSelect<T> Select<T>() => new SelectProvider1<T>(Ado);
+    public IExpSelect<T> Select<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>() => new SelectProvider1<T>(Ado);
 
     #region insert
 
@@ -234,12 +239,12 @@ internal abstract class ExpressionCoreSqlBase
         }
     }
 
-    protected static async Task<IList<DbStruct.ReadedTable>> InternalGetTablesAsync(ISqlExecutor ado, ExpressionSqlOptions _)
+    protected static async Task<IList<ReadedTable>> InternalGetTablesAsync(ISqlExecutor ado, ExpressionSqlOptions _)
     {
         if (ado.Database.DbHandler is null)
             return [];
         var sql = ado.Database.DbHandler.GetTablesSql();
-        return await ado.QueryListAsync<DbStruct.ReadedTable>(sql);
+        return await ado.Execute(sql).ToListAsync<ReadedTable>();
     }
 
     protected static async Task<ReadedTable> InternalTableStructAsync(ReadedTable table, ISqlExecutor ado, ExpressionSqlOptions _)
@@ -247,7 +252,7 @@ internal abstract class ExpressionCoreSqlBase
         if (ado.Database.DbHandler is null)
             throw new NotSupportedException();
         var sql = ado.Database.DbHandler.GetTableStructSql(table.TableName!);
-        var columns = await ado.QueryListAsync<DbStruct.ReadedTableColumn>(sql);
+        var columns = await ado.Execute(sql).ToListAsync<ReadedTableColumn>();
         return table with { Columns = columns };
     }
 

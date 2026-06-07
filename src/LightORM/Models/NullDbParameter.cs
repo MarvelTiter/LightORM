@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.Models;
 
-internal class NullDbParameter
+public sealed class NullDbParameter
 {
     public static readonly NullDbParameter Instance = new ();
 }

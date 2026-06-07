@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using LightORM.Extension;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -10,7 +11,7 @@ namespace LightORM.Cache;
 internal static class DbParameterReader
 {
     private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object>> cacheReaders = [];
-    private static readonly ConcurrentDictionary<Certificate, Func<object, Dictionary<string, object>>> readObjectToDicCache = [];
+    private static readonly ConcurrentDictionary<Certificate, Action<object, Dictionary<string, object>>> readObjectToDicCache = [];
     public static void HandleDbParameter(this SqlExecuteContext context, string prefix, DbCommand command)
     {
         if (string.IsNullOrWhiteSpace(context.Sql)) return;
@@ -24,9 +25,7 @@ internal static class DbParameterReader
         }
     }
 
-    public static Action<IDbCommand, object> GetDbParameterReader(string commandText
-        , string prefix
-        ,
+    public static Action<IDbCommand, object> GetDbParameterReader(string commandText, string prefix,
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
@@ -40,23 +39,24 @@ internal static class DbParameterReader
         return cacheReaders.GetOrAdd(cer, key => CreateReader(key.DbPrefix, key.Sql, key.ParameterType));
     }
 
-    public static Dictionary<string, object> ObjectToDictionary<
+    public static void MergeObjectToDictionary<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(string prefix, string sql, T? value)
+    T>(string prefix, string sql, T? value, Dictionary<string, object> dic)
     {
         if (value is null)
         {
-            return [];
+            return;
         }
         if (value is Dictionary<string, object> d)
         {
-            return d;
+            dic.TryAddDictionary(d);
+            return;
         }
         var cer = new Certificate(sql, prefix, typeof(T));
         var func = readObjectToDicCache.GetOrAdd(cer, key => CreateObjectToDictionary(key.DbPrefix, key.Sql, key.ParameterType));
-        return func.Invoke(value);
+        func.Invoke(value, dic);
     }
 
     private static void ReadDictionary(IDbCommand cmd, object obj)
@@ -107,7 +107,12 @@ internal static class DbParameterReader
     }
     static readonly MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
     static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
-    static readonly MethodInfo dictionaryAdd = typeof(Dictionary<string, object>).GetMethod("Add")!;
+    static readonly MethodInfo dictionaryAdd = typeof(DbParameterReader).GetMethod(nameof(TryAdd), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    static void TryAdd(Dictionary<string, object> dic, string key, object value)
+    {
+        dic.TryAdd(key, value);
+    }
 
 #if NET8_0_OR_GREATER
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(IDataParameter))]
@@ -230,16 +235,18 @@ internal static class DbParameterReader
         }
     }
 
-    public static Func<object, Dictionary<string, object>> CreateObjectToDictionary(string prefix, string commandText, Type type)
+    public static Action<object, Dictionary<string, object>> CreateObjectToDictionary(string prefix, string commandText,
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        Type type)
     {
         var pExp = Expression.Parameter(typeof(object), "p");
-        var retExp = Expression.Variable(typeof(Dictionary<string, object>), "ret");
+        var dicExp = Expression.Parameter(typeof(Dictionary<string, object>), "dic");
         var realParam = Expression.Variable(type, "value");
         var assign = Expression.Assign(realParam, Expression.Convert(pExp, type));
-        var retExpInited = Expression.Assign(retExp, Expression.New(typeof(Dictionary<string, object>)));
         List<Expression> blockBody = [
-            assign,
-            retExpInited,
+            assign
             ];
         var all = type.GetProperties();
         var props = string.IsNullOrEmpty(commandText) ? all : ExtractParameter(prefix, commandText, all);
@@ -247,12 +254,11 @@ internal static class DbParameterReader
         {
             var key = Expression.Constant(item.Name, typeof(string));
             var value = Expression.Convert(Expression.Property(realParam, item), typeof(object));
-            var add = Expression.Call(retExp, dictionaryAdd, key, value);
+            var add = Expression.Call(dictionaryAdd, dicExp, key, value);
             blockBody.Add(add);
         }
-        blockBody.Add(retExp);
-        var block = Expression.Block([realParam, retExp], blockBody);
-        var lambda = Expression.Lambda<Func<object, Dictionary<string, object>>>(block, pExp);
+        var block = Expression.Block([realParam], blockBody);
+        var lambda = Expression.Lambda<Action<object, Dictionary<string, object>>>(block, pExp, dicExp);
         return lambda.Compile();
     }
 

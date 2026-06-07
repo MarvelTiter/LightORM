@@ -36,6 +36,7 @@ public static partial class SqlExecutorExtensions
             reader?.Close();
         }
     }
+    
     public static IEnumerable<dynamic> Query(this ISqlExecutor self
         , string sql
         , object? param = null
@@ -61,6 +62,7 @@ public static partial class SqlExecutorExtensions
             reader?.Close();
         }
     }
+    
     public static T? QuerySingle<
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -296,6 +298,7 @@ public static partial class SqlExecutorExtensions
 #endif
         }
     }
+
     internal static Func<IDataReader, T> BuildDeserializer<
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]

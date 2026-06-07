@@ -27,11 +27,14 @@ internal abstract record SqlBuilder : ISqlBuilder
     T>(string prefix, string sql, T? value)
     {
         if (value is null) return;
-        if (value is not Dictionary<string, object> dic)
+        if (value is Dictionary<string, object> dic)
         {
-            dic = DbParameterReader.ObjectToDictionary(prefix, sql, value);
+            DbParameters.TryAddDictionary(dic);
         }
-        DbParameters.TryAddDictionary(dic);
+        else
+        {
+            DbParameterReader.MergeObjectToDictionary(prefix, sql, value, DbParameters);
+        }
     }
     protected virtual void BeforeResolveExpressions(ResolveContext context)
     {

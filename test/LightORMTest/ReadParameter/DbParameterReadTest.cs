@@ -19,8 +19,16 @@ public class DbParameterReadTest
             Age = 18,
             Name = "Marvel"
         };
-        var dic = DbParameterReader.ObjectToDictionary("@", "@Date, @Age, @Name", p1);
-        _ = DbParameterReader.ObjectToDictionary("@", "@Date, @Age, @Name", p1);
+        var p2 = new
+        {
+            Date = DateTime.Now,
+            Age2 = 11,
+            Name2 = "Marvel2"
+        };
+        Dictionary<string, object> dic = [];
+        DbParameterReader.MergeObjectToDictionary("@", "@Date, @Age, @Name", p1, dic);
+        DbParameterReader.MergeObjectToDictionary("@", "@Age2, @Name2", p2, dic);
+        Assert.HasCount(5, dic);
         Assert.IsTrue((DateTime)dic["Date"] == p1.Date);
         Assert.AreEqual(p1.Age, (int)dic["Age"]);
         Assert.AreEqual(p1.Name, (string)dic["Name"]);

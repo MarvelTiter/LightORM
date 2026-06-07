@@ -6,53 +6,20 @@ namespace LightORM;
 
 public static partial class SqlExecutorExtensions
 {
-    public readonly struct SqlResult(DbDataReader reader)
-    {
-        public IEnumerable<T> ToList<
-#if NET8_0_OR_GREATER
-       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
-        T>()
-        {
-            try
-            {
-                var des = reader.BuildDeserializer<T>();
-                while (reader.Read())
-                {
-                    yield return des.Invoke(reader);
-                }
-            }
-            finally
-            {
-                reader?.Close();
-            }
-        }
-
-    }
     extension(ISqlExecutor executor)
     {
-        public SqlResult Execute<
+        public ExecuteResult<TParameter> Execute<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         TParameter>(string sql, TParameter? param, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
         {
-            if (trans != null)
-            {
-                executor.UseExternalTransaction(trans);
-            }
-            var reader = executor.ExecuteReader(sql, param, commandType);
-            return new SqlResult(reader);
+            return new(executor, sql, param, trans, commandType);
         }
 
-        public SqlResult Execute(string sql, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
+        public ExecuteResult Execute(string sql, DbTransaction? trans = null, CommandType commandType = CommandType.Text)
         {
-            if (trans != null)
-            {
-                executor.UseExternalTransaction(trans);
-            }
-            var reader = executor.ExecuteReader(sql, NullDbParameter.Instance, commandType);
-            return new SqlResult(reader);
+            return new ExecuteResult(executor, sql, trans, commandType);
         }
 
 
