@@ -7,15 +7,6 @@ namespace LightORM;
 
 public static class ExecuteResultExtensions
 {
-    extension<
-#if NET8_0_OR_GREATER
-   [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
-    Tp>(ExecuteResult<Tp> r)
-    {
-        
-    }
-
 
     extension(ExecuteResult r)
     {

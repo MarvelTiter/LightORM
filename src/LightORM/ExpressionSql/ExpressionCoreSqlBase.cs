@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace LightORM.ExpressionSql;
 
-internal abstract class ExpressionCoreSqlBase
+internal abstract class ExpressionCoreSqlBase : IContext
 {
     public abstract ISqlExecutor Ado { get; }
     public abstract ExpressionSqlOptions Options { get; }
@@ -95,7 +95,7 @@ internal abstract class ExpressionCoreSqlBase
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>() => new SelectProvider1<T>(Ado);
+    T>() => new SelectProvider1<T>(this);
 
     #region insert
 

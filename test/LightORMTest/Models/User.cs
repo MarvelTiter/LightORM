@@ -44,13 +44,14 @@ public class User
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 
-    [LightNavigate(nameof(Id), nameof(City.Id))]
+    [LightNavigate(nameof(Id), nameof(City.Uid))]
     public City City { get; set; }
 
 }
 
 public class City
 {
+    public int Uid { get; set; }
     public string Id { get; set; }
     public string Name { get; set; }
 }

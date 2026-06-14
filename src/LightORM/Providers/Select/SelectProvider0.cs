@@ -14,16 +14,18 @@ internal class SelectProvider0<TSelect,
 T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
     public SelectBuilder SqlBuilder { get; set; } = default!;
-    public ISqlExecutor Executor { get; }
+    public ISqlExecutor Executor => DbContext.Ado;
     public DbBaseType DbType => Executor.Database.DbBaseType;
     public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
     public bool IsSubQuery { get; set; }
+    public IContext DbContext { get; }
+
     protected ExpressionInfo? SelectExpression;
-    public SelectProvider0(ISqlExecutor executor, SelectBuilder? builder = null)
+    public SelectProvider0(IContext dbContext, SelectBuilder? builder = null)
     {
-        Executor = executor;
         if (builder != null)
             SqlBuilder = builder;
+        DbContext = dbContext;
     }
     public IExpTemp<T1> AsTemp(string name)
     {

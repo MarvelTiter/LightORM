@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-namespace LightORM.Interfaces.ExpSql;
+namespace LightORM;
 
 public interface IExpSelect : ISql
 {
     internal bool IsSubQuery { get; set; }
+    internal IContext DbContext { get; }
     internal ISqlExecutor Executor { get; }
     internal SelectBuilder SqlBuilder { get; }
 }

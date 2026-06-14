@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 
@@ -7,7 +8,7 @@ namespace LightORM.Repository;
 
 internal sealed class DefaultRepository<
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
 TEntity> : ILightOrmRepository<TEntity>
 {

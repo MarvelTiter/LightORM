@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.SqlExecutor;
@@ -76,7 +77,9 @@ internal class InternalDataReader : DbDataReader
     public override double GetDouble(int ordinal) => dataReader.GetDouble(ordinal);
 
     public override IEnumerator GetEnumerator() => dataReader.GetEnumerator();
-
+#if NET8_0_OR_GREATER
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
     public override Type GetFieldType(int ordinal) => dataReader.GetFieldType(ordinal);
 
     public override float GetFloat(int ordinal) => dataReader.GetFloat(ordinal);
@@ -186,7 +189,9 @@ internal class EmptyDataReader : DbDataReader
     {
         throw new NotImplementedException();
     }
-
+#if NET8_0_OR_GREATER
+    [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
     public override Type GetFieldType(int ordinal)
     {
         throw new NotImplementedException();

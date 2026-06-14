@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Providers;
 using LightORM.Repository;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM;
 
@@ -71,9 +72,13 @@ public static class ExpressionContextExtension
         return ado.Database.BulkCopy(dataTable);
     }
 
-    public static IExpSelect<T> Select<T>(this IContext context, string tableName)
+    public static IExpSelect<T> Select<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(this IContext context, string tableName)
     {
-        return new SelectProvider1<T>(tableName, context.Ado);
+        return new SelectProvider1<T>(tableName, context);
     }
 
     public static IExpInsert<T> Insert<T>(this IContext context, string tableName, params T[] values)
@@ -128,7 +133,11 @@ public static class ExpressionContextExtension
     /// <typeparam name="TEntity"></typeparam>
     /// <param name="context"></param>
     /// <returns></returns>
-    public static ILightOrmRepository<TEntity> GetRepository<TEntity>(this IExpressionContext context)
+    public static ILightOrmRepository<TEntity> GetRepository<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TEntity>(this IExpressionContext context)
         where TEntity : class, new()
     {
         return new DefaultRepository<TEntity>(context);
@@ -144,32 +153,36 @@ public static class ExpressionContextExtension
         return context.SwitchDatabase(table.TargetDatabase);
     }
 
-    public static IExpSelect<T> SelectWithAttr<T>(this IExpressionContext context)
+    public static IExpSelect<T> SelectWithAttr<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(this IExpressionContext context)
         => context.SwitchDb<T>().Select<T>();
 
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, T entity)
-        => context.SwitchDb<T>().Insert<T>(entity);
+        => context.SwitchDb<T>().Insert(entity);
 
     public static IExpInsert<T> InsertWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Insert<T>(entities);
+        => context.SwitchDb<T>().Insert(entities);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context)
         => context.SwitchDb<T>().Update<T>();
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, T entity)
-     => context.SwitchDb<T>().Update<T>(entity);
+     => context.SwitchDb<T>().Update(entity);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Update<T>(entities);
+        => context.SwitchDb<T>().Update(entities);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context)
         => context.SwitchDb<T>().Delete<T>();
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, T entity)
-        => context.SwitchDb<T>().Delete<T>(entity);
+        => context.SwitchDb<T>().Delete(entity);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Delete<T>(entities);
+        => context.SwitchDb<T>().Delete(entities);
 
     public static ISingleScopedExpressionContext CreateMainDbScoped(this IExpressionContext context)
     {
@@ -189,7 +202,7 @@ public static class ExpressionContextExtension
     {
         var builder = SelectBuilder.GetSelectBuilder();
         HandleFromTemp(builder, temp1, temp2);
-        return new SelectProvider2<TTemp1, TTemp2>(context.Ado, builder);
+        return new SelectProvider2<TTemp1, TTemp2>(context, builder);
     }
 
     public static IExpSelect<TTemp1, TTemp2, TTemp3> FromTemp<TTemp1, TTemp2, TTemp3>(this IExpressionContext context
@@ -197,7 +210,7 @@ public static class ExpressionContextExtension
     {
         var builder = SelectBuilder.GetSelectBuilder();
         HandleFromTemp(builder, temp1, temp2, temp3);
-        return new SelectProvider3<TTemp1, TTemp2, TTemp3>(context.Ado, builder);
+        return new SelectProvider3<TTemp1, TTemp2, TTemp3>(context, builder);
     }
 
     public static IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4> FromTemp<TTemp1, TTemp2, TTemp3, TTemp4>(this IExpressionContext context
@@ -205,7 +218,7 @@ public static class ExpressionContextExtension
     {
         var builder = SelectBuilder.GetSelectBuilder();
         HandleFromTemp(builder, temp1, temp2, temp3, temp4);
-        return new SelectProvider4<TTemp1, TTemp2, TTemp3, TTemp4>(context.Ado, builder);
+        return new SelectProvider4<TTemp1, TTemp2, TTemp3, TTemp4>(context, builder);
     }
 
     public static IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> FromTemp<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(this IExpressionContext context
@@ -213,7 +226,7 @@ public static class ExpressionContextExtension
     {
         var builder = SelectBuilder.GetSelectBuilder();
         HandleFromTemp(builder, temp1, temp2, temp3, temp4, temp5);
-        return new SelectProvider5<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(context.Ado, builder);
+        return new SelectProvider5<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(context, builder);
     }
 }
 
@@ -229,32 +242,36 @@ public static class ScopedExpressionContextExtensions
         throw new LightOrmException("实体上没有设置DatabaseKey，无法自动切换数据库");
     }
 
-    public static IExpSelect<T> SelectWithAttr<T>(this IScopedExpressionContext context)
+    public static IExpSelect<T> SelectWithAttr<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(this IScopedExpressionContext context)
         => context.SwitchDb<T>().Select<T>();
 
     public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, T entity)
-        => context.SwitchDb<T>().Insert<T>(entity);
+        => context.SwitchDb<T>().Insert(entity);
 
 
     public static IExpInsert<T> InsertWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Insert<T>(entities);
+        => context.SwitchDb<T>().Insert(entities);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context)
         => context.SwitchDb<T>().Update<T>();
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, T entity)
-        => context.SwitchDb<T>().Update<T>(entity);
+        => context.SwitchDb<T>().Update(entity);
 
     public static IExpUpdate<T> UpdateWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Update<T>(entities);
+        => context.SwitchDb<T>().Update(entities);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context)
         => context.SwitchDb<T>().Delete<T>();
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, T entity)
-        => context.SwitchDb<T>().Delete<T>(entity);
+        => context.SwitchDb<T>().Delete(entity);
 
     public static IExpDelete<T> DeleteWithAttr<T>(this IScopedExpressionContext context, params T[] entities)
-        => context.SwitchDb<T>().Delete<T>(entities);
+        => context.SwitchDb<T>().Delete(entities);
 }
 

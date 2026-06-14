@@ -11,7 +11,7 @@ internal class IncludeContext
     public IncludeContext? ThenInclude { get; set; }
 }
 
-internal class IncludeInfo
+public sealed class IncludeInfo
 {
     public IncludeInfo()
     {

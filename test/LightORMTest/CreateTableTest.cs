@@ -32,13 +32,13 @@ public class CreateTableTest : TestBase
     public async Task CreateTable()
     {
         using var db = this.Db.CreateMainDbScoped();
-        //await db.DropTableAsync<User>();
-        //await db.DropTableAsync<UserRole>();
-        //await db.DropTableAsync<Role>();
-        //await db.DropTableAsync<RolePermission>();
-        //await db.DropTableAsync<Permission>();
-        //await db.DropTableAsync<UserFlat>();
-        //await db.DropTableAsync<Product>();
+        await db.DropTableAsync<User>();
+        await db.DropTableAsync<UserRole>();
+        await db.DropTableAsync<Role>();
+        await db.DropTableAsync<RolePermission>();
+        await db.DropTableAsync<Permission>();
+        await db.DropTableAsync<UserFlat>();
+        await db.DropTableAsync<Product>();
         await db.CreateTableAsync<User>(cancellationToken: TestContext.CancellationToken);
         await db.CreateTableAsync<UserRole>(cancellationToken: TestContext.CancellationToken);
         await db.CreateTableAsync<Role>(cancellationToken: TestContext.CancellationToken);

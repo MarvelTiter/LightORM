@@ -80,9 +80,9 @@ public static partial class SelectExtensions
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
         {
-            return new SelectProvider2<T1, T2>(instance.GetAdo(key));
+            return new SelectProvider2<T1, T2>(instance.SwitchDatabase(key));
         }
-        return new SelectProvider2<T1, T2>(instance.Ado);
+        return new SelectProvider2<T1, T2>(instance);
     }
 
     public static IExpSelect<T1, T2> SelectColumns<T1, T2>(this IExpSelect<T1, T2> select, Expression<Func<T1, T2, object>> exp)

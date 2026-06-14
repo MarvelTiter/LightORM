@@ -20,7 +20,7 @@ internal static class SelectHandleExtensions
         if (exp is LambdaExpression keySelector)
         {
             select.SqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Group, exp));
-            return new GroupSelectProvider<TGroup, TTables>(select.Executor, select.SqlBuilder, keySelector);
+            return new GroupSelectProvider<TGroup, TTables>(select.DbContext, select.SqlBuilder, keySelector);
         }
         //LightOrmException.Throw("GroupBy请返回NewExpression，否则无法在后续操作中解析属性来源");
         throw new LightOrmException("表达式类型不是LambdaExpression");
@@ -124,7 +124,7 @@ internal static class SelectHandleExtensions
         builder.SelectedTables.Add(table);
         builder.HandleTempsRecursion(select.SqlBuilder);
         builder.SubQuery = select.SqlBuilder;
-        return new SelectProvider1<TTemp>(select.Executor, builder);
+        return new SelectProvider1<TTemp>(select.DbContext, builder);
     }
 }
 

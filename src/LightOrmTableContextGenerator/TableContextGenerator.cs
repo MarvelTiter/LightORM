@@ -51,7 +51,7 @@ public class TableContextGenerator : IIncrementalGenerator
                     var c = GenerateTypeContextClass(t, i, flatTypes);
                     if (c != null)
                     {
-                        var tt = c.ToString();
+                        //var tt = c.ToString();
                         context.AddSource(c);
                         i++;
                     }
@@ -69,7 +69,7 @@ public class TableContextGenerator : IIncrementalGenerator
                 //""";
                 context.ReportDiagnostic(DiagnosticDefinitions.TCG00002(source.TargetNode.GetLocation(), ex.Message));
             }
-            
+
         });
 
     }
@@ -140,7 +140,7 @@ public class TableContextGenerator : IIncrementalGenerator
             .MemberType($"global::System.Func<global::System.Data.IDataReader, {target.ToDisplayString()}>?")
             .Lambda(staticDeserializerMethod.Name!);
 
-        members.Add(CreateInitColumnInfoMethod(target, columns));
+        members.AddRange(CreateInitColumnInfoMethod(target, columns));
         members.Add(deserializer);
         members.Add(staticDeserializerMethod);
         // GetValue   object? GetValue(ColumnInfo col, object target);
@@ -241,11 +241,12 @@ public class TableContextGenerator : IIncrementalGenerator
         //}
     }
 
-    private static MethodBuilder CreateInitColumnInfoMethod(INamedTypeSymbol owner, IPropertySymbol[] columns)
+    private static IEnumerable<MethodBuilder> CreateInitColumnInfoMethod(INamedTypeSymbol owner, IPropertySymbol[] columns)
     {
         List<Statement> bodies = [];
         var i = 0;
         var tableType = $"typeof({owner.ToDisplayString()})";
+        List<IPropertySymbol> navProps = [];
         foreach (var p in columns)
         {
             // 处理 Flat 属性
@@ -262,6 +263,10 @@ public class TableContextGenerator : IIncrementalGenerator
                     {
                         throw new InvalidOperationException($"{owner.ToDisplayString()}的聚合属性的子属性[{item.Name}]和聚合属性[{p.Name}]命名冲突");
                     }
+                    if (fr.NavInfo != "null")
+                    {
+                        navProps.Add(item);
+                    }
                     var propertyType = $"typeof({item.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
                     bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert}, {fr.IsJson})""");
                 }
@@ -271,6 +276,10 @@ public class TableContextGenerator : IIncrementalGenerator
                 continue;
             }
             var r = ScanProperty(p);
+            if (r.NavInfo != "null")
+            {
+                navProps.Add(p);
+            }
             var pt = $"typeof({p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
             bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{pt}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert}, {r.IsJson})""");
         }
@@ -279,7 +288,13 @@ public class TableContextGenerator : IIncrementalGenerator
             $"var cols = new global::LightORM.Interfaces.ITableColumnInfo[{i}]",
             ..bodies
             ];
-        return MethodBuilder.Default.MethodName("CollectColumnInfo").Modifiers("private static").ReturnType("global::LightORM.Interfaces.ITableColumnInfo[]").AddBody([.. bodies]);
+        yield return MethodBuilder.Default.MethodName("CollectColumnInfo").Modifiers("private static").ReturnType("global::LightORM.Interfaces.ITableColumnInfo[]").AddBody([.. bodies]);
+
+        // 增加导航方法
+        foreach (var p in navProps)
+        {
+
+        }
 
         static string GetBoolValue(AttributeData? lightCol, string name, Func<string>? elseAction = null)
         {

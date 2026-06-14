@@ -14,7 +14,7 @@ partial class ExpressionCoreSql
         var builder = SelectBuilder.GetSelectBuilder();
         builder.HandleTempsRecursion(temp.SqlBuilder);
         builder.SelectedTables.Add(temp.ResultTable);
-        return new SelectProvider1<T>(Ado, builder);
+        return new SelectProvider1<T>(this, builder);
     }
 
     public IExpSelect<T> Union<T>(params IExpSelect<T>[] selects)

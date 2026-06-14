@@ -5,13 +5,19 @@ namespace LightORM.Providers
 {
     internal class IncludeProvider<T1, TMember> : SelectProvider1<T1>, IExpInclude<T1, TMember>
     {
-        public IncludeProvider(ISqlExecutor executor, SelectBuilder builder) : base(executor, builder) { }
+        public IncludeProvider(IContext dbContext, SelectBuilder builder) : base(dbContext, builder) { }
 
         public override T1? First()
         {
             var t = base.First();
             if (t != null)
+            {
                 SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
+                //foreach (var item in SqlBuilder.IncludeContext.Includes)
+                //{
+                //    SqlBuilder.MainTable
+                //}
+            }
             return t;
         }
 
@@ -19,8 +25,14 @@ namespace LightORM.Providers
         {
             var t = await base.FirstAsync(cancellationToken);
             if (t != null)
+            {
                 // TODO async 版本
-                SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
+                //SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
+                foreach (var item in SqlBuilder.IncludeContext.Includes)
+                {
+                    SqlBuilder.MainTable.
+                }
+            }
             return t;
         }
 

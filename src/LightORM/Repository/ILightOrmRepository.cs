@@ -1,12 +1,13 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM.Repository;
 
 public interface ILightOrmRepository<
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    TEntity>: IDisposable
+TEntity>: IDisposable
 {
     IQueryable<TEntity> Table { get; }
     IExpSelect<TEntity> ExpSelect { get; }

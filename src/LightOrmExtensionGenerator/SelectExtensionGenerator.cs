@@ -28,9 +28,9 @@ public static partial class SelectExtensions
         var key = GetDbKey({{string.Join(", ", types)}});
         if (key != null)
         {
-            return new SelectProvider{{count}}<{{argsStr}}>(instance.GetAdo(key));
+            return new SelectProvider{{count}}<{{argsStr}}>(instance.SwitchDatabase(key));
         }
-        return new SelectProvider{{count}}<{{argsStr}}>(instance.Ado);
+        return new SelectProvider{{count}}<{{argsStr}}>(instance);
     }
     /// <summary>
     /// 条件Where

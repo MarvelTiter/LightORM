@@ -41,14 +41,14 @@ public static class IncludeExtensions
         };
         include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext();
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
-        return new IncludeProvider<T1, TMember>(include.Executor, include.SqlBuilder);
+        return new IncludeProvider<T1, TMember>(include.DbContext, include.SqlBuilder);
     }
 
     public static IExpInclude<T1, TMember> ThenInclude<T1, TElement, TMember>(this IExpInclude<T1, TElement> include, Expression<Func<TElement, TMember>> exp)
     {
         var p = (IncludeProvider<T1, TElement>)include;
         //TODO 处理 ThenInclude
-        return new IncludeProvider<T1, TMember>(p.Executor, p.SqlBuilder);
+        return new IncludeProvider<T1, TMember>(p.DbContext, p.SqlBuilder);
     }
 
     public static bool WhereIf<T>(this IEnumerable<T> values, Expression<Func<T, bool>> predicate)

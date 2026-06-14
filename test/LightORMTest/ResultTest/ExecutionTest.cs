@@ -110,7 +110,7 @@ public class ExecutionTest : TestBase
             #region include
 
             var result = await Db.Select<User>()
-            .Include(u => u.UserRoles)
+            .Include(u => u.UserRoles.Where(r => r.RoleId.StartsWith("A")))
             .Where(u => u.UserId == "test01")
             .FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(result);

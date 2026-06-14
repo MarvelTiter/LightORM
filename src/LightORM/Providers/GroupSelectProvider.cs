@@ -5,15 +5,16 @@ namespace LightORM.Providers
 {
     internal class GroupSelectProvider<TGroup, TTables> : IExpSelectGroup<TGroup, TTables>
     {
+        public IContext DbContext { get;  }
         public SelectBuilder SqlBuilder { get; }
         public LambdaExpression KeySelector { get; }
-        public ISqlExecutor Executor { get; }
+        public ISqlExecutor Executor => DbContext.Ado;
         public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
         public bool IsSubQuery { get; set; }
 
-        public GroupSelectProvider(ISqlExecutor executor, SelectBuilder builder, LambdaExpression keySelector)
+        public GroupSelectProvider(IContext dbContext, SelectBuilder builder, LambdaExpression keySelector)
         {
-            Executor = executor;
+            DbContext = dbContext;
             SqlBuilder = builder;
             KeySelector = keySelector;
         }
@@ -67,7 +68,7 @@ namespace LightORM.Providers
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
-            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
+            return new SelectProvider1<TTemp>(DbContext, SqlBuilder);
         }
 
         //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
