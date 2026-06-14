@@ -12,7 +12,14 @@ namespace LightORM.Providers
             var t = base.First();
             if (t != null)
             {
-                SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
+                if (IsAOTRuntime)
+                {
+
+                }
+                else
+                {
+                    SqlBuilder.IncludeContext!.BindIncludeDatas(Executor, t);
+                }
                 //foreach (var item in SqlBuilder.IncludeContext.Includes)
                 //{
                 //    SqlBuilder.MainTable
@@ -27,10 +34,13 @@ namespace LightORM.Providers
             if (t != null)
             {
                 // TODO async 版本
-                //SqlBuilder.IncludeContext.BindIncludeDatas(Executor, t);
-                foreach (var item in SqlBuilder.IncludeContext.Includes)
+                if (IsAOTRuntime)
                 {
-                    SqlBuilder.MainTable.
+
+                }
+                else
+                {
+                    SqlBuilder.IncludeContext!.BindIncludeDatas(Executor, t);
                 }
             }
             return t;
@@ -39,7 +49,14 @@ namespace LightORM.Providers
         public override IEnumerable<T1> ToList()
         {
             var result = base.ToList().ToList();
-            SqlBuilder.IncludeContext.BindIncludeDatas(Executor, result);
+            if (IsAOTRuntime)
+            {
+
+            }
+            else
+            {
+                SqlBuilder.IncludeContext!.BindIncludeDatas(Executor, result);
+            }
             return result;
         }
 
@@ -47,7 +64,14 @@ namespace LightORM.Providers
         {
             var result = await base.ToListAsync(cancellationToken);
             // TODO async 版本
-            SqlBuilder.IncludeContext.BindIncludeDatas(Executor, result);
+            if (IsAOTRuntime)
+            {
+
+            }
+            else
+            {
+                SqlBuilder.IncludeContext!.BindIncludeDatas(Executor, result);
+            }
             return result;
         }
     }

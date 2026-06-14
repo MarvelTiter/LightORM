@@ -22,6 +22,7 @@ namespace System
     }
 }
 
+#endif
 
 namespace System.Runtime.CompilerServices
 {
@@ -43,5 +44,3 @@ namespace System.Runtime.CompilerServices
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     internal sealed class DoesNotReturnAttribute : Attribute { }
 }
-
-#endif

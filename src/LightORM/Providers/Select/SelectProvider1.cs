@@ -221,6 +221,7 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
             ParentTable = SqlBuilder.MainTable,
             IncludeWhereExpression = includeWhereExpression
         };
+        SqlBuilder.IncludeContext ??= new();
         SqlBuilder.IncludeContext.Includes.Add(includeInfo);
 
         return new IncludeProvider<T1, TMember>(DbContext, SqlBuilder);

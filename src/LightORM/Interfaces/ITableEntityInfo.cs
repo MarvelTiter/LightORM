@@ -17,7 +17,7 @@ public interface ITableEntityInfo
     //object? GetValue(ITableColumnInfo col, object target);
     //void SetValue(ITableColumnInfo col, object target, object? value);
     //ITableColumnInfo? GetColumn(string name);
-    
+    //void HandleInclude(object entity, IContext dbContext, IncludeInfo includeInfo);
 }
 
 public interface ITableEntityInfo<

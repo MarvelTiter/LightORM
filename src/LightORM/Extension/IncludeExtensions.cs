@@ -8,6 +8,7 @@ public static class IncludeExtensions
     {
         //var option = SqlResolveOptions.Select;
         //var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
+        var p = (IncludeProvider<T1, TElement>)include;
         string? includePropertyName = null;
         Expression? includeWhereExpression = null;
         if (exp is MemberExpression m)
@@ -39,7 +40,7 @@ public static class IncludeExtensions
             ParentTable = include.SqlBuilder.MainTable,
             IncludeWhereExpression = includeWhereExpression
         };
-        include.SqlBuilder.IncludeContext.ThenInclude ??= new IncludeContext();
+        include.SqlBuilder.IncludeContext!.ThenInclude ??= new IncludeContext();
         include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(include.DbContext, include.SqlBuilder);
     }

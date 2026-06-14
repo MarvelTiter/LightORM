@@ -24,6 +24,11 @@ internal record TableEntity : ITableEntityInfo
     public string? Description { get; set; }
     public ITableColumnInfo[] Columns { get; set; } = [];
 
+    public void HandleInclude(object entity, IContext dbContext, IncludeInfo includeInfo)
+    {
+
+    }
+
     //private readonly ConcurrentDictionary<string, ITableColumnInfo> columnMap = new();
     //public ITableColumnInfo GetColumnInfo(string propertyName)
     //{

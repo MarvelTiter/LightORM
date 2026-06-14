@@ -19,10 +19,10 @@ internal struct SelectInsert(string tableName, string columns)
 
 internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
 {
-    public SelectBuilder()
-    {
-        IncludeContext = new IncludeContext();
-    }
+    //public SelectBuilder()
+    //{
+    //    IncludeContext = new IncludeContext();
+    //}
     public static SelectBuilder GetSelectBuilder() => new();//SelectBuilderPool.Rent();
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public int PageIndex { get; set; }
@@ -47,7 +47,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public List<JoinInfo> Joins { get; set; } = [];
     public List<string> Having { get; set; } = [];
     public List<IncludeInfo> Includes { get; set; } = [];
-    public IncludeContext IncludeContext { get; set; }
+    public IncludeContext? IncludeContext { get; set; }
 
     public List<string> GroupBy { get; set; } = [];
     public List<string> OrderBy { get; set; } = [];

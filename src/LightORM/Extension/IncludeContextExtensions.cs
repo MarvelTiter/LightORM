@@ -15,7 +15,10 @@ namespace LightORM.Extension
 #endif
         public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
         {
-            // TODO 在TableContext生成器中，增加Include相关方法的生成
+            if (!AOTSupported)
+            {
+                LightOrmException.Throw("当前配置不支持反射Include操作");
+            }
             if (data is IEnumerable datas)
             {
                 foreach (object item in datas)
@@ -34,6 +37,7 @@ namespace LightORM.Extension
                 }
             }
         }
+
 #if NET8_0_OR_GREATER
 
 #endif

@@ -4,6 +4,8 @@ using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace LightORMTest;
 
@@ -26,7 +28,7 @@ public class TestBase
             option.UseInterceptor<LightOrmAop>();
             option.SetTableContext(TableContext);
             option.ConfigJsonHandler<JsonHandler>();
-            
+
         });
 
         Services = services.BuildServiceProvider();
