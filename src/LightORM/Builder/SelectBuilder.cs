@@ -46,8 +46,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public int Level { get; set; }
     public List<JoinInfo> Joins { get; set; } = [];
     public List<string> Having { get; set; } = [];
-    public List<IncludeInfo> Includes { get; set; } = [];
-    public IncludeContext? IncludeContext { get; set; }
+    public SortedSet<IncludeInfo> Includes { get; set; } = [];
 
     public List<string> GroupBy { get; set; } = [];
     public List<string> OrderBy { get; set; } = [];

@@ -28,10 +28,14 @@ public static class IncludeExtensions
         {
             throw new LightOrmException("解析导航属性失败");
         }
-        var navCol = include.SqlBuilder.MainTable.GetColumnInfo(includePropertyName!);
+
+        var last = include.SqlBuilder.Includes.Last();
+        var lastIncludeTable = TableContext.GetTableInfo(last.NavigateInfo.NavigateType);
+        
+        var navCol = lastIncludeTable.GetColumn(includePropertyName!);
         var navInfo = navCol.NavigateInfo!;
         //var table = TableInfo.Create(navCol.NavigateInfo!.NavigateType);
-        var parentWhereColumn = include.SqlBuilder.MainTable.GetColumnInfo(navCol.NavigateInfo!.MainName!);
+        var parentWhereColumn = lastIncludeTable.GetColumn(navCol.NavigateInfo!.MainName!);
         var includeInfo = new IncludeInfo
         {
             NavigateInfo = navInfo,
@@ -40,8 +44,7 @@ public static class IncludeExtensions
             ParentTable = include.SqlBuilder.MainTable,
             IncludeWhereExpression = includeWhereExpression
         };
-        include.SqlBuilder.IncludeContext!.ThenInclude ??= new IncludeContext();
-        include.SqlBuilder.IncludeContext.ThenInclude.Includes.Add(includeInfo);
+        last.ThenIncludes.Add(includeInfo);
         return new IncludeProvider<T1, TMember>(include.DbContext, include.SqlBuilder);
     }
 

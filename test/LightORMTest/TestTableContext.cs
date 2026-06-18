@@ -4,21 +4,19 @@ using System.Linq.Expressions;
 
 namespace LightORMTest;
 
+using static LightORMTest.TestTableContext;
+
 /// <summary>
 /// 数据表上下文缓存
 /// </summary>
 [LightORMTableContext]
 internal partial class TestTableContext
 {
-
-
 }
-
-
 
 /// <inheritdoc/>
 [global::System.CodeDom.Compiler.GeneratedCode("LightOrmTableContextGenerator.TableContextGenerator", "2026.5.15.1")]
-public partial record LightORMTest_Models_UserTableInfo : global::LightORM.Interfaces.ITableEntityInfo, global::LightORM.Interfaces.ITableEntityInfo<LightORMTest.Models.User>
+public partial record LightORMTest_Models_User22TableInfo : global::LightORM.Interfaces.ITableEntityInfo, global::LightORM.Interfaces.ITableEntityInfo<LightORMTest.Models.User>
 {
     private static global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]> columns = new global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>(CollectColumnInfo);
 
@@ -78,43 +76,112 @@ public partial record LightORMTest_Models_UserTableInfo : global::LightORM.Inter
         throw new NotImplementedException();
     }
 
-    public void HandleInclude(object value, IncludeInfo info, IContext context)
+    public void HandleInclude(global::LightORM.IContext context, object value, global::System.Collections.Generic.IEnumerable<global::LightORM.Models.IncludeInfo> info)
     {
-        var nt = info.NavigateInfo?.NavigateType;
-        if (nt == typeof(City))
+        foreach (var item in info)
         {
-            IncludeCity((User)value, context, info.IncludeWhereExpression as Expression<Func<City, bool>>);
-        }
-        else if (nt == typeof(Role))
-        {
-            IncludeRole((User)value, context, info.IncludeWhereExpression as Expression<Func<Role, bool>>);
+            var nt = item.NavigateInfo?.NavigateType;
+            if (nt == typeof(City))
+            {
+                IncludeCity(context, value, item);
+            }
+            else if (nt == typeof(Role))
+            {
+                IncludeRole(context, value, item);
+            }
         }
     }
 
-    public static void IncludeCity(object value, IContext context, Expression<Func<City, bool>>? where)
+    public Task HandleIncludeAsync(IContext dbContext, object entity, IEnumerable<IncludeInfo> infos, CancellationToken cancellationToken)
     {
-        if (value is not User user)
-        {
-            throw new ArgumentException();
-        }
-        user.City = context.Select<City>().Where(p => p.Uid == user.Id).First();
+        throw new NotImplementedException();
     }
 
-    public static void IncludeRole(object value, IContext context, Expression<Func<Role, bool>>? where)
+    public static void IncludeCity(IContext context, object value, IncludeInfo info)
     {
-        if (value is not User user)
+        if (value is User user)
         {
-            throw new ArgumentException();
+            var whereExpression = info.IncludeWhereExpression as Expression<Func<City, bool>>;
+            var includeValue = context.Select<City>()
+                .Where(p => p.Uid == user.Id)
+                .WhereIf(whereExpression is not null, whereExpression!)
+                .First();
+            if (includeValue is not null && info.ThenIncludes?.Count > 0)
+                LightORMTest_Models_City.HandleInclude(context, includeValue, info.ThenIncludes);
+            user.City = includeValue;
         }
-        user.UserRoles = context.Select<Role>()
-            .InnerJoin<UserRole>((r, ur) => r.RoleId == ur.RoleId)
-            .InnerJoin<User>((_, ur, u) => ur.UserId == u.UserId)
-            .Where((_, ur, u) => u.UserId == user.UserId)
-            .WhereIf(where is not null, where!)
-            .ToList();
+        else if (value is IEnumerable<User> users)
+        {
+            var userList = users as IList<User> ?? users.ToList();
+            if (userList.Count == 0) return;
+            var whereExpression = info.IncludeWhereExpression as Expression<Func<City, bool>>;
+            var ids = userList.Select(p => p.Id);
+            var includeValue = context.Select<City>()
+                .Where(p => ids.Contains(p.Uid))
+                .WhereIf(whereExpression is not null, whereExpression!)
+                .ToList().GroupBy(p => p.Uid).ToDictionary(g => g.Key, g => g.First());
+            foreach (var u in userList)
+            {
+                if (includeValue.TryGetValue(u.Id, out var city))
+                {
+                    u.City = city;
+                }
+            }
 
+            if (info.ThenIncludes?.Count > 0 && includeValue.Count > 0)
+            {
+                LightORMTest_Models_City.HandleInclude(context, includeValue.Values.ToList(), info.ThenIncludes);
+            }
+        }
     }
 
+    public static void IncludeRole(IContext context, object value, IncludeInfo info)
+    {
+        if (value is User user)
+        {
+            var whereExpression = info.IncludeWhereExpression as Expression<Func<Role, bool>>;
+            var userRoles = context.Select<Role>()
+                .InnerJoin<UserRole>((r, ur) => r.RoleId == ur.RoleId)
+                .InnerJoin<User>((_, ur, u) => ur.UserId == u.UserId)
+                .Where((_, ur, u) => u.UserId == user.UserId)
+                .WhereIf(whereExpression is not null, whereExpression!)
+                .ToList();
+            var userUserRoles = userRoles as IList<Role> ?? userRoles.ToList();
+            if (userRoles is not null && userUserRoles.Any() && info.ThenIncludes?.Count > 0)
+            {
+                LightORMTest_Models_Role.HandleInclude(context, userRoles, info.ThenIncludes);
+            }
+
+            user.UserRoles = userUserRoles;
+        }
+        else if (value is IEnumerable<User> users)
+        {
+            var userList = users as IList<User> ?? users.ToList();
+            if (userList.Count == 0) return;
+            var whereExpression = info.IncludeWhereExpression as Expression<Func<Role, bool>>;
+            var ids = userList.Select(p => p.UserId);
+            var includeValue = context.Select<Role>()
+                .InnerJoin<UserRole>((r, ur) => r.RoleId == ur.RoleId)
+                .InnerJoin<User>((_, ur, u) => ur.UserId == u.UserId)
+                .Where((_, ur, u) => ids.Contains(u.UserId))
+                .WhereIf(whereExpression is not null, whereExpression!)
+                .ToList((r, ur, u) => new { Role = r, u.UserId })
+                .GroupBy(v => v.UserId)
+                .ToDictionary(g => g.Key, g => g.Select(gg => gg.Role).ToList());
+            foreach (var u in userList)
+            {
+                if (includeValue.TryGetValue(u.UserId, out var roles))
+                {
+                    u.UserRoles = roles;
+                }
+            }
+            if (includeValue is not null && includeValue.Any() && info.ThenIncludes?.Count > 0)
+            {
+                var distinctRoles = includeValue.Values.SelectMany(r => r).Distinct().ToList();
+                LightORMTest_Models_Role.HandleInclude(context, distinctRoles, info.ThenIncludes);
+            }
+        }
+    }
 
     public static object? GetValue(global::LightORM.Interfaces.ITableColumnInfo col, object target)
     {

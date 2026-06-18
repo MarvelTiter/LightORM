@@ -5,11 +5,44 @@ namespace LightORM.Extension;
 
 internal static class TypeExtension
 {
+    private static readonly HashSet<Type> systemTypes = [
+        typeof(DateTime),
+        typeof(decimal),
+        typeof(Guid),
+        typeof(TimeSpan),
+        typeof(Uri),
+        typeof(Version)
+    ];
+    
     public static bool IsAnonymous(this Type? type)
     {
         return type?.FullName?.StartsWith("<>f__AnonymousType") == true;
     }
 
+    public static bool IsClassOrAnonymous(this Type type)
+    {
+        if (type == null) return false;
+        
+        // 快速排除：值类型、基元类型、字符串
+        if (type.IsValueType || type.IsPrimitive || type == typeof(string))
+            return false;
+        
+        // 排除常见系统类型
+        if (systemTypes.Contains(type)) return false;
+        
+        // 排除数组、委托、枚举、接口
+        if (type.IsArray || type.IsDelegate() || type.IsEnum || type.IsInterface)
+            return false;
+        
+        // 必须是类
+        return type.IsClass;
+    }
+    
+    public static bool IsDelegate(this Type type)
+    {
+        return typeof(Delegate).IsAssignableFrom(type);
+    }
+    
     public static bool IsFlat(this Type? type)
     {
         return type?.HasAttribute<LightFlatAttribute>() == true;
@@ -140,6 +173,8 @@ internal static class TypeExtension
         [typeof(sbyte)] = default(sbyte),
         [typeof(char)] = default(char),
     };
+
+
     public static object? TypeDefaultValue(this Type type)
     {
         typeDefaultValueCache.TryGetValue(type, out var value);

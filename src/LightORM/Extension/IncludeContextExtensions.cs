@@ -6,45 +6,47 @@ namespace LightORM.Extension
 {
     internal static class IncludeContextExtensions
     {
-        private readonly static MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
-        private readonly static MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
-        private readonly static MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault), Type.EmptyTypes)!;
+        private static readonly MethodInfo QueryMethod = typeof(SqlExecutorExtensions).GetMethods().First(m => m.Name == nameof(SqlExecutorExtensions.Query) && m.IsGenericMethod);
+        private static readonly MethodInfo ToList = typeof(Enumerable).GetMethod(nameof(Enumerable.ToList))!;
+        private static readonly MethodInfo FirstOrDefault = typeof(Enumerable).GetMethod(nameof(Enumerable.FirstOrDefault), Type.EmptyTypes)!;
 
 #if NET8_0_OR_GREATER
 
 #endif
-        public static void BindIncludeDatas(this IncludeContext context, ISqlExecutor executor, object data)
+        public static void BindIncludeDatas(this SelectBuilder sqlBuilder, ISqlExecutor executor, object data)
         {
             if (!AOTSupported)
             {
                 LightOrmException.Throw("当前配置不支持反射Include操作");
             }
+
             if (data is IEnumerable datas)
             {
                 foreach (object item in datas)
                 {
-                    foreach (IncludeInfo include in context.Includes)
+                    foreach (IncludeInfo include in sqlBuilder.Includes)
                     {
-                        Do(context, executor, item, include);
+                        Do( executor, item, include);
                     }
                 }
             }
             else
             {
-                foreach (IncludeInfo include in context.Includes)
+                foreach (IncludeInfo include in sqlBuilder.Includes)
                 {
-                    Do(context, executor, data, include);
+                    Do( executor, data, include);
                 }
             }
         }
 
 #if NET8_0_OR_GREATER
-
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2060", Justification = "这是反射路径")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050", Justification = "这是反射路径")]
 #endif
-        private static void Do(IncludeContext context, ISqlExecutor executor, object item, IncludeInfo include)
+        public static void Do(ISqlExecutor executor, object item, IncludeInfo include)
         {
             var database = executor.Database.DatabaseAdapter;
-            SelectBuilder includeBuilder = BuildIncludeSqlBuilder(database, item, include);
+            SelectBuilder includeBuilder = BuildSql(database, include, item);
             var selectedType = include.NavigateInfo!.NavigateType;
             string sql = includeBuilder.ToSqlString(database);
             var param = includeBuilder.DbParameters;
@@ -60,20 +62,27 @@ namespace LightORM.Extension
                 var firstOrDefault = FirstOrDefault.MakeGenericMethod(selectedType);
                 result = firstOrDefault.Invoke(null, [result]);
             }
+
             if (result == null)
             {
                 return;
             }
+
             include.ParentNavigateColumn!.SetValue(item, result);
-            context.ThenInclude?.BindIncludeDatas(executor, result);
+            if (include.ThenIncludes?.Count > 0)
+            {
+                foreach (var thenInclude in include.ThenIncludes)
+                {
+                    Do(executor, result, thenInclude);
+                }
+            }
         }
-
-        public static SelectBuilder BuildIncludeSqlBuilder(IDatabaseAdapter database, object item, IncludeInfo include)
-        {
-            var includeBuilder = BuildSql(database, include, item);
-            return includeBuilder;
-        }
-
+        
+#if NET8_0_OR_GREATER
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026", Justification = "这是反射路径")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2060", Justification = "这是反射路径")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL3050", Justification = "这是反射路径")]
+#endif
         private static SelectBuilder BuildSql(IDatabaseAdapter database, IncludeInfo include, object item)
         {
             SelectBuilder selectSql = SelectBuilder.GetSelectBuilder();
@@ -113,6 +122,7 @@ namespace LightORM.Extension
                     Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.MainTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
             }
+
             ParameterExpression[] all = [.. selectSql.AllTables().Select(t => Expression.Parameter(t.Type))];
             selectSql.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Select, BuildSelectAllExpression(all)));
 
@@ -121,32 +131,32 @@ namespace LightORM.Extension
             {
                 selectSql.Expressions.Add(new(SqlResolveOptions.Where, BuildIncludeNavigateExpression(selectSql, include.IncludeWhereExpression)));
             }
+
             return selectSql;
-        }
-#if NET8_0_OR_GREATER
-
-#endif
-        private static LambdaExpression BuildSelectAllExpression(ParameterExpression[] allTables)
-        {
-            var lambda = Expression.Lambda(allTables[0], allTables);
-            return lambda;
-        }
-#if NET8_0_OR_GREATER
-
-#endif
-        private static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col, ParameterExpression[] allTables)
-        {
-            var p = allTables.Last();
-            var equal = Expression.Equal(Expression.Property(p, col.PropertyName), Expression.Constant(col.GetValue(item)));
-            return Expression.Lambda(equal, allTables);
-        }
-        private static LambdaExpression BuildIncludeNavigateExpression(SelectBuilder _, Expression body)
-        {
-            if (body.TryGetLambdaExpression(out var mainLambda))
+                
+            static LambdaExpression BuildSelectAllExpression(ParameterExpression[] allTables)
             {
-                return mainLambda!;
+                var lambda = Expression.Lambda(allTables[0], allTables);
+                return lambda;
             }
-            throw new LightOrmException("Include的Where条件不是一个LambdaExpression");
+            
+            static LambdaExpression BuildMainWhereExpression(object item, ITableColumnInfo col, ParameterExpression[] allTables)
+            {
+                var p = allTables.Last();
+                var equal = Expression.Equal(Expression.Property(p, col.PropertyName), Expression.Constant(col.GetValue(item)));
+                return Expression.Lambda(equal, allTables);
+            }
+            
+            static LambdaExpression BuildIncludeNavigateExpression(SelectBuilder _, Expression body)
+            {
+                if (body.TryGetLambdaExpression(out var mainLambda))
+                {
+                    return mainLambda!;
+                }
+
+                throw new LightOrmException("Include的Where条件不是一个LambdaExpression");
+            }
+            
         }
     }
 }

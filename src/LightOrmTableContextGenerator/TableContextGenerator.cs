@@ -22,13 +22,14 @@ namespace LightOrmTableContextGenerator;
 //}
 
 [Generator(LanguageNames.CSharp)]
-public class TableContextGenerator : IIncrementalGenerator
+public partial class TableContextGenerator : IIncrementalGenerator
 {
     public const string ContextAttributeFullName = "LightORM.LightORMTableContextAttribute";
     public const string ContextInterfaceFullName = "LightORM.ITableContext";
     public const string LightTableAttributeFullName = "LightORM.LightTableAttribute";
     public const string LightFlatAttributeFullName = "LightORM.LightFlatAttribute";
     public const string LightJsonMapAttributeFullName = "LightORM.LightJsonMapAttribute";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var source = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -45,10 +46,11 @@ public class TableContextGenerator : IIncrementalGenerator
                 int i = 0;
                 List<INamedTypeSymbol> flatTypes = [];
                 //var customMap = ctxSymbol.GetAttributes("LightORM.Attributes.Mapping.MappingBaseAttribute", true).ToArray();
+                var staticUsing = $"using static {ctxSymbol.ContainingNamespace.ToDisplayString()}.{ctxSymbol.FormatClassName()};";
                 foreach (var t in allTableType)
                 {
                     // 生成  {Type}Context.g.cs
-                    var c = GenerateTypeContextClass(t, i, flatTypes);
+                    var c = GenerateTypeContextClass(t, staticUsing, flatTypes);
                     if (c != null)
                     {
                         //var tt = c.ToString();
@@ -69,20 +71,19 @@ public class TableContextGenerator : IIncrementalGenerator
                 //""";
                 context.ReportDiagnostic(DiagnosticDefinitions.TCG00002(source.TargetNode.GetLocation(), ex.Message));
             }
-
         });
-
     }
 
-    private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, int index, List<INamedTypeSymbol> flatTypes)
+    private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, string staticUsing, List<INamedTypeSymbol> flatTypes)
     {
         _ = target.GetAttribute(LightTableAttributeFullName, out var lightTable);
         _ = target.GetAttribute("System.ComponentModel.DataAnnotations.Schema.TableAttribute", out var componentTable);
         _ = target.GetAttribute("System.ComponentModel.DescriptionAttribute", out var des);
-        List<Node> members = [
+        List<Node> members =
+        [
             // private LightORM.Interfaces.ITableColumnInfo[] columns;
             FieldBuilder.Default.Modifiers("private static").MemberType("global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>").FieldName("columns")
-            .InitializeWith("new global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>(CollectColumnInfo)"),
+                .InitializeWith("new global::System.Lazy<global::LightORM.Interfaces.ITableColumnInfo[]>(CollectColumnInfo)"),
             // public Type Type { get; } = typeof(Product);
             PropertyBuilder.Default.MemberType("Type").PropertyName("Type").Readonly().InitializeWith($"typeof({target.ToDisplayString()})"),
             // public string TableName => CustomName ?? Type?.Name ?? throw new LightOrmException("获取表名异常");
@@ -125,22 +126,26 @@ public class TableContextGenerator : IIncrementalGenerator
         {
             desValue = description!.ToString();
         }
+
         members.Add(PropertyBuilder.Default.MemberType("string?").PropertyName("Description").Lambda(desValue));
         // public List<ColumnInfo> Columns { get; } = [];
         members.Add(PropertyBuilder.Default.MemberType("global::LightORM.Interfaces.ITableColumnInfo[]").PropertyName("Columns").Lambda("columns.Value"));
 
         var columns = target.GetAllMembers(s => s.IsAbstract)
-            .Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
+            .Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol { DeclaredAccessibility: Accessibility.Public })
             .Cast<IPropertySymbol>().ToArray();
 
         // Func<IDataReader, object>? DataReaderDeserializer { get; }
-        MethodBuilder staticDeserializerMethod = CreateDeserializeMethod(target, columns);
+        var columnInfos = CollectProperties(target, columns).ToArray();
+        MethodBuilder staticDeserializerMethod = CreateDeserializeMethod(target, columnInfos);
         var deserializer = PropertyBuilder.Default
             .PropertyName("DataReaderDeserializer")
             .MemberType($"global::System.Func<global::System.Data.IDataReader, {target.ToDisplayString()}>?")
             .Lambda(staticDeserializerMethod.Name!);
 
-        members.AddRange(CreateInitColumnInfoMethod(target, columns));
+
+        members.Add(CreateInitColumnInfoMethod(target, columnInfos));
+        members.AddRange(CreateIncludeMethods(target, columnInfos));
         members.Add(deserializer);
         members.Add(staticDeserializerMethod);
         // GetValue   object? GetValue(ColumnInfo col, object target);
@@ -156,270 +161,19 @@ public class TableContextGenerator : IIncrementalGenerator
             .AddMembers([.. members]);
 
         return CodeFile.New($"{target.FormatFileName()}.TableInfo.g.cs")
-            .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r));
-    }
-
-    private static MethodBuilder CreateDeserializeMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
-    {
-        //var initInstance = $"var p = {target.New()}";
-        //var forStatement = ForStatement.Default.For("int i = 0; i < reader.FieldCount; i++");
-        //var dbnullCheck = IfStatement.Default.If("reader.IsDBNull(i)")
-        //    .AddStatement("continue");
-        //forStatement.AddStatements(dbnullCheck);
-        //forStatement.AddStatements("string columnName = reader.GetName(i)");
-        //var switchSet = SwitchStatement.Default
-        //    .Switch("columnName");
-
-        //foreach (var column in columns)
-        //{
-        //    if (column.IsReadOnly || column.SetMethod?.IsInitOnly == true)
-        //        continue;
-        //    if (column.Type.TypeKind == TypeKind.Class
-        //        && column.Type.SpecialType == SpecialType.None
-        //        && column.HasAttribute(LightFlatAttributeFullName))
-        //    {
-        //        var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
-        //        foreach (var flat in flatProps)
-        //        {
-        //            switchSet.AddBreakCase($"\"{flat.Name}\"",
-        //                //$"p.{column.Name}.{flat.Name}",
-        //                IfStatement.Default.If($"p.{column.Name} is null")
-        //                .AddStatement($"p.{column.Name} = {column.Type.New()};"),
-        //                $"p.{column.Name}.{flat.Name} = {GetValueExpression("reader", flat, "i")}"
-        //                );
-        //        }
-        //    }
-        //    else
-        //    {
-        //        switchSet.AddBreakCase($"\"{column.Name}\"", $"p.{column.Name} = {GetValueExpression("reader", column, "i")}");
-        //    }
-        //}
-        //switchSet.AddDefaultCase("throw new global::LightORM.LightOrmException()");
-        //forStatement.AddStatements(switchSet);
-        return MethodBuilder.Default
-            .MethodName($"Deserialize{target.MetadataName}FromDbDataReader")
-            .Modifiers("public static")
-            .AddParameter("global::System.Data.IDataReader reader")
-            .ReturnType(target.ToDisplayString())
-            .AddBody("throw new NotImplementedException()");
-
-        //static string GetValueExpression(string instanceName, IPropertySymbol property, string indexVar)
-        //{
-        //    if (property.Type.TypeKind == TypeKind.Array
-        //        && property.Type is IArrayTypeSymbol array
-        //        && array.ElementType.SpecialType == SpecialType.System_Byte)
-        //    {
-        //        // 处理 byte[] 类型
-        //        return $"global::LightORM.Utils.DataRecordFieldHandleHelper.RecordFieldToBytes({instanceName}, {indexVar})";
-        //    }
-        //    else if (IsUnsignType(property.Type))
-        //    {
-        //        if (typeMapMethod.TryGetValue(property.Type.SpecialType, out var method))
-        //        {
-        //            return $"{method}({instanceName}, {indexVar})";
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (typeMapMethod.TryGetValue(property.Type.SpecialType, out var method))
-        //        {
-        //            return $"{instanceName}.{method}({indexVar})";
-        //        }
-        //    }
-        //    return "";
-        //}
-        //static bool IsUnsignType(ITypeSymbol type)
-        //{
-        //    return type.SpecialType switch
-        //    {
-        //        SpecialType.System_SByte => true,
-        //        SpecialType.System_UInt16 => true,
-        //        SpecialType.System_UInt32 => true,
-        //        SpecialType.System_UInt64 => true,
-        //        _ => false
-        //    };
-        //}
-    }
-
-    private static IEnumerable<MethodBuilder> CreateInitColumnInfoMethod(INamedTypeSymbol owner, IPropertySymbol[] columns)
-    {
-        List<Statement> bodies = [];
-        var i = 0;
-        var tableType = $"typeof({owner.ToDisplayString()})";
-        List<IPropertySymbol> navProps = [];
-        foreach (var p in columns)
-        {
-            // 处理 Flat 属性
-            if (p.Type.TypeKind == TypeKind.Class
-                && p.Type.SpecialType == SpecialType.None
-                && p.HasAttribute(LightFlatAttributeFullName))
-            {
-                var flattedProps = p.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
-                var flatType = p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
-                foreach (var item in flattedProps)
-                {
-                    var fr = ScanProperty(item);
-                    if (item.Name == p.Name)
-                    {
-                        throw new InvalidOperationException($"{owner.ToDisplayString()}的聚合属性的子属性[{item.Name}]和聚合属性[{p.Name}]命名冲突");
-                    }
-                    if (fr.NavInfo != "null")
-                    {
-                        navProps.Add(item);
-                    }
-                    var propertyType = $"typeof({item.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
-                    bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{propertyType}, "{item.Name}", {fr.CustomName}, {fr.PrimaryKey}, {fr.IsNotMap}, {fr.AutoIncrement}, {fr.NotNull}, {fr.Len}, {fr.DefaultValue}, {fr.Comment}, {fr.CanRead}, {fr.CanWrite}, {fr.CanInit}, {fr.NavInfo}, typeof({flatType}), false, true, false, {fr.IgnoreUpdate}, {fr.IgnoreInsert}, {fr.IsJson})""");
-                }
-                //bodies.Add($"""var gen_{p.Name} = new global::LightORM.Models.ColumnInfo({tableType}, "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null)""");
-                //bodies.Add($"gen_{p.Name}.IsAggregated = true");
-                bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},typeof({flatType}), "{p.Name}", null, false, true, false, false, 0, null, null, true, true, true, null, typeof({flatType}), true, false, false, true, true, false)""");
-                continue;
-            }
-            var r = ScanProperty(p);
-            if (r.NavInfo != "null")
-            {
-                navProps.Add(p);
-            }
-            var pt = $"typeof({p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString()})";
-            bodies.Add($"""cols[{i++}] = new global::LightORM.Models.ColumnInfo({tableType},{pt}, "{p.Name}", {r.CustomName}, {r.PrimaryKey}, {r.IsNotMap}, {r.AutoIncrement}, {r.NotNull}, {r.Len}, {r.DefaultValue}, {r.Comment}, {r.CanRead}, {r.CanWrite}, {r.CanInit}, {r.NavInfo}, null, false, false, {r.IsVersion}, {r.IgnoreUpdate}, {r.IgnoreInsert}, {r.IsJson})""");
-        }
-        bodies.Add("return cols");
-        bodies = [
-            $"var cols = new global::LightORM.Interfaces.ITableColumnInfo[{i}]",
-            ..bodies
-            ];
-        yield return MethodBuilder.Default.MethodName("CollectColumnInfo").Modifiers("private static").ReturnType("global::LightORM.Interfaces.ITableColumnInfo[]").AddBody([.. bodies]);
-
-        // 增加导航方法
-        foreach (var p in navProps)
-        {
-
-        }
-
-        static string GetBoolValue(AttributeData? lightCol, string name, Func<string>? elseAction = null)
-        {
-            var b = "false";
-            if (lightCol.GetNamedValue(name, out var v))
-            {
-                b = $"{v}";
-            }
-            else
-            {
-                if (elseAction != null)
-                    b = elseAction.Invoke();
-            }
-            return b.ToLower();
-        }
-
-        static string GetAttributeValueOrNull(AttributeData? a, string name, bool isString = false)
-        {
-            var v = "null";
-            if (a.GetNamedValue(name, out var val))
-            {
-                if (isString)
-                {
-                    v = $"\"{val}\"";
-                }
-                else
-                {
-                    v = $"{v}";
-                }
-            }
-            return v;
-        }
-
-        static PropertyScanResult ScanProperty(IPropertySymbol p)
-        {
-            var commentId = p.GetDocumentationCommentId();
-            var commentDoc = p.GetDocumentationCommentXml();
-            System.Diagnostics.Debug.WriteLine($"{commentId} -> 注释: {commentDoc}");
-            _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.ColumnAttribute", out var cmCol);
-            _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
-            _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);
-            _ = p.GetAttribute("LightORM.LightColumnAttribute", out var lightCol);
-            _ = p.GetAttribute("LightORM.LightNavigateAttribute", out var nav);
-            _ = p.GetAttribute(LightJsonMapAttributeFullName, out var json);
-            var customName = "null";
-
-            if (lightCol.GetNamedValue("Name", out var cname))
-            {
-                customName = $"\"{cname}\"";
-            }
-            else if (cmCol.GetNamedValue("Name", out cname))
-            {
-                customName = $"\"{cname}\"";
-            }
-            var primaryKey = GetBoolValue(lightCol, "PrimaryKey", () => key != null ? "true" : "false");
-            var isnotmap = GetBoolValue(lightCol, "Ignore", () => notmap != null ? "true" : "false");
-            var autoincrement = GetBoolValue(lightCol, "AutoIncrement");
-            var notnull = GetBoolValue(lightCol, "NotNull");
-            var len = GetAttributeValueOrNull(lightCol, "Length");
-            var def = GetAttributeValueOrNull(lightCol, "Default");
-            var comment = GetAttributeValueOrNull(lightCol, "Comment", true);
-            var canRead = (p.GetMethod is not null) ? "true" : "false";
-            var canWrite = (p.SetMethod is not null && p.SetMethod?.IsInitOnly == false) ? "true" : "false";
-            var canInit = (p.SetMethod is not null) ? "true" : "false";
-            var version = GetBoolValue(lightCol, "Version");
-            var ignoreUpdate = GetBoolValue(lightCol, "IgnoreUpdate");
-            var ignoreInsert = GetBoolValue(lightCol, "IgnoreInsert");
-            var navInfo = "null";
-            var isJson = json is null ? "false" : "true";
-            if (nav != null)
-            {
-                var ismulti = p.Type.HasInterfaceAll("System.Collections.IEnumerable") && p.Type.SpecialType == SpecialType.None;
-                var multi = ismulti ? "true" : "false";
-                var elementType = p.Type.GetElementType();
-                if (nav.ConstructorArguments.Length == 2)
-                {
-                    var mn = nav.ConstructorArguments[0].Value;
-                    var sn = nav.ConstructorArguments[1].Value;
-                    navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), null, \"{mn}\", \"{sn}\", {multi})";
-                }
-                else if (nav.ConstructorArguments.Length == 3)
-                {
-                    var mpt = (INamedTypeSymbol)nav.ConstructorArguments[0].Value!;
-                    var mn = nav.ConstructorArguments[1].Value;
-                    var sn = nav.ConstructorArguments[2].Value;
-                    navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), typeof({mpt.ToDisplayString()}), \"{mn}\", \"{sn}\", {multi})";
-                }
-                else
-                {
-                    var mpt = nav.GetNamedValue("ManyToMany") is not INamedTypeSymbol mappingType ? "null" : $"typeof({mappingType.ToDisplayString()})";
-                    var mn = GetAttributeValueOrNull(nav, "MainName", true);
-                    var sn = GetAttributeValueOrNull(nav, "SubName", true);
-                    navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), {mpt}, {mn}, {sn}, {multi})";
-                }
-            }
-            return new()
-            {
-                CustomName = customName,
-                PrimaryKey = primaryKey,
-                IsNotMap = isnotmap,
-                AutoIncrement = autoincrement,
-                NotNull = notnull,
-                Len = len,
-                DefaultValue = def,
-                Comment = comment,
-                CanRead = canRead,
-                CanWrite = canWrite,
-                CanInit = canInit,
-                NavInfo = navInfo,
-                IsVersion = version,
-                IgnoreUpdate = ignoreUpdate,
-                IgnoreInsert = ignoreInsert,
-                IsJson = isJson
-            };
-        }
+            .AddMembers(NamespaceBuilder.Default.Namespace("LightORM.GeneratedTableContext").AddMembers(r).FileScoped())
+            .AddUsings(staticUsing);
     }
 
     private static MethodBuilder CreateGetValueMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
     {
-        List<Statement> bodies = [
+        List<Statement> bodies =
+        [
             $"var p = target as {target.ToDisplayString()}",
             "ArgumentNullException.ThrowIfNull(p)",
             "if (!col.CanRead)",
             "   return null"
-         ];
+        ];
 
 
         var builder = MethodBuilder.Default
@@ -434,8 +188,8 @@ public class TableContextGenerator : IIncrementalGenerator
             foreach (IPropertySymbol column in columns)
             {
                 if (column.Type.TypeKind == TypeKind.Class
-                && column.Type.SpecialType == SpecialType.None
-                && column.HasAttribute(LightFlatAttributeFullName))
+                    && column.Type.SpecialType == SpecialType.None
+                    && column.HasAttribute(LightFlatAttributeFullName))
                 {
                     var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
                     var nullable = column.Type.NullableAnnotation == NullableAnnotation.Annotated ? "?" : "";
@@ -449,6 +203,7 @@ public class TableContextGenerator : IIncrementalGenerator
                     ss.AddReturnCase($"\"{column.Name}\"", $"p.{column.Name}");
                 }
             }
+
             ss.AddDefaultCase("throw new ArgumentException()");
         });
 
@@ -457,14 +212,15 @@ public class TableContextGenerator : IIncrementalGenerator
 
     private static MethodBuilder CreateSetValueMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
     {
-        List<Statement> bodies = [
+        List<Statement> bodies =
+        [
             $"var p = target as {target.ToDisplayString()}",
             "ArgumentNullException.ThrowIfNull(p)",
             "if (!col.CanWrite)",
             "   return",
             "if (value == null)",
             "   return"
-         ];
+        ];
         var method = MethodBuilder.Default
             .Modifiers("public static")
             .MethodName("SetValue")
@@ -478,8 +234,8 @@ public class TableContextGenerator : IIncrementalGenerator
                 if (column.IsReadOnly || column.SetMethod?.IsInitOnly == true)
                     continue;
                 if (column.Type.TypeKind == TypeKind.Class
-                && column.Type.SpecialType == SpecialType.None
-                && column.HasAttribute(LightFlatAttributeFullName))
+                    && column.Type.SpecialType == SpecialType.None
+                    && column.HasAttribute(LightFlatAttributeFullName))
                 {
                     var flatProps = column.Type.GetMembers().Where(i => i.Kind == SymbolKind.Property && i is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public).Cast<IPropertySymbol>();
                     foreach (var flat in flatProps)
@@ -487,9 +243,9 @@ public class TableContextGenerator : IIncrementalGenerator
                         ss.AddBreakCase($"\"{flat.Name}\"",
                             //$"p.{column.Name}.{flat.Name}",
                             IfStatement.Default.If($"p.{column.Name} is null")
-                            .AddStatement($"p.{column.Name} = {column.Type.New()};"),
+                                .AddStatement($"p.{column.Name} = {column.Type.New()};"),
                             $"p.{column.Name}.{flat.Name} = ({flat.Type.ToDisplayString()})value"
-                            );
+                        );
                     }
                 }
                 else
@@ -497,13 +253,178 @@ public class TableContextGenerator : IIncrementalGenerator
                     ss.AddBreakCase($"\"{column.Name}\"", $"p.{column.Name} = ({column.Type.ToDisplayString()})value");
                 }
             }
+
             ss.AddDefaultCase("throw new ArgumentException()");
         });
 
         return method;
     }
 
-    readonly static Dictionary<SpecialType, string> typeMapMethod = new(37)
+    private static IEnumerable<PropertyScanResult> CollectProperties(INamedTypeSymbol owner, IPropertySymbol[] props)
+    {
+        foreach (var p in props)
+        {
+            // 处理 Flat 属性
+            if (p.Type.TypeKind == TypeKind.Class
+                && p.Type.SpecialType == SpecialType.None
+                && p.HasAttribute(LightFlatAttributeFullName))
+            {
+                var flattedProps = p.Type.GetMembers().Where(ii => ii.Kind == SymbolKind.Property && ii is IPropertySymbol { DeclaredAccessibility: Accessibility.Public }).Cast<IPropertySymbol>();
+                var flatType = p.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
+                foreach (var item in flattedProps)
+                {
+                    var fr = ScanProperty(item);
+                    if (item.Name == p.Name)
+                    {
+                        throw new InvalidOperationException($"{owner.ToDisplayString()}的聚合属性的子属性[{item.Name}]和聚合属性[{p.Name}]命名冲突");
+                    }
+
+                    yield return fr with { IsFlat = true, FlatType = flatType, IsFlatProperty = true };
+                }
+
+                yield return new()
+                {
+                    Symbol = p,
+                    PropertyName = p.Name,
+                    IsFlat = true,
+                    FlatType = flatType,
+                    IsFlatProperty = false
+                };
+                continue;
+            }
+
+            yield return ScanProperty(p);
+        }
+    }
+
+    private static PropertyScanResult ScanProperty(IPropertySymbol p)
+    {
+        var commentId = p.GetDocumentationCommentId();
+        var commentDoc = p.GetDocumentationCommentXml();
+        System.Diagnostics.Debug.WriteLine($"{commentId} -> 注释: {commentDoc}");
+        _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.ColumnAttribute", out var cmCol);
+        _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
+        _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);
+        _ = p.GetAttribute("LightORM.LightColumnAttribute", out var lightCol);
+        _ = p.GetAttribute("LightORM.LightNavigateAttribute", out var nav);
+        _ = p.GetAttribute(LightJsonMapAttributeFullName, out var json);
+        var customName = "null";
+
+        if (lightCol.GetNamedValue("Name", out var cname))
+        {
+            customName = $"\"{cname}\"";
+        }
+        else if (cmCol.GetNamedValue("Name", out cname))
+        {
+            customName = $"\"{cname}\"";
+        }
+
+        var primaryKey = GetBoolValue(lightCol, "PrimaryKey", () => key != null ? "true" : "false");
+        var isnotmap = GetBoolValue(lightCol, "Ignore", () => notmap != null ? "true" : "false");
+        var autoincrement = GetBoolValue(lightCol, "AutoIncrement");
+        var notnull = GetBoolValue(lightCol, "NotNull");
+        var len = GetAttributeValueOrNull(lightCol, "Length");
+        var def = GetAttributeValueOrNull(lightCol, "Default");
+        var comment = GetAttributeValueOrNull(lightCol, "Comment", true);
+        var canRead = (p.GetMethod is not null) ? "true" : "false";
+        var canWrite = (p.SetMethod is not null && p.SetMethod?.IsInitOnly == false) ? "true" : "false";
+        var canInit = (p.SetMethod is not null) ? "true" : "false";
+        var version = GetBoolValue(lightCol, "Version");
+        var ignoreUpdate = GetBoolValue(lightCol, "IgnoreUpdate");
+        var ignoreInsert = GetBoolValue(lightCol, "IgnoreInsert");
+        NavigateContext? navInfo = null;
+        var isJson = json is null ? "false" : "true";
+        if (nav != null)
+        {
+            var ismulti = p.Type.HasInterfaceAll("System.Collections.IEnumerable") && p.Type.SpecialType == SpecialType.None;
+            var multi = ismulti ? "true" : "false";
+            var elementType = p.Type.GetElementType();
+            if (nav.ConstructorArguments.Length == 2)
+            {
+                var mn = nav.ConstructorArguments[0].Value.ToString();
+                var sn = nav.ConstructorArguments[1].Value.ToString();
+                // navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), null, \"{mn}\", \"{sn}\", {multi})";
+                navInfo = new(elementType, mn, sn, ismulti);
+            }
+            else if (nav.ConstructorArguments.Length == 3)
+            {
+                var mpt = (INamedTypeSymbol)nav.ConstructorArguments[0].Value!;
+                var mn = nav.ConstructorArguments[1].Value.ToString();
+                var sn = nav.ConstructorArguments[2].Value.ToString();
+                // navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), typeof({mpt.ToDisplayString()}), \"{mn}\", \"{sn}\", {multi})";
+                navInfo = new(elementType, mn, sn, ismulti, mpt);
+            }
+            else
+            {
+                // var mpt = nav.GetNamedValue("ManyToMany") is not INamedTypeSymbol mappingType ? "null" : $"typeof({mappingType.ToDisplayString()})";
+                var mappingType = nav.GetNamedValue("ManyToMany") as INamedTypeSymbol;
+                var mn = GetAttributeValueOrNull(nav, "MainName", true, true);
+                var sn = GetAttributeValueOrNull(nav, "SubName", true, true);
+                // navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), {mpt}, {mn}, {sn}, {multi})";
+                navInfo = new(elementType, mn, sn, ismulti, mappingType);
+            }
+        }
+
+        return new()
+        {
+            Symbol = p,
+            PropertyName = p.Name,
+            CustomName = customName,
+            PrimaryKey = primaryKey,
+            IsNotMap = isnotmap,
+            AutoIncrement = autoincrement,
+            NotNull = notnull,
+            Len = len,
+            DefaultValue = def,
+            Comment = comment,
+            CanRead = canRead,
+            CanWrite = canWrite,
+            CanInit = canInit,
+            NavInfo = navInfo,
+            IsVersion = version,
+            IgnoreUpdate = ignoreUpdate,
+            IgnoreInsert = ignoreInsert,
+            IsJson = isJson
+        };
+
+        static string GetBoolValue(AttributeData? lightCol, string name, Func<string>? elseAction = null)
+        {
+            var b = "false";
+            if (lightCol.GetNamedValue(name, out var v))
+            {
+                b = $"{v}";
+            }
+            else
+            {
+                if (elseAction != null)
+                    b = elseAction.Invoke();
+            }
+
+            return b.ToLower();
+        }
+
+        static string GetAttributeValueOrNull(AttributeData? a, string name, bool isString = false, bool raw = false)
+        {
+            var v = "null";
+            if (a.GetNamedValue(name, out var val))
+            {
+                if (isString)
+                {
+                    if (raw) return val.ToString();
+                    v = $"\"{val}\"";
+                }
+                else
+                {
+                    v = $"{v}";
+                }
+            }
+
+            return v;
+        }
+    }
+
+
+    static readonly Dictionary<SpecialType, string> typeMapMethod = new(37)
     {
         [SpecialType.System_Byte] = "GetByte",
         [SpecialType.System_SByte] = "GetByte",

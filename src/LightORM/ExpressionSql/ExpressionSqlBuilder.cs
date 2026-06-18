@@ -38,6 +38,7 @@ internal partial class ExpressionSqlOptions
     private static string? defaultDbKey;
     private static bool useParameterized = true;
     private static bool enableExpressionCache = true;
+
     static ExpressionSqlOptions()
     {
         Instance = new(() => new ExpressionSqlOptions());
@@ -80,23 +81,26 @@ internal partial class ExpressionSqlOptions
     {
         defaultDbKey = key;
     }
+
     public static void SetConnectionPoolSize(int size)
     {
         poolSize = size;
     }
+
     public static void SetUseParameterized(bool use)
     {
         useParameterized = use;
     }
+
     public static void SetEnableExpressionCache(bool enable)
     {
         enableExpressionCache = enable;
     }
+
     public static void SetSpecificJsonHandler(ILightJsonHelper instance)
     {
         specificInstance = instance;
     }
-
 }
 
 internal partial class ExpressionSqlOptions : IJsonConfiguration
@@ -106,6 +110,7 @@ internal partial class ExpressionSqlOptions : IJsonConfiguration
     public int InternalObjectPoolSize => objectPoolSize;
     public bool EnableExpressionCache => enableExpressionCache;
     public bool ThrowExceptionWhileMethodResolveNotMap { get; set; }
+
     public string DefaultDbKey
     {
         get
@@ -115,9 +120,11 @@ internal partial class ExpressionSqlOptions : IJsonConfiguration
             {
                 throw new KeyNotFoundException($"数据库 '{d}' 未注册. 使用'SetDefault'设置默认值.");
             }
+
             return d;
         }
     }
+
     public bool UseParameterized => useParameterized;
     public IServiceProvider? Services { get; set; }
     private readonly ICollection<IAdoInterceptor> allInterceptors;
@@ -126,8 +133,8 @@ internal partial class ExpressionSqlOptions : IJsonConfiguration
     public ConcurrentDictionary<string, IDatabaseAdapter> CustomDatabases { get; }
     public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
     public Func<object, string>? Serializer { get; set; }
-    public Func<string, object>? Deserializer { get; set; }
-    public Func<byte[], object>? DeserializerBytes { get; set; }
+    public Func<string, Type, object>? Deserializer { get; set; }
+    public Func<byte[], Type, object>? DeserializerBytes { get; set; }
 
     public ExpressionSqlOptions()
     {
@@ -144,6 +151,7 @@ internal partial class ExpressionSqlOptions : IJsonConfiguration
         {
             throw new LightOrmException("未配置ILightJsonHelper实例的情况下，Serializer和Deserializer和DeserializerBytes不能为null");
         }
+
         return specificInstance ??= new DefaultJsonHelper(Serializer, Deserializer, DeserializerBytes);
     }
 
@@ -167,12 +175,15 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         get => ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap;
         set => ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap = value;
     }
+
     public WeakReference<IServiceCollection>? WeakServices { get; set; }
+
     public IExpressionContextSetup SetDefault(string key)
     {
         ExpressionSqlOptions.SetDefaultDatabase(key);
         return this;
     }
+
     public IExpressionContextSetup SetUseParameterized(bool use)
     {
         ExpressionSqlOptions.SetUseParameterized(use);
@@ -221,6 +232,7 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         {
             services?.AddScoped(typeof(IAdoInterceptor), item);
         }
+
         return this;
     }
 
@@ -229,15 +241,18 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         ExpressionSqlOptions.SetSpecificJsonHandler(new T());
         return this;
     }
+
     public IExpressionContextSetup ConfigJsonHandler(Action<IJsonConfiguration> config)
     {
         config.Invoke(ExpressionSqlOptions.Instance.Value);
         return this;
     }
+
     public IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new()
     {
         throw new NotImplementedException();
     }
+
     public IExpressionContextSetup TableConfiguration(Action<TableOptions> action)
     {
         throw new NotSupportedException();
@@ -250,8 +265,7 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
             var interceptor = provider.GetServices<IAdoInterceptor>();
             return new(interceptor);
         }
+
         return new();
     }
-
-
 }

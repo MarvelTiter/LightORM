@@ -49,6 +49,7 @@ public class User
 
 }
 
+[LightTable]
 public class City
 {
     public int Uid { get; set; }

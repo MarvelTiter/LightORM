@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM.Interfaces;
 
@@ -17,7 +18,8 @@ public interface ITableEntityInfo
     //object? GetValue(ITableColumnInfo col, object target);
     //void SetValue(ITableColumnInfo col, object target, object? value);
     //ITableColumnInfo? GetColumn(string name);
-    //void HandleInclude(object entity, IContext dbContext, IncludeInfo includeInfo);
+    void HandleInclude(IContext dbContext,object entity, IEnumerable<IncludeInfo> infos);
+    Task HandleIncludeAsync(IContext dbContext, object entity, IEnumerable<IncludeInfo> infos, CancellationToken cancellationToken);
 }
 
 public interface ITableEntityInfo<

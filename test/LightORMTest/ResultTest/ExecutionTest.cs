@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORMTest.ResultTest;
 
@@ -13,9 +7,9 @@ public class ExecutionTest : TestBase
 {
     private static async Task DoSomethingWithTempUserDataAsync(IExpressionContext db, Func<Task> action)
     {
-        db.Delete<User>().FullDelete().Execute();
-        db.Delete<UserRole>().FullDelete().Execute();
-        db.Delete<Role>().FullDelete().Execute();
+        await db.Delete<User>().FullDelete().ExecuteAsync();
+        await db.Delete<UserRole>().FullDelete().ExecuteAsync();
+        await db.Delete<Role>().FullDelete().ExecuteAsync();
         await db.Insert<User>().InsertEachAsync([new User()
         {
             UserId = "test01",
@@ -183,6 +177,19 @@ public class ExecutionTest : TestBase
             int arg = 10;
             var list8 = await Db.Select<User>().Where(u => u.Age < arg && u.Version < arg).ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(2, list8);
+            
+            // select 嵌套类
+            var ids = list1.Select(u => u.UserId);
+            var userRoles =await Db.Select<Role>()
+                .InnerJoin<UserRole>((r, ur) => r.RoleId == ur.RoleId)
+                .InnerJoin<User>((_, ur, u) => ur.UserId == u.UserId)
+                .Where((_, ur, u) => ids.Contains(u.UserId))
+                // .WhereIf(where is not null, where!)
+                .ToListAsync((r, ur, u) => new { Role = r, u.UserId }, TestContext.CancellationToken);
+            foreach (var userRole in userRoles)
+            {
+                Console.WriteLine(userRole.Role.RoleName);
+            }
         });
     }
 

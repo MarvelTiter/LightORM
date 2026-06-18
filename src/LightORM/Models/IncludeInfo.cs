@@ -1,5 +1,6 @@
 ﻿namespace LightORM.Models;
 
+[Obsolete]
 internal class IncludeContext
 {
     //public IncludeContext(DbBaseType dbBase)
@@ -17,6 +18,7 @@ public sealed class IncludeInfo
     {
 
     }
+    
     //public TableInfo? SelectedTable { get; set; }
     public NavigateInfo? NavigateInfo { get; set; }
     public ITableColumnInfo? ParentNavigateColumn { get; set; }
@@ -25,4 +27,5 @@ public sealed class IncludeInfo
     //public ExpressionResolvedResult? ExpressionResolvedResult { get; set; }
     public Expression? IncludeWhereExpression { get; set; }
     //public SelectBuilder? SqlBuilder { get; set; }
+    public List<IncludeInfo> ThenIncludes { get; set; } = [];
 }

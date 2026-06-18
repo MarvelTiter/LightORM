@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace LightORM.Implements;
 
 internal class DefaultJsonHelper(
-    Func<object, string> serializer
-    , Func<string, object> deserializer
-    , Func<byte[], object> deserializerBytes) : ILightJsonHelper
+    Func<object, string> serializer,
+    Func<string, Type, object> deserializer,
+    Func<byte[], Type, object> deserializerBytes) : ILightJsonHelper
 {
-    public T? Deserialize<T>(string json) => (T)deserializer.Invoke(json);
+    public object? Deserialize(string json, Type type) => deserializer.Invoke(json, type);
 
-    public T? Deserialize<T>(byte[] json) => (T)deserializerBytes.Invoke(json);
+    public object? Deserialize(byte[] json, Type type) => deserializerBytes.Invoke(json, type);
 
     public string Serialize<T>(T value) => serializer.Invoke(value!);
 }

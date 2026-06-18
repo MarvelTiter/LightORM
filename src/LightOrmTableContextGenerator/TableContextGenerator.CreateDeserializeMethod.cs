@@ -6,7 +6,7 @@ namespace LightOrmTableContextGenerator;
 
 public partial class TableContextGenerator
 {
-    private static MethodBuilder CreateDeserializeMethod(INamedTypeSymbol target, IPropertySymbol[] columns)
+    private static MethodBuilder CreateDeserializeMethod(INamedTypeSymbol target, PropertyScanResult[] columns)
     {
         //var initInstance = $"var p = {target.New()}";
         //var forStatement = ForStatement.Default.For("int i = 0; i < reader.FieldCount; i++");
