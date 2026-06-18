@@ -27,6 +27,7 @@ namespace LightORM.Implements
                 {
                     throw new NotSupportedException($"{this.GetType().Name}: {expression.Method.Name}, {expression.Method.GetParameters().Select(p => $"[{p.ParameterType}:{p.Name}]")}");
                 }
+
                 {
                     //resolver.ExpStores ??= [];
                     //resolver.ExpStores.Add(methodName, expression);
@@ -40,9 +41,11 @@ namespace LightORM.Implements
                             resolver.Visit(arg);
                         }
                     }
+
                     return;
                 }
             }
+
             action.Invoke(resolver, expression);
         }
 
@@ -50,9 +53,9 @@ namespace LightORM.Implements
         {
             if (expression.Arguments.Count == 0)
                 return;
-            var formatString = expression.Arguments[0] as ConstantExpression;
-            var args = expression.Arguments.Skip(1).Select(a => Expression.Lambda(a).Compile().DynamicInvoke());
-            var formatedValue = string.Format(formatString!.Value!.ToString()!, [.. args]);
+            var formatString = ResolveHelper.ExtractInstanceValue<string>(expression.Arguments[0]);
+            var args = expression.Arguments.Skip(1).Select(ResolveHelper.ExtractInstanceValue<object>);
+            var formatedValue = string.Format(formatString, [.. args]);
             resolver.Sql.Append('\'');
             resolver.Sql.Append(formatedValue);
             resolver.Sql.Append('\'');
@@ -64,15 +67,15 @@ namespace LightORM.Implements
         {
             //var subQuery = methodCall.Arguments[0];
             //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
-            var sel = methodCall.GetExpSelectObject();
-            if (sel is not null)
+            var builder = methodCall.CreateSelectBuilder();
+            if (builder is not null)
             {
                 //sel.SqlBuilder.Level = resolver.Level + 1;
-                sel.SqlBuilder.IsSubQuery = true;
+                builder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
+                builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -82,16 +85,16 @@ namespace LightORM.Implements
             //var subQuery = methodCall.Arguments[0];
             //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
             //var parameters = resolver.Parameters;
-            var sel = methodCall.GetExpSelectObject();
-            if (sel is not null)
+            var builder = methodCall.CreateSelectBuilder();
+            if (builder is not null)
             {
                 //sel.SqlBuilder.Level = resolver.Level + 1;
-                sel.SqlBuilder.IsSubQuery = true;
-                sel.SqlBuilder.SelectValue = "1";
+                builder.IsSubQuery = true;
+                builder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
+                builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
         }
@@ -140,6 +143,7 @@ namespace LightORM.Implements
                 {
                     throw new LightOrmException("语法错误: 在Linq中使用聚合函数时，不支持参数");
                 }
+
                 resolver.Sql.Append("COUNT(*)");
                 return;
             }
@@ -171,22 +175,22 @@ namespace LightORM.Implements
         {
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
-                var sel = methodCall.GetExpSelectObject()!;
+                var builder = methodCall.CreateSelectBuilder()!;
                 if (methodCall.Arguments.Count == 0)
                 {
-                    sel.HandleResult(null, "COUNT(*)");
+                    builder.HandleResult(null, "COUNT(*)");
                 }
                 else
                 {
-                    sel.HandleResult(methodCall.Arguments[0], "COUNT(DISTINCT {0})");
+                    builder.HandleResult(methodCall.Arguments[0], "COUNT(DISTINCT {0})");
                 }
 
                 //sel.SqlBuilder.Level = resolver.Level + 1;
-                sel.SqlBuilder.IsSubQuery = true;
+                builder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
+                builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.AppendLine(")");
                 return;
             }
@@ -220,7 +224,8 @@ namespace LightORM.Implements
             {
                 return;
             }
-            else if (methodCall.IsLinqExtension())
+
+            if (methodCall.IsLinqExtension())
             {
                 if (methodCall.Arguments.Count > 1)
                 {
@@ -228,8 +233,10 @@ namespace LightORM.Implements
                     resolver.Visit(methodCall.Arguments[1]);
                     resolver.Sql.Append(')');
                 }
+
                 return;
             }
+
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("SUM(CASE WHEN ");
@@ -260,8 +267,10 @@ namespace LightORM.Implements
                     resolver.Visit(methodCall.Arguments[1]);
                     resolver.Sql.Append(')');
                 }
+
                 return;
             }
+
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("AVG(CASE WHEN ");
@@ -292,8 +301,10 @@ namespace LightORM.Implements
                     resolver.Visit(methodCall.Arguments[1]);
                     resolver.Sql.Append(')');
                 }
+
                 return;
             }
+
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("MAX(CASE WHEN ");
@@ -324,8 +335,10 @@ namespace LightORM.Implements
                     resolver.Visit(methodCall.Arguments[1]);
                     resolver.Sql.Append(')');
                 }
+
                 return;
             }
+
             if (methodCall.Arguments.Count > 1)
             {
                 resolver.Sql.Append("MIN(CASE WHEN ");
@@ -507,6 +520,7 @@ namespace LightORM.Implements
             {
                 resolver.Sql.Clear();
             }
+
             resolver.NavigateDeep++;
             resolver.Visit(methodCall.Arguments[0]);
             if (methodCall.Arguments.Count > 1)
@@ -533,6 +547,7 @@ namespace LightORM.Implements
                 resolver.WindowFnPartials.Add(partial);
                 resolver.Sql.Append(partial.Idenfity);
             }
+
             resolver.Sql.Append(") OVER(");
         }
 
@@ -567,6 +582,7 @@ namespace LightORM.Implements
                 resolver.WindowFnPartials.Add(partial);
                 resolver.Sql.Append(partial.Idenfity);
             }
+
             resolver.Sql.Append(" ASC");
         }
 
@@ -582,6 +598,7 @@ namespace LightORM.Implements
                 resolver.WindowFnPartials.Add(partial);
                 resolver.Sql.Append(partial.Idenfity);
             }
+
             resolver.Sql.Append(" DESC");
         }
 
@@ -648,26 +665,28 @@ namespace LightORM.Implements
 
         #endregion
 
-        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<IExpSelect, ReadOnlyCollection<Expression>, string> action)
+        private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<SelectBuilder, ReadOnlyCollection<Expression>, string> action)
         {
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
-                var sel = methodCall.GetExpSelectObject()!;
+                var builder = methodCall.CreateSelectBuilder()!;
 
                 //sel.HandleResult(methodCall.Arguments[0], template);
-                action(sel, methodCall.Arguments, template);
+                action(builder, methodCall.Arguments, template);
 
                 //sel.SqlBuilder.Level = resolver.Level + 1;
-                sel.SqlBuilder.IsSubQuery = true;
+                builder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
                 //resolver.Sql.Append(sql);
-                sel.SqlBuilder.Build(resolver.Sql, sel.Executor.Database.DatabaseAdapter, resolver.Level + 1);
+                builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.Append(')');
                 return true;
             }
+
             return false;
         }
+
         private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template)
         {
             //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
@@ -685,10 +704,7 @@ namespace LightORM.Implements
             //    return true;
             //}
             //return false;
-            return HandleSubContext(resolver, methodCall, template, static (sel, args, template) =>
-            {
-                sel.HandleResult(args[0], template);
-            });
+            return HandleSubContext(resolver, methodCall, template, static (sel, args, template) => { sel.HandleResult(args[0], template); });
         }
     }
 }

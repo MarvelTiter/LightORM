@@ -19,7 +19,7 @@ public class ResolveHelper
     // 尝试将表达式求值为常量（仅支持 Constant 和 简单 Member 访问）
     public static T ExtractInstanceValue<T>(Expression expression)
     {
-        if (expression is ConstantExpression ce && ce.Value is T index)
+        if (expression is ConstantExpression { Value: T index })
         {
             return index;
         }
@@ -56,6 +56,41 @@ public class ResolveHelper
         throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
     }
 
+    public static bool TryExtractValue<T>(Expression expression, out T value)
+    {
+        if (expression is ConstantExpression { Value: T index })
+        {
+            value = index;
+            return true;
+        }
+        var members = new Stack<MemberPathInfo>();
+        Expression? current = expression;
+
+        // 向下遍历，收集 MemberInfo
+        while (current is MemberExpression memberExpr)
+        {
+            members.Push(new(memberExpr.Member));
+            current = memberExpr.Expression;
+        }
+        object? obj = null;
+
+        if (current is ConstantExpression constExpr)
+        {
+            obj = constExpr.Value;
+        }
+
+        obj = GetValue(members, obj);
+
+        if (obj is T t)
+        {
+            value = t;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+    
     public static T ExtractInstanceValueWithName<T>(Expression expression, out string name)
     {
         if (expression is ConstantExpression ce && ce.Value is T index)
@@ -145,10 +180,7 @@ public class ResolveHelper
         if (value is null) return null;
         var type = value.GetType();
         var memberKey = $"{type.FullName}_{name}";
-        var func = getterCache.GetOrAdd(memberKey, _ =>
-        {
-            return CreateGetter(type, memberInfos);
-        });
+        var func = getterCache.GetOrAdd(memberKey, _ => CreateGetter(type, memberInfos));
         memberInfos.Clear();
         return func.Invoke(value);
     }

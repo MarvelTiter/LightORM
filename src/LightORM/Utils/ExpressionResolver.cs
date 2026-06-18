@@ -126,7 +126,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public Expression[]? NavigateWhereExpression { get; set; }
     public string? MemberOfNavigateMember { get; set; }
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
-    private IDatabaseAdapter Database => Context.Database;
+    public IDatabaseAdapter Database => Context.Database;
     public Expression? Body => bodyExpression;
     // TODO: 嵌套情况，需要优化
     public BinaryExpression? CurrentBinary => stackBinaryExpressions.Count > 0 ? stackBinaryExpressions.Peek() : null;
