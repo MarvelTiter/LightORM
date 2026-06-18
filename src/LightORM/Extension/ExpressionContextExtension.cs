@@ -24,7 +24,7 @@ public static class ExpressionContextExtension
             foreach (var col in table.Columns)
             {
                 if (col.IsNotMapped || col.IsAggregated || col.IsNavigate) continue;
-                var propType = table.Type?.GetProperty(col.PropertyName)?.PropertyType;
+                var propType = col.ColumnType;
                 if (propType is null)
                 {
                     continue;
@@ -204,28 +204,44 @@ public static class ExpressionContextExtension
             return context.CreateScoped("MainDb");
         }
 
-        public IExpSelect<TTemp1, TTemp2> FromTemp<TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2)
+        public IExpSelect<TTemp1, TTemp2> FromTemp<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp1, TTemp2>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2)
         {
             var builder = SelectBuilder.GetSelectBuilder();
             HandleFromTemp(builder, temp1, temp2);
             return new SelectProvider2<TTemp1, TTemp2>(context, builder);
         }
 
-        public IExpSelect<TTemp1, TTemp2, TTemp3> FromTemp<TTemp1, TTemp2, TTemp3>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3)
+        public IExpSelect<TTemp1, TTemp2, TTemp3> FromTemp<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp1, TTemp2, TTemp3>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3)
         {
             var builder = SelectBuilder.GetSelectBuilder();
             HandleFromTemp(builder, temp1, temp2, temp3);
             return new SelectProvider3<TTemp1, TTemp2, TTemp3>(context, builder);
         }
 
-        public IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4> FromTemp<TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3, IExpTemp<TTemp2> temp4)
+        public IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4> FromTemp<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp1, TTemp2, TTemp3, TTemp4>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3, IExpTemp<TTemp2> temp4)
         {
             var builder = SelectBuilder.GetSelectBuilder();
             HandleFromTemp(builder, temp1, temp2, temp3, temp4);
             return new SelectProvider4<TTemp1, TTemp2, TTemp3, TTemp4>(context, builder);
         }
 
-        public IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> FromTemp<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3, IExpTemp<TTemp2> temp4, IExpTemp<TTemp2> temp5)
+        public IExpSelect<TTemp1, TTemp2, TTemp3, TTemp4, TTemp5> FromTemp<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp1, TTemp2, TTemp3, TTemp4, TTemp5>(IExpTemp<TTemp1> temp1, IExpTemp<TTemp2> temp2, IExpTemp<TTemp2> temp3, IExpTemp<TTemp2> temp4, IExpTemp<TTemp2> temp5)
         {
             var builder = SelectBuilder.GetSelectBuilder();
             HandleFromTemp(builder, temp1, temp2, temp3, temp4, temp5);

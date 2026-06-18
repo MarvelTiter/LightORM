@@ -199,7 +199,11 @@ namespace LightOrmExtensionGenerator
 
             var code = $$"""
 
-internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IExpSelect<{{argsStr}}>, T1>, IExpSelect<{{argsStr}}>
+internal sealed class SelectProvider{{count}}<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+{{argsStr}}> : SelectProvider0<IExpSelect<{{argsStr}}>, T1>, IExpSelect<{{argsStr}}>
 {
     public SelectProvider{{count}}(IContext dbContext, SelectBuilder? builder = null) 
         : base(dbContext, builder)
@@ -236,43 +240,71 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
 
 {{join}}
         
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
+    public IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
     {
         this.HandleResult(exp, null);
         return new SelectProvider1<TTable>(DbContext, SqlBuilder);
@@ -323,49 +355,77 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this;
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-     public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
+    public IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);

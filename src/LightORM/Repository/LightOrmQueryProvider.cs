@@ -1,8 +1,12 @@
 ﻿using LightORM.Extension;
 using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Repository;
-
+#if NET8_0_OR_GREATER
+[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "LightOrmQueryProvider的Join操作存在Expression.Lambda操作，AOT有风险")]
+[UnconditionalSuppressMessage("AOT", "IL2091", Justification = "LightOrmQueryProvider的Execute<T>AOT有风险")]
+#endif
 internal class LightOrmQueryProvider : IQueryProvider
 {
     private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();

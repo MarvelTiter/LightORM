@@ -1,15 +1,24 @@
 ﻿using LightORM.Extension;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.ExpressionSql;
 
 partial class ExpressionCoreSql
 {
-    public IExpSelect<T> FromQuery<T>(IExpSelect<T> select)
+    public IExpSelect<T> FromQuery<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(IExpSelect<T> select)
     {
         return select.HandleSubQuery<T>();
     }
 
-    public IExpSelect<T> FromTemp<T>(IExpTemp<T> temp)
+    public IExpSelect<T> FromTemp<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(IExpTemp<T> temp)
     {
         var builder = SelectBuilder.GetSelectBuilder();
         builder.HandleTempsRecursion(temp.SqlBuilder);
@@ -17,7 +26,11 @@ partial class ExpressionCoreSql
         return new SelectProvider1<T>(this, builder);
     }
 
-    public IExpSelect<T> Union<T>(params IExpSelect<T>[] selects)
+    public IExpSelect<T> Union<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(params IExpSelect<T>[] selects)
     {
         if (selects.Length == 0)
         {
@@ -34,7 +47,11 @@ partial class ExpressionCoreSql
         return sub;
     }
 
-    public IExpSelect<T> UnionAll<T>(params IExpSelect<T>[] selects)
+    public IExpSelect<T> UnionAll<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(params IExpSelect<T>[] selects)
     {
         if (selects.Length == 0)
         {

@@ -23,7 +23,11 @@ namespace LightOrmExtensionGenerator
 
 public static partial class SelectExtensions
 {
-    public static IExpSelect<{{argsStr}}> Select<{{argsStr}}>(this IExpressionContext instance)
+    public static IExpSelect<{{argsStr}}> Select<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    {{argsStr}}>(this IExpressionContext instance)
     {
         var key = GetDbKey({{string.Join(", ", types)}});
         if (key != null)

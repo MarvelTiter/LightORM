@@ -44,7 +44,11 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
     /// <typeparam name="T"></typeparam>
     /// <param name="selects"></param>
     /// <returns></returns>
-    IExpSelect<T> Union<T>(params IExpSelect<T>[] selects);
+    IExpSelect<T> Union<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(params IExpSelect<T>[] selects);
 
     /// <summary>
     /// 与<see cref="IExpSelect{T1}.UnionAll(IExpSelect{T1})"/>不同的是，当Union个数大于1时，该方法会嵌套为子查询
@@ -52,10 +56,22 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
     /// <typeparam name="T"></typeparam>
     /// <param name="selects"></param>
     /// <returns></returns>
-    IExpSelect<T> UnionAll<T>(params IExpSelect<T>[] selects);
+    IExpSelect<T> UnionAll<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(params IExpSelect<T>[] selects);
 
-    IExpSelect<T> FromQuery<T>(IExpSelect<T> select);
-    IExpSelect<T> FromTemp<T>(IExpTemp<T> temp);
+    IExpSelect<T> FromQuery<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(IExpSelect<T> select);
+    IExpSelect<T> FromTemp<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(IExpTemp<T> temp);
     //IExpSelect<T> Select<T>();
     //IExpInsert<T> Insert<T>(params T[] entities);
     //IExpUpdate<T> Update<T>();

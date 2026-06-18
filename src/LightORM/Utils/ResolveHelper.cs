@@ -87,7 +87,7 @@ public class ResolveHelper
             return true;
         }
 
-        value = default;
+        value = default!;
         return false;
     }
     

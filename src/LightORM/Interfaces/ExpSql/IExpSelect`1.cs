@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;
@@ -47,7 +48,11 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     /// <typeparam name="TTable"></typeparam>
     /// <param name="exp"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp);
+    IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<T1, TTable>> exp);
 
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<T1, TTemp>> exp);
     IExpSelect<T1> Union(IExpSelect<T1> select);
@@ -63,13 +68,37 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 
     #region Result
 
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+    IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp);
+    IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp);
+    Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
 
 
     /// <summary>
@@ -77,21 +106,33 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     /// </summary>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
-    IEnumerable<TReturn> ToList<TReturn>();
+    IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>();
 
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
     /// </summary>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
-    Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default);
+    Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
     /// </summary>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(CancellationToken cancellationToken = default);
 
     #endregion
 

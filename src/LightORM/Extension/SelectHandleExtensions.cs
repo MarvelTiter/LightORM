@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Providers;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM;
 
@@ -113,7 +114,11 @@ internal static class SelectHandleExtensions
             select.SqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Select, exp, template));
         }
 
-        internal SelectProvider1<TTemp> HandleSubQuery<TTemp>(string? alias = null)
+        internal SelectProvider1<TTemp> HandleSubQuery<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp>(string? alias = null)
         {
             select.SqlBuilder.IsSubQuery = true;
             var builder = SelectBuilder.GetSelectBuilder();

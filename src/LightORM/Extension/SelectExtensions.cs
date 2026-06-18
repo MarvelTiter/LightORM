@@ -1,4 +1,5 @@
 ﻿using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;
@@ -73,7 +74,11 @@ public static partial class SelectExtensions
 
     #region 2个类型参数
 
-    public static IExpSelect<T1, T2> Select<T1, T2>(this IExpressionContext instance)
+    public static IExpSelect<T1, T2> Select<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T1, T2>(this IExpressionContext instance)
     {
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)

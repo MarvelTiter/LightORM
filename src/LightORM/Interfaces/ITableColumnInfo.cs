@@ -1,12 +1,17 @@
-﻿namespace LightORM.Interfaces;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LightORM.Interfaces;
 
 public interface ITableColumnInfo
 {
     //ITableEntityInfo Table { get; }
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
     Type TableType { get; }
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
     Type ColumnType { get; }
     string ColumnName { get; }
     string PropertyName { get; }
@@ -28,7 +33,7 @@ public interface ITableColumnInfo
     bool IsNotMapped { get; }
     bool IsPrimaryKey { get; }
 #if NET8_0_OR_GREATER
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
     Type? AggregateType { get; }
     string? AggregateProp { get; }

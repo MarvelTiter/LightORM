@@ -1,4 +1,6 @@
-﻿namespace LightORM.Interfaces.ExpSql;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LightORM.Interfaces.ExpSql;
 
 public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 {
@@ -9,10 +11,26 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     IExpSelectGroup<TGroup, TTables> Paging(int pageIndex, int pageSize);
     IExpSelectGroup<TGroup, TTables> Skip(int count);
     IExpSelectGroup<TGroup, TTables> Take(int count);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
-    IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
-    Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
+    IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
+    Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
+    IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
+    Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     /// <summary>
     /// 转换为<see cref="IExpSelect{T1}"/>
     /// </summary>
@@ -20,7 +38,11 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     /// <param name="exp"></param>
     /// <param name="alias"></param>
     /// <returns></returns>
-    IExpSelect<TTable> AsTable<TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp, string? alias = null);
+    IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp, string? alias = null);
     IExpSelectGroup<TGroup, TTables> Rollup();
     //IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);

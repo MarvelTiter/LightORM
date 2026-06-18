@@ -1,9 +1,14 @@
 ﻿using LightORM.Extension;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.Providers
 {
-    internal class IncludeProvider<T1, TMember> : SelectProvider1<T1>, IExpInclude<T1, TMember>
+    internal class IncludeProvider<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        T1, TMember> : SelectProvider1<T1>, IExpInclude<T1, TMember>
     {
         public IncludeProvider(IContext dbContext, SelectBuilder builder) : base(dbContext, builder)
         {

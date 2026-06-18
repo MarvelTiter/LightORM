@@ -240,7 +240,11 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
         return new TempProvider<TTemp>(name, SqlBuilder);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<T1, TTable>> exp)
+    public IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<T1, TTable>> exp)
     {
         this.HandleResult(exp, null);
         return new SelectProvider1<TTable>(DbContext, SqlBuilder);
@@ -248,47 +252,83 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 
     #region Result
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, TReturn>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<T1, object>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>() => this.InternalToList<TReturn>();
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>() => this.InternalToList<TReturn>();
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(CancellationToken cancellationToken = default) => this.InternalToListAsync<TReturn>(cancellationToken);
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(CancellationToken cancellationToken = default) => this.InternalToListAsync<TReturn>(cancellationToken);
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(CancellationToken cancellationToken = default)
         => this.InternalToEnumerableAsync<TReturn>(cancellationToken);
 
     #endregion
