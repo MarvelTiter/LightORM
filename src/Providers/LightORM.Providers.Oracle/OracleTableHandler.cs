@@ -65,7 +65,7 @@ public sealed class OracleTableHandler(TableOptions tableOptions)
         }
 
         // 处理可能带长度的类型声明（如 VARCHAR2(50)）
-        var baseType = dbType.Split('(')[0].ToUpper().Trim();
+        var baseType = dbType!.Split('(')[0].ToUpper().Trim();
         var isNullable = nullable?.ToUpper() == "Y" || nullable?.ToUpper() == "YES";
 
         switch (baseType)

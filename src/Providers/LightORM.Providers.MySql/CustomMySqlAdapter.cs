@@ -8,7 +8,7 @@ namespace LightORM.Providers.MySql;
 
 public sealed class CustomMySqlAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
-    internal static readonly CustomMySqlAdapter Instance = new CustomMySqlAdapter(new MySqlMethodResolver(), new());
+    internal static readonly CustomMySqlAdapter Instance = new(new MySqlMethodResolver(), new());
     public override string Prefix => "?";
     public override string Emphasis => "``";
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)

@@ -5,16 +5,19 @@ namespace LightORM.SqlExecutor;
 internal partial class ExpressionBuilder
 {
     private static ConcurrentDictionary<Type, byte> JsonMaps { get; } = [];
+
     public static void AddJsonTypeMap(Type type)
     {
         JsonMaps.TryAdd(type, 0);
     }
+
     public static bool ContainsJsonType(Type type) => JsonMaps.ContainsKey(type);
 
-    public static string CustomStringToBoolean(string valueString)
+    public static bool CustomStringToBoolean(string valueString)
     {
-        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? "True" : "False";
+        return ",是,1,Y,YES,TRUE,".Contains(valueString.ToUpper()) ? true : false;
     }
+
     public static byte[] RecordFieldToBytes(IDataRecord Reader, int Column)
     {
         long blobSize = Reader.GetBytes(Column, 0, null, 0, 0);
@@ -46,15 +49,15 @@ internal partial class ExpressionBuilder
         return value >= 0 ? (ulong)value : throw new OverflowException("Negative value cannot be converted to ulong");
     }
 
-    public static T? RecordFieldStringDeserializer<T>(string value)
+    public static object? RecordFieldStringDeserializer(string value, Type targetType)
     {
         var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-        return jsonHandler.Deserialize<T>(value);
+        return jsonHandler.Deserialize(value, targetType);
     }
 
-    public static T? RecordFieldBytesDeserializer<T>(byte[] value)
+    public static object? RecordFieldBytesDeserializer(byte[] value, Type targetType)
     {
         var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-        return jsonHandler.Deserialize<T>(value);
+        return jsonHandler.Deserialize(value, targetType);
     }
 }

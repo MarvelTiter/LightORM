@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace LightORM.Builder;
@@ -19,11 +20,21 @@ internal abstract record SqlBuilder : ISqlBuilder
     public bool? IsParameterized { get; set; } = true;
     public virtual IEnumerable<TableInfo> AllTables() => [MainTable];
 
-    public void TryAddParameters(string prefix, string sql, object? value)
+    public void TryAddParameters<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    T>(string prefix, string sql, T? value)
     {
         if (value is null) return;
-        var dic = DbParameterReader.ObjectToDictionary(prefix, sql, value);
-        DbParameters.TryAddDictionary(dic);
+        if (value is Dictionary<string, object> dic)
+        {
+            DbParameters.TryAddDictionary(dic);
+        }
+        else
+        {
+            DbParameterReader.MergeObjectToDictionary(prefix, sql, value, DbParameters);
+        }
     }
     protected virtual void BeforeResolveExpressions(ResolveContext context)
     {
@@ -96,6 +107,7 @@ internal abstract record SqlBuilder : ISqlBuilder
             item.IsCompleted = true;
         }
     }
+
     protected abstract void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result);
 
     public abstract string ToSqlString(IDatabaseAdapter database);

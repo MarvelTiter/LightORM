@@ -1,8 +1,14 @@
 ﻿using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Repository;
 
-internal class LightOrmQuery<T>(IQueryProvider queryProvider) : IOrderedQueryable<T>
+internal class LightOrmQuery<
+#if NET8_0_OR_GREATER
+//[UnconditionalSuppressMessage("AOT", "IL2091", Justification = "LightOrmQueryProvider的Execute<T>AOT有风险")]
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+T>(IQueryProvider queryProvider) : IOrderedQueryable<T>
 {
     private readonly IQueryProvider _queryProvider = queryProvider ?? throw new ArgumentNullException(nameof(queryProvider));
 

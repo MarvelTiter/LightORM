@@ -1,5 +1,6 @@
 ﻿using LightORM;
 using LightORM.Performances;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace LightORM.Utils.Vistors;
@@ -14,6 +15,9 @@ internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
         newParameters.Clear();
         _transparentParameter = null;
     }
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "扁平化闭包表达式")]
+#endif
     public LambdaExpression Flatten(LambdaExpression lambda)
     {
         try
@@ -49,7 +53,9 @@ internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
             ExpressionVisitorPool<LinqExpressionFlattener>.Return(this);
         }
     }
-
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "扁平化闭包表达式")]
+#endif
     protected override Expression VisitMember(MemberExpression node)
     {
         // 处理透明标识符成员访问

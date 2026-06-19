@@ -24,6 +24,6 @@ public class Product
     public DateTime CreateTime { get; init; } = DateTime.Now;
     [LightColumn(Name = "MODIFY_TIME", Comment = "修改时间")]
     public DateTime? ModifyTime { get; set; }
-    [LightORM.Ignore]
+    [LightColumn(Ignore = true)]
     public IEnumerable<Product> Products { get; set; } = [];
 }

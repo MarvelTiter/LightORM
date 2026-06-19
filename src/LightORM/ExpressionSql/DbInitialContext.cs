@@ -26,7 +26,7 @@ public abstract class DbInitialContext
 
         try
         {
-            var d = executor.Query<DbInfo>("SELECT * FROM DB_INITIAL_INFO").FirstOrDefault();
+            var d = executor.Execute("SELECT * FROM DB_INITIAL_INFO").ToList<DbInfo>().FirstOrDefault();
             if (d != null)
             {
                 update = true;

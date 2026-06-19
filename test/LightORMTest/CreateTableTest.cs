@@ -32,13 +32,22 @@ public class CreateTableTest : TestBase
     public async Task CreateTable()
     {
         using var db = this.Db.CreateMainDbScoped();
-        await db.CreateTableAsync<User>();
-        await db.CreateTableAsync<UserRole>();
-        await db.CreateTableAsync<Role>();
-        await db.CreateTableAsync<RolePermission>();
-        await db.CreateTableAsync<Permission>();
-        await db.CreateTableAsync<UserFlat>();
-        await db.CreateTableAsync<Product>();
+        await db.DropTableAsync<User>();
+        await db.DropTableAsync<UserRole>();
+        await db.DropTableAsync<Role>();
+        await db.DropTableAsync<RolePermission>();
+        await db.DropTableAsync<Permission>();
+        await db.DropTableAsync<UserFlat>();
+        await db.DropTableAsync<Product>();
+        await db.CreateTableAsync<User>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserRole>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Role>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<RolePermission>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Permission>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserFlat>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Product>(cancellationToken: TestContext.CancellationToken);
 
     }
+
+    public TestContext TestContext { get; set; }
 }

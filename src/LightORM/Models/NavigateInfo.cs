@@ -2,11 +2,23 @@
 
 public sealed record NavigateInfo
 {
-    public NavigateInfo(Type mainType)
+    public NavigateInfo(
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type mainType)
     {
         NavigateType = mainType;
     }
-    public NavigateInfo(Type mainType, Type? mappingType, string? mainName, string? subName, bool isMulti)
+    public NavigateInfo(
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        Type mainType,
+#if NET8_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+    Type? mappingType, string? mainName, string? subName, bool isMulti)
     {
         NavigateType = mainType;
         MappingType = mappingType;

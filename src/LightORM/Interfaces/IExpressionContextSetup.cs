@@ -11,7 +11,13 @@ public interface IExpressionContextSetup
     IExpressionContextSetup SetEnableExpressionCache(bool enable);
     IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider);
     IExpressionContextSetup SetTableContext(ITableContext context);
-    IExpressionContextSetup UseInterceptor<T>() where T : AdoInterceptorBase;
+
+    IExpressionContextSetup UseInterceptor<
+#if NET8_0_OR_GREATER
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+#endif
+        T>() where T : AdoInterceptorBase;
+
     IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new();
 
     IExpressionContextSetup ConfigJsonHandler<T>() where T : ILightJsonHelper, new();
@@ -25,6 +31,6 @@ public interface IExpressionContextSetup
 public interface IJsonConfiguration
 {
     Func<object, string>? Serializer { get; set; }
-    Func<string, object>? Deserializer { get; set; }
-    Func<byte[], object>? DeserializerBytes { get; set; }
+    Func<string, Type, object>? Deserializer { get; set; }
+    Func<byte[], Type, object>? DeserializerBytes { get; set; }
 }

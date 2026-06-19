@@ -11,7 +11,7 @@
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
 	</PropertyGroup>
-	<Import Project="Versions.props"/>
+	<Import Project="Versions.props" />
 	<Import Project="..\..\SupportedFrameworks.props" />
 	<ItemGroup>
 		<None Include="..\..\Nuget.md">
@@ -19,18 +19,9 @@
 			<Pack>True</Pack>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
-		<PackageReference Include="MT.LightORM" Version="*" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
-		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
-	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
 	</ItemGroup>
-
-	
 
 </Project>

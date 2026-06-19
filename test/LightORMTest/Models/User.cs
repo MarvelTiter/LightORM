@@ -38,16 +38,21 @@ public class User
     [LightColumn(Name = "VERSION", Version = true)]
     public int Version { get; set; }
 
+    [LightColumn(Name = "AVATOR", Comment = "头像")]
+    public byte[] Avator { get; set; }
+
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 
-    [LightNavigate(nameof(Id), nameof(City.Id))]
+    [LightNavigate(nameof(Id), nameof(City.Uid))]
     public City City { get; set; }
 
 }
 
+[LightTable]
 public class City
 {
+    public int Uid { get; set; }
     public string Id { get; set; }
     public string Name { get; set; }
 }

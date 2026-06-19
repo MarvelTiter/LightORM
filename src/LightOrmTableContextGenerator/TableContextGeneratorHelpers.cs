@@ -143,7 +143,7 @@ namespace LightOrmTableContextGenerator
 
             var s = ctxClass.ToString();
 
-            return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString()).AddMembers(ctxClass)).AddUsings("using LightORM.GeneratedTableContext;");
+            return CodeFile.New($"{target.FormatFileName()}.LightORM.g.cs").AddMembers(NamespaceBuilder.Default.Namespace(target.ContainingNamespace.ToDisplayString()).AddMembers(ctxClass).FileScoped()).AddUsings("using LightORM.GeneratedTableContext;");
         }
     }
 }

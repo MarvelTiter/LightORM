@@ -4,6 +4,8 @@ using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace LightORMTest;
 
@@ -26,7 +28,7 @@ public class TestBase
             option.UseInterceptor<LightOrmAop>();
             option.SetTableContext(TableContext);
             option.ConfigJsonHandler<JsonHandler>();
-            
+
         });
 
         Services = services.BuildServiceProvider();
@@ -105,14 +107,14 @@ public class LightOrmAop : AdoInterceptorBase
 
 public class JsonHandler : ILightJsonHelper
 {
-    public T? Deserialize<T>(string json)
+    public object? Deserialize(string json,Type type)
     {
-        return System.Text.Json.JsonSerializer.Deserialize<T>(json);
+        return System.Text.Json.JsonSerializer.Deserialize(json, type);
     }
 
-    public T? Deserialize<T>(byte[] json)
+    public object? Deserialize(byte[] json, Type type)
     {
-        return System.Text.Json.JsonSerializer.Deserialize<T>(json);
+        return System.Text.Json.JsonSerializer.Deserialize(json, type);
     }
 
     public string Serialize<T>(T value)

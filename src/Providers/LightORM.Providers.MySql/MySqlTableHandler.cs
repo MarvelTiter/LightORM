@@ -53,7 +53,7 @@ public sealed class MySqlTableHandler(string database, TableOptions tableOptions
         }
 
         // 处理可能带长度/精度的类型声明
-        var baseType = dbType.Split('(')[0].ToUpper().Trim();
+        var baseType = dbType!.Split('(')[0].ToUpper().Trim();
         var isNullable = nullable?.ToUpper() == "YES" || nullable?.ToUpper() == "Y";
 
         switch (baseType)

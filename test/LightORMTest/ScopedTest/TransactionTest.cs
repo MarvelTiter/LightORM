@@ -88,12 +88,14 @@ public class TransactionTest : TestBase
         //}).ExecuteAsync();
 
         using var tc = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var user = (await Db.Select<User>().FirstAsync()) ?? throw new Exception("没有查询到结果");
+        var user = (await Db.Select<User>().FirstAsync(TestContext.CancellationToken)) ?? throw new Exception("没有查询到结果");
 
         await Db.Update<User>(user)
             .Set(u => u.Age, 18)
             .Where(u => u.UserId == user.UserId && u.Version == user.Version)
-            .ExecuteAsync();
+            .ExecuteAsync(TestContext.CancellationToken);
         tc.Complete();
     }
+
+    public TestContext TestContext { get; set; }
 }

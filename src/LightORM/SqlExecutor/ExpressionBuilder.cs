@@ -1,17 +1,23 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+
 namespace LightORM.SqlExecutor;
 
 internal partial class ExpressionBuilder
 {
     private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
 
-    public static Func<IDataReader, T> BuildDeserializer<T>(DbDataReader reader)
+    public static Func<IDataReader, T> BuildDeserializer<
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        T>(DbDataReader reader)
     {
         var type = typeof(T);
 
@@ -37,12 +43,13 @@ internal partial class ExpressionBuilder
             foreach (DataRow row in schemaTable.Rows)
             {
                 builder.Append('|')
-                       .Append(row["ColumnName"])       // 列名
-                       .Append(':')
-                       .Append(row["DataType"]?.ToString() ?? "null") // 数据类型
-                       .Append(':')
-                       .Append(row["AllowDBNull"]); // 是否可空
+                    .Append(row["ColumnName"]) // 列名
+                    .Append(':')
+                    .Append(row["DataType"]?.ToString() ?? "null") // 数据类型
+                    .Append(':')
+                    .Append(row["AllowDBNull"]); // 是否可空
             }
+
             return builder.ToString();
         }
     }
@@ -62,7 +69,11 @@ internal partial class ExpressionBuilder
     /// <param name="reader"></param>
     /// <param name="Culture"></param>
     /// <returns></returns>
-    private static Func<IDataReader, Target> BuildFunc<Target>(DbDataReader reader, CultureInfo Culture)
+    private static Func<IDataReader, Target> BuildFunc<
+#if NET8_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+        Target>(DbDataReader reader, CultureInfo Culture)
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
@@ -77,6 +88,7 @@ internal partial class ExpressionBuilder
             {
                 throw new LightOrmException("Tuple must have one Constructor");
             }
+
             var Constructor = Constructors[0];
 
             var Parameters = Constructor.GetParameters();
@@ -94,14 +106,15 @@ internal partial class ExpressionBuilder
                 else
                 {
                     TargetValueExpressions[Ordinal] = GetTargetValueExpression(
-                                                    reader,
-                                                    Culture,
-                                                    recordInstanceExp,
-                                                    SchemaTable,
-                                                    Ordinal,
-                                                    ParameterType);
+                        reader,
+                        Culture,
+                        recordInstanceExp,
+                        SchemaTable,
+                        Ordinal,
+                        ParameterType);
                 }
             }
+
             Body = Expression.New(Constructor, TargetValueExpressions);
         }
         // 基础类型处理 eg: IEnumable<int>  IEnumable<string>
@@ -109,12 +122,12 @@ internal partial class ExpressionBuilder
         {
             const int Ordinal = 0;
             Expression TargetValueExpression = GetTargetValueExpression(
-                                                    reader,
-                                                    Culture,
-                                                    recordInstanceExp,
-                                                    SchemaTable,
-                                                    Ordinal,
-                                                    TargetType);
+                reader,
+                Culture,
+                recordInstanceExp,
+                SchemaTable,
+                Ordinal,
+                TargetType);
 
             //UnaryExpression converted = Expression.Convert(TargetValueExpression, TargetType);
             Body = Expression.Block(TargetValueExpression);
@@ -122,123 +135,213 @@ internal partial class ExpressionBuilder
         // 其他
         else
         {
-            var columns = TableContext.GetTableInfo(TargetType).Columns;
-            if (TargetType.IsAnonymous())
+            Body = TargetType.IsAnonymous() ? CreateAnonymous(TargetType) : CreateCustomEntiry(TargetType);
+#if NET8_0_OR_GREATER
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "嵌套的类型，必须是实体表。否则可能出现被裁剪的情况")]
+#endif
+            Expression CreateAnonymous(
+#if NET8_0_OR_GREATER
+                [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+                Type targetType)
             {
-                Body = CreateAnonymous();
-            }
-            else
-            {
-                Body = CreateCustomEntiry();
-            }
-
-            Expression CreateAnonymous()
-            {
-                var props = TargetType.GetProperties();
+                var props = targetType.GetProperties();
                 List<Expression> Expressions = [];
-                void work()
+                foreach (var targetMember in props)
                 {
-                    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                    Expression TargetValueExpression;
+                    var ordinal = reader.GetOrdinal(targetMember.Name);
+                    if (ContainsJsonType(targetMember.PropertyType))
                     {
-                        var targetMember = props[Ordinal];
-                        Expression TargetValueExpression = GetTargetValueExpression(
-                                                                reader,
-                                                                Culture,
-                                                                recordInstanceExp,
-                                                                SchemaTable,
-                                                                Ordinal,
-                                                                targetMember.PropertyType);
-
-                        //Create a binding to the target member
-                        Expressions.Add(TargetValueExpression);
+                        TargetValueExpression = GetTargetJsonExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
                     }
+                    else if (targetMember.PropertyType.IsClassOrAnonymous())
+                    {
+                        if (targetMember.PropertyType.IsAnonymous())
+                        {
+                            if (IsAOTRuntime)
+                            {
+                                throw new LightOrmException("嵌套的匿名类型会被裁剪！！");
+                            }
+                            TargetValueExpression = CreateAnonymous(targetMember.PropertyType);
+                        }
+                        else
+                        {
+                            TargetValueExpression = CreateCustomEntiry(targetMember.PropertyType);
+                        }
+                    }
+                    else
+                    {
+                        TargetValueExpression = GetTargetValueExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
+                    }
+
+                    //Create a binding to the target member
+                    Expressions.Add(TargetValueExpression);
                 }
-                work();
-                var ctor = TargetType.GetConstructors().First();
+
+                var ctor = targetType.GetConstructors().First();
                 return Expression.New(ctor, Expressions);
             }
 
-            Expression CreateCustomEntiry()
+            Expression CreateCustomEntiry(
+#if NET8_0_OR_GREATER
+                [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
+#endif
+                Type targetType)
             {
+                var columns = TableContext.GetTableInfo(targetType).Columns;
                 // 属性处理 Property
                 List<MemberBinding> Bindings = [];
                 // 处理普通属性
-                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.IsAggregatedProperty))
+                foreach (var col in columns.Where(c => !c.IsNotMapped && !c.IsNavigate && !c.IsAggregated && !c.IsAggregatedProperty && !c.IsJsonColumn))
                 {
                     if (!col.CanWrite && !col.CanInit)
                     {
                         continue;
                     }
-                    var TargetMember = TargetType.GetProperty(col.PropertyName)!;
-                    void work()
-                    {
-                        for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                        {
-                            //Check if the RecordFieldName matches the TargetMember
-                            if (MemberMatchesName(col, reader.GetName(Ordinal)))
-                            {
-                                Expression TargetValueExpression = GetTargetValueExpression(
-                                                                        reader,
-                                                                        Culture,
-                                                                        recordInstanceExp,
-                                                                        SchemaTable,
-                                                                        Ordinal,
-                                                                        TargetMember.PropertyType);
 
-                                //Create a binding to the target member
-                                MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                                Bindings.Add(BindExpression);
-                                return;
-                            }
-                        }
-                    }
-                    work();
+                    var targetMember = targetType.GetProperty(col.PropertyName)!;
+
+                    FindMatchValueExpression(Bindings, col, targetMember);
+
+                    //void work()
+                    //{
+                    //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                    //    {
+                    //        //Check if the RecordFieldName matches the TargetMember
+                    //        if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                    //        {
+                    //            Expression TargetValueExpression = GetTargetValueExpression(
+                    //                reader,
+                    //                Culture,
+                    //                recordInstanceExp,
+                    //                SchemaTable,
+                    //                Ordinal,
+                    //                targetMember.PropertyType);
+
+                    //            //Create a binding to the target member
+                    //            MemberAssignment BindExpression = Expression.Bind(targetMember, TargetValueExpression);
+                    //            Bindings.Add(BindExpression);
+                    //            return;
+                    //        }
+                    //    }
+                    //}
+
+                    //work();
                 }
+
+                // 处理Json列
+                foreach (var col in columns.Where(c => c.IsJsonColumn))
+                {
+                    if (!col.CanWrite && !col.CanInit)
+                    {
+                        continue;
+                    }
+
+                    var targetMember = targetType.GetProperty(col.PropertyName)!;
+
+                    FindMatchValueExpression(Bindings, col, targetMember);
+
+                    //void work()
+                    //{
+                    //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                    //    {
+                    //        //Check if the RecordFieldName matches the TargetMember
+                    //        if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                    //        {
+                    //            Expression TargetValueExpression = GetTargetJsonExpression(
+                    //                reader,
+                    //                Culture,
+                    //                recordInstanceExp,
+                    //                SchemaTable,
+                    //                Ordinal,
+                    //                targetMember.PropertyType);
+
+                    //            //Create a binding to the target member
+                    //            MemberAssignment BindExpression = Expression.Bind(targetMember, TargetValueExpression);
+                    //            Bindings.Add(BindExpression);
+                    //            return;
+                    //        }
+                    //    }
+                    //}
+
+                    //work();
+                }
+
                 // 处理聚合的属性
                 ITableColumnInfo[] agTypes = [.. columns.Where(c => c.AggregateType != null && c.IsAggregated)];
                 foreach (var ag in agTypes)
                 {
                     var flatType = ag.AggregateType!;
-                    List<MemberBinding> bindings = [];
-                    PropertyInfo targetMember = TargetType.GetProperty(ag.PropertyName)!;
+                    List<MemberBinding> flatBindings = [];
+                    PropertyInfo targetMember = targetType.GetProperty(ag.PropertyName)!;
                     foreach (var flatCol in columns.Where(c => c.AggregateType == flatType && c.IsAggregatedProperty))
                     {
                         if (!flatCol.CanWrite && !flatCol.CanInit)
                         {
                             continue;
                         }
-                        var TargetMember = flatType.GetProperty(flatCol.PropertyName)!;
-                        void work()
-                        {
-                            for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                            {
-                                //Check if the RecordFieldName matches the TargetMember
-                                if (MemberMatchesName(flatCol, reader.GetName(Ordinal)))
-                                {
-                                    Expression TargetValueExpression = GetTargetValueExpression(
-                                                                            reader,
-                                                                            Culture,
-                                                                            recordInstanceExp,
-                                                                            SchemaTable,
-                                                                            Ordinal,
-                                                                            TargetMember.PropertyType);
 
-                                    //Create a binding to the target member
-                                    MemberAssignment BindExpression = Expression.Bind(TargetMember, TargetValueExpression);
-                                    bindings.Add(BindExpression);
-                                    return;
-                                }
-                            }
-                        }
-                        work();
+                        var flatTargetMember = flatType.GetProperty(flatCol.PropertyName)!;
+                        FindMatchValueExpression(flatBindings, flatCol, flatTargetMember);
+                        //void work()
+                        //{
+                        //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                        //    {
+                        //        //Check if the RecordFieldName matches the TargetMember
+                        //        if (MemberMatchesName(flatCol, reader.GetName(Ordinal)))
+                        //        {
+                        //            Expression TargetValueExpression = GetTargetValueExpression(
+                        //                reader,
+                        //                Culture,
+                        //                recordInstanceExp,
+                        //                SchemaTable,
+                        //                Ordinal,
+                        //                flatTargetMember.PropertyType);
+
+                        //            //Create a binding to the target member
+                        //            MemberAssignment BindExpression = Expression.Bind(flatTargetMember, TargetValueExpression);
+                        //            bindings.Add(BindExpression);
+                        //            return;
+                        //        }
+                        //    }
+                        //}
+
+                        //work();
                     }
-                    var memberInit = Expression.MemberInit(Expression.New(flatType), bindings);
+
+                    var memberInit = Expression.MemberInit(Expression.New(flatType), flatBindings);
                     Bindings.Add(Expression.Bind(targetMember, memberInit));
                 }
-                return Expression.MemberInit(Expression.New(TargetType), Bindings);
-            }
 
+                return Expression.MemberInit(Expression.New(targetType), Bindings);
+
+                void FindMatchValueExpression(List<MemberBinding> bindings, ITableColumnInfo col, PropertyInfo property)
+                {
+                    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
+                    {
+                        //Check if the RecordFieldName matches the TargetMember
+                        if (MemberMatchesName(col, reader.GetName(Ordinal)))
+                        {
+                            Expression TargetValueExpression = GetTargetValueExpression(
+                                reader,
+                                Culture,
+                                recordInstanceExp,
+                                SchemaTable,
+                                Ordinal,
+                                property.PropertyType);
+
+                            //Create a binding to the target member
+                            MemberAssignment BindExpression = Expression.Bind(property, TargetValueExpression);
+                            bindings.Add(BindExpression);
+                            return;
+                        }
+                    }
+                }
+
+            }
         }
+
         //Compile as Delegate
         var lambdaExp = Expression.Lambda<Func<IDataReader, Target>>(Body, recordInstanceExp);
         System.Diagnostics.Debug.WriteLine(lambdaExp);
@@ -248,7 +351,7 @@ internal partial class ExpressionBuilder
     private static bool MemberMatchesName(ITableColumnInfo col, string Name)
     {
         return string.Equals(col.PropertyName, Name, StringComparison.CurrentCultureIgnoreCase)
-            || string.Equals(col.ColumnName, Name, StringComparison.CurrentCultureIgnoreCase);
+               || string.Equals(col.ColumnName, Name, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private static Expression GetTargetValueExpression(
@@ -269,17 +372,60 @@ internal partial class ExpressionBuilder
         if (AllowDBNull)
         {
             TargetValueExpression = Expression.Condition(
-            NullCheckExpression,
-            Expression.Default(TargetMemberType),
-            //Nullable.GetUnderlyingType(TargetMemberType) is null ? ConvertedRecordFieldExpression : Expression.Convert(ConvertedRecordFieldExpression, TargetMemberType),
-            ConvertedRecordFieldExpression,
-            TargetMemberType
+                NullCheckExpression,
+                Expression.Default(TargetMemberType),
+                //Nullable.GetUnderlyingType(TargetMemberType) is null ? ConvertedRecordFieldExpression : Expression.Convert(ConvertedRecordFieldExpression, TargetMemberType),
+                ConvertedRecordFieldExpression,
+                TargetMemberType
             );
         }
         else
         {
             TargetValueExpression = ConvertedRecordFieldExpression;
         }
+
+        return TargetValueExpression;
+
+        static bool IsColumnNullable(DataTable schemaTable, int ordinal)
+        {
+            var allowDbNull = schemaTable.Rows[ordinal]["AllowDBNull"];
+            return allowDbNull == DBNull.Value ||
+                   allowDbNull == null ||
+                   Convert.ToBoolean(allowDbNull);
+        }
+    }
+
+    private static Expression GetTargetJsonExpression(
+        DbDataReader reader,
+        CultureInfo Culture,
+        ParameterExpression recordInstanceExp,
+        DataTable SchemaTable,
+        int Ordinal,
+        Type TargetMemberType)
+    {
+        Type RecordFieldType = reader.GetFieldType(Ordinal);
+        bool AllowDBNull = IsColumnNullable(SchemaTable, Ordinal);
+        Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
+        Expression objectExp = GetJsonDeserializeExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
+        Expression ConvertedRecordFieldExpression = Expression.Convert(objectExp, TargetMemberType);
+        MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
+
+        Expression TargetValueExpression;
+        if (AllowDBNull)
+        {
+            TargetValueExpression = Expression.Condition(
+                NullCheckExpression,
+                Expression.Default(TargetMemberType),
+                //Nullable.GetUnderlyingType(TargetMemberType) is null ? ConvertedRecordFieldExpression : Expression.Convert(ConvertedRecordFieldExpression, TargetMemberType),
+                ConvertedRecordFieldExpression,
+                TargetMemberType
+            );
+        }
+        else
+        {
+            TargetValueExpression = ConvertedRecordFieldExpression;
+        }
+
         return TargetValueExpression;
 
         static bool IsColumnNullable(DataTable schemaTable, int ordinal)
@@ -315,7 +461,9 @@ internal partial class ExpressionBuilder
         {
             RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, ordinal);
         }
+
         return RecordFieldExpression;
+
         static bool IsUnsignType(Type type)
         {
             return type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong);
@@ -344,7 +492,7 @@ internal partial class ExpressionBuilder
         }
         else if (TargetType == typeof(string))
         {
-            TargetExpression = Expression.Call(SourceExpression, SourceType.GetMethod("ToString", Type.EmptyTypes)!);
+            TargetExpression = Expression.Call(SourceExpression, typeof(Convert).GetMethod("ToString", [SourceType])!);
         }
         else if (TargetType == typeof(bool) || underlying == typeof(bool))
         {
@@ -360,11 +508,27 @@ internal partial class ExpressionBuilder
             TargetExpression = Expression.Convert(SourceExpression, TargetType);
             converted = true;
         }
+
         if (isnullable && !converted)
         {
             TargetExpression = Expression.Convert(TargetExpression, TargetType);
         }
+
         return TargetExpression;
+    }
+
+    private static MethodCallExpression GetJsonDeserializeExpression(Type SourceType, Expression SourceExpression, Type TargetType, CultureInfo Culture)
+    {
+        if (SourceType == typeof(string))
+        {
+            return Expression.Call(StringDeserializer, SourceExpression, Expression.Constant(TargetType, typeof(Type)));
+        }
+        else if (SourceType == typeof(byte[]))
+        {
+            return Expression.Call(BytesDeserializer, SourceExpression, Expression.Constant(TargetType, typeof(Type)));
+        }
+
+        throw new LightOrmException($"反序列化{SourceType}为JSON出错");
     }
 
     private static Expression GetArrayHandlerExpression(Expression sourceExpression, Type targetType)
@@ -376,15 +540,17 @@ internal partial class ExpressionBuilder
         }
         else if (targetType == typeof(MemoryStream))
         {
-            ConstructorInfo ConstructorInfo = targetType.GetConstructor([typeof(byte[])])!;
+            ConstructorInfo ConstructorInfo = typeof(MemoryStream).GetConstructor([typeof(byte[])])!;
             TargetExpression = Expression.New(ConstructorInfo, sourceExpression);
         }
         else
         {
             throw new LightOrmException("Cannot convert a byte array to " + targetType.Name);
         }
+
         return TargetExpression;
     }
+
     private static Expression GetParseExpression(Expression SourceExpression, Type TargetType, CultureInfo Culture)
     {
         var (UnderlyingType, _) = GetUnderlyingType(TargetType);
@@ -396,33 +562,23 @@ internal partial class ExpressionBuilder
         }
         else
         {
-            Expression ParseExpression;
-            switch (UnderlyingType.FullName)
+            Expression ParseExpression = UnderlyingType.FullName switch
             {
-                case "System.Byte":
-                case "System.UInt16":
-                case "System.UInt32":
-                case "System.UInt64":
-                case "System.SByte":
-                case "System.Int16":
-                case "System.Int32":
-                case "System.Int64":
-                case "System.Double":
-                case "System.Decimal":
-                    ParseExpression = GetNumberParseExpression(SourceExpression, UnderlyingType, Culture);
-                    break;
-                case "System.DateTime":
-                    ParseExpression = GetDateTimeParseExpression(SourceExpression, UnderlyingType, Culture);
-                    break;
-                case "System.Boolean":
-                    ParseExpression = TryParseStringToBoolean(SourceExpression, UnderlyingType);
-                    break;
-                case "System.Char":
-                    ParseExpression = GetGenericParseExpression(SourceExpression, UnderlyingType);
-                    break;
-                default:
-                    throw new LightOrmException(string.Format("Conversion from {0} to {1} is not supported", "String", TargetType));
-            }
+                "System.Byte" => GetNumberParseExpression<byte>(SourceExpression, Culture),
+                "System.UInt16" => GetNumberParseExpression<ushort>(SourceExpression, Culture),
+                "System.UInt32" => GetNumberParseExpression<uint>(SourceExpression, Culture),
+                "System.UInt64" => GetNumberParseExpression<ulong>(SourceExpression, Culture),
+                "System.SByte" => GetNumberParseExpression<sbyte>(SourceExpression, Culture),
+                "System.Int16" => GetNumberParseExpression<short>(SourceExpression, Culture),
+                "System.Int32" => GetNumberParseExpression<int>(SourceExpression, Culture),
+                "System.Int64" => GetNumberParseExpression<long>(SourceExpression, Culture),
+                "System.Double" => GetNumberParseExpression<double>(SourceExpression, Culture),
+                "System.Decimal" => GetNumberParseExpression<decimal>(SourceExpression, Culture),
+                "System.DateTime" => GetDateTimeParseExpression(SourceExpression, Culture),
+                "System.Boolean" => TryParseStringToBoolean(SourceExpression),
+                "System.Char" => GetGenericParseExpression<char>(SourceExpression),
+                _ => throw new LightOrmException($"Conversion from \"String\" to {TargetType} is not supported"),
+            };
             if (Nullable.GetUnderlyingType(TargetType) == null)
             {
                 return ParseExpression;
@@ -433,15 +589,21 @@ internal partial class ExpressionBuilder
                 return Expression.Convert(ParseExpression, TargetType);
             }
         }
-        Expression GetGenericParseExpression(Expression sourceExpression, Type type)
+
+        Expression GetGenericParseExpression<
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+#endif
+            T>(Expression sourceExpression)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string)])!;
+            MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string)])!;
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression]);
             return CallExpression;
         }
-        Expression GetDateTimeParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+
+        Expression GetDateTimeParseExpression(Expression sourceExpression, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
+            MethodInfo ParseMetod = typeof(DateTime).GetMethod("Parse", [typeof(string), typeof(DateTimeFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.DateTimeFormat, typeof(DateTimeFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
@@ -458,17 +620,21 @@ internal partial class ExpressionBuilder
             return CallExpression;
         }
 
-        MethodCallExpression GetNumberParseExpression(Expression sourceExpression, Type type, CultureInfo culture)
+        MethodCallExpression GetNumberParseExpression<
+#if NET8_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+#endif
+            T>(Expression sourceExpression, CultureInfo culture)
         {
-            MethodInfo ParseMetod = type.GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
+            MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression, ProviderExpression]);
             return CallExpression;
         }
-        Expression TryParseStringToBoolean(Expression sourceExpression, Type type)
+
+        Expression TryParseStringToBoolean(Expression sourceExpression)
         {
-            var valueExpression = Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
-            return GetGenericParseExpression(valueExpression, type);
+            return Expression.Call(CustomStringParseToBoolean, [sourceExpression]);
         }
     }
 
@@ -482,6 +648,7 @@ internal partial class ExpressionBuilder
 file static class Ex
 {
     readonly static HashSet<Type> ElementaryTypes = LoadElementaryTypes();
+
     /// <summary>
     /// 检查是否为基础类型
     /// </summary>
@@ -491,43 +658,44 @@ file static class Ex
     {
         return ElementaryTypes.Contains(t);
     }
+
     private static HashSet<Type> LoadElementaryTypes()
     {
         HashSet<Type> TypeSet =
         [
-                typeof(string),
-                typeof(byte),
-                typeof(byte[]),
-                typeof(sbyte),
-                typeof(short),
-                typeof(int),
-                typeof(long),
-                typeof(ushort),
-                typeof(uint),
-                typeof(ulong),
-                typeof(float),
-                typeof(double),
-                typeof(decimal),
-                typeof(DateTime),
-                typeof(Guid),
-                typeof(bool),
-                typeof(TimeSpan),
-                typeof(byte?),
-                typeof(sbyte?),
-                typeof(short?),
-                typeof(int?),
-                typeof(long?),
-                typeof(ushort?),
-                typeof(uint?),
-                typeof(ulong?),
-                typeof(float?),
-                typeof(double?),
-                typeof(decimal?),
-                typeof(DateTime?),
-                typeof(Guid?),
-                typeof(bool?),
-                typeof(TimeSpan?)
-            ];
+            typeof(string),
+            typeof(byte),
+            typeof(byte[]),
+            typeof(sbyte),
+            typeof(short),
+            typeof(int),
+            typeof(long),
+            typeof(ushort),
+            typeof(uint),
+            typeof(ulong),
+            typeof(float),
+            typeof(double),
+            typeof(decimal),
+            typeof(DateTime),
+            typeof(Guid),
+            typeof(bool),
+            typeof(TimeSpan),
+            typeof(byte?),
+            typeof(sbyte?),
+            typeof(short?),
+            typeof(int?),
+            typeof(long?),
+            typeof(ushort?),
+            typeof(uint?),
+            typeof(ulong?),
+            typeof(float?),
+            typeof(double?),
+            typeof(decimal?),
+            typeof(DateTime?),
+            typeof(Guid?),
+            typeof(bool?),
+            typeof(TimeSpan?)
+        ];
         return TypeSet;
     }
 }

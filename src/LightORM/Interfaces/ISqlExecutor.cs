@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;
@@ -70,17 +71,24 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    int ExecuteNonQuery<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters , CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行标量
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    T? ExecuteScalar<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    ScalarValue ExecuteScalar<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters , CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行阅读器
@@ -90,7 +98,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="behavior">命令行为</param>
     /// <returns></returns>
-    DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
+    DbDataReader ExecuteReader<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
 
     /// <summary>
     /// 多结果查询, 使用<see cref="MultipleResult"/>的<see cref="MultipleResult.Read{T}"/>或者<see cref="MultipleResult.ReadFirst{T}"/>或者对应的异步版本
@@ -100,7 +112,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandType"></param>
     /// <param name="behavior"></param>
     /// <returns></returns>
-    MultipleResult QueryMultiple(string sql, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
+    MultipleResult QueryMultiple<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null);
     /// <summary>
     /// 执行数据集
     /// </summary>
@@ -108,7 +124,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    DataSet ExecuteDataSet(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text);
+    DataSet ExecuteDataSet<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行数据表格
@@ -117,8 +137,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <returns></returns>
-    DataTable ExecuteDataTable(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text);
+    DataTable ExecuteDataTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行非查询异步
@@ -128,19 +151,25 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<int> ExecuteNonQueryAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行标量异步
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="commandType">命令类型</param>
     /// <param name="commandText">命令文本</param>
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<ScalarValue> ExecuteScalarAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行阅读器异步
@@ -151,7 +180,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="behavior">命令行为</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
+    Task<DbDataReader> ExecuteReaderAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 多结果查询, 使用<see cref="MultipleResult"/>的<see cref="MultipleResult.Read{T}"/>或者<see cref="MultipleResult.ReadFirst{T}"/>或者对应的异步版本
@@ -162,7 +195,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="behavior"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<MultipleResult> QueryMultipleAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
+    Task<MultipleResult> QueryMultipleAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行数据集异步
@@ -172,8 +209,11 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<DataSet> ExecuteDataSetAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 执行数据表格异步
@@ -183,6 +223,10 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
     /// <param name="dbParameters">数据库参数</param>
     /// <param name="cancellationToken">异步取消令牌</param>
     /// <returns></returns>
-    Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null,
-        CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
+    Task<DataTable> ExecuteDataTableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default);
 }
+

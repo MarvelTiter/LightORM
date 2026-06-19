@@ -19,18 +19,22 @@ public class ResolveHelper
     // 尝试将表达式求值为常量（仅支持 Constant 和 简单 Member 访问）
     public static T ExtractInstanceValue<T>(Expression expression)
     {
-        if (expression is ConstantExpression ce && ce.Value is T index)
+        if (expression is ConstantExpression { Value: T i1 })
         {
-            return index;
+            return i1;
+        }
+        else if (expression is UnaryExpression { Operand: ConstantExpression { Value: T i2 } })
+        {
+            return i2;
         }
         var members = new Stack<MemberPathInfo>();
-        Expression? current = expression;
+        Expression? current = UnaryFilter(expression);
 
         // 向下遍历，收集 MemberInfo
         while (current is MemberExpression memberExpr)
         {
             members.Push(new(memberExpr.Member));
-            current = memberExpr.Expression;
+            current = UnaryFilter(memberExpr.Expression);
         }
         object? value;
 
@@ -56,21 +60,66 @@ public class ResolveHelper
         throw new LightOrmException($"尝试获取类型{typeof(T)}的值，实际类型: {value?.GetType()}");
     }
 
-    public static T ExtractInstanceValueWithName<T>(Expression expression, out string name)
+    public static bool TryExtractValue<T>(Expression expression, out T value)
     {
-        if (expression is ConstantExpression ce && ce.Value is T index)
+        if (expression is ConstantExpression { Value: T index })
         {
-            name = "Const";
-            return index;
+            value = index;
+            return true;
+        }
+        else if (expression is UnaryExpression { Operand: ConstantExpression { Value: T i2 } })
+        {
+            value = i2;
+            return true;
         }
         var members = new Stack<MemberPathInfo>();
-        Expression? current = expression;
+        Expression? current = UnaryFilter(expression);
 
         // 向下遍历，收集 MemberInfo
         while (current is MemberExpression memberExpr)
         {
             members.Push(new(memberExpr.Member));
-            current = memberExpr.Expression;
+            current = UnaryFilter(memberExpr.Expression);
+        }
+        object? obj = null;
+
+        if (current is ConstantExpression constExpr)
+        {
+            obj = constExpr.Value;
+        }
+
+        obj = GetValue(members, obj);
+
+        if (obj is T t)
+        {
+            value = t;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
+
+    public static T ExtractInstanceValueWithName<T>(Expression expression, out string name)
+    {
+        if (expression is ConstantExpression { Value: T i1 })
+        {
+            name = "Const";
+            return i1;
+        }
+        else if (expression is UnaryExpression { Operand: ConstantExpression { Value: T i2 } })
+        {
+            name = "Const";
+            return i2;
+        }
+        var members = new Stack<MemberPathInfo>();
+        Expression? current = UnaryFilter(expression);
+
+        // 向下遍历，收集 MemberInfo
+        while (current is MemberExpression memberExpr)
+        {
+            members.Push(new(memberExpr.Member));
+            current = UnaryFilter(memberExpr.Expression);
         }
         object? value;
 
@@ -107,13 +156,13 @@ public class ResolveHelper
             return uce.Type;
         }
         var members = new Queue<MemberPathInfo>();
-        Expression? current = expression;
+        Expression? current = UnaryFilter(expression);
 
         // 向下遍历，收集 MemberInfo
         while (current is MemberExpression memberExpr)
         {
             members.Enqueue(new(memberExpr.Member));
-            current = memberExpr.Expression;
+            current = UnaryFilter(memberExpr.Expression);
         }
 
         if (current is UnaryExpression unaryExpr)
@@ -135,28 +184,56 @@ public class ResolveHelper
         };
 
     }
-
+    private static Expression? UnaryFilter(Expression? expression)
+    {
+        if (expression is UnaryExpression unary)
+        {
+            return unary.Operand;
+        }
+        return expression;
+    }
     public static object? GetValue(Stack<MemberPathInfo> memberInfos, object? compilerVar) => GetValueByExpression(memberInfos, compilerVar, out _);
 
     private static readonly ConcurrentDictionary<string, Func<object?, object?>> getterCache = [];
     public static object? GetValueByExpression(Stack<MemberPathInfo> memberInfos, object? value, out string name)
     {
         name = string.Join("_", memberInfos.Where(m => !m.Member.Name.StartsWith("CS$<>8__locals")).Select(m => m.Member.Name));
-        if (value is null) return null;
-        var type = value.GetType();
-        var memberKey = $"{type.FullName}_{name}";
-        var func = getterCache.GetOrAdd(memberKey, _ =>
+        if (value is null)
         {
-            return CreateGetter(type, memberInfos);
-        });
-        memberInfos.Clear();
-        return func.Invoke(value);
+            if (memberInfos.Count == 0) return null;
+            var type = memberInfos.Peek().Member.DeclaringType;
+            var memberKey = $"{type?.FullName ?? "GLOBAL"}_{name}";
+            var func = getterCache.GetOrAdd(memberKey, _ => StaticGetter(type!, memberInfos));
+            memberInfos.Clear();
+            return func.Invoke(value);
+        }
+        else
+        {
+            var type = value.GetType();
+            var memberKey = $"{type.FullName}_{name}";
+            var func = getterCache.GetOrAdd(memberKey, _ => CreateGetter(type, memberInfos));
+            memberInfos.Clear();
+            return func.Invoke(value);
+        }
     }
 
     private static Func<object?, object?> CreateGetter(Type type, Stack<MemberPathInfo> memberInfos)
     {
         var param = Expression.Parameter(typeof(object), "obj");
         Expression body = Expression.Convert(param, type);
+        while (memberInfos.Count > 0)
+        {
+            body = Expression.MakeMemberAccess(body, memberInfos.Pop().Member);
+        }
+        body = Expression.Convert(body, typeof(object));
+        var lambda = Expression.Lambda<Func<object?, object?>>(body, param);
+        return lambda.Compile();
+    }
+
+    private static Func<object?, object?> StaticGetter(Type type, Stack<MemberPathInfo> memberInfos)
+    {
+        var param = Expression.Parameter(typeof(object), "obj");
+        Expression body = Expression.MakeMemberAccess(null, memberInfos.Pop().Member);
         while (memberInfos.Count > 0)
         {
             body = Expression.MakeMemberAccess(body, memberInfos.Pop().Member);

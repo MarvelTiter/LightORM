@@ -11,7 +11,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
 {
     public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
     {
-        var tableSpace = option?.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
+        var tableSpace = option.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
 
         #region Table
 

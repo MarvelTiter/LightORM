@@ -1,9 +1,10 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
-using System.Collections.Concurrent;
 namespace LightORM.SqlExecutor;
 
 internal partial class SqlExecutor : ISqlExecutor
@@ -86,8 +87,7 @@ internal partial class SqlExecutor : ISqlExecutor
     // 使用外部事务
     public void UseExternalTransaction(DbTransaction externalTransaction)
     {
-        if (externalTransaction == null)
-            throw new ArgumentNullException(nameof(externalTransaction));
+        ArgumentNullException.ThrowIfNull(externalTransaction);
 
         if (CurrentTransactionContext.Value != null)
             throw new InvalidOperationException("Already in a transaction context");
@@ -127,7 +127,7 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         catch (Exception ex)
         {
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             CurrentTransactionContext.Value?.SetException(ex);
             if (ctx.IsHandled)
@@ -174,7 +174,7 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         catch (Exception ex)
         {
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             CurrentTransactionContext.Value?.SetException(ex);
             if (ctx.IsHandled)
@@ -196,7 +196,7 @@ internal partial class SqlExecutor : ISqlExecutor
                 return;
             }
             var ex = new InvalidOperationException("No active transaction to commit"); ;
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.CommitTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.CommitTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             if (ctx.IsHandled)
             {
@@ -234,7 +234,7 @@ internal partial class SqlExecutor : ISqlExecutor
                 return;
             }
             var ex = new InvalidOperationException("No active transaction to commit"); ;
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.RollbackTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.RollbackTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             if (ctx.IsHandled)
             {
@@ -299,7 +299,7 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         catch (Exception ex)
         {
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.BeginTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             CurrentTransactionContext.Value?.SetException(ex);
             if (ctx.IsHandled)
@@ -322,7 +322,7 @@ internal partial class SqlExecutor : ISqlExecutor
                 return;
             }
             var ex = new InvalidOperationException("No active transaction to commit"); ;
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.CommitTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.CommitTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             if (ctx.IsHandled)
             {
@@ -361,7 +361,7 @@ internal partial class SqlExecutor : ISqlExecutor
                 return;
             }
             var ex = new InvalidOperationException("No active transaction to commit"); ;
-            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.RollbackTransaction, null, null), ex);
+            var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.RollbackTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
             if (ctx.IsHandled)
             {
@@ -447,8 +447,6 @@ internal partial class SqlExecutor : ISqlExecutor
         {
             return new(null!, null!, false, true);
         }
-        var commandText = et.Sql!;
-        var dbParameters = et.Parameter;
         //DbLog?.Invoke(commandText, dbParameters);
         Interceptor.NotifyPrepareCommand(et);
         DbConnection conn;
@@ -471,19 +469,12 @@ internal partial class SqlExecutor : ISqlExecutor
             conn.Open();
         }
         var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+        Database.DatabaseAdapter.DbCommandInit(command);
         if (context != null)
         {
             command.Transaction = context.Transaction;
         }
-        command.CommandText = commandText;
-        command.CommandType = commandType;
-        if (dbParameters != null)
-        {
-            var action = DbParameterReader.GetDbParameterReader(Database.DatabaseAdapter.Prefix, commandText, dbParameters.GetType());
-            action?.Invoke(command, dbParameters);
-        }
-
+        et.HandleDbParameter(Database.DatabaseAdapter.Prefix, command);
         return new(command, conn, needToReturn, false);
     }
 
@@ -494,8 +485,6 @@ internal partial class SqlExecutor : ISqlExecutor
         {
             return new(null!, null!, false, true);
         }
-        var commandText = et.Sql!;
-        var dbParameters = et.Parameter;
         //DbLog?.Invoke(commandText, dbParameters);
         Interceptor.NotifyPrepareCommand(et);
         DbConnection conn;
@@ -519,25 +508,30 @@ internal partial class SqlExecutor : ISqlExecutor
         }
 
         var command = conn.CreateCommand();
-        GetInit(command.GetType())?.Invoke(command);
+        Database.DatabaseAdapter.DbCommandInit(command);
 
         if (context != null)
         {
             command.Transaction = context.Transaction;
         }
-        command.CommandText = commandText;
-        command.CommandType = commandType;
-        if (dbParameters != null)
-        {
-            var action = DbParameterReader.GetDbParameterReader(Database.DatabaseAdapter.Prefix, commandText, dbParameters.GetType());
-            action?.Invoke(command, dbParameters);
-        }
+        //command.CommandText = commandText;
+        //command.CommandType = commandType;
+        //if (dbParameters is not DBNull)
+        //{
+        //    var action = DbParameterReader.GetDbParameterReader(Database.DatabaseAdapter.Prefix, commandText, dbParameters.GetType());
+        //    action?.Invoke(command, dbParameters);
+        //}
+        et.HandleDbParameter(Database.DatabaseAdapter.Prefix, command);
         return new(command, conn, needToReturn, false);
     }
 
-    public int ExecuteNonQuery(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public int ExecuteNonQuery<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -571,9 +565,13 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public T? ExecuteScalar<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public ScalarValue ExecuteScalar<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -588,11 +586,7 @@ internal partial class SqlExecutor : ISqlExecutor
             var obj = r.Command.ExecuteScalar();
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            if (obj is DBNull || obj is null)
-            {
-                return default;
-            }
-            return ChangeType<T>(obj);
+            return new ScalarValue(obj);
         }
         catch (Exception ex)
         {
@@ -611,9 +605,13 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public DbDataReader ExecuteReader(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
+    public DbDataReader ExecuteReader<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult commandResult;
         try
         {
@@ -655,9 +653,13 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public MultipleResult QueryMultiple(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
+    public MultipleResult QueryMultiple<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult commandResult;
         try
         {
@@ -703,11 +705,15 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public DataSet ExecuteDataSet(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public DataSet ExecuteDataSet<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -742,11 +748,15 @@ internal partial class SqlExecutor : ISqlExecutor
         return ds;
     }
 
-    public DataTable ExecuteDataTable(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text)
+    public DataTable ExecuteDataTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataTable();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -781,9 +791,13 @@ internal partial class SqlExecutor : ISqlExecutor
         return ds;
     }
 
-    public async Task<int> ExecuteNonQueryAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteNonQueryAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -817,9 +831,13 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public async Task<T?> ExecuteScalarAsync<T>(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
+    public async Task<ScalarValue> ExecuteScalarAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -834,11 +852,7 @@ internal partial class SqlExecutor : ISqlExecutor
             var obj = await r.Command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            if (obj is DBNull || obj is null)
-            {
-                return default;
-            }
-            return ChangeType<T>(obj);
+            return new(obj);
         }
         catch (Exception ex)
         {
@@ -856,9 +870,13 @@ internal partial class SqlExecutor : ISqlExecutor
                 DisposeCommand(commandResult.Value);
         }
     }
-    public async Task<DbDataReader> ExecuteReaderAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
+    public async Task<DbDataReader> ExecuteReaderAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult;
         try
         {
@@ -900,9 +918,13 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public async Task<MultipleResult> QueryMultipleAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
+    public async Task<MultipleResult> QueryMultipleAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
-        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult commandResult;
         try
         {
@@ -948,11 +970,15 @@ internal partial class SqlExecutor : ISqlExecutor
         }
     }
 
-    public async Task<DataSet> ExecuteDataSetAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
+    public async Task<DataSet> ExecuteDataSetAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataSet();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -987,11 +1013,15 @@ internal partial class SqlExecutor : ISqlExecutor
         return ds;
     }
 
-    public async Task<DataTable> ExecuteDataTableAsync(string commandText, object? dbParameters = null, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
+    public async Task<DataTable> ExecuteDataTableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataTable();
         using var adapter = Database.DbProviderFactory.CreateDataAdapter();
-        var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters);
+        var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
         {
@@ -1026,80 +1056,99 @@ internal partial class SqlExecutor : ISqlExecutor
         return ds;
     }
 
-    internal static T? ChangeType<T>(object value)
+    internal static T? ChangeType<T>(object? value)
     {
-        var conversionType = typeof(T);
-        if (value == null)
+        if (value is null || value is DBNull)
         {
             return default;
         }
-        var type = value.GetType();
-        if (type.Equals(typeof(Guid)) && conversionType.Equals(typeof(string)))
+        if (value is T typedValue)
         {
-            value = value.ToString()!;
+            return typedValue;
         }
-        if (conversionType.Equals(type))
+        var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+        var result = targetType switch
         {
-            return (T)value;
-        }
-        if (conversionType.IsGenericType && conversionType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+            _ when targetType == typeof(string) => value.ToString(),
+            _ when targetType == typeof(int) => Convert.ToInt32(value),
+            _ when targetType == typeof(long) => Convert.ToInt64(value),
+            _ when targetType == typeof(short) => Convert.ToInt16(value),
+            _ when targetType == typeof(byte) => Convert.ToByte(value),
+            _ when targetType == typeof(decimal) => Convert.ToDecimal(value),
+            _ when targetType == typeof(double) => Convert.ToDouble(value),
+            _ when targetType == typeof(float) => Convert.ToSingle(value),
+            _ when targetType == typeof(bool) => Convert.ToBoolean(value),
+            _ when targetType == typeof(DateTime) => Convert.ToDateTime(value),
+            _ when targetType == typeof(Guid) => Guid.Parse(value.ToString()!),
+            _ when targetType == typeof(char) => Convert.ToChar(value),
+            _ when targetType.IsEnum => Enum.Parse(targetType, value.ToString()!, ignoreCase: true),
+            // 兜底——理论上不会走到这里
+            _ => Convert.ChangeType(value, targetType)
+        };
+        if (result is T finalResult)
         {
-            var nullableConverter = new NullableConverter(conversionType);
-            conversionType = nullableConverter.UnderlyingType;
+            return finalResult;
         }
-        return (T)Convert.ChangeType(value, conversionType);
+        return default;
     }
 
-    private static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
-    internal static Action<DbCommand>? GetInit(Type commandType)
-    {
-        if (commandType == null)
-        {
-            return null;
-        }
+    //    private readonly static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
+    //    internal static Action<DbCommand>? GetInit(DbCommand commandObject)
+    //    {
+    //        if (commandObject is null)
+    //        {
+    //            return null;
+    //        }
 
-        return commandInitCache.GetOrAdd(commandType, t =>
-        {
-            MethodInfo? setBindName = GetBasicPropertySetter(t, "BindByName", typeof(bool));
-            MethodInfo? setInit = GetBasicPropertySetter(t, "InitialLONGFetchSize", typeof(int));
-            if (setBindName is null && setInit is null)
-            {
-                return null;
-            }
-            /*
-             * (DbCommand cmd) => {
-             *     (OracleCommand)cmd.set_BindByName(true);
-             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
-             * }
-             */
-            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
-            List<Expression> body = new List<Expression>();
-            if (setBindName != null)
-            {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
-                body.Add(setter1Exp);
-            }
-            if (setInit != null)
-            {
-                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
-                body.Add(setter2Exp);
-            }
-            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
-            return lambda.Compile();
-        });
-    }
+    //        var commandType = commandObject.GetType();
+    //        if (!commandInitCache.TryGetValue(commandType, out var action))
+    //        {
+    //            MethodInfo? setBindName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
+    //            MethodInfo? setInit = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
+    //            if (setBindName is null && setInit is null)
+    //            {
+    //                return null;
+    //            }
+    //            /*
+    //             * (DbCommand cmd) => {
+    //             *     (OracleCommand)cmd.set_BindByName(true);
+    //             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
+    //             * }
+    //             */
+    //            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
+    //            List<Expression> body = [];
+    //            if (setBindName != null)
+    //            {
+    //                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+    //                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
+    //                body.Add(setter1Exp);
+    //            }
+    //            if (setInit != null)
+    //            {
+    //                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
+    //                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
+    //                body.Add(setter2Exp);
+    //            }
+    //            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
+    //            action = lambda.Compile();
+    //            commandInitCache.TryAdd(commandType, action);
+    //        }
+    //        return action;
+    //    }
 
-    internal static MethodInfo? GetBasicPropertySetter(Type declaringType, string name, Type expectedType)
-    {
-        PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-        if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
-        {
-            return property.GetSetMethod();
-        }
-        return null;
-    }
+    //    internal static MethodInfo? GetBasicPropertySetter(
+    //#if NET8_0_OR_GREATER
+    //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
+    //#endif
+    //        Type declaringType, string name, Type expectedType)
+    //    {
+    //        PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
+    //        if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
+    //        {
+    //            return property.GetSetMethod();
+    //        }
+    //        return null;
+    //    }
 
     public object Clone()
     {

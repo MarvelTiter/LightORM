@@ -1,7 +1,7 @@
 ﻿namespace LightORM;
 
 [AttributeUsage(AttributeTargets.Property)]
-[Obsolete("use LightORMIgnore instead")]
+[Obsolete("use LightColumnAttribute instead")]
 public class IgnoreAttribute : Attribute
 {
 }

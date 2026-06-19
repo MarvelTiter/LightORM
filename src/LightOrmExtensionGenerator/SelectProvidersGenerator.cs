@@ -37,7 +37,7 @@ namespace LightOrmExtensionGenerator
                         public IExpSelect<{{argsStr}}, {{tempType}}> WithTempQuery<{{tempType}}>({{tempPara}})
                         {
                             this.HandleTempQuery({{tempUsed}});
-                            return new SelectProvider{{i + count}}<{{argsStr}}, {{tempType}}>(Executor, SqlBuilder);
+                            return new SelectProvider{{i + count}}<{{argsStr}}, {{tempType}}>(DbContext, SqlBuilder);
                         }
                     """;
             }
@@ -52,65 +52,65 @@ namespace LightOrmExtensionGenerator
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.InnerJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.LeftJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.RightJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<{{argsStr}}, TJoin, bool>> exp)
                     {
                         this.JoinHandle<TJoin>(exp, TableLinkType.OuterJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
                         this.JoinHandle<TJoin>(where, TableLinkType.InnerJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
                         this.JoinHandle<TJoin>(where, TableLinkType.LeftJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
                         this.JoinHandle<TJoin>(where, TableLinkType.RightJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<{{argsStr}}, TJoin, bool>> where)
                     {
                         this.JoinHandle<TJoin>(where, TableLinkType.OuterJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                 """ : "";
 
@@ -120,76 +120,76 @@ namespace LightOrmExtensionGenerator
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(string tableName, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> exp)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(exp)!;
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, overriddenTableName: tableName);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     
                     public IExpSelect<{{argsStr}}, TJoin> InnerJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.InnerJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                 
                     public IExpSelect<{{argsStr}}, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.LeftJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.RightJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                     public IExpSelect<{{argsStr}}, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<{{argsStr}}, TJoin>, bool>> where)
                     {
                         var flatExp = FlatTypeSet.Default.Flat(where);
                         this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, subQuery);
-                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(Executor, SqlBuilder);
+                        return new SelectProvider{{count + 1}}<{{argsStr}}, TJoin>(DbContext, SqlBuilder);
                     }
                 """ : "";
 
@@ -199,10 +199,14 @@ namespace LightOrmExtensionGenerator
 
             var code = $$"""
 
-internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IExpSelect<{{argsStr}}>, T1>, IExpSelect<{{argsStr}}>
+internal sealed class SelectProvider{{count}}<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+{{argsStr}}> : SelectProvider0<IExpSelect<{{argsStr}}>, T1>, IExpSelect<{{argsStr}}>
 {
-    public SelectProvider{{count}}(ISqlExecutor executor, SelectBuilder? builder = null) 
-        : base(executor, builder)
+    public SelectProvider{{count}}(IContext dbContext, SelectBuilder? builder = null) 
+        : base(dbContext, builder)
     {
         if (builder == null)
         {
@@ -236,46 +240,74 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
 
 {{join}}
         
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<{{argsStr}}, object>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp)
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
+    public IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<{{argsStr}}, TTable>> exp)
     {
         this.HandleResult(exp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(DbContext, SqlBuilder);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<{{argsStr}}, TTemp>> exp)
     {
@@ -323,53 +355,81 @@ internal sealed class SelectProvider{{count}}<{{argsStr}}> : SelectProvider0<IEx
         return this;
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
+    public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToList<TReturn>();
     }
 
-    public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-     public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
 
-    public IExpSelect<TTable> AsTable<TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
+    public IExpSelect<TTable> AsTable<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TTable>(Expression<Func<TypeSet<{{argsStr}}>, TTable>> exp)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp);
         this.HandleResult(flatExp, null);
-        return new SelectProvider1<TTable>(Executor, SqlBuilder);
+        return new SelectProvider1<TTable>(DbContext, SqlBuilder);
     }
     public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<TypeSet<{{argsStr}}>, TTemp>> exp)
     {

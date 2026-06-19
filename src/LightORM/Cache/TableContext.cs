@@ -1,18 +1,15 @@
 ﻿using LightORM.Extension;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-
+using System;
+using System.Runtime.CompilerServices;
 namespace LightORM.Cache;
 
-internal class AbstractTableType
+internal class AbstractTableType(Type type)
 {
-    public AbstractTableType(Type type)
-    {
-        Type = type;
-    }
-
-    public Type Type { get; }
+    public Type Type { get; } = type;
 }
 internal static partial class TableContext
 {
@@ -26,6 +23,7 @@ internal static partial class TableContext
     {
         return GetTableInfo(typeof(T));
     }
+
     public static void SetValue(ITableColumnInfo col, object target, object? value)
     {
         var type = col.TableType;
@@ -54,6 +52,7 @@ internal static partial class TableContext
             reflectAction.Invoke(target, value);
         }
     }
+
     public static object? GetValue(ITableColumnInfo col, object target)
     {
         var type = col.TableType;
@@ -83,15 +82,6 @@ internal static partial class TableContext
         }
     }
 
-    //public static ITableEntityInfo<T> GetGenericTableInfo<T>()
-    //{
-    //    if (StaticContext is null)
-    //    {
-    //        throw new LightOrmException("未设置TableContext");
-    //    }
-    //    var table = StaticContext.GetTableInfo(typeof(T)) as ITableEntityInfo<T>;
-    //    return table ?? throw new LightOrmException("获取泛型ITableEntityInfo失败");
-    //}
 
     public static ITableEntityInfo GetTableInfo(Type type)
     {
@@ -107,7 +97,17 @@ internal static partial class TableContext
             }
             catch { }
         }
-        var cacheKey = $"DbTable_{type.GUID}";
+        return GetTableInfoViaReflection(type);
+    }
+
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "匿名类型的反射在 AOT 中安全，具名类型通过源生成器或运行时检测处理")]
+    [UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "匿名类型的反射在 AOT 中安全")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "匿名类型的反射在 AOT 中安全")]
+#endif
+    private static ITableEntityInfo GetTableInfoViaReflection(Type type)
+    {
+        EnsureReflectionAccess(type);
 
         var realType = type.GetRealType(out _);
 
@@ -115,20 +115,11 @@ internal static partial class TableContext
         {
             realType = abstractTypeRels.GetOrAdd(type, static t =>
             {
-                var rt = reflectTables.Values.Where(x => t.IsAssignableFrom(x.Type)).FirstOrDefault()?.Type;
-                if (rt is null)
-                {
-                    throw new LightOrmException("无法解析的表");
-                }
+                var rt = (reflectTables.Values.FirstOrDefault(x => t.IsAssignableFrom(x.Type))?.Type) ?? throw new LightOrmException("无法解析的表");
                 return new AbstractTableType(rt);
             }).Type;
-            return GetTableInfo(realType);
+            return GetTableInfoViaReflection(realType);
         }
-
-        //if (realType.HasAttribute<LightFlatAttribute>())
-        //{
-
-        //}
 
         var entityInfoCache = reflectTables.GetOrAdd(type, static type =>
         {
@@ -155,13 +146,16 @@ internal static partial class TableContext
 
             var propertyColumnInfos = propertyInfos.SelectMany(ScanProperty);
             entityInfo.Columns = [.. propertyColumnInfos];
-           
+
             return entityInfo;
         });
         // 拷贝
-        return entityInfoCache with { };
+        return entityInfoCache;
     }
 
+#if NET8_0_OR_GREATER
+    [RequiresUnreferencedCode("反射创建ColumnInfo不支持AOT，考虑使用LightOrmTableContextGenerator.TableContextGenerator生成器")]
+#endif
     private static IEnumerable<ITableColumnInfo> ScanProperty(PropertyInfo prop)
     {
         if (prop.HasAttribute<LightFlatAttribute>())

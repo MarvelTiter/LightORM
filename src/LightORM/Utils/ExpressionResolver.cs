@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -125,7 +126,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public Expression[]? NavigateWhereExpression { get; set; }
     public string? MemberOfNavigateMember { get; set; }
     private ISqlMethodResolver MethodResolver => Context.Database.MethodResolver;
-    private IDatabaseAdapter Database => Context.Database;
+    public IDatabaseAdapter Database => Context.Database;
     public Expression? Body => bodyExpression;
     // TODO: 嵌套情况，需要优化
     public BinaryExpression? CurrentBinary => stackBinaryExpressions.Count > 0 ? stackBinaryExpressions.Peek() : null;
@@ -380,7 +381,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             var table = Context.GetTable(exp);
             foreach (var item in table.TableEntityInfo.Columns)
             {
-                var prop = Expression.Property(exp, item.PropertyName);
+                var prop = SafeCreateProperty(exp, item.PropertyName);
                 Visit(prop);
                 Sql.Append(", ");
             }
@@ -408,6 +409,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
 
         return null;
+
+#if NET8_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "AOT模式下，ITableColumnInfo由生成器生成，AOT 静态分析可跟踪")]
+#endif
+        static MemberExpression SafeCreateProperty(Expression expression, string propertyName)
+        {
+            return Expression.Property(expression, propertyName);
+        }
     }
 
     Expression? VisitMemberInit(MemberInitExpression exp)
@@ -494,12 +503,12 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             }
             if (Members.Count > 0)
             {
-                if (Members.Count > 1)
-                {
-                    throw new LightOrmException("聚合属性只能嵌套1层");
-                }
                 if (col.IsAggregated)
                 {
+                    if (Members.Count > 1)
+                    {
+                        throw new LightOrmException("聚合属性只能嵌套1层");
+                    }
                     name = Members.Pop().Member.Name;
                     col = table.GetColumnInfo(name);
                 }
@@ -576,7 +585,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     DbParameters.Add(new(bn, v, ExpValueType.Boolean));
                 }
             }
-            
+
             else
             {
                 DbParameters.Add(new(bn, v, ExpValueType.Other));

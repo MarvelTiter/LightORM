@@ -53,7 +53,7 @@ public class JsonTest : TestBase
     [TestMethod]
     public async Task CreateTable()
     {
-        await Db.CreateMainDbScoped().CreateTableAsync<JsonTestModel>();
+        await Db.CreateMainDbScoped().CreateTableAsync<JsonTestModel>(cancellationToken: TestContext.CancellationToken);
     }
 
     [TestMethod]
@@ -61,7 +61,7 @@ public class JsonTest : TestBase
     {
         await PrepareJsonDataAsync(Db, async () =>
         {
-            var model = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync();
+            var model = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(TestContext.CancellationToken);
             Assert.HasCount(1, model);
             Assert.IsNotNull(model[0].Json);
             Assert.AreEqual("World2", model[0].Json!.Name);
@@ -70,7 +70,7 @@ public class JsonTest : TestBase
             {
                 j.Id,
                 j.Json,
-            });
+            }, TestContext.CancellationToken);
             Assert.HasCount(1, list);
             Assert.IsNotNull(list[0].Json);
             Assert.AreEqual("World2", list[0].Json!.Name);
@@ -79,20 +79,20 @@ public class JsonTest : TestBase
             {
                 Id = j.Id,
                 Json = j.Json,
-            });
+            }, TestContext.CancellationToken);
             Assert.HasCount(1, dto);
             Assert.IsNotNull(dto[0].Json);
             Assert.AreEqual("World2", dto[0].Json!.Name);
 
-            var jsonObject = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["City"]!["Name"]!.GetValue<string>() == "Dongguan3").FirstAsync();
+            var jsonObject = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["City"]!["Name"]!.GetValue<string>() == "Dongguan3").FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(jsonObject);
             Assert.AreEqual(21, jsonObject.JsonObject["Age"]!.GetValue<int>());
 
-            var jsonObjectArr = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["Values"]![1]!.GetValue<int>() == 8).FirstAsync();
+            var jsonObjectArr = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["Values"]![1]!.GetValue<int>() == 8).FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(jsonObjectArr);
             Assert.AreEqual(22, jsonObjectArr.JsonObject["Age"]!.GetValue<int>());
 
-            var nestJsonName = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name);
+            var nestJsonName = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
 
             Assert.HasCount(1, nestJsonName);
             Assert.AreEqual("Nest Object5", nestJsonName[0]);
@@ -106,20 +106,22 @@ public class JsonTest : TestBase
         await PrepareJsonDataAsync(Db, async () =>
         {
             await Db.Update<JsonTestModel>().Set(j => SqlFn.JsonSet(j.JsonObject, "$.City.Name", "NewName"))
-            .Where(j => j.Id == 1).ExecuteAsync();
+            .Where(j => j.Id == 1).ExecuteAsync(TestContext.CancellationToken);
 
-            var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync();
+            var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync(TestContext.CancellationToken);
             Assert.IsNotNull(updated);
             Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
 
             await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, "NewName")
-            .Where(j => j.Id == 5).ExecuteAsync();
+            .Where(j => j.Id == 5).ExecuteAsync(TestContext.CancellationToken);
 
-            var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name);
+            var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
 
             Assert.HasCount(1, nestJsonNameNew);
             Assert.AreEqual("NewName", nestJsonNameNew[0]);
 
         });
     }
+
+    public TestContext TestContext { get; set; }
 }

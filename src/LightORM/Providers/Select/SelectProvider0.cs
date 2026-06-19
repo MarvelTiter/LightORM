@@ -1,24 +1,31 @@
 ﻿
 
 using LightORM.Implements;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 
 namespace LightORM.Providers.Select;
 
-internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
+internal class SelectProvider0<TSelect,
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
     public SelectBuilder SqlBuilder { get; set; } = default!;
-    public ISqlExecutor Executor { get; }
+    public ISqlExecutor Executor => DbContext.Ado;
     public DbBaseType DbType => Executor.Database.DbBaseType;
     public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
     public bool IsSubQuery { get; set; }
+    public IContext DbContext { get; }
+
     protected ExpressionInfo? SelectExpression;
-    public SelectProvider0(ISqlExecutor executor, SelectBuilder? builder = null)
+    public SelectProvider0(IContext dbContext, SelectBuilder? builder = null)
     {
-        Executor = executor;
         if (builder != null)
             SqlBuilder = builder;
+        DbContext = dbContext;
     }
     public IExpTemp<T1> AsTemp(string name)
     {
@@ -54,30 +61,36 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         return (this as TSelect)!;
     }
 
-    public TSelect WithParameters<TParameter>(TParameter parameters)
-    {
-        //if (parameters is not null)
-        //{
-        //    if (parameters is not IDictionary<string, object> dic)
-        //    {
-        //        var reader = DbParameterReader.CreateReadToDictionary("", typeof(TParameter));
-        //        dic = reader.Invoke(parameters);
-        //    }
-        //    SqlBuilder.DbParameters.TryAddDictionary(dic);
-        //}
 
+
+    #endregion
+
+    #region original sql
+
+    public TSelect WithParameters<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(TParameter parameters)
+    {
         SqlBuilder.TryAddParameters(Database.Prefix, "", parameters);
         return (this as TSelect)!;
     }
-
-    public TSelect Where(string sql, object? parameters = default!)
+    public TSelect Where<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.Where.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-
-    public TSelect WhereIf(bool condition, string sql, object? parameters = default!)
+    public TSelect WhereIf<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(bool condition, string sql, TParameter parameters)
     {
         if (condition)
         {
@@ -85,23 +98,65 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         return (this as TSelect)!;
     }
-    public TSelect GroupBy(string sql, object? parameters = default!)
+    public TSelect GroupBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.GroupBy.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect Having(string sql, object? parameters = default!)
+    public TSelect Having<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         //SqlBuilder
         SqlBuilder.Having.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
-    public TSelect OrderBy(string sql, object? parameters = default!)
+    public TSelect OrderBy<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TParameter>(string sql, TParameter parameters)
     {
         SqlBuilder.OrderBy.Add(sql);
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
+        return (this as TSelect)!;
+    }
+
+    public TSelect Where(string sql)
+    {
+        SqlBuilder.Where.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect WhereIf(bool condition, string sql)
+    {
+        if (condition)
+        {
+            return Where(sql);
+        }
+        return (this as TSelect)!;
+    }
+    public TSelect GroupBy(string sql)
+    {
+        SqlBuilder.GroupBy.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect Having(string sql)
+    {
+        //SqlBuilder
+        SqlBuilder.Having.Add(sql);
+        return (this as TSelect)!;
+    }
+    public TSelect OrderBy(string sql)
+    {
+        SqlBuilder.OrderBy.Add(sql);
         return (this as TSelect)!;
     }
 
@@ -148,37 +203,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public TMember? Max<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.InternalSingle<TMember>();
+        return this.ExecuteScalar<TMember>();
     }
 
     public TMember? Min<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.InternalSingle<TMember>();
+        return this.ExecuteScalar<TMember>();
     }
 
     public double Sum<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.InternalSingle<double>();
+        return this.ExecuteScalar<double>();
     }
 
     public int Count<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.InternalSingle<int>();
+        return this.ExecuteScalar<int>();
     }
 
     public int Count()
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.InternalSingle<int>();
+        return this.ExecuteScalar<int>();
     }
 
     public double Avg<TMember>(Expression<Func<T1, TMember>> exp)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.InternalSingle<double>();
+        return this.ExecuteScalar<double>();
     }
 
     public virtual T1? First()
@@ -190,7 +245,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QuerySingle<T1>(sql, parameters);
+        return Executor.Execute(sql, parameters).Single<T1>();
     }
 
     public virtual IEnumerable<T1> ToList()
@@ -202,7 +257,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.Query<T1>(sql, parameters);
+        return Executor.Execute(sql, parameters).ToList<T1>();
     }
 
     public DataTable ToDataTable()
@@ -221,7 +276,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QuerySingleAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return await Executor.Execute(sql, parameters).SingleAsync<T1>(cancellationToken);
     }
 
     public virtual async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)
@@ -233,7 +288,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return await Executor.QueryListAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return await Executor.Execute(sql, parameters).ToListAsync<T1>(cancellationToken);
     }
 
     public IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default)
@@ -242,7 +297,7 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
         this.HandleResult(exp, null);
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
-        return Executor.QueryAsync<T1>(sql, parameters, cancellationToken: cancellationToken);
+        return Executor.Execute(sql, parameters).ToAsyncList<T1>(cancellationToken);
     }
 
     public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
@@ -255,37 +310,37 @@ internal class SelectProvider0<TSelect, T1> : IExpSelect0<TSelect, T1> where TSe
     public Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MAX({0})");
-        return this.InternalSingleAsync<TMember>(cancellationToken);
+        return this.ExecuteScalarAsync<TMember>(cancellationToken);
     }
 
     public Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "MIN({0})");
-        return this.InternalSingleAsync<TMember>(cancellationToken);
+        return this.ExecuteScalarAsync<TMember>(cancellationToken);
     }
 
     public Task<double> SumAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "SUM({0})");
-        return this.InternalSingleAsync<double>(cancellationToken);
+        return this.ExecuteScalarAsync<double>(cancellationToken);
     }
 
     public Task<int> CountAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "COUNT({0})");
-        return this.InternalSingleAsync<int>(cancellationToken);
+        return this.ExecuteScalarAsync<int>(cancellationToken);
     }
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         this.HandleResult(null, "COUNT(*)");
-        return this.InternalSingleAsync<int>(cancellationToken);
+        return this.ExecuteScalarAsync<int>(cancellationToken);
     }
 
     public Task<double> AvgAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, "AVG({0})");
-        return this.InternalSingleAsync<double>(cancellationToken);
+        return this.ExecuteScalarAsync<double>(cancellationToken);
     }
 
     public async Task<bool> AnyAsync(CancellationToken cancellationToken = default)

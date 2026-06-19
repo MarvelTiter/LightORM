@@ -1,9 +1,11 @@
 ﻿using Generators.Shared;
 using Microsoft.CodeAnalysis;
+using System;
 using System.Linq;
 
 namespace LightOrmExtensionGenerator
 {
+
     [Generator(LanguageNames.CSharp)]
     public class SelectExtensionGenerator : GeneratorBase
     {
@@ -21,14 +23,18 @@ namespace LightOrmExtensionGenerator
 
 public static partial class SelectExtensions
 {
-    public static IExpSelect<{{argsStr}}> Select<{{argsStr}}>(this IExpressionContext instance)
+    public static IExpSelect<{{argsStr}}> Select<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    {{argsStr}}>(this IExpressionContext instance)
     {
         var key = GetDbKey({{string.Join(", ", types)}});
         if (key != null)
         {
-            return new SelectProvider{{count}}<{{argsStr}}>(instance.GetAdo(key));
+            return new SelectProvider{{count}}<{{argsStr}}>(instance.SwitchDatabase(key));
         }
-        return new SelectProvider{{count}}<{{argsStr}}>(instance.Ado);
+        return new SelectProvider{{count}}<{{argsStr}}>(instance);
     }
     /// <summary>
     /// 条件Where

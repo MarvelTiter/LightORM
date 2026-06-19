@@ -1,19 +1,21 @@
 ﻿using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace LightORM.Providers
 {
     internal class GroupSelectProvider<TGroup, TTables> : IExpSelectGroup<TGroup, TTables>
     {
+        public IContext DbContext { get;  }
         public SelectBuilder SqlBuilder { get; }
         public LambdaExpression KeySelector { get; }
-        public ISqlExecutor Executor { get; }
+        public ISqlExecutor Executor => DbContext.Ado;
         public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
         public bool IsSubQuery { get; set; }
 
-        public GroupSelectProvider(ISqlExecutor executor, SelectBuilder builder, LambdaExpression keySelector)
+        public GroupSelectProvider(IContext dbContext, SelectBuilder builder, LambdaExpression keySelector)
         {
-            Executor = executor;
+            DbContext = dbContext;
             SqlBuilder = builder;
             KeySelector = keySelector;
         }
@@ -63,19 +65,16 @@ namespace LightORM.Providers
             return this;
         }
 
-        public IExpSelect<TTemp> AsTable<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
+        public IExpSelect<TTemp> AsTable<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
-            return new SelectProvider1<TTemp>(Executor, SqlBuilder);
+            return new SelectProvider1<TTemp>(DbContext, SqlBuilder);
         }
-
-        //public IExpSelect<TTemp> AsSubQuery<TTemp>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp, string? alias = null)
-        //{
-        //    var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
-        //    this.HandleResult(flatExp, null);
-        //    return this.HandleSubQuery<TTemp>(alias);
-        //}
 
         public IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp)
         {
@@ -84,28 +83,44 @@ namespace LightORM.Providers
             return new TempProvider<TTemp>(name, SqlBuilder);
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
+        public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
             return this.InternalToList<TReturn>();
         }
 
-        public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
+        public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
             return this.InternalToListAsync<TReturn>();
         }
 
-        public IEnumerable<TReturn> ToList<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        public IEnumerable<TReturn> ToList<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
             return this.InternalToList<TReturn>();
         }
 
-        public Task<IList<TReturn>> ToListAsync<TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        public Task<IList<TReturn>> ToListAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);

@@ -1,8 +1,11 @@
 ﻿using LightORM.Extension;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace LightORM.Builder;
-
+//#if NET8_0_OR_GREATER
+//[System.Diagnostics.CodeAnalysis.RequiresDynamicCode("[Delete]语句使用了导航属性，需要动态构建表达式，AOT可能存在问题")]
+//#endif
 internal record DeleteBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
@@ -13,6 +16,9 @@ internal record DeleteBuilder<T> : SqlBuilder
     public bool Truncate { get; set; }
     HashSet<string> Members { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "根据已知类型构建导航条件")]
+#endif
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
         if (expInfo.ResolveOptions.SqlType == SqlPartial.Where)

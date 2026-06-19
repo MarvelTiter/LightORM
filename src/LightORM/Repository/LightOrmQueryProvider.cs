@@ -1,8 +1,12 @@
 ﻿using LightORM.Extension;
 using LightORM.Utils.Vistors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Repository;
-
+#if NET8_0_OR_GREATER
+[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "LightOrmQueryProvider的Join操作存在Expression.Lambda操作，AOT有风险")]
+[UnconditionalSuppressMessage("AOT", "IL2091", Justification = "LightOrmQueryProvider的Execute<T>AOT有风险")]
+#endif
 internal class LightOrmQueryProvider : IQueryProvider
 {
     private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();
@@ -149,7 +153,7 @@ internal class LightOrmQueryProvider : IQueryProvider
     public TResult Execute<TResult>(Expression expression)
     {
         var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
-        var def = ado.Query<TResult>(sql, select.DbParameters).FirstOrDefault();
+        var def = ado.Execute(sql, select.DbParameters).ToList<TResult>().FirstOrDefault();
         if (def == null && expression is MethodCallExpression method && method.Arguments.Count > 1)
         {
             var defaultValue = method.Arguments[1] as UnaryExpression;
