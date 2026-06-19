@@ -1,5 +1,10 @@
 ﻿namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpInclude<T1, TMember> : IExpSelect<T1>
+public interface IExpInclude
+{
+    internal int Deep { get; }
+}
+
+public interface IExpInclude<T1, TMember> : IExpSelect<T1> , IExpInclude
 {
 }

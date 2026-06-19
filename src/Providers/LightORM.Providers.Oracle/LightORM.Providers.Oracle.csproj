@@ -20,15 +20,8 @@
 		</None>
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
-		<PackageReference Include="MT.LightORM" Version="*" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
-		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
-	</ItemGroup>
-
 	<ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.100" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.200" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">

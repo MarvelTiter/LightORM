@@ -12,7 +12,15 @@ namespace LightORM.Providers
     {
         public IncludeProvider(IContext dbContext, SelectBuilder builder) : base(dbContext, builder)
         {
+
         }
+
+        public IncludeProvider(IContext dbContext, SelectBuilder builder, int thenDeep) : base(dbContext, builder)
+        {
+            Deep = thenDeep;
+        }
+
+        public int Deep { get; }
 
         public override T1? First()
         {

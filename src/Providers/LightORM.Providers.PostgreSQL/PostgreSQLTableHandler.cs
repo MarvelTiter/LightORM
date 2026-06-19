@@ -74,10 +74,10 @@ public sealed class PostgreSQLTableHandler(TableOptions tableOptions)
             type = "";
             return false;
         }
-        var d = dbType.ToLower().Trim();
+        var d = dbType!.ToLower().Trim();
         var isNullable = nullable?.ToUpper() == "YES";
 
-        switch (dbType)
+        switch (d)
         {
             case "integer":
                 type = isNullable ? "int?" : "int";

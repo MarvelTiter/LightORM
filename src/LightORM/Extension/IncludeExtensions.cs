@@ -11,16 +11,13 @@ public static class IncludeExtensions
 #endif
     T1, TElement, TMember>(this IExpInclude<T1, IEnumerable<TElement>> include, Expression<Func<TElement, TMember>> exp)
     {
-        //var option = SqlResolveOptions.Select;
-        //var result = exp.Resolve(option, ResolveContext.Create(Executor.Database.DbBaseType));
-        var p = (IncludeProvider<T1, TElement>)include;
         string? includePropertyName = null;
         Expression? includeWhereExpression = null;
-        if (exp is MemberExpression m)
+        if (exp.Body is MemberExpression m)
         {
             includePropertyName = m.Member.Name;
         }
-        else if (exp is MethodCallExpression mc)
+        else if (exp.Body is MethodCallExpression mc)
         {
             var member = mc.Arguments[0] as MemberExpression;
             includePropertyName = member?.Member.Name;
@@ -34,7 +31,7 @@ public static class IncludeExtensions
             throw new LightOrmException("解析导航属性失败");
         }
 
-        var last = include.SqlBuilder.Includes.Last();
+        var last = FindIncludeInfo(include.SqlBuilder, include.Deep);
         var lastIncludeTable = TableContext.GetTableInfo(last.NavigateInfo!.NavigateType);
         
         var navCol = lastIncludeTable.GetColumn(includePropertyName!)!;
@@ -50,7 +47,19 @@ public static class IncludeExtensions
             IncludeWhereExpression = includeWhereExpression
         };
         last.ThenIncludes.Add(includeInfo);
-        return new IncludeProvider<T1, TMember>(include.DbContext, include.SqlBuilder);
+        return new IncludeProvider<T1, TMember>(include.DbContext, include.SqlBuilder, include.Deep + 1);
+
+        static IncludeInfo FindIncludeInfo(SelectBuilder builder, int deep)
+        {
+            var last = builder.Includes.Last();
+            while(deep > 0 && last.ThenIncludes.Count > 0)
+            {
+                last = last.ThenIncludes.Last();
+                deep--;
+            }
+            return last;
+        }
+
     }
 
     public static IExpInclude<T1, TMember> ThenInclude<

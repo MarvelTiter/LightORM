@@ -19,17 +19,11 @@
 		</None>
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
-		<PackageReference Include="MT.LightORM" Version="*" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
-		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
-	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' != 'net462'">
 		<PackageReference Include="Kdbndp_V9" Version="8.0.3.424" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-		<PackageReference Include="Kdbndp_V9" Version="4.5.2.427" />
+		<PackageReference Include="Kdbndp_V9" Version="8.0.3.609" />
 	</ItemGroup>
 </Project>

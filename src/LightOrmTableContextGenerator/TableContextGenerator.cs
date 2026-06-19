@@ -341,16 +341,16 @@ public partial class TableContextGenerator : IIncrementalGenerator
             var elementType = p.Type.GetElementType();
             if (nav.ConstructorArguments.Length == 2)
             {
-                var mn = nav.ConstructorArguments[0].Value.ToString();
-                var sn = nav.ConstructorArguments[1].Value.ToString();
+                var mn = nav.ConstructorArguments[0].Value!.ToString();
+                var sn = nav.ConstructorArguments[1].Value!.ToString();
                 // navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), null, \"{mn}\", \"{sn}\", {multi})";
                 navInfo = new(elementType, mn, sn, ismulti);
             }
             else if (nav.ConstructorArguments.Length == 3)
             {
                 var mpt = (INamedTypeSymbol)nav.ConstructorArguments[0].Value!;
-                var mn = nav.ConstructorArguments[1].Value.ToString();
-                var sn = nav.ConstructorArguments[2].Value.ToString();
+                var mn = nav.ConstructorArguments[1].Value!.ToString();
+                var sn = nav.ConstructorArguments[2].Value!.ToString();
                 // navInfo = $"new global::LightORM.Models.NavigateInfo(typeof({elementType.ToDisplayString()}), typeof({mpt.ToDisplayString()}), \"{mn}\", \"{sn}\", {multi})";
                 navInfo = new(elementType, mn, sn, ismulti, mpt);
             }
@@ -410,7 +410,7 @@ public partial class TableContextGenerator : IIncrementalGenerator
             {
                 if (isString)
                 {
-                    if (raw) return val.ToString();
+                    if (raw) return val!.ToString();
                     v = $"\"{val}\"";
                 }
                 else
