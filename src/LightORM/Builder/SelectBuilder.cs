@@ -24,13 +24,13 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     //    IncludeContext = new IncludeContext();
     //}
     public static SelectBuilder GetSelectBuilder() => new();//SelectBuilderPool.Rent();
-    public static SelectBuilder GetSelectBuilder(int level)
-    {
-        return new()
-        {
-            Level = level,
-        };
-    }
+    //public static SelectBuilder GetSelectBuilder(int level)
+    //{
+    //    return new()
+    //    {
+    //        Level = level,
+    //    };
+    //}
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public int PageIndex { get; set; }
     public int PageSize { get; set; }
@@ -50,7 +50,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public bool IsDistinct { get; set; }
     public bool IsRollup { get; set; }
     public string SelectValue { get; set; } = "*";
-    public int Level { get; set; }
+    public int Depth { get; set; }
     public List<JoinInfo> Joins { get; set; } = [];
     public List<string> Having { get; set; } = [];
     public SortedSet<IncludeInfo> Includes { get; set; } = [];
@@ -67,7 +67,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
     public void AddTableInfo(TableInfo tableInfo)
     {
-        tableInfo.Deep = Level;
+        //tableInfo.Deep = Level;
         SelectedTables.Add(tableInfo);
     }
 
@@ -81,13 +81,12 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         {
             yield return item.EntityInfo!;
         }
-        //return [.. SelectedTables, .. Joins.Select(j => j.EntityInfo!)];
     }
 
 
     protected override void BeforeResolveExpressions(ResolveContext context)
     {
-        //context.Level = Level;
+        context.Depth = Depth;
         if (IsTemp)
         {
             context.SetParamPrefix(TempName);
@@ -240,6 +239,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     {
         if (SelectedTables.Count == 1)
         {
+            MainTable.Depth = Depth;
             sql.AppendTableName(database, MainTable);
         }
         else
@@ -247,6 +247,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             bool first = true;
             foreach (var table in SelectedTables)
             {
+                table.Depth = Depth;
                 if (!first)
                 {
                     sql.Append(", ");
@@ -263,7 +264,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         //SubQuery?.ResolveExpressions();
         var estimatedSize = EstimateSqlLength();
         StringBuilder sql = new(estimatedSize);
-        Build(sql, database, Level);
+        Build(sql, database, Depth);
         HandleSqlParameters(sql, database);
         sql.Trim();
         var sqlString = sql.ToString();
@@ -274,8 +275,8 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
     public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
+        Depth = currentLevel;
         ResolveExpressions(database);
-
         var ident = new string(' ', 4 * currentLevel);
         if (InsertInfo.HasValue)
         {
@@ -368,7 +369,8 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             else
             {
                 // $"{ident}{item.JoinType.ToLabel()} {GetTableName(database, item.EntityInfo!)} ON {item.Where}"
-                sql.Append(ident).Append(item.JoinType.ToLabel()).Append(' ').AppendTableName(database, item.EntityInfo!).Append(" ON ").AppendLine(item.Where);
+                item.EntityInfo!.Depth = Depth;
+                sql.Append(ident).Append(item.JoinType.ToLabel()).Append(' ').AppendTableName(database, item.EntityInfo).Append(" ON ").AppendLine(item.Where);
             }
         }
 

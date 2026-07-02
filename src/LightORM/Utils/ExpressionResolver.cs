@@ -120,7 +120,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
-    public int Level => Context.Level;
+    public int Level => Context.Depth;
     internal List<string> NavigateMembers { get; set; } = [];
     public Dictionary<string, Expression?>? ExpStores { get; set; }
     public Expression[]? NavigateWhereExpression { get; set; }

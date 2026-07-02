@@ -27,9 +27,10 @@ public class TableInfo
     }
 
     public string TableName => OverriddenTableName ?? TableEntityInfo.TableName;
+
     public string? Schema => TableEntityInfo.Schema;
 
-    public int Deep { get; set; }
+    public int Depth { get; set; }
 
     /// <summary>
     /// 表类型
@@ -46,7 +47,7 @@ public class TableInfo
     {
         get
         {
-            return $"{alias}{Deep}";
+            return $"{alias}{Depth}";
         }
         set => alias = value;
     }

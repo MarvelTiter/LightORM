@@ -13,7 +13,7 @@ public class ResolveContext
 
     private readonly ResolveContext? parent;
 
-    public int Level { get; set; }
+    public int Depth { get; set; }
     
     public ResolveContext(IDatabaseAdapter database)
     {
@@ -23,7 +23,7 @@ public class ResolveContext
     public ResolveContext(ResolveContext upperContext)
     {
         Database = upperContext.Database;
-        Level = upperContext.Level + 1;
+        Depth = upperContext.Depth + 1;
         parent = upperContext;
     }
 
@@ -46,7 +46,7 @@ public class ResolveContext
             p.Name = pExp.Name;
             lambdaParameterInfos.Add(key, p);
         }
-        p.Deep = Level;
+        p.Depth = Depth;
     }
 
     public TableInfo GetTable(ParameterExpression pExp)

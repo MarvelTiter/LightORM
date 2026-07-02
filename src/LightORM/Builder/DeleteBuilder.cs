@@ -34,7 +34,7 @@ internal class DeleteBuilder<T> : SqlBuilder
                     }
                     var navSqlBuilder = SelectBuilder.GetSelectBuilder();
                     navSqlBuilder.IsSubQuery = true;
-                    navSqlBuilder.Level = 1;
+                    navSqlBuilder.Depth = 1;
                     navSqlBuilder.SelectedTables.Add(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);

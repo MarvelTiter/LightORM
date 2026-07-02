@@ -131,14 +131,14 @@ public static class MethodCallExtensions
         public IExpSelect? Select { get; set; }
     }
 
-    internal static SelectBuilder? CreateSelectBuilder(this MethodCallExpression? methodCall, int deep = 0)
+    internal static SelectBuilder? CreateSelectBuilder(this MethodCallExpression? methodCall)
     {
         if (methodCall is null)
         {
             return null;
         }
 
-        var builder = SelectBuilder.GetSelectBuilder(deep);
+        var builder = SelectBuilder.GetSelectBuilder();
         Stack<MethodCallExpression> chain = new();
         Expression? current = methodCall;
         while (current is MethodCallExpression m)

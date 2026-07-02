@@ -47,7 +47,7 @@ internal static class SelectHandleExtensions
             , string? overriddenTableName = null)
         {
             var expression = new ExpressionInfo(SqlResolveOptions.Join, exp);
-            
+
             select.SqlBuilder.Expressions.Add(expression);
             var joinInfo = new JoinInfo()
             {
@@ -74,6 +74,7 @@ internal static class SelectHandleExtensions
                 JoinType = joinType,
                 EntityInfo = TableInfo.Create(type, select.SqlBuilder.NextTableIndex),
             };
+            //joinInfo.EntityInfo.Deep = select.SqlBuilder.Level;
             select.SqlBuilder.Joins.Add(joinInfo);
         }
 
@@ -91,22 +92,6 @@ internal static class SelectHandleExtensions
             };
             select.SqlBuilder.HandleTempsRecursion(tempQuery.SqlBuilder);
             select.SqlBuilder.Joins.Add(joinInfo);
-        }
-
-        [Obsolete("多余的设计")]
-        internal void JoinHandle(Expression? exp, TableLinkType joinType)
-        {
-            var expression = new ExpressionInfo(SqlResolveOptions.Join, exp, additionalParameter: select.SqlBuilder.Joins.Count + 1);
-
-            select.SqlBuilder.Expressions.Add(expression);
-            var joinInfo = new JoinInfo()
-            {
-                ExpressionId = expression.Id,
-                JoinType = joinType,
-            };
-            select.SqlBuilder.Joins.Add(joinInfo);
-            //SqlBuilder.OtherTables.Add()
-            //return (this as TSelect)!;
         }
 
         internal void HandleResult(Expression? exp, string? template)
@@ -128,7 +113,7 @@ internal static class SelectHandleExtensions
                 table.Alias = alias;
                 throw new LightOrmException("暂不支持自定义表别名");
             }
-            builder.SelectedTables.Add(table);
+            builder.AddTableInfo(table);
             builder.HandleTempsRecursion(select.SqlBuilder);
             builder.SubQuery = select.SqlBuilder;
             return new SelectProvider1<TTemp>(select.DbContext, builder);
@@ -139,7 +124,7 @@ internal static class SelectHandleExtensions
     {
         internal void HandleResult(Expression? exp, string? template)
         {
-            builder.Expressions.Add(new (SqlResolveOptions.Select, exp, template));
+            builder.Expressions.Add(new(SqlResolveOptions.Select, exp, template));
         }
         internal void JoinHandle(Type type, Expression? exp
             , TableLinkType joinType
@@ -153,8 +138,9 @@ internal static class SelectHandleExtensions
             {
                 ExpressionId = expression.Id,
                 JoinType = joinType,
-                EntityInfo = TableInfo.Create(overriddenTableName,type, builder.NextTableIndex),
+                EntityInfo = TableInfo.Create(overriddenTableName, type, builder.NextTableIndex),
             };
+            //joinInfo.EntityInfo.Deep = builder.Level;
             if (subQuery is not null)
             {
                 joinInfo.IsSubQuery = true;
