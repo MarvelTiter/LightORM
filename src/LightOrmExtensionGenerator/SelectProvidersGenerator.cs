@@ -194,7 +194,7 @@ namespace LightOrmExtensionGenerator
                 """ : "";
 
             var selecteds = Enumerable.Range(1, count).Select(i => $"""
-                        SqlBuilder.SelectedTables.Add(TableInfo.Create<T{i}>({i - 1}));
+                        SqlBuilder.AddTableInfo(TableInfo.Create<T{i}>({i - 1}));
             """);
 
             var code = $$"""

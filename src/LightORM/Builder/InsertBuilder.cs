@@ -3,7 +3,7 @@ using System.Text;
 
 namespace LightORM.Builder;
 
-internal record InsertBuilder<T> : SqlBuilder
+internal class InsertBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public T[] TargetObjects { get; set; } = [];

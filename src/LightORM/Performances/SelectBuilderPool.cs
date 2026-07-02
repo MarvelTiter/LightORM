@@ -56,7 +56,7 @@ internal class SelectBuilderPool
         builder.IsDistinct = false;
         builder.IsRollup = false;
         builder.SelectValue = "*";
-        builder.Level = 0;
+        builder.Depth = 0;
         builder.TableIndexFix = 0;
         builder.IsSubQuery = false;
         builder.IsTemp = false;

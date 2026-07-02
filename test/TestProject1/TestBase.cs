@@ -1,12 +1,21 @@
-﻿using LightORM.Providers.Oracle.Extensions;
+﻿using LightORM.Implements;
+using LightORM.Providers.Oracle.Extensions;
 using LightORM.Providers.Sqlite.Extensions;
 using System.Data.SQLite;
-using LightORM.Implements;
+using System.Linq.Expressions;
 
 namespace TestProject1;
 
 public class TestBase
 {
+    protected static void HandleExpressionParameters(ResolveContext context, LambdaExpression lambda)
+    {
+        for (int i = 0; i < lambda.Parameters.Count; i++)
+        {
+            ParameterExpression? item = lambda.Parameters[i];
+            context.HandleParameterExpression(item, i);
+        }
+    }
     public IExpressionContext Db { get; }
     internal ResolveContext ResolveCtx { get; }
     protected ITableContext TableContext { get; } = new TestTableContext();

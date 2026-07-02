@@ -4,6 +4,8 @@ public class TableInfo
 {
     private const string ALIAS = "abcdefghijklmnopqrstuvwyz";
     private int index;
+    private string alias;
+
     public static TableInfo Create<T>() => Create<T>(0);
     public static TableInfo Create<T>(int index) => Create(typeof(T), index);
     public static TableInfo Create(Type type) => Create(type, 0);
@@ -16,7 +18,7 @@ public class TableInfo
     {
         Type = type;
         this.index = index;
-        Alias = ALIAS[index].ToString();
+        alias = ALIAS[index].ToString();
         TableEntityInfo = TableContext.GetTableInfo(type);
     }
     private TableInfo(string? tableName, Type type, int index) : this(type, index)
@@ -25,7 +27,11 @@ public class TableInfo
     }
 
     public string TableName => OverriddenTableName ?? TableEntityInfo.TableName;
+
     public string? Schema => TableEntityInfo.Schema;
+
+    public int Depth { get; set; }
+
     /// <summary>
     /// 表类型
     /// </summary>
@@ -37,7 +43,14 @@ public class TableInfo
     /// <summary>
     /// 解析结果的表别名
     /// </summary>
-    public string Alias { get; set; }
+    public string Alias
+    {
+        get
+        {
+            return $"{alias}{Depth}";
+        }
+        set => alias = value;
+    }
     /// <summary>
     /// 表达式中的参数索引
     /// </summary>

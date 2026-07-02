@@ -6,7 +6,7 @@ namespace LightORM.Builder;
 //#if NET8_0_OR_GREATER
 //[System.Diagnostics.CodeAnalysis.RequiresDynamicCode("[Delete]语句使用了导航属性，需要动态构建表达式，AOT可能存在问题")]
 //#endif
-internal record DeleteBuilder<T> : SqlBuilder
+internal class DeleteBuilder<T> : SqlBuilder
 {
     public new T? TargetObject { get; set; }
     public T[] TargetObjects { get; set; } = [];
@@ -34,7 +34,7 @@ internal record DeleteBuilder<T> : SqlBuilder
                     }
                     var navSqlBuilder = SelectBuilder.GetSelectBuilder();
                     navSqlBuilder.IsSubQuery = true;
-                    navSqlBuilder.Level = 1;
+                    navSqlBuilder.Depth = 1;
                     navSqlBuilder.SelectedTables.Add(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);

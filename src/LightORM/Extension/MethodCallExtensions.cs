@@ -161,7 +161,7 @@ public static class MethodCallExtensions
                                 // context.Select<Role>() 或 context.Select<Role>("table")
                                 var tableType = m.Method.GetGenericArguments()[0];
 
-                                builder.SelectedTables.Add(TableInfo.Create(tableType, 0));
+                                builder.AddTableInfo(TableInfo.Create(tableType, 0));
                                 break;
                             }
                         case > 0:
@@ -173,7 +173,7 @@ public static class MethodCallExtensions
                                     for (var index = 0; index < tableType.Length; index++)
                                     {
                                         var type = tableType[index];
-                                        builder.SelectedTables.Add(TableInfo.Create(type, index));
+                                        builder.AddTableInfo(TableInfo.Create(type, index));
                                     }
                                 }
                                 else if (tableType.Length == 1)
@@ -181,11 +181,11 @@ public static class MethodCallExtensions
                                     // 单个泛型参数，可能存在重写表名参数
                                     if (m.Arguments.Count == 2 && ResolveHelper.TryExtractValue<string>(m.Arguments[1], out var overName))
                                     {
-                                        builder.SelectedTables.Add(TableInfo.Create(overName, tableType[0], 0));
+                                        builder.AddTableInfo(TableInfo.Create(overName, tableType[0], 0));
                                     }
                                     else
                                     {
-                                        builder.SelectedTables.Add(TableInfo.Create(tableType[0], 0));
+                                        builder.AddTableInfo(TableInfo.Create(tableType[0], 0));
                                     }
                                 }
 

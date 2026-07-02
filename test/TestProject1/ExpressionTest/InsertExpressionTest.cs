@@ -10,9 +10,8 @@ public class InsertExpressionTest : TestBase
     public void Insert()
     {
         Expression<Func<User, object>> exp = u => u;
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
-
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Insert, ctx);
         Console.WriteLine(result.SqlString);
     }

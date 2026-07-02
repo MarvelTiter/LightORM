@@ -476,7 +476,7 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
     public ISelectInsert<TInsertTable> Insert<TInsertTable>(Expression<Func<TInsertTable, object>> exp)
     {
         var table = TableContext.GetTableInfo<TInsertTable>();
-        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType, table));
+        var result = exp.Resolve(SqlResolveOptions.Insert, ResolveContext.Create(Executor.Database.DbBaseType));
         HandleSelectInsert(table.TableName, result.SqlString!);
         //var sql = SqlBuilder.ToSqlString();
         SqlBuilder.Expressions.Update(e => e.ResolveOptions == SqlResolveOptions.Select, e =>
