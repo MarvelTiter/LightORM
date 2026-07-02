@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LightORM.Builder;
 //internal readonly struct 
-internal abstract record SqlBuilder : ISqlBuilder
+internal abstract class SqlBuilder : ISqlBuilder
 {
     public static string N { get; } = Environment.NewLine;
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
@@ -84,13 +84,19 @@ internal abstract record SqlBuilder : ISqlBuilder
             }
         }
     }
+
+    public void SetResolveParentContext(ResolveContext parent)
+    {
+        ResolveCtx = new ResolveContext(parent);
+    }
+
     protected void ResolveExpressions(IDatabaseAdapter database)
     {
         if (Expressions.IsCompleted)
         {
             return;
         }
-        ResolveCtx = new ResolveContext(database);
+        ResolveCtx ??= new ResolveContext(database);
         BeforeResolveExpressions(ResolveCtx);
         foreach (var item in Expressions.ExpressionInfos.Values)
         {

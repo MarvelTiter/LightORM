@@ -12,8 +12,8 @@ public class FormatStringTest: TestBase
         var name = "test";
         var seq = 0;
         Expression<Func<User, bool>> exp = u => u.UserName == $"{name}{seq}";
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -22,8 +22,8 @@ public class FormatStringTest: TestBase
     public void InterpolationFormatOption()
     {
         Expression<Func<User, bool>> exp = u => u.UserName == $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Where, ctx);
         Console.WriteLine(result.SqlString);
     }

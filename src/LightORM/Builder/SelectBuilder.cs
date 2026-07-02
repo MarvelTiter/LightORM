@@ -17,13 +17,20 @@ internal struct SelectInsert(string tableName, string columns)
     public string InsertColumns { get; set; } = columns;
 }
 
-internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
+internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 {
     //public SelectBuilder()
     //{
     //    IncludeContext = new IncludeContext();
     //}
     public static SelectBuilder GetSelectBuilder() => new();//SelectBuilderPool.Rent();
+    public static SelectBuilder GetSelectBuilder(int level)
+    {
+        return new()
+        {
+            Level = level,
+        };
+    }
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public int PageIndex { get; set; }
     public int PageSize { get; set; }
@@ -58,6 +65,12 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
     //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
     //}
 
+    public void AddTableInfo(TableInfo tableInfo)
+    {
+        tableInfo.Deep = Level;
+        SelectedTables.Add(tableInfo);
+    }
+
     public override IEnumerable<TableInfo> AllTables()
     {
         foreach (var item in SelectedTables)
@@ -74,7 +87,7 @@ internal record SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
     protected override void BeforeResolveExpressions(ResolveContext context)
     {
-        context.Level = Level;
+        //context.Level = Level;
         if (IsTemp)
         {
             context.SetParamPrefix(TempName);

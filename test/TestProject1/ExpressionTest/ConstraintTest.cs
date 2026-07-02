@@ -14,8 +14,7 @@ public class ConstraintTest : TestBase
     public void ConstraintValue()
     {
         Expression<Func<User, bool>> where = u => u.UserName.Contains("Hello");
-        var t1 = TableContext.GetTableInfo(typeof(User))!;
-        ResolveCtx.AddSelectedTable(t1);
+        HandleExpressionParameters(ResolveCtx, where);
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }
@@ -24,8 +23,7 @@ public class ConstraintTest : TestBase
     {
         var key = "Hello";
         Expression<Func<User, bool>> where = u => u.UserName.Contains(key);
-        var t1 = TableContext.GetTableInfo(typeof(User))!;
-        ResolveCtx.AddSelectedTable(t1);
+        HandleExpressionParameters(ResolveCtx, where);
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }
@@ -34,9 +32,8 @@ public class ConstraintTest : TestBase
     public void ConstraintValues()
     {
         string[] names = ["S1", "S2"];
-        Expression<Func<User, bool>> where = u => u.UserName.In("S1", "S2");
-        var t1 = TableContext.GetTableInfo(typeof(User))!;
-        ResolveCtx.AddSelectedTable(t1);
+        Expression<Func<User, bool>> where = u => u.UserName.In("S1", "S2"); 
+        HandleExpressionParameters(ResolveCtx, where);
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }
@@ -45,8 +42,7 @@ public class ConstraintTest : TestBase
     public void BooleanValueTest()
     {
         Expression<Func<User, bool>> where = u => u.IsLock == true;
-        var t1 = TableContext.GetTableInfo(typeof(User))!;
-        ResolveCtx.AddSelectedTable(t1);
+        HandleExpressionParameters(ResolveCtx, where);
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }
@@ -56,8 +52,7 @@ public class ConstraintTest : TestBase
     {
         var b = "12345".Length > 4;
         Expression<Func<User, bool>> where = u => u.IsLock == b;
-        var t1 = TableContext.GetTableInfo(typeof(User))!;
-        ResolveCtx.AddSelectedTable(t1);
+        HandleExpressionParameters(ResolveCtx, where);
         var result = where.Resolve(SqlResolveOptions.Where, ResolveCtx);
         Console.WriteLine(result.SqlString);
     }

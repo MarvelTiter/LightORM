@@ -71,6 +71,7 @@ namespace LightORM.Implements
             if (builder is not null)
             {
                 //sel.SqlBuilder.Level = resolver.Level + 1;
+                builder.SetResolveParentContext(resolver.Context);
                 builder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
                 //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
@@ -89,6 +90,7 @@ namespace LightORM.Implements
             if (builder is not null)
             {
                 //sel.SqlBuilder.Level = resolver.Level + 1;
+                builder.SetResolveParentContext(resolver.Context);
                 builder.IsSubQuery = true;
                 builder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
@@ -176,6 +178,7 @@ namespace LightORM.Implements
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
                 var builder = methodCall.CreateSelectBuilder()!;
+                builder.SetResolveParentContext(resolver.Context);
                 if (methodCall.Arguments.Count == 0)
                 {
                     builder.HandleResult(null, "COUNT(*)");
@@ -670,6 +673,7 @@ namespace LightORM.Implements
             if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
                 var builder = methodCall.CreateSelectBuilder()!;
+                builder.SetResolveParentContext(resolver.Context);
 
                 //sel.HandleResult(methodCall.Arguments[0], template);
                 action(builder, methodCall.Arguments, template);

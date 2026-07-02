@@ -21,8 +21,8 @@ public class SqlFunTest : TestBase
         {
             RowNum = WinFn.RowNumber().PartitionBy(u.UserName).OrderBy(u.Age).Value()
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -35,8 +35,8 @@ public class SqlFunTest : TestBase
         {
             DateDiff = u.LastLogin - WinFn.Lag(u.LastLogin).PartitionBy(u.UserName).OrderBy(u.Age).Value()
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -48,8 +48,8 @@ public class SqlFunTest : TestBase
         {
             Total = SqlFn.Count(SqlFn.Case<int?>().When(u.Age > 10).Then(u.Age).Else(0).End())
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -61,8 +61,8 @@ public class SqlFunTest : TestBase
         {
             Result = SqlFn.Join(u.Age > 10 ? u.UserName : "").Separator("|").Distinct().OrderBy(u.UserId).Value()
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomOracleAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -74,8 +74,8 @@ public class SqlFunTest : TestBase
         {
             Result = SqlFn.Abs(u.Age)
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomOracleAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -87,8 +87,8 @@ public class SqlFunTest : TestBase
         {
             Result = u.LastLogin.Value.ToString("yyyy-MM-dd")
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomMySqlAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }
@@ -100,8 +100,8 @@ public class SqlFunTest : TestBase
         {
             Result = SqlFn.NullThen(u.Age, 0)
         };
-        var table = TableContext.GetTableInfo(typeof(User))!;
-        var ctx = new ResolveContext(CustomMySqlAdapter.Instance, table);
+        var ctx = new ResolveContext(CustomSqliteAdapter.TestInstance);
+        HandleExpressionParameters(ctx, exp);
         var result = exp.Resolve(SqlResolveOptions.Select, ctx);
         Console.WriteLine(result.SqlString);
     }

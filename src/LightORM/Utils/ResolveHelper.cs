@@ -10,12 +10,12 @@ namespace LightORM.Utils;
 
 public class ResolveHelper
 {
-    public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? _, string name, ref int index)
-    {
-        var p = $"{context?.ParameterPrefix}{name}_{index}";
-        index += 1;
-        return p;
-    }
+    //public static string FormatDbParameterName(ResolveContext? context, SqlResolveOptions? _, string name, ref int index)
+    //{
+    //    var p = $"{context?.ParameterPrefix}{name}_{index}";
+    //    index += 1;
+    //    return p;
+    //}
     // 尝试将表达式求值为常量（仅支持 Constant 和 简单 Member 访问）
     public static T ExtractInstanceValue<T>(Expression expression)
     {

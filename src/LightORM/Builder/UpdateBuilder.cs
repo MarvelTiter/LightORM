@@ -15,7 +15,7 @@ internal record struct VersionInfo
     public object? VersionValue { get; set; }
 }
 
-internal record UpdateBuilder<T> : SqlBuilder
+internal class UpdateBuilder<T> : SqlBuilder
 {
     private static readonly ConcurrentDictionary<string, ITableColumnInfo> columnCaches = [];
 
