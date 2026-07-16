@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,21 +13,34 @@ internal partial class ExpressionBuilder
 {
     private static readonly MethodInfo enumParseMethod = typeof(Enum).GetMethod("Parse", [typeof(Type), typeof(string), typeof(bool)])!;
 
-    private static readonly MethodInfo DataRecord_GetByte = typeof(IDataRecord).GetMethod("GetByte", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt16 = typeof(IDataRecord).GetMethod("GetInt16", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt32 = typeof(IDataRecord).GetMethod("GetInt32", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetInt64 = typeof(IDataRecord).GetMethod("GetInt64", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetFloat = typeof(IDataRecord).GetMethod("GetFloat", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDouble = typeof(IDataRecord).GetMethod("GetDouble", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDecimal = typeof(IDataRecord).GetMethod("GetDecimal", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetBoolean = typeof(IDataRecord).GetMethod("GetBoolean", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetString = typeof(IDataRecord).GetMethod("GetString", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetChar = typeof(IDataRecord).GetMethod("GetChar", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetGuid = typeof(IDataRecord).GetMethod("GetGuid", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetDateTime = typeof(IDataRecord).GetMethod("GetDateTime", [typeof(int)])!;
-
-    private static readonly MethodInfo DataRecord_IsDBNull = typeof(IDataRecord).GetMethod("IsDBNull", [typeof(int)])!;
-    private static readonly MethodInfo DataRecord_GetValue = typeof(IDataRecord).GetMethod("GetValue", [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetByte
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetByte), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetInt16
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetInt16), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetInt32
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetInt32), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetInt64
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetInt64), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetFloat
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetFloat), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetDouble
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetDouble), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetDecimal
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetDecimal), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetBoolean
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetBoolean), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetString
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetString), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetChar
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetChar), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetGuid
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetGuid), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetDateTime
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetDateTime), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_IsDBNull
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull), [typeof(int)])!;
+    private static readonly MethodInfo DataRecord_GetValue
+        = typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetValue), [typeof(int)])!;
 
 
     private static readonly MethodInfo DataRecord_GetUInt16 = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldToUInt16), BindingFlags.Public | BindingFlags.Static)!;
@@ -36,6 +51,15 @@ internal partial class ExpressionBuilder
 
     private static readonly MethodInfo StringDeserializer = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldStringDeserializer), BindingFlags.Public | BindingFlags.Static)!;
     private static readonly MethodInfo BytesDeserializer = typeof(ExpressionBuilder).GetMethod(nameof(RecordFieldBytesDeserializer), BindingFlags.Public | BindingFlags.Static)!;
+
+    //private static readonly ConcurrentDictionary<(string, Type), MethodInfo> convertMethodInfos = [];
+    //private static MethodInfo GetConvertMethod(string methodName, Type type)
+    //{
+    //    return convertMethodInfos.GetOrAdd((methodName, type), k =>
+    //    {
+    //        return typeof(Convert).GetMethod(k.Item1, [k.Item2])!;
+    //    });
+    //}
 
     private static readonly Dictionary<Type, MethodInfo> typeMapMethod = new(37)
     {

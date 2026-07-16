@@ -492,11 +492,12 @@ internal partial class ExpressionBuilder
         }
         else if (TargetType == typeof(string))
         {
-            TargetExpression = Expression.Call(SourceExpression, typeof(Convert).GetMethod("ToString", [SourceType])!);
+            var method = typeof(Convert).GetMethod(nameof(Convert.ToString), [SourceType])!;
+            TargetExpression = Expression.Call(method, SourceExpression);
         }
         else if (TargetType == typeof(bool) || underlying == typeof(bool))
         {
-            MethodInfo ToBooleanMethod = typeof(Convert).GetMethod("ToBoolean", [SourceType])!;
+            MethodInfo ToBooleanMethod = typeof(Convert).GetMethod(nameof(Convert.ToBoolean), [SourceType])!;
             TargetExpression = Expression.Call(ToBooleanMethod, SourceExpression);
         }
         else if (SourceType == typeof(byte[]))

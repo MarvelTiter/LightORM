@@ -219,6 +219,18 @@ public partial class ExecutionTest : TestBase
     }
 
     [TestMethod]
+    public async Task UpdateTest2()
+    {
+        var user = await Db.Select<User>().FirstAsync(TestContext.CancellationToken);
+        await Db.Update<User>()
+            .Set(u => u.Age, 20)
+            .Where(u => u.UserId == user!.UserId)
+            .ExecuteAsync(TestContext.CancellationToken);
+
+
+    }
+
+    [TestMethod]
     public async Task DeleteTest()
     {
         var users = await Db.Select<User>().ToListAsync(TestContext.CancellationToken);
