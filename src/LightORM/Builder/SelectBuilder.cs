@@ -1,6 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Performances;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
 
 namespace LightORM.Builder;
@@ -16,6 +17,8 @@ internal struct SelectInsert(string tableName, string columns)
     public string TableName { get; set; } = tableName;
     public string InsertColumns { get; set; } = columns;
 }
+
+internal readonly record struct TagInfo(string Message, string? FilePath, string? CallMember, int? LineNumber, bool WithCallSite);
 
 internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 {
@@ -60,6 +63,15 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
     public int NextTableIndex => SelectedTables.Count + Joins.Count + TableIndexFix;
+
+    private List<TagInfo>? Tags { get; set; }
+
+    public void AddTag(TagInfo tag)
+    {
+        Tags ??= [];
+        Tags.Add(tag);
+    }
+
     //protected override Lazy<TableInfo[]> GetAllTables()
     //{
     //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
@@ -259,6 +271,41 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         sql.AppendLine();
     }
 
+    private void WriteTags(StringBuilder sql, ref string ident)
+    {
+        if (Tags is not { Count: > 0 })
+        {
+            return;
+        }
+        foreach (var tag in Tags)
+        {
+            if (IsTemp)
+                sql.Append("-- ");
+            else
+                sql.Append(ident).Append("-- ");
+            if (tag.WithCallSite)
+            {
+                var fileName = tag.FilePath != null
+               ? Path.GetFileNameWithoutExtension(tag.FilePath)
+               : "Unknown";
+                sql.Append(fileName)
+                    .Append('.')
+                    .Append(tag.CallMember ?? "Unknown")
+                    .Append(':')
+                    .Append(tag.LineNumber?.ToString() ?? "?")
+                    .Append(" - ")
+                    .Append(tag.Message);
+            }
+            else
+            {
+                sql.Append(tag.Message);
+            }
+            sql.AppendLine();
+        }
+        // 注释和sql隔开一行
+        //sql.AppendLine();
+    }
+
     public override string ToSqlString(IDatabaseAdapter database)
     {
         //SubQuery?.ResolveExpressions();
@@ -278,6 +325,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         Depth = currentLevel;
         ResolveExpressions(database);
         var ident = new string(' ', 4 * currentLevel);
+        WriteTags(sql, ref ident);
         if (InsertInfo.HasValue)
         {
             //sb.AppendLine($"INSERT INTO {database.AttachEmphasis(InsertInfo.Value.TableName)}");
@@ -292,23 +340,25 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
         if (TempViews.Count > 0)
         {
-            sql.Append("WITH");
+            sql.Append("WITH ");
             foreach (var item in TempViews)
             {
                 //sql.Append(item.ToSqlString(database));
                 //item.Level = Level + 1;
                 item.Build(sql, database, currentLevel + 1);
-                sql.Append(',');
                 DbParameters.TryAddDictionary(item.DbParameters);
             }
-            sql.RemoveLast(1);
+            // 去除最后的换行符+逗号
+            sql.RemoveLast(N.Length + 1);
+            sql.AppendLine();
+
         }
         if (IsTemp)
         {
             //Level += 1;
             //sb.AppendLine($" {TempName} AS (");
             //$" {TempName} AS (";
-            sql.Append(' ').Append(TempName).Append(' ').AppendLine(" AS (");
+            sql.Append(TempName).Append(' ').AppendLine(" AS (");
         }
 
         //if (GroupBy.Count > 0)
@@ -407,6 +457,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             }
             sql.AppendLine();
         }
+
         if (Take > 0)
         {
             if (Skip < 0) Skip = 0;
@@ -415,7 +466,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
         if (IsTemp)
         {
-            sql.AppendLine(")");
+            sql.AppendLine("),");
         }
 
         // union

@@ -2,6 +2,7 @@
 
 using LightORM.Implements;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -31,6 +32,22 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     {
         return new TempProvider<T1>(name, SqlBuilder);
     }
+
+    #region 日志输出辅助
+
+    public TSelect TagWith(string tag)
+    {
+        SqlBuilder.AddTag(new(tag, null, null, null,false));
+        return (this as TSelect)!;
+    }
+
+    public TSelect TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null)
+    {
+        SqlBuilder.AddTag(new(tag, filePath, callMember, lineNum,true));
+        return (this as TSelect)!;
+    }
+
+    #endregion
 
     #region where
 

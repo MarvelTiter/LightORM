@@ -160,6 +160,7 @@ public partial class SelectSql : TestBase
             // 两种写法都可以
             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
+            .TagWithCallSite("测试导航查询")
             .ToSql();
         Console.WriteLine(sql);
 
@@ -211,6 +212,7 @@ public partial class SelectSql : TestBase
         var tempR = Db.Select<Role>().WithTempQuery(tempU)
             .Where((r, u) => r.RoleId == u.UserId)
             .Where(w => w.Tb2.UserId.StartsWith("ad"))
+            .TagWithCallSite("测试Temp查询")
             .AsTemp("temp", w => new
             {
                 w.Tb1.RoleId,

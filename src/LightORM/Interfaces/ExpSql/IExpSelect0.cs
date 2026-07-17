@@ -1,13 +1,20 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace LightORM;
 
 public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpSelect
 {
+    #region 日志输出辅助
+
+    TSelect TagWith(string tag);
+    TSelect TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null);
+
+    #endregion
+
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
-
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
 
     IEnumerable<T1> ToList();
