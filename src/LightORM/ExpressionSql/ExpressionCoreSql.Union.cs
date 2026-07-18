@@ -22,7 +22,7 @@ partial class ExpressionCoreSql
     {
         var builder = SelectBuilder.GetSelectBuilder();
         builder.HandleTempsRecursion(temp.SqlBuilder);
-        builder.SelectedTables.Add(temp.ResultTable);
+        builder.AddTableInfo(temp.ResultTable);
         return new SelectProvider1<T>(this, builder);
     }
 

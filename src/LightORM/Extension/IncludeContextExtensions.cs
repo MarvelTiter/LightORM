@@ -87,7 +87,7 @@ namespace LightORM.Extension
         {
             SelectBuilder selectSql = SelectBuilder.GetSelectBuilder();
             var selectedType = include.NavigateInfo!.NavigateType;
-            selectSql.SelectedTables.Add(TableInfo.Create(selectedType));
+            selectSql.AddTableInfo(TableInfo.Create(selectedType));
 
             var mainNav = selectSql.MainTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == include.NavigateInfo!.MappingType).First().NavigateInfo!;
             var mainCol = selectSql.MainTable.GetColumnInfo(mainNav.MainName!);
@@ -96,17 +96,15 @@ namespace LightORM.Extension
             {
                 var mapTable = TableInfo.Create(include.NavigateInfo!.MappingType, selectSql.NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(mainNav.SubName!);
-                selectSql.Joins.Add(new JoinInfo
+                selectSql.Joins.Add(new JoinInfo(mapTable)
                 {
-                    EntityInfo = mapTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {selectSql.MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
-                selectSql.Joins.Add(new JoinInfo
+                selectSql.Joins.Add(new JoinInfo(parentTable)
                 {
-                    EntityInfo = parentTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
@@ -115,9 +113,8 @@ namespace LightORM.Extension
             {
                 var subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
-                selectSql.Joins.Add(new JoinInfo
+                selectSql.Joins.Add(new JoinInfo(parentTable)
                 {
-                    EntityInfo = parentTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.MainTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });

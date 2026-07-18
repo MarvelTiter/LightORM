@@ -200,18 +200,16 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 var mapTable = TableInfo.Create(navInfo.MappingType, NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
                 //TryJoin(mapTable);
-                Joins.Add(new JoinInfo
+                Joins.Add(new JoinInfo(mapTable)
                 {
-                    EntityInfo = mapTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
 
                 subCol = mapTable.GetColumnInfo(targetNav.SubName!);
                 targetTable.Index += 1;
-                Joins.Add(new JoinInfo
+                Joins.Add(new JoinInfo(targetTable)
                 {
-                    EntityInfo = targetTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
@@ -220,9 +218,8 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             {
                 var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
                 //TryJoin(targetTable);
-                Joins.Add(new JoinInfo
+                Joins.Add(new JoinInfo(targetTable)
                 {
-                    EntityInfo = targetTable,
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                 });

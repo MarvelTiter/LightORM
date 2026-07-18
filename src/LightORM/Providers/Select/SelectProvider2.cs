@@ -16,8 +16,8 @@ T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
         if (builder == null)
         {
             SqlBuilder = SelectBuilder.GetSelectBuilder();
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(0));
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T2>(1));
+            SqlBuilder.AddTableInfo(TableInfo.Create<T1>(0));
+            SqlBuilder.AddTableInfo(TableInfo.Create<T2>(1));
         }
     }
 

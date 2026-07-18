@@ -37,7 +37,7 @@ internal static class SelectHandleExtensions
                 //select.SqlBuilder.TempViews.Add(item.SqlBuilder);
                 select.SqlBuilder.HandleTempsRecursion(item.SqlBuilder);
                 item.ResultTable.Index = select.SqlBuilder.NextTableIndex;
-                select.SqlBuilder.SelectedTables.Add(item.ResultTable);
+                select.SqlBuilder.AddTableInfo(item.ResultTable);
             }
         }
 
@@ -49,11 +49,11 @@ internal static class SelectHandleExtensions
             var expression = new ExpressionInfo(SqlResolveOptions.Join, exp);
 
             select.SqlBuilder.Expressions.Add(expression);
-            var joinInfo = new JoinInfo()
+            var ei = TableInfo.Create<TJoin>(overriddenTableName, select.SqlBuilder.NextTableIndex);
+            var joinInfo = new JoinInfo(ei)
             {
                 ExpressionId = expression.Id,
                 JoinType = joinType,
-                EntityInfo = TableInfo.Create<TJoin>(overriddenTableName, select.SqlBuilder.NextTableIndex),
             };
             if (subQuery is not null)
             {
@@ -68,11 +68,11 @@ internal static class SelectHandleExtensions
             var expression = new ExpressionInfo(SqlResolveOptions.Join, exp);
 
             select.SqlBuilder.Expressions.Add(expression);
-            var joinInfo = new JoinInfo()
+            var ei = TableInfo.Create(type, select.SqlBuilder.NextTableIndex);
+            var joinInfo = new JoinInfo(ei)
             {
                 ExpressionId = expression.Id,
                 JoinType = joinType,
-                EntityInfo = TableInfo.Create(type, select.SqlBuilder.NextTableIndex),
             };
             //joinInfo.EntityInfo.Deep = select.SqlBuilder.Level;
             select.SqlBuilder.Joins.Add(joinInfo);
@@ -84,11 +84,10 @@ internal static class SelectHandleExtensions
 
             select.SqlBuilder.Expressions.Add(expression);
             tempQuery.ResultTable.Index = select.SqlBuilder.NextTableIndex;
-            var joinInfo = new JoinInfo()
+            var joinInfo = new JoinInfo(tempQuery.ResultTable)
             {
                 ExpressionId = expression.Id,
                 JoinType = joinType,
-                EntityInfo = tempQuery.ResultTable
             };
             select.SqlBuilder.HandleTempsRecursion(tempQuery.SqlBuilder);
             select.SqlBuilder.Joins.Add(joinInfo);
@@ -134,11 +133,11 @@ internal static class SelectHandleExtensions
             var expression = new ExpressionInfo(SqlResolveOptions.Join, exp);
 
             builder.Expressions.Add(expression);
-            var joinInfo = new JoinInfo()
+            var ei = TableInfo.Create(overriddenTableName, type, builder.NextTableIndex);
+            var joinInfo = new JoinInfo(ei)
             {
                 ExpressionId = expression.Id,
                 JoinType = joinType,
-                EntityInfo = TableInfo.Create(overriddenTableName, type, builder.NextTableIndex),
             };
             //joinInfo.EntityInfo.Deep = builder.Level;
             if (subQuery is not null)

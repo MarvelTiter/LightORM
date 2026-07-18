@@ -35,7 +35,7 @@ internal class DeleteBuilder<T> : SqlBuilder
                     var navSqlBuilder = SelectBuilder.GetSelectBuilder();
                     navSqlBuilder.IsSubQuery = true;
                     navSqlBuilder.Depth = 1;
-                    navSqlBuilder.SelectedTables.Add(MainTable);
+                    navSqlBuilder.AddTableInfo(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);
                     var targetType = navInfo.NavigateType;
@@ -49,18 +49,16 @@ internal class DeleteBuilder<T> : SqlBuilder
                         var mapTable = TableInfo.Create(navInfo.MappingType, 1);
                         var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
                         //TryJoin(mapTable);
-                        navSqlBuilder.Joins.Add(new JoinInfo
+                        navSqlBuilder.Joins.Add(new JoinInfo(mapTable)
                         {
-                            EntityInfo = mapTable,
                             JoinType = TableLinkType.InnerJoin,
                             Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
 
                         subCol = mapTable.GetColumnInfo(targetNav.SubName!);
                         targetTable.Index += 1;
-                        navSqlBuilder.Joins.Add(new JoinInfo
+                        navSqlBuilder.Joins.Add(new JoinInfo(targetTable)
                         {
-                            EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
                             Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                         });
@@ -81,9 +79,8 @@ internal class DeleteBuilder<T> : SqlBuilder
                     {
                         var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
                         //TryJoin(targetTable);
-                        navSqlBuilder.Joins.Add(new JoinInfo
+                        navSqlBuilder.Joins.Add(new JoinInfo(targetTable)
                         {
-                            EntityInfo = targetTable,
                             JoinType = TableLinkType.InnerJoin,
                             Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
                         });

@@ -16,7 +16,8 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);
-
+    TSelect Where<TTable>(Expression<Func<TTable, bool>> exp);
+    TSelect WhereIf<TTable>(bool condition, Expression<Func<TTable, bool>> exp);
     IEnumerable<T1> ToList();
     T1? First();
     DataTable ToDataTable();

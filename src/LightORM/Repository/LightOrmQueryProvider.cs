@@ -15,7 +15,7 @@ internal class LightOrmQueryProvider : IQueryProvider
     public LightOrmQueryProvider(ISqlExecutor ado, Type type)
     {
         this.ado = ado;
-        select.SelectedTables.Add(TableInfo.Create(type));
+        select.AddTableInfo(TableInfo.Create(type));
     }
     public IQueryable CreateQuery(Expression expression)
     {
@@ -62,11 +62,11 @@ internal class LightOrmQueryProvider : IQueryProvider
         var joinType = joinCondition.Parameters[1].Type;
         var exp = new ExpressionInfo(SqlResolveOptions.Join, joinCondition);
         select.Expressions.Add(exp);
-        select.Joins.Add(new JoinInfo()
+        var ei = TableInfo.Create(joinType, select.NextTableIndex);
+        select.Joins.Add(new JoinInfo(ei)
         {
             ExpressionId = exp.Id,
             JoinType = TableLinkType.InnerJoin,
-            EntityInfo = TableInfo.Create(joinType, select.NextTableIndex),
         });
         return ReturnOrCreateQuery<TElement>(methodCallExpression, this);
 

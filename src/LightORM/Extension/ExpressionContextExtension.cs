@@ -254,7 +254,7 @@ public static class ExpressionContextExtension
         foreach (var temp in temps)
         {
             sqlbuilder.HandleTempsRecursion(temp.SqlBuilder);
-            sqlbuilder.SelectedTables.Add(temp.ResultTable);
+            sqlbuilder.AddTableInfo(temp.ResultTable);
         }
     }
 }

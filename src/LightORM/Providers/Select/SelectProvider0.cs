@@ -37,13 +37,13 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 
     public TSelect TagWith(string tag)
     {
-        SqlBuilder.AddTag(new(tag, null, null, null,false));
+        SqlBuilder.AddTag(new(tag, null, null, null, false));
         return (this as TSelect)!;
     }
 
     public TSelect TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null)
     {
-        SqlBuilder.AddTag(new(tag, filePath, callMember, lineNum,true));
+        SqlBuilder.AddTag(new(tag, filePath, callMember, lineNum, true));
         return (this as TSelect)!;
     }
 
@@ -67,18 +67,17 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         return (this as TSelect)!;
     }
 
-    public TSelect Where<TAnother>(Expression<Func<TAnother, bool>> exp)
+    public TSelect Where<TTable>(Expression<Func<TTable, bool>> exp)
     {
-        this.WhereHandle(exp);
+        var newExp = WhereLambdaParameterReplace.Default.Replace(exp, SqlBuilder);
+        this.WhereHandle(newExp);
         return (this as TSelect)!;
     }
-    public TSelect WhereIf<TAnother>(bool condition, Expression<Func<TAnother, bool>> exp)
+    public TSelect WhereIf<TTable>(bool condition, Expression<Func<TTable, bool>> exp)
     {
         if (condition) this.WhereHandle(exp);
         return (this as TSelect)!;
     }
-
-
 
     #endregion
 

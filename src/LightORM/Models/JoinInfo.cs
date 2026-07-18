@@ -2,7 +2,10 @@
 
 internal record JoinInfo
 {
-    public JoinInfo() { }
+    public JoinInfo(TableInfo joinTable)
+    {
+        EntityInfo = joinTable;
+    }
     /// <summary>
     /// 联接类型
     /// </summary>
@@ -13,8 +16,8 @@ internal record JoinInfo
     /// </summary>
     public string? Where { get; set; }
     public string? ExpressionId { get; set; }
-    public TableInfo? EntityInfo { get; set; }
+    public TableInfo EntityInfo { get; }
     public bool IsSubQuery { get; set; }
     public SelectBuilder? SubQuery { get; set; }
-    
+
 }

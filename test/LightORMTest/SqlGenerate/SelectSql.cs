@@ -84,6 +84,8 @@ public partial class SelectSql : TestBase
         var temp = Db.Select<User>()
             .InnerJoin<UserRole>((u, ur) => u.UserId == ur.UserId)
             .RightJoin<Role>(w => w.Tb2.RoleId == w.Tb3.RoleId)
+            .Where<Role>(r => r.RoleId.Contains("admin"))
+            .TagWith("子查询关联")
             .AsTable(w => new
             {
                 w.Tb1.UserId,

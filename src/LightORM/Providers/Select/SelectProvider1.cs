@@ -25,7 +25,7 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
         {
             SqlBuilder = SelectBuilder.GetSelectBuilder();
             //SqlBuilder.SelectedTables.Add(TableContext.GetTableInfo<T1>());
-            SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>());
+            SqlBuilder.AddTableInfo(TableInfo.Create<T1>());
         }
     }
 
@@ -33,7 +33,7 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
         : base(dbContext)
     {
         SqlBuilder = SelectBuilder.GetSelectBuilder();
-        SqlBuilder.SelectedTables.Add(TableInfo.Create<T1>(overriddenTableName));
+        SqlBuilder.AddTableInfo(TableInfo.Create<T1>(overriddenTableName));
     }
 
     public IExpSelect<T1> As(string alias)

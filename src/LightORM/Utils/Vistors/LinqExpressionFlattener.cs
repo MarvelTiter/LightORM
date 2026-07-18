@@ -7,7 +7,7 @@ namespace LightORM.Utils.Vistors;
 
 internal class LinqExpressionFlattener : ExpressionVisitor, IResetable
 {
-    private List<ParameterExpression> newParameters = [];
+    private readonly List<ParameterExpression> newParameters = [];
     private ParameterExpression? _transparentParameter;
     public static LinqExpressionFlattener Default => ExpressionVisitorPool<LinqExpressionFlattener>.Rent();
     public void Reset()
