@@ -52,6 +52,18 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 
     #region Result
 
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, T2, TReturn>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -67,6 +79,7 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         TReturn>(Expression<Func<T1, T2, object>> exp);
+
     Task<IList<TReturn>> ToListAsync<
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -117,6 +130,19 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
     IExpSelect<T1, T2, TJoin> LeftJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, T2, TJoin>, bool>> where);
     IExpSelect<T1, T2, TJoin> RightJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, T2, TJoin>, bool>> where);
     IExpSelect<T1, T2, TJoin> OuterJoin<TJoin>(IExpSelect<TJoin> subQuery, Expression<Func<TypeSet<T1, T2, TJoin>, bool>> where);
+
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]

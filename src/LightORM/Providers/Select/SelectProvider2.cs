@@ -122,6 +122,26 @@ T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
 
     #region result
 
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<T1, T2, TReturn>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingle<TReturn>();
+    }
+
+    public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingleAsync<TReturn>(cancellationToken);
+    }
+
     public IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -358,6 +378,28 @@ T1, T2> : SelectProvider0<IExpSelect<T1, T2>, T1>, IExpSelect<T1, T2>
         var flatExp = FlatTypeSet.Default.Flat(where);
         this.JoinHandle<TJoin>(flatExp, TableLinkType.OuterJoin, subQuery);
         return new SelectProvider3<T1, T2, TJoin>(DbContext, SqlBuilder);
+    }
+
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp);
+        this.HandleResult(flatExp, null);
+        return this.InternalSingle<TReturn>();
+    }
+
+    public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp);
+        this.HandleResult(flatExp, null);
+        return this.InternalSingleAsync<TReturn>(cancellationToken);
     }
 
     public IEnumerable<TReturn> ToList<

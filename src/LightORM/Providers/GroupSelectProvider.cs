@@ -1,6 +1,7 @@
 ﻿using LightORM.Utils.Vistors;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Threading;
 
 namespace LightORM.Providers
 {
@@ -83,6 +84,29 @@ namespace LightORM.Providers
             return new TempProvider<TTemp>(name, SqlBuilder);
         }
 
+
+        public TReturn? First<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
+        {
+            var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
+            this.HandleResult(flatExp, null);
+            return this.InternalSingle<TReturn>();
+        }
+
+        public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp, CancellationToken cancellationToken = default)
+        {
+            var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
+            this.HandleResult(flatExp, null);
+            return this.InternalSingleAsync<TReturn>(cancellationToken);
+        }
+
         public IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -98,11 +122,11 @@ namespace LightORM.Providers
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp)
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp, CancellationToken cancellationToken = default)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
-            return this.InternalToListAsync<TReturn>();
+            return this.InternalToListAsync<TReturn>(cancellationToken);
         }
 
         public IEnumerable<TReturn> ToList<
@@ -120,11 +144,11 @@ namespace LightORM.Providers
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
+        TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp, CancellationToken cancellationToken = default)
         {
             var flatExp = FlatGrouping.Default.Flat(exp, KeySelector);
             this.HandleResult(flatExp, null);
-            return this.InternalToListAsync<TReturn>();
+            return this.InternalToListAsync<TReturn>(cancellationToken);
         }
 
         public string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp)
@@ -148,5 +172,6 @@ namespace LightORM.Providers
             }
             return sb.ToString();
         }
+
     }
 }

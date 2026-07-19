@@ -68,6 +68,12 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 
     #region Result
 
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<T1, TReturn>> exp);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -78,6 +84,13 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
     TReturn>(Expression<Func<T1, object>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
+
     Task<IList<TReturn>> ToListAsync<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]

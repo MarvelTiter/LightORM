@@ -239,6 +239,26 @@ internal sealed class SelectProvider{{count}}<
     }
 
 {{join}}
+
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingle<TReturn>();
+    }
+
+    public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingleAsync<TReturn>(cancellationToken);
+    }
         
     public IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
@@ -353,6 +373,28 @@ internal sealed class SelectProvider{{count}}<
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.WhereHandle(flatExp);
         return this;
+    }
+
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp);
+        this.HandleResult(flatExp, null);
+        return this.InternalSingle<TReturn>();
+    }
+
+    public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        var flatExp = FlatTypeSet.Default.Flat(exp);
+        this.HandleResult(flatExp, null);
+        return this.InternalSingleAsync<TReturn>(cancellationToken);
     }
 
     public IEnumerable<TReturn> ToList<

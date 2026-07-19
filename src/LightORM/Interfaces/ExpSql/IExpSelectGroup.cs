@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM.Interfaces.ExpSql;
 
@@ -11,6 +12,19 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
     IExpSelectGroup<TGroup, TTables> Paging(int pageIndex, int pageSize);
     IExpSelectGroup<TGroup, TTables> Skip(int count);
     IExpSelectGroup<TGroup, TTables> Take(int count);
+
+    TReturn? First<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp, CancellationToken cancellationToken = default);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -20,7 +34,7 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp);
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp, CancellationToken cancellationToken = default);
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -30,7 +44,7 @@ public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 #if NET8_0_OR_GREATER
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
+    TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp, CancellationToken cancellationToken = default);
     /// <summary>
     /// 转换为<see cref="IExpSelect{T1}"/>
     /// </summary>

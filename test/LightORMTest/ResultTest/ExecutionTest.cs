@@ -163,9 +163,19 @@ public partial class ExecutionTest : TestBase
     [TestMethod]
     public async Task Select_Single_Column()
     {
-        var avatorData = await Db.Select<User>().Where(u => u.UserId.EndsWith("01")).SelectColumns(u => u.Avator).ExecuteScalarAsync<byte[]>(TestContext.CancellationToken);
+        var avatorData = await Db.Select<User>().TagWith("SelectColumns then ExecuteScalarAsync").Where(u => u.UserId.EndsWith("01")).SelectColumns(u => u.Avator).ExecuteScalarAsync<byte[]>(TestContext.CancellationToken);
         Assert.IsNotNull(avatorData);
         var avaStr = Encoding.UTF8.GetString(avatorData);
+        Assert.AreEqual("test01", avaStr);
+
+        avatorData = await Db.Select<User>().TagWith("SelectColumns then FirstAsync").Where(u => u.UserId.EndsWith("01")).SelectColumns(u => u.Avator).FirstAsync<byte[]>(TestContext.CancellationToken);
+        Assert.IsNotNull(avatorData);
+        avaStr = Encoding.UTF8.GetString(avatorData);
+        Assert.AreEqual("test01", avaStr);
+
+        avatorData = await Db.Select<User>().TagWith("FirstAsync").Where(u => u.UserId.EndsWith("01")).FirstAsync(u => u.Avator, TestContext.CancellationToken);
+        Assert.IsNotNull(avatorData);
+        avaStr = Encoding.UTF8.GetString(avatorData);
         Assert.AreEqual("test01", avaStr);
     }
 

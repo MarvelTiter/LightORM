@@ -85,11 +85,25 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     IExpSelect<{{argsStr}}> Where(Expression<Func<{{argsStr}}, bool>> exp);
     IExpSelect<{{argsStr}}> Where(Expression<Func<TypeSet<{{argsStr}}>, bool>> exp);
 {{join}}
+
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
     TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp);
+
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -152,6 +166,18 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
     IExpSelect<{{argsStr}}> OrderBy<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp);
     IExpSelect<{{argsStr}}> OrderByDesc<TOrder>(Expression<Func<TypeSet<{{argsStr}}>, TOrder>> exp);
     IExpSelectGroup<TGroup, TypeSet<{{argsStr}}>> GroupBy<TGroup>(Expression<Func<TypeSet<{{argsStr}}>, TGroup>> exp);
+
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp);
+
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default);
 
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER

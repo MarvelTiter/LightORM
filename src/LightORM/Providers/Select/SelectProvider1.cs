@@ -252,6 +252,16 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 
     #region Result
 
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(Expression<Func<T1, TReturn>> exp)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingle<TReturn>();
+    }
+
     public IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -280,6 +290,16 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
     {
         this.HandleResult(exp, null);
         return this.InternalToList<TReturn>();
+    }
+
+    public Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
+    {
+        this.HandleResult(exp, null);
+        return this.InternalSingleAsync<TReturn>(cancellationToken);
     }
 
     public Task<IList<TReturn>> ToListAsync<

@@ -29,8 +29,18 @@ namespace LightORM.Implements
                 }
 
                 {
-                    //resolver.ExpStores ??= [];
-                    //resolver.ExpStores.Add(methodName, expression);
+                    if (expression.IsExpSelect())
+                    {
+                        if (expression.Method.ReturnType == typeof(bool))
+                        {
+                            Exits(resolver, expression);
+                        }
+                        else
+                        {
+                            Result(resolver, expression);
+                        }
+                        return;
+                    }
                     if (expression.Object is not null)
                         resolver.Visit(expression.Object);
                     if (expression.Arguments.Count > 0)
@@ -65,17 +75,12 @@ namespace LightORM.Implements
 
         public virtual void Result(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            //var subQuery = methodCall.Arguments[0];
-            //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
             var builder = methodCall.CreateSelectBuilder();
             if (builder is not null)
             {
-                //sel.SqlBuilder.Level = resolver.Level + 1;
                 builder.SetResolveParentContext(resolver.Context);
                 builder.IsSubQuery = true;
                 resolver.Sql.AppendLine("(");
-                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                //resolver.Sql.Append(sql);
                 builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
@@ -83,19 +88,13 @@ namespace LightORM.Implements
 
         public virtual void Exits(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            //var subQuery = methodCall.Arguments[0];
-            //var obj = Expression.Lambda(subQuery).Compile().DynamicInvoke();
-            //var parameters = resolver.Parameters;
             var builder = methodCall.CreateSelectBuilder();
             if (builder is not null)
             {
-                //sel.SqlBuilder.Level = resolver.Level + 1;
                 builder.SetResolveParentContext(resolver.Context);
                 builder.IsSubQuery = true;
                 builder.SelectValue = "1";
                 resolver.Sql.AppendLine(resolver.IsNot ? "NOT EXISTS (" : "EXISTS (");
-                //var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-                //resolver.Sql.Append(sql);
                 builder.Build(resolver.Sql, resolver.Context.Database, resolver.Level + 1);
                 resolver.Sql.Append(')');
             }
@@ -114,26 +113,6 @@ namespace LightORM.Implements
 
         public virtual void Count(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
-            //if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
-            //{
-            //    var sel = methodCall.GetExpSelectObject()!;
-            //    if (methodCall.Arguments.Count == 0)
-            //    {
-            //        sel.HandleResult(null, "COUNT(*)");
-            //    }
-            //    else
-            //    {
-            //        sel.HandleResult(methodCall.Arguments[0], "COUNT({0})");
-            //    }
-
-            //    sel.SqlBuilder.Level = resolver.Level + 1;
-            //    sel.SqlBuilder.IsSubQuery = true;
-            //    resolver.Sql.AppendLine("(");
-            //    var sql = sel.SqlBuilder.ToSqlString(sel.Executor.Database.CustomDatabase);
-            //    resolver.Sql.Append(sql);
-            //    resolver.Sql.Append(')');
-            //    return;
-            //}
             var template = methodCall.Arguments.Count == 0 ? "COUNT(*)" : "COUNT({0})";
             if (HandleSubContext(resolver, methodCall, template, static (sel, args, template) => sel.HandleResult(args.Count == 0 ? null : args[0], template)))
             {
@@ -519,6 +498,11 @@ namespace LightORM.Implements
 
         public virtual void Any(IExpressionResolver resolver, MethodCallExpression methodCall)
         {
+            if (methodCall.IsExpSelect())
+            {
+                Exits(resolver, methodCall);
+                return;
+            }
             if (resolver.NavigateDeep > 0)
             {
                 resolver.Sql.Clear();
@@ -670,7 +654,7 @@ namespace LightORM.Implements
 
         private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<SelectBuilder, ReadOnlyCollection<Expression>, string> action)
         {
-            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
+            if (methodCall.IsExpSelect())
             {
                 var builder = methodCall.CreateSelectBuilder()!;
                 builder.SetResolveParentContext(resolver.Context);

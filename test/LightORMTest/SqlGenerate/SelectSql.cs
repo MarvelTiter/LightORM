@@ -104,12 +104,12 @@ public partial class SelectSql : TestBase
     public void Select_SubSelectAsWhere()
     {
         var sql = Db.Select<User>()
-            .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectColumns(ur => ur.RoleId).Result<int>())
+            .Where(u => u.Age > Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin")).SelectColumns(ur => ur.RoleId).First<int>())
             .ToSql();
         Console.WriteLine(sql);
 
         sql = Db.Select<User>()
-            .Where(u => u.Age > Db.Select<User>().Max(u => u.Age))
+            .Where(u => u.Age > Db.Select<User>().GroupBy(u => u.Age).First(g => g.Group))
             .ToSql();
         Console.WriteLine(sql);
     }
@@ -118,7 +118,7 @@ public partial class SelectSql : TestBase
     [TestMethod]
     public void Select_WhereExits()
     {
-        var sql = Db.Select<User>().Where(u => Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin") && ur.UserId == u.UserId).Exits()).ToSql();
+        var sql = Db.Select<User>().Where(u => Db.Select<UserRole>().Where(ur => ur.RoleId.Contains("admin") && ur.UserId == u.UserId).Any()).ToSql();
         Console.WriteLine(sql);
         //var result = """
         //        SELECT *

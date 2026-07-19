@@ -264,6 +264,21 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         return Executor.Execute(sql, parameters).Single<T1>();
     }
 
+    public TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>()
+    {
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            throw new LightOrmException("未调用SelectColumns设置Select的列，不能推断具体是哪一列为TReturn，或者使用First<TReturn>(Expression<Func<..., TReturn>> exp)重载");
+        }
+        var sql = SqlBuilder.ToSqlString(Database);
+        var parameters = SqlBuilder.DbParameters;
+        return Executor.Execute(sql, parameters).Single<TReturn>();
+    }
+
     public virtual IEnumerable<T1> ToList()
     {
         if (!SqlBuilder.Expressions.IsAlreadySetSelect())
@@ -287,12 +302,26 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     {
         if (!SqlBuilder.Expressions.IsAlreadySetSelect())
         {
-            Expression<Func<T1, T1>> exp = t => t;
-            this.HandleResult(exp, null);
+            throw new LightOrmException("未调用SelectColumns设置Select的列，不能推断具体是哪一列为TReturn");
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
         return await Executor.Execute(sql, parameters).SingleAsync<T1>(cancellationToken);
+    }
+
+    public  async Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+        TReturn>(CancellationToken cancellationToken = default)
+    {
+        if (!SqlBuilder.Expressions.IsAlreadySetSelect())
+        {
+            throw new LightOrmException("未调用SelectColumns设置Select的列，不能推断具体是哪一列为TReturn，或者使用First<TReturn>(Expression<Func<..., TReturn>> exp)重载");
+        }
+        var sql = SqlBuilder.ToSqlString(Database);
+        var parameters = SqlBuilder.DbParameters;
+        return await Executor.Execute(sql, parameters).SingleAsync<TReturn>(cancellationToken);
     }
 
     public virtual async Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default)

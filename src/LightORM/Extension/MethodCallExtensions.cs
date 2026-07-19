@@ -25,6 +25,11 @@ public static class MethodCallExtensions
         return methodCall?.Method?.DeclaringType == typeof(Enumerable);
     }
 
+    internal static bool IsReturnIExpSelect(this MethodCallExpression? methodCall)
+    {
+        return methodCall?.Method?.ReturnType?.Name.StartsWith("IExpSelect") == true;
+    }
+
     [Obsolete("AOT不安全，弃用")]
 #if NET8_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL3050", Justification = "已弃用")]
@@ -141,105 +146,135 @@ public static class MethodCallExtensions
         var builder = SelectBuilder.GetSelectBuilder();
         Stack<MethodCallExpression> chain = new();
         Expression? current = methodCall;
+        Expression? keySelector = null;
         while (current is MethodCallExpression m)
         {
             chain.Push(m);
             current = m.Object ?? m.Arguments.FirstOrDefault();
         }
-
+        // TODO 未处理所有方法调用
         // 从内到外处理
         while (chain.Count > 0)
         {
             var m = chain.Pop();
-            switch (m.Method.Name)
+            if (m.IsReturnIExpSelect())
             {
-                case "Select":
-                    switch (m.Arguments.Count)
+                switch (m.Method.Name)
+                {
+                    case "Select":
+                        switch (m.Arguments.Count)
+                        {
+                            case 0:
+                                {
+                                    // context.Select<Role>() 或 context.Select<Role>("table")
+                                    var tableType = m.Method.GetGenericArguments()[0];
+
+                                    builder.AddTableInfo(TableInfo.Create(tableType, 0));
+                                    break;
+                                }
+                            case > 0:
+                                {
+                                    // 扩展方法，可能有多个泛型参数，也可能有重写表名参数
+                                    var tableType = m.Method.GetGenericArguments();
+                                    if (tableType.Length > 1)
+                                    {
+                                        for (var index = 0; index < tableType.Length; index++)
+                                        {
+                                            var type = tableType[index];
+                                            builder.AddTableInfo(TableInfo.Create(type, index));
+                                        }
+                                    }
+                                    else if (tableType.Length == 1)
+                                    {
+                                        // 单个泛型参数，可能存在重写表名参数
+                                        if (m.Arguments.Count == 2 && ResolveHelper.TryExtractValue<string>(m.Arguments[1], out var overName))
+                                        {
+                                            builder.AddTableInfo(TableInfo.Create(overName, tableType[0], 0));
+                                        }
+                                        else
+                                        {
+                                            builder.AddTableInfo(TableInfo.Create(tableType[0], 0));
+                                        }
+                                    }
+
+                                    break;
+                                }
+                        }
+
+                        break;
+
+                    case "Where":
+                        if (m.Arguments[0].TryGetLambdaExpression(out var wLambda))
+                            builder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, wLambda));
+                        break;
+
+                    case "WhereIf":
+                        if (m.Arguments[0] is ConstantExpression { Value: true }
+                            && m.Arguments[1].TryGetLambdaExpression(out var wifLambda))
+                            builder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, wifLambda));
+                        break;
+
+                    case "InnerJoin":
+                        HandleJoin(builder, m, TableLinkType.InnerJoin);
+                        break;
+                    case "LeftJoin":
+                        HandleJoin(builder, m, TableLinkType.LeftJoin);
+                        break;
+                    case "RightJoin":
+                        HandleJoin(builder, m, TableLinkType.RightJoin);
+                        break;
+                    case "OuterJoin":
+                        HandleJoin(builder, m, TableLinkType.OuterJoin);
+                        break;
+
+                    case "OrderBy":
+                        if (m.Arguments[0].TryGetLambdaExpression(out var oLambda))
+                            builder.Expressions.Add(new ExpressionInfo(
+                                SqlResolveOptions.Order, oLambda, additionalParameter: "ASC"));
+                        break;
+                    case "OrderByDesc":
+                        if (m.Arguments[0].TryGetLambdaExpression(out var odLambda))
+                            builder.Expressions.Add(new ExpressionInfo(
+                                SqlResolveOptions.Order, odLambda, additionalParameter: "DESC"));
+                        break;
+
+                    case "Distinct":
+                        builder.IsDistinct = true;
+                        break;
+
+                    case "Skip":
+                        builder.Skip = GetConstantInt(m.Arguments[0]);
+                        break;
+                    case "Take":
+                        builder.Take = GetConstantInt(m.Arguments[0]);
+                        break;
+
+                    case "SelectColumns":
+                        var select = m.Arguments[1];
+                        builder.Expressions.Add(new(SqlResolveOptions.Select, select));
+                        break;
+
+                    case "GroupBy":
+                        keySelector = m.Arguments[0];
+                        builder.Expressions.Add(new(SqlResolveOptions.Group, keySelector));
+                        break;
+                }
+            }
+            else
+            {
+                var selecFields = m.Arguments.FirstOrDefault();
+                if (selecFields is not null)
+                {
+                    if (selecFields.TryGetLambdaExpression(out var sf) && keySelector.TryGetLambdaExpression(out var ks))
                     {
-                        case 0:
-                            {
-                                // context.Select<Role>() 或 context.Select<Role>("table")
-                                var tableType = m.Method.GetGenericArguments()[0];
-
-                                builder.AddTableInfo(TableInfo.Create(tableType, 0));
-                                break;
-                            }
-                        case > 0:
-                            {
-                                // 扩展方法，可能有多个泛型参数，也可能有重写表名参数
-                                var tableType = m.Method.GetGenericArguments();
-                                if (tableType.Length > 1)
-                                {
-                                    for (var index = 0; index < tableType.Length; index++)
-                                    {
-                                        var type = tableType[index];
-                                        builder.AddTableInfo(TableInfo.Create(type, index));
-                                    }
-                                }
-                                else if (tableType.Length == 1)
-                                {
-                                    // 单个泛型参数，可能存在重写表名参数
-                                    if (m.Arguments.Count == 2 && ResolveHelper.TryExtractValue<string>(m.Arguments[1], out var overName))
-                                    {
-                                        builder.AddTableInfo(TableInfo.Create(overName, tableType[0], 0));
-                                    }
-                                    else
-                                    {
-                                        builder.AddTableInfo(TableInfo.Create(tableType[0], 0));
-                                    }
-                                }
-
-                                break;
-                            }
+                        var flatExp = FlatGrouping.Default.Flat(sf!, ks!);
+                        builder.Expressions.Add(new(SqlResolveOptions.Select, flatExp));
                     }
-
-                    break;
-
-                case "Where":
-                    if (m.Arguments[0].TryGetLambdaExpression(out var wLambda))
-                        builder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, wLambda));
-                    break;
-
-                case "WhereIf":
-                    if (m.Arguments[0] is ConstantExpression { Value: true }
-                        && m.Arguments[1].TryGetLambdaExpression(out var wifLambda))
-                        builder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, wifLambda));
-                    break;
-
-                case "InnerJoin":
-                    HandleJoin(builder, m, TableLinkType.InnerJoin);
-                    break;
-                case "LeftJoin":
-                    HandleJoin(builder, m, TableLinkType.LeftJoin);
-                    break;
-                case "RightJoin":
-                    HandleJoin(builder, m, TableLinkType.RightJoin);
-                    break;
-                case "OuterJoin":
-                    HandleJoin(builder, m, TableLinkType.OuterJoin);
-                    break;
-
-                case "OrderBy":
-                    if (m.Arguments[0].TryGetLambdaExpression(out var oLambda))
-                        builder.Expressions.Add(new ExpressionInfo(
-                            SqlResolveOptions.Order, oLambda, additionalParameter: "ASC"));
-                    break;
-                case "OrderByDesc":
-                    if (m.Arguments[0].TryGetLambdaExpression(out var odLambda))
-                        builder.Expressions.Add(new ExpressionInfo(
-                            SqlResolveOptions.Order, odLambda, additionalParameter: "DESC"));
-                    break;
-
-                case "Distinct":
-                    builder.IsDistinct = true;
-                    break;
-
-                case "Skip":
-                    builder.Skip = GetConstantInt(m.Arguments[0]);
-                    break;
-                case "Take":
-                    builder.Take = GetConstantInt(m.Arguments[0]);
-                    break;
+                    else
+                    {
+                        builder.Expressions.Add(new(SqlResolveOptions.Select, selecFields));
+                    }
+                }
             }
         }
 

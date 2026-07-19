@@ -20,7 +20,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
         groupTypeIndex = 0;
     }
 
-    public LambdaExpression? Flat(LambdaExpression exp, LambdaExpression keySelector)
+    public LambdaExpression Flat(LambdaExpression exp, LambdaExpression keySelector)
     {
         try
         {

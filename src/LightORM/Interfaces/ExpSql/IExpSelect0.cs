@@ -20,10 +20,20 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     TSelect WhereIf<TTable>(bool condition, Expression<Func<TTable, bool>> exp);
     IEnumerable<T1> ToList();
     T1? First();
+    TReturn? First<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+    TReturn>();
     DataTable ToDataTable();
     Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default);
     IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default);
     Task<T1?> FirstAsync(CancellationToken cancellationToken = default);
+    Task<TReturn?> FirstAsync<
+#if NET8_0_OR_GREATER
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
+#endif
+TReturn>(CancellationToken cancellationToken = default);
     Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default);
     Task<TMember?> MaxAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
     Task<TMember?> MinAsync<TMember>(Expression<Func<T1, TMember>> exp, CancellationToken cancellationToken = default);
