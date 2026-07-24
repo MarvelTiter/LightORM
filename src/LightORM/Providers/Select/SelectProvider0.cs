@@ -302,7 +302,8 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     {
         if (!SqlBuilder.Expressions.IsAlreadySetSelect())
         {
-            throw new LightOrmException("未调用SelectColumns设置Select的列，不能推断具体是哪一列为TReturn");
+            Expression<Func<T1, T1>> exp = t => t;
+            this.HandleResult(exp, null);
         }
         var sql = SqlBuilder.ToSqlString(Database);
         var parameters = SqlBuilder.DbParameters;
