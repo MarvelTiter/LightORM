@@ -36,7 +36,9 @@ public class SqlExecuteContext
         Parameter = other.Parameter;
         ParameterType = other.ParameterType;
     }
-
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("Trimming", "IL2074", Justification = "非AOT环境会传入object")]
+#endif
     public SqlExecuteContext(ExecuteMethod method, string? sql, object? parameter,
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
@@ -48,7 +50,8 @@ public class SqlExecuteContext
         Sql = sql;
         CommandType = commandType;
         Parameter = parameter;
-        ParameterType = parameterType;
+        // 如果有参数传入，但是参数类型为object，说明是非AOT环境调用扩展方法，需要获取参数的真实类型
+        ParameterType = parameterType == typeof(object) && parameter is not null ? parameter.GetType() : parameterType;
     }
     //public object? Result { get; set; }
 }

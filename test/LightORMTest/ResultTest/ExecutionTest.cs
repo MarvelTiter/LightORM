@@ -278,6 +278,22 @@ public partial class ExecutionTest : TestBase
         Assert.HasCount(4, ur);
     }
 
+    [TestMethod]
+    public async Task SelectByAdo()
+    {
+        var users = await Db.Ado.QueryListAsync<User>("""
+            select * from user
+            where age > @Age
+            """, new { Age = 10 }, cancellationToken: TestContext.CancellationToken);
+        Assert.HasCount(2, users);
+
+        var users2 = await Db.Ado.Execute("""
+            select * from user
+            where age > @Age
+            """, new { Age = 10 }).ToListAsync<User>(TestContext.CancellationToken);
+        Assert.HasCount(2, users2);
+    }
+
     [NotNull]
     public TestContext? TestContext { get; set; }
 }

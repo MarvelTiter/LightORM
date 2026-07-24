@@ -17,6 +17,10 @@ public static partial class SqlExecutorExtensions
         , DbTransaction? trans = null
         , CommandType commandType = CommandType.Text)
     {
+        if (IsAOTRuntime && param is not null && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -43,6 +47,10 @@ public static partial class SqlExecutorExtensions
         , DbTransaction? trans = null
         , CommandType commandType = CommandType.Text)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -73,6 +81,10 @@ public static partial class SqlExecutorExtensions
         , DbTransaction? trans = null
         , CommandType commandType = CommandType.Text)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -106,6 +118,10 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , CancellationToken cancellationToken = default)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -146,6 +162,10 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , CancellationToken cancellationToken = default)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -190,6 +210,10 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -228,6 +252,10 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {
@@ -270,6 +298,10 @@ public static partial class SqlExecutorExtensions
         , CommandType commandType = CommandType.Text
         , CancellationToken cancellationToken = default)
     {
+        if (IsAOTRuntime && param is not null)
+        {
+            throw new NotSupportedException("AOT环境不支持解析object参数，请先调用Execute<TParameter>");
+        }
         DbDataReader? reader = null;
         try
         {

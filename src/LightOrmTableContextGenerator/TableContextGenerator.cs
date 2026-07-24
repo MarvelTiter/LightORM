@@ -10,17 +10,6 @@ using System.Reflection;
 
 namespace LightOrmTableContextGenerator;
 
-//internal class MappingDefinitions
-//{
-//    private Name name;
-//    //public string GetName() => name.
-//    private ConcurrentDictionary<string, AttributeData> attributes = [];
-//    private struct Name
-//    {
-//        public const string AttributeType = "LightORM.Attributes.Mapping.ColumnNameMappingAttribute";
-//    }
-//}
-
 [Generator(LanguageNames.CSharp)]
 public partial class TableContextGenerator : IIncrementalGenerator
 {
@@ -299,9 +288,9 @@ public partial class TableContextGenerator : IIncrementalGenerator
 
     private static PropertyScanResult ScanProperty(IPropertySymbol p)
     {
-        var commentId = p.GetDocumentationCommentId();
-        var commentDoc = p.GetDocumentationCommentXml();
-        System.Diagnostics.Debug.WriteLine($"{commentId} -> 注释: {commentDoc}");
+        //var commentId = p.GetDocumentationCommentId();
+        //var commentDoc = p.GetDocumentationCommentXml();
+        //System.Diagnostics.Debug.WriteLine($"{commentId} -> 注释: {commentDoc}");
         _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.ColumnAttribute", out var cmCol);
         _ = p.GetAttribute("System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute", out var notmap);
         _ = p.GetAttribute("System.ComponentModel.DataAnnotations.KeyAttribute", out var key);
