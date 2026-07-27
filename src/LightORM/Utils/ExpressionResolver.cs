@@ -117,7 +117,6 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public Stack<MemberPathInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
     public List<WindowFnSpecification>? WindowFnPartials { get; set; }
-    public bool IsNot { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
     public int Level => Context.Depth;
@@ -176,6 +175,8 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         }
         set => useAs = value;
     }
+
+    public bool IsNot { get; set; }
 
 
     bool isVisitConvert;
@@ -359,9 +360,22 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     Expression? VisitUnary(UnaryExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: UnaryExpression: {exp}");
-        IsNot = exp.NodeType == ExpressionType.Not;
-        IsVisitConvert = exp.NodeType == ExpressionType.Convert;
-        Visit(exp.Operand);
+        if (exp.NodeType == ExpressionType.Not)
+        {
+            IsNot = true;
+            Visit(exp.Operand);
+            IsNot = false;
+        }
+        else if (exp.NodeType == ExpressionType.Convert)
+        {
+            IsVisitConvert = true;
+            Visit(exp.Operand); 
+            IsVisitConvert = false;
+        }
+        else
+        {
+            Visit(exp.Operand);
+        }
         return null;
     }
 

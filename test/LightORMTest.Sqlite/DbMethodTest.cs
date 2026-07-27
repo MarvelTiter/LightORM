@@ -10,4 +10,6 @@ public class DbMethodTest : LightORMTest.DbMethodTest
         option.UseSqlite(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
+
+    
 }

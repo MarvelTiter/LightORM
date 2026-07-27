@@ -28,26 +28,6 @@ public class DbMethodTest : TestBase
         Console.WriteLine(r1.SqlString);
     }
 
-    [TestMethod]
-    public void T()
-    {
-        using var jdcScoped = Db.CreateMainDbScoped();
-        var job = new { JOB_ID = 123 };
-        string[] where = ["0102"];
-        var sql = jdcScoped.Update<JobFile>()
-              .Set(f => f.JFL_OK, 0)
-              .Set(f => f.JFL_EXIST, 0)
-              .Where(f => f.JOB_ID == job.JOB_ID)
-              .Where(f => where.Contains(f.FLT_ID!.Trim())).ToSqlWithParameters();
-        Console.WriteLine(sql);
-
-        var sql2 = jdcScoped.Update<JobFile>()
-              .Set(f => f.JFL_OK, 0)
-              .Set(f => f.JFL_EXIST, 0)
-              .Where(f => f.JOB_ID == job.JOB_ID)
-              .Where(f => where.Contains(f.FLT_ID!.Trim())).ToSqlWithParameters();
-        Console.WriteLine(sql2);
-    }
 
     [LightTable(Name = "JOBFILES")]
     public class JobFile
