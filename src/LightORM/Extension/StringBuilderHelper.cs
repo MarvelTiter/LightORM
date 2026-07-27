@@ -134,5 +134,9 @@ public static class StringBuilderHelper
             //not equal
             sql.Replace($"<> {placeholder}", "IS NOT NULL");
         }
+        else
+        {
+            sql.Replace(placeholder, "NULL");
+        }
     }
 }

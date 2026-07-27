@@ -596,6 +596,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             if (v == null)
             {
+                // 方便binary按顺序处理，替换操作在ExpressionResolvedResult.ReplaceConstantValue中处理
                 var name = new string(Guid.NewGuid().ToString("N").AsSpan(0, 8).ToArray());
                 Sql.Append(name);
                 DbParameters.Add(new(name, null, ExpValueType.ConstantNull));
