@@ -52,13 +52,15 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public string? TempName { get; set; }
     public bool IsDistinct { get; set; }
     public bool IsRollup { get; set; }
+    public bool IsCube { get; set; }
     public string SelectValue { get; set; } = "*";
     public int Depth { get; set; }
     public List<JoinInfo> Joins { get; set; } = [];
     public List<string> Having { get; set; } = [];
     public SortedSet<IncludeInfo> Includes { get; set; } = [];
 
-    public List<string> GroupBy { get; set; } = [];
+    public string? GroupBy { get; set; }
+    public List<string> GroupingSets { get; set; } = [];
     public List<string> OrderBy { get; set; } = [];
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
@@ -168,7 +170,14 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.GroupBy)
         {
-            GroupBy.Add(result.SqlString!);
+            if (expInfo.AdditionalParameter is GroupingSetsFlags)
+            {
+                GroupingSets.Add(result.SqlString!);
+            }
+            else
+            {
+                GroupBy = result.SqlString;
+            }
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.OrderBy)
         {
@@ -316,7 +325,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         return sqlString;
 
     }
-
+    private const string UNIT_IDENT = "    ";
     public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
         Depth = currentLevel;
@@ -372,9 +381,9 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         {
             sql.Append("DISTINCT ");
         }
-        if (GroupBy.Count > 0 && SelectValue == "*")
+        if (GroupBy is { } && SelectValue == "*")
         {
-            sql.AppendJoined(GroupBy, ",");
+            sql.Append(GroupBy).AppendLine();
         }
         else
         {
@@ -426,17 +435,34 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             // $"{ident}WHERE {string.Join($" AND ", Where)}"
             sql.Append(ident).Append("WHERE ").AppendJoined(Where, " AND ").AppendLine();
         }
-        if (GroupBy.Count > 0)
+        if (GroupBy is { })
         {
             if (IsRollup)
             {
                 // $"{ident}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})"
-                sql.Append(ident).Append("GROUP BY ROLLUP (").AppendJoined(GroupBy, ",").AppendLine(")");
+                sql.Append(ident).Append("GROUP BY ROLLUP (").Append(GroupBy).AppendLine(")");
+            }
+            else if (IsCube)
+            {
+                // $"{ident}GROUP BY CUBE ({string.Join(", ", GroupBy)})"
+                sql.Append(ident).Append("GROUP BY CUBE (").Append(GroupBy).AppendLine(")");
+            }
+            else if (GroupingSets.Count > 0)
+            {
+                sql.Append(ident).AppendLine("GROUP BY GROUPING SETS (");
+                foreach (var set in GroupingSets)
+                {
+                    sql.Append(ident).Append(UNIT_IDENT)
+                        .Append('(').Append(set).Append(')').AppendLine(",");
+                }
+                sql.RemoveLast(N.Length + 1);
+                sql.AppendLine();
+                sql.Append(ident).AppendLine(")");
             }
             else
             {
                 // $"{ident}GROUP BY {string.Join(", ", GroupBy)}"
-                sql.Append(ident).Append("GROUP BY ").AppendJoined(GroupBy, ",").AppendLine();
+                sql.Append(ident).Append("GROUP BY ").Append(GroupBy).AppendLine();
             }
         }
         if (Having.Count > 0)
@@ -554,16 +580,14 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
 
         // GROUP BY
-        if (GroupBy.Count > 0)
+        if (GroupBy is { })
         {
             total += indent + 12;
             if (IsRollup) total += 9;
-            for (int i = 0; i < GroupBy.Count; i++)
-            {
-                if (i > 0) total += 2; // ", "
-                total += GroupBy[i].Length;
-            }
+            if (IsCube) total += 7;
+            total += GroupBy.Length;
             if (IsRollup) total += 1;
+            if (IsCube) total += 1;
             total += 1; // \n
         }
 

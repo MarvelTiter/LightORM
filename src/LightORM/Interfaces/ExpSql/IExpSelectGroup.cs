@@ -3,6 +3,11 @@ using System.Threading;
 
 namespace LightORM.Interfaces.ExpSql;
 
+public interface IGroupingSetsBuilder<TGroup>
+{
+    IGroupingSetsBuilder<TGroup> Set(Expression<Func<TGroup, object>> set);
+}
+
 public interface IExpSelectGroup<TGroup, TTables> : IExpSelect
 {
     internal LambdaExpression KeySelector { get; }
@@ -58,7 +63,21 @@ TReturn>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TReturn>> exp, Can
 #endif
     TTable>(Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTable>> exp, string? alias = null);
     IExpSelectGroup<TGroup, TTables> Rollup();
-    //IExpSelectGroup<TGroup, TTables> Rollup(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
+    IExpSelectGroup<TGroup, TTables> Cube();
+    /// <summary>
+    /// 自定义分组，一次调用GroupingSet为一个分组
+    /// </summary>
+    /// <param name="set"></param>
+    /// <returns></returns>
+    IExpSelectGroup<TGroup, TTables> AddGroupingSet(Expression<Func<TGroup, object>> set);
+
+    /// <summary>
+    /// 自定义分组
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
+    IExpSelectGroup<TGroup, TTables> GroupingSets(Action<IGroupingSetsBuilder<TGroup>> action);
+
     IExpTemp<TTemp> AsTemp<TTemp>(string name, Expression<Func<IExpSelectGrouping<TGroup, TTables>, TTemp>> exp);
     string ToSql(Expression<Func<IExpSelectGrouping<TGroup, TTables>, object>> exp);
 }
@@ -154,5 +173,22 @@ public interface IExpSelectGrouping<TGroup, TTables>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
     ICaseFragment<TReturn> Case<TReturn>();
+
+    /// <summary>
+    /// 等价于 <see cref="SqlFn.Coalesce{TColumn}(TColumn, TColumn[])"/>
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <param name="fallbackValue"></param>
+    /// <returns></returns>
+    TColumn Coalesce<TColumn>(TColumn fallbackValue, params TColumn[] column);
+
+    /// <summary>
+    /// 等价于 <see cref="SqlFn.Grouping{TColumn}(TColumn)"/>
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <returns></returns>
+    int Grouping<TColumn>(TColumn column);
 
 }

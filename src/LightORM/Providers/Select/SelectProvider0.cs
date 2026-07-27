@@ -120,7 +120,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 #endif
     TParameter>(string sql, TParameter parameters)
     {
-        SqlBuilder.GroupBy.Add(sql);
+        SqlBuilder.GroupBy = sql;
         SqlBuilder.TryAddParameters(Database.Prefix, sql, parameters);
         return (this as TSelect)!;
     }
@@ -161,7 +161,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     }
     public TSelect GroupBy(string sql)
     {
-        SqlBuilder.GroupBy.Add(sql);
+        SqlBuilder.GroupBy = sql;
         return (this as TSelect)!;
     }
     public TSelect Having(string sql)

@@ -49,7 +49,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
             }
             else
             {
-                return exp;
+                parameters = [.. keySelector.Parameters];
             }
             this.keySelector = keySelector;
             TryAddSelectorParameters();
@@ -110,7 +110,14 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
                     {
                         if (n.Members?[i].Name == node.Member.Name)
                         {
-                            return n.Arguments[i];
+                            if (n.Arguments[i] is MemberExpression m)
+                            {
+                                var pa = parameters.FirstOrDefault(p => p.Type == m.Expression?.Type);
+                                if (pa is not null)
+                                {
+                                    return SafeCreateProperty(pa, m.Member.Name);
+                                }
+                            }
                         }
                     }
                 }
@@ -148,6 +155,14 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
                 else
                 {
                     throw new LightOrmException("语法错误，Group是匿名类型，不能Select整个Group结果");
+                }
+            }
+            else
+            {
+                // grouping sets
+                if (parameters.Count == 1)
+                {
+                    return SafeCreateProperty(parameters[0], node.Member.Name);
                 }
             }
 

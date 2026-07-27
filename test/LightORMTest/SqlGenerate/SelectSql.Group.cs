@@ -53,4 +53,75 @@ public partial class SelectSql
         AssertSqlResult(nameof(TestGroupByWithSubQuery), sql);
     }
 
+    [TestMethod]
+    public void TestGroupBy_Rollup()
+    {
+        var sql = Db.Select<Sales>()
+            .GroupBy(s => new { s.Region, s.Province, s.Product })
+            .Rollup()
+            .ToSql(g => new
+            {
+                region = g.Coalesce("合计", g.Group.Region),
+                province = g.Coalesce("小计", g.Group.Province),
+                product = g.Coalesce("小计", g.Group.Product),
+                flag1 = g.Grouping(g.Group.Region),
+                flag2 = g.Grouping(g.Group.Province),
+                flag3 = g.Grouping(g.Group.Product),
+                total = g.Sum(g.Tables.Amount)
+            });
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestGroupBy_Cube()
+    {
+        var sql = Db.Select<Sales>()
+            .GroupBy(s => new { s.Region, s.Province, s.Product })
+            .Cube()
+            .ToSql(g => new
+            {
+                region = g.Coalesce("合计", g.Group.Region),
+                province = g.Coalesce("小计", g.Group.Province),
+                product = g.Coalesce("小计", g.Group.Product),
+                flag1 = g.Grouping(g.Group.Region),
+                flag2 = g.Grouping(g.Group.Province),
+                flag3 = g.Grouping(g.Group.Product),
+                total = g.Sum(g.Tables.Amount)
+            });
+        Console.WriteLine(sql);
+    }
+
+    [TestMethod]
+    public void TestGroupBy_GroupingSets()
+    {
+        var sql = Db.Select<Sales>()
+            .GroupBy(s => new { s.Region, s.Province, s.Product })
+            //.AddGroupingSet(g => new { g.Region, g.Province, g.Product })
+            //.AddGroupingSet(g => new { g.Region, g.Province })
+            //.AddGroupingSet(g => new { })
+            .GroupingSets(sets => sets
+                .Set(g => new { g.Region, g.Province, g.Product })
+                .Set(g => new { g.Region, g.Province })
+                .Set(g => new { })
+            )
+            .AsTable(g => new
+            {
+                region = g.Coalesce("合计", g.Group.Region),
+                province = g.Coalesce("小计", g.Group.Province),
+                product = g.Coalesce("小计", g.Group.Product),
+                flag1 = g.Grouping(g.Group.Region),
+                flag2 = g.Grouping(g.Group.Province),
+                flag3 = g.Grouping(g.Group.Product),
+                total = g.Sum(g.Tables.Amount)
+            }).AsSubQuery()
+            .Where(r => r.flag1 == 0 || r.flag2 == 0)
+            .ToSql(r => new
+            {
+                r.region,
+                r.province,
+                r.product,
+                r.total
+            });
+        Console.WriteLine(sql);
+    }
 }

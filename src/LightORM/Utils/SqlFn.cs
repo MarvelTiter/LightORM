@@ -112,6 +112,29 @@ partial class SqlFn
     public static T NullThen<T>(T column, T value) => default!;
     [Obsolete("Use NullThen")]
     public static T IsNull<T>(T column, T value) => default!;
+
+    /// <summary>
+    /// COALESCE语句
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <param name="fallbackValue"></param>
+    /// <returns></returns>
+    public static TColumn Coalesce<TColumn>(TColumn fallbackValue, params TColumn[] column)
+    {
+        return default!;
+    }
+
+    /// <summary>
+    /// GROUPING函数
+    /// </summary>
+    /// <typeparam name="TColumn"></typeparam>
+    /// <param name="column"></param>
+    /// <returns></returns>
+    public static int Grouping<TColumn>(TColumn column)
+    {
+        return 0;
+    }
 }
 
 public interface IGroupJoinFn

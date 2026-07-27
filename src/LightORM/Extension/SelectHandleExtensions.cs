@@ -15,7 +15,7 @@ internal static class SelectHandleExtensions
 
         internal void OrderByHandle(Expression? exp, bool asc)
         {
-            select.SqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Order, exp, additionalParameter: asc ? "ASC" : "DESC"));
+            select.SqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Order, exp, additionalParameter: asc ? ConstString.ASC : ConstString.DESC));
         }
 
         internal IExpSelectGroup<TGroup, TTables> GroupByHandle<TGroup, TTables>(Expression? exp)

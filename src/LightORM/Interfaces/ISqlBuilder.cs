@@ -44,7 +44,7 @@ namespace LightORM.Interfaces
         int Skip {  get; set; }
         int Take { get; set; }
         object? AdditionalValue { get; set; }
-        List<string> GroupBy { get; set; }
+        string? GroupBy { get; set; }
         List<string> OrderBy { get; set; }
     }
 }

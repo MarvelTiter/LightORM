@@ -385,6 +385,26 @@ namespace LightORM.Implements
             throw new NotSupportedException();
         }
 
+        public virtual void Coalesce(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("COALESCE(");
+            var fallbackValue = methodCall.Arguments[0];
+            for (int i = 1; i < methodCall.Arguments.Count; i++)
+            {
+                resolver.Visit(methodCall.Arguments[i]);
+                resolver.Sql.Append(',');
+            }
+            resolver.Visit(fallbackValue);
+            resolver.Sql.Append(')');
+        }
+
+        public virtual void Grouping(IExpressionResolver resolver, MethodCallExpression methodCall)
+        {
+            resolver.Sql.Append("GROUPING(");
+            resolver.Visit(methodCall.Arguments[0]);
+            resolver.Sql.Append(')');
+        }
+
         #region 类型转换
 
         public virtual void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
@@ -652,9 +672,11 @@ namespace LightORM.Implements
 
         #endregion
 
+
+
         private static bool HandleSubContext(IExpressionResolver resolver, MethodCallExpression methodCall, string template, Action<SelectBuilder, ReadOnlyCollection<Expression>, string> action)
         {
-            if (methodCall.IsExpSelect())
+            if (methodCall.IsExpSelect() && !methodCall.IsExpSelectGrouping())
             {
                 var builder = methodCall.CreateSelectBuilder()!;
                 builder.SetResolveParentContext(resolver.Context);

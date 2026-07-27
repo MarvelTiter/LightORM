@@ -38,7 +38,6 @@ internal class SelectBuilderPool
         builder.SelectedTables.Clear();
         builder.Where.Clear();
         builder.Joins.Clear();
-        builder.GroupBy.Clear();
         builder.OrderBy.Clear();
         builder.Having.Clear();
         builder.Includes?.Clear();
@@ -62,6 +61,7 @@ internal class SelectBuilderPool
         builder.IsTemp = false;
         builder.IsUnion = false;
         builder.TempName = null;
+        builder.GroupBy = null;
         builder.InsertInfo = null;
         builder.SubQuery = null;
         builder.AdditionalValue = null;
@@ -76,7 +76,6 @@ internal class SelectBuilderPool
     {
         // 如果列表容量过大，重建以释放内存
         ShrinkListIfLarge(builder.Where);
-        ShrinkListIfLarge(builder.GroupBy);
         ShrinkListIfLarge(builder.OrderBy);
         ShrinkListIfLarge(builder.Joins);
         // ... 其他列表
