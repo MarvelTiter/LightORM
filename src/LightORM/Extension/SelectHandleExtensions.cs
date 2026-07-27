@@ -106,6 +106,7 @@ internal static class SelectHandleExtensions
         {
             select.SqlBuilder.IsSubQuery = true;
             var builder = SelectBuilder.GetSelectBuilder();
+            builder.QuoteIdentifiers = select.SqlBuilder.QuoteIdentifiers;
             var table = TableInfo.Create<TTemp>();
             if (alias != null)
             {

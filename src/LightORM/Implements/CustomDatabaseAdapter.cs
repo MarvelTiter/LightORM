@@ -117,6 +117,8 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual string DeleteTemplate => throw new NotImplementedException();
 
+    bool? IDatabaseAdapter.QuoteIdentifiers { get ; set ; }
+
     public virtual void HandleJsonColumn(JsonColumnContext context)
     {
         throw new NotSupportedException();

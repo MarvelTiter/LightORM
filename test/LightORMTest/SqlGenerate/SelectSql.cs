@@ -159,10 +159,11 @@ public partial class SelectSql : TestBase
     public void Select_Navigate_Where_Multi()
     {
         var sql = Db.Select<User>()
+            .NoQuoteIdentifiers()
             // 两种写法都可以
             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .Where(u => u.UserRoles.WhereIf(r => r.RoleId.Contains("admin")))
-            .TagWithCallSite("测试导航查询")
+            .TagWithCallSite("NoQuoteIdentifiers")
             .ToSql();
         Console.WriteLine(sql);
 
@@ -170,6 +171,7 @@ public partial class SelectSql : TestBase
             // 两种写法都可以
             .Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
             .ToSql();
+        Console.WriteLine(sql2);
         //Assert.AreEqual(sql2, sql);
         //var result = """
         //    SELECT DISTINCT *

@@ -17,7 +17,8 @@ public static class CustomDatabaseExtensions
 
     public static string AttachEmphasis(this IDatabaseAdapter database, string name)
     {
-        if (database.UseIdentifierQuote || database.IsKeyWord(name))
+        var shouldQuoteIdentifier = database.QuoteIdentifiers ?? database.UseIdentifierQuote;
+        if (shouldQuoteIdentifier || database.IsKeyWord(name))
         {
             return database.Emphasis.Insert(1, name);
         }
@@ -30,7 +31,8 @@ public static class CustomDatabaseExtensions
         {
             throw new LightOrmException("Emphasis must be exactly 2 characters, e.g., \"[]\" or \"``\".");
         }
-        if (database.UseIdentifierQuote || database.IsKeyWord(name))
+        var shouldQuoteIdentifier = database.QuoteIdentifiers ?? database.UseIdentifierQuote;
+        if (shouldQuoteIdentifier || database.IsKeyWord(name))
         {
             sql.Append(database.Emphasis[0]);
             sql.Append(name);

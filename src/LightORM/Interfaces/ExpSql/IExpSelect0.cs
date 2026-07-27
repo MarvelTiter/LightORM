@@ -13,6 +13,13 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
 
     #endregion
 
+    #region 自定义控制
+
+    TSelect NoQuoteIdentifiers();
+    TSelect QuoteIdentifiers();
+
+    #endregion
+
     TSelect Count(out long total);
     TSelect Where(Expression<Func<T1, bool>> exp);
     TSelect WhereIf(bool condition, Expression<Func<T1, bool>> exp);

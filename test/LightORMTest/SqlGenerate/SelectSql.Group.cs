@@ -95,6 +95,7 @@ public partial class SelectSql
     public void TestGroupBy_GroupingSets()
     {
         var sql = Db.Select<Sales>()
+            .NoQuoteIdentifiers()
             .GroupBy(s => new { s.Region, s.Province, s.Product })
             //.AddGroupingSet(g => new { g.Region, g.Province, g.Product })
             //.AddGroupingSet(g => new { g.Region, g.Province })

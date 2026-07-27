@@ -49,6 +49,22 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 
     #endregion
 
+    #region 自定义控制
+
+    public TSelect NoQuoteIdentifiers()
+    {
+        SqlBuilder.QuoteIdentifiers = false;
+        return (this as TSelect)!;
+    }
+
+    public TSelect QuoteIdentifiers()
+    {
+        SqlBuilder.QuoteIdentifiers = true;
+        return (this as TSelect)!;
+    }
+
+    #endregion
+
     #region where
 
     public TSelect Where(Expression<Func<T1, bool>> exp)
@@ -310,7 +326,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         return await Executor.Execute(sql, parameters).SingleAsync<T1>(cancellationToken);
     }
 
-    public  async Task<TReturn?> FirstAsync<
+    public async Task<TReturn?> FirstAsync<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif

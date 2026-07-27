@@ -1,7 +1,5 @@
 ﻿using System.Data.Common;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LightORM.Interfaces
 {
@@ -9,6 +7,16 @@ namespace LightORM.Interfaces
     {
         string Prefix { get; }
         string Emphasis { get; }
+        ISqlMethodResolver MethodResolver { get; }
+        /// <summary>
+        /// 是否使用标识引用符号，数据库关键词会强制使用，可通过<see cref="AddKeyWord"/>新增
+        /// </summary>
+        bool UseIdentifierQuote { get; set; }
+
+        /// <summary>
+        /// 单次语句构建是否使用标识引用符号
+        /// </summary>
+        bool? QuoteIdentifiers { get; set; }
         void DbCommandInit(DbCommand dbCommand);
         ///// <summary>
         ///// 获取删除语句的模板，将提供两个参数，{0} 表示表名，{1} 表示别名
@@ -20,11 +28,7 @@ namespace LightORM.Interfaces
         string FormatBooleanValue(bool value);
         void HandleDateValue(StringBuilder sql, DateTime value);
         string HandleBooleanValueForBulkCopy(bool value);
-        ISqlMethodResolver MethodResolver { get; }
-        /// <summary>
-        /// 是否使用标识引用符号，数据库关键词会强制使用，可通过<see cref="AddKeyWord"/>新增
-        /// </summary>
-        bool UseIdentifierQuote { get; set; }
+        
         bool IsKeyWord(string keyWork);
         void AddKeyWord(IEnumerable<string> keyworks);
 
@@ -32,6 +36,6 @@ namespace LightORM.Interfaces
         string RewriteParameterReferences(string sql, string prefix);
         void HandleJsonColumn(JsonColumnContext context);
         void HandleJsonParameter(JsonColumnParameterContext context);
-        //IJsonColumnHandler JsonHandler { get; }
+
     }
 }

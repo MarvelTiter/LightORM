@@ -1,5 +1,6 @@
 ﻿using LightORM.Extension;
 using LightORM.Performances;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
@@ -20,7 +21,7 @@ internal struct SelectInsert(string tableName, string columns)
 
 internal readonly record struct TagInfo(string Message, string? FilePath, string? CallMember, int? LineNumber, bool WithCallSite);
 
-internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
+internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 {
     //public SelectBuilder()
     //{
@@ -65,7 +66,7 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
     public int NextTableIndex => SelectedTables.Count + Joins.Count + TableIndexFix;
-
+    public bool? QuoteIdentifiers { get; set; }
     private List<TagInfo>? Tags { get; set; }
 
     public void AddTag(TagInfo tag)
@@ -311,11 +312,14 @@ internal class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         // 注释和sql隔开一行
         //sql.AppendLine();
     }
-
     public override string ToSqlString(IDatabaseAdapter database)
     {
         //SubQuery?.ResolveExpressions();
         var estimatedSize = EstimateSqlLength();
+        if (QuoteIdentifiers.HasValue)
+        {
+            database = new ScopedDatabaseAdapter(database, QuoteIdentifiers.Value);
+        }
         StringBuilder sql = new(estimatedSize);
         Build(sql, database, Depth);
         HandleSqlParameters(sql, database);
