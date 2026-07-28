@@ -1,5 +1,5 @@
 ﻿
-#if NET462_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+#if NET462_OR_GREATER || NETSTANDARD2_0_OR_GREATER || NET8_0_OR_GREATER
 using LightORM.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
