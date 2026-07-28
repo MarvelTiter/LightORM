@@ -1,7 +1,5 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Providers;
-using Microsoft.Extensions.Options;
-using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;

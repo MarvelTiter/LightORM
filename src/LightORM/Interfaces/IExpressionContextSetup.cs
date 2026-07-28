@@ -14,7 +14,7 @@ public interface IExpressionContextSetup
 
     IExpressionContextSetup UseInterceptor<
 #if NET8_0_OR_GREATER
-        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
         T>() where T : AdoInterceptorBase;
 

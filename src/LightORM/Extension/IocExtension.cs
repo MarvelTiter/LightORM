@@ -1,4 +1,6 @@
-﻿using LightORM.Repository;
+﻿
+#if NET462_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+using LightORM.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LightORM;
@@ -22,3 +24,4 @@ public static class IocExtension
         return services;
     }
 }
+#endif

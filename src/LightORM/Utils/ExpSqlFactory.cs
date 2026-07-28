@@ -9,7 +9,7 @@
         {
             var builder = new ExpressionOptionBuilder();
             config.Invoke(builder);
-            option = builder.Build(null);
+            option = builder.Build();
         }
 
         static ExpSqlFactory()
