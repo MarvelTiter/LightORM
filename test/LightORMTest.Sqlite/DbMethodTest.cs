@@ -1,4 +1,6 @@
-﻿namespace LightORMTest.Sqlite;
+﻿using LightORMTest.Models;
+
+namespace LightORMTest.Sqlite;
 
 [TestClass]
 public class DbMethodTest : LightORMTest.DbMethodTest
@@ -7,9 +9,16 @@ public class DbMethodTest : LightORMTest.DbMethodTest
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseSqlite(ConnectString.Value);
+        option.UseSqlite("Test",ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
 
+    [TestMethod]
+    public void SelectWithAttr()
+    {
+        var scoped = Db.CreateScoped();
+        scoped.SelectWithAttr<User>().ToList();
+        Db.SelectWithAttr<User>();
+    }
     
 }

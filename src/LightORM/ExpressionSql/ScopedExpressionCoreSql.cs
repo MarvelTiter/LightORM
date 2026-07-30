@@ -8,17 +8,19 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
     private readonly SqlExecutorProvider executorProvider;
 
     public string Id { get; } = $"{Guid.NewGuid():N}";
-    private string? dbKey;
     private bool useTrans;
     private IsolationLevel isolationLevel = IsolationLevel.Unspecified;
     public override ExpressionSqlOptions Options { get; }
+    private TransientExpressionCoreSql? current;
     public override ISqlExecutor Ado
     {
         get
         {
-            dbKey ??= ConstString.Main;
-            var ado = executorProvider.GetSqlExecutor(dbKey);
-            dbKey = null;
+            if (current is not null)
+            {
+                return current.Ado;
+            }
+            var ado = executorProvider.GetSqlExecutor(ConstString.Main);
             if (useTrans)
             {
                 ado.InitTransaction(isolationLevel);
@@ -37,18 +39,31 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
             var ctx = AsyncLocalTransactionContexts.GetOrAdd(item, new AsyncLocal<TransactionContext?>());
             ctx.Value ??= new TransactionContext();
         }
-
     }
-    IScopedExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
+
+    private readonly Dictionary<string, TransientExpressionCoreSql> contextCaches = [];
+    ITransientExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
     {
-        dbKey = key;
-        return this;
+        if (contextCaches.TryGetValue(key, out var ctx))
+        {
+            return ctx;
+        }
+        var ado = executorProvider.GetSqlExecutor(key);
+        if (useTrans)
+        {
+            ado.InitTransaction(isolationLevel);
+        }
+        ctx = new(key, ado, Options);
+        contextCaches[key] = ctx;
+        current = ctx;
+        return ctx;
     }
 
     public void Dispose()
     {
         executorProvider.Dispose();
     }
+
     public void BeginAllTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
     {
         useTrans = true;

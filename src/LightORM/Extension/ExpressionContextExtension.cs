@@ -263,15 +263,14 @@ public static class ScopedExpressionContextExtensions
 {
     extension(IScopedExpressionContext context)
     {
-        private IScopedExpressionContext SwitchDb<T>()
+        private ITransientExpressionContext SwitchDb<T>()
         {
             var table = TableContext.GetTableInfo<T>();
-            if (table.TargetDatabase != null)
+            if (table.TargetDatabase is null)
             {
-                return context.SwitchDatabase(table.TargetDatabase);
+                throw new LightOrmException("实体上没有设置DatabaseKey，无法自动切换数据库");
             }
-
-            throw new LightOrmException("实体上没有设置DatabaseKey，无法自动切换数据库");
+            return context.SwitchDatabase(table.TargetDatabase);
         }
 
         public IExpSelect<T> SelectWithAttr<

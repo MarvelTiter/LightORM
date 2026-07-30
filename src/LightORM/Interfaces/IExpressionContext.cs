@@ -124,7 +124,7 @@ public interface IDefinedTableAction
 /// </summary>
 public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
-    IScopedExpressionContext SwitchDatabase(string key);
+    ITransientExpressionContext SwitchDatabase(string key);
     string Id { get; }
 //    IExpSelect<T> Select<
 //#if NET8_0_OR_GREATER
