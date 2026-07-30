@@ -1,4 +1,6 @@
-﻿namespace LightORMTest.Oracle;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace LightORMTest.Oracle;
 
 [TestClass]
 public class DbMethodTest : LightORMTest.DbMethodTest

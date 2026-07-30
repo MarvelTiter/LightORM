@@ -356,7 +356,8 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 //sql.Append(item.ToSqlString(database));
                 //item.Level = Level + 1;
                 item.Build(sql, database, currentLevel + 1);
-                DbParameters.TryAddDictionary(item.DbParameters);
+                //DbParameters.TryAddDictionary(item.DbParameters);
+                ResolvedValues.UnionWith(item.ResolvedValues);
             }
             // 去除最后的换行符+逗号
             sql.RemoveLast(N.Length + 1);
@@ -409,7 +410,8 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             //.Append(SubQuery.ToSqlString(database))
             SubQuery.Build(sql, database, currentLevel + 1);
             sql.Append(ident).Append(") ").AppendLine(MainTable.Alias);
-            DbParameters.TryAddDictionary(SubQuery.DbParameters);
+            //DbParameters.TryAddDictionary(SubQuery.DbParameters);
+            ResolvedValues.UnionWith(SubQuery.ResolvedValues);
         }
 
         foreach (var item in Joins)
@@ -424,7 +426,8 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 //.Append(item.SubQuery.ToSqlString(database))
                 item.SubQuery.Build(sql, database, currentLevel + 1);
                 sql.Append(ident).Append(") ").Append(item.EntityInfo!.Alias!).Append(" ON ").AppendLine(item.Where);
-                DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
+                //DbParameters.TryAddDictionary(item.SubQuery.DbParameters);
+                ResolvedValues.UnionWith(item.SubQuery.ResolvedValues);
             }
             else
             {
@@ -507,7 +510,8 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 sql.Append(ident).AppendLine(union);
                 item.SqlBuilder.Build(sql, database, currentLevel);
                 //sql.Append(item.SqlBuilder.ToSqlString(database));
-                DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                //DbParameters.TryAddDictionary(item.SqlBuilder.DbParameters);
+                ResolvedValues.UnionWith(item.SqlBuilder.ResolvedValues);
             }
         }
     }
