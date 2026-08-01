@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="..\GenShared\Generators.Shared\Generators.Shared.projitems" Label="Shared" />
 	<Import Project="..\GenShared\Generators.Shared\MT.Generators.props" />
-	<Import Project="..\Versions.props"/>
+	<Import Project="..\versions.props"/>
 	<PropertyGroup>
 		<Version>$(MainProjectVersion)</Version>
 	</PropertyGroup>
