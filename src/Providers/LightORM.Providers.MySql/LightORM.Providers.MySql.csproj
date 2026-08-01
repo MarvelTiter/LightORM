@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+	<Import Project="../../versions.props"/>
 	<PropertyGroup>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -10,8 +10,8 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+		<Version>$(MySqlVersion)</Version>
 	</PropertyGroup>
-	<Import Project="Versions.props" />
 	<Import Project="..\..\SupportedFrameworks.props" />
 	<ItemGroup>
 		<None Include="..\..\Nuget.md">
@@ -24,4 +24,11 @@
 		<PackageReference Include="MySqlConnector" Version="2.6.0" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="$(MySqlDepVersion)" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+	
 </Project>

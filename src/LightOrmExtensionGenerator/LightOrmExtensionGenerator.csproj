@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="..\GenShared\Generators.Shared\Generators.Shared.projitems" Label="Shared" />
 	<Import Project="..\GenShared\Generators.Shared\MT.Generators.props" />
-	<Import Project="..\LightORM\Versions.props"/>
+	<Import Project="..\Versions.props"/>
+	<PropertyGroup>
+		<Version>$(MainProjectVersion)</Version>
+	</PropertyGroup>
 </Project>

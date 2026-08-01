@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../../versions.props"/>
 	<PropertyGroup>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -9,8 +10,8 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+		<Version>$(KingbaseESVersion)</Version>
 	</PropertyGroup>
-	<Import Project="Versions.props" />
 	<Import Project="..\..\SupportedFrameworks.props" />
 	<ItemGroup>
 		<None Include="..\..\Nuget.md">
@@ -26,4 +27,12 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
 		<PackageReference Include="Kdbndp_V9" Version="8.0.3.609" />
 	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="$(KingbaseESDepVersion)" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+	
 </Project>

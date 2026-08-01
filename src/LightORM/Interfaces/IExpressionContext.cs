@@ -124,6 +124,7 @@ public interface IDefinedTableAction
 /// </summary>
 public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
+    ISqlExecutor DefaultAdo { get; }
     ITransientExpressionContext SwitchDatabase(string key);
     string Id { get; }
 //    IExpSelect<T> Select<

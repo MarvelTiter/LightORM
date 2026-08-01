@@ -1,0 +1,40 @@
+<Project>
+	<PropertyGroup>
+		<MainProjectVersion>2026.07.30.2</MainProjectVersion>
+		<!-- 达梦 -->
+		<DamengVersion>2026.06.19.1</DamengVersion>
+		<!-- 达梦依赖版本 -->
+		<DamengDepVersion>2026.06.19.1</DamengDepVersion>
+
+		<!-- KingbaseES -->
+		<KingbaseESVersion>2026.06.19.1</KingbaseESVersion>
+		<!-- KingbaseES依赖版本 -->
+		<KingbaseESDepVersion>2026.06.19.1</KingbaseESDepVersion>
+
+		<!-- MySql -->
+		<MySqlVersion>2026.06.19.1</MySqlVersion>
+		<!-- MySql依赖版本 -->
+		<MySqlDepVersion>2026.06.19.1</MySqlDepVersion>
+
+		<!-- Oracle -->
+		<OracleVersion>2026.06.19.1</OracleVersion>
+		<!-- Oracle依赖版本 -->
+		<OracleDepVersion>2026.06.19.1</OracleDepVersion>
+
+		<!-- PgSql -->
+		<PgSqlVersion>2026.06.19.1</PgSqlVersion>
+		<!-- PgSql依赖版本 -->
+		<PgSqlDepVersion>2026.06.19.1</PgSqlDepVersion>
+
+		<!-- Sqlite -->
+		<SqliteVersion>2026.06.19.1</SqliteVersion>
+		<!-- Sqlite依赖版本 -->
+		<SqliteDepVersion>2026.06.19.1</SqliteDepVersion>
+
+		<!-- SqlServer -->
+		<SqlServerVersion>2026.06.19.1</SqlServerVersion>
+		<!-- SqlServer依赖版本 -->
+		<SqlServerDepVersion>2026.06.19.1</SqlServerDepVersion>
+		
+	</PropertyGroup>
+</Project>

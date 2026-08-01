@@ -16,11 +16,20 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
     {
         get
         {
-            if (current is not null)
+            var ado = current?.Ado ?? DefaultAdo;
+            if (useTrans)
             {
-                return current.Ado;
+                ado.InitTransaction(isolationLevel);
             }
-            var ado = executorProvider.GetSqlExecutor(ConstString.Main);
+            return ado;
+        }
+    }
+
+    public ISqlExecutor DefaultAdo
+    {
+        get
+        {
+            var ado = executorProvider.GetSqlExecutor(Options.DefaultDbKey);
             if (useTrans)
             {
                 ado.InitTransaction(isolationLevel);

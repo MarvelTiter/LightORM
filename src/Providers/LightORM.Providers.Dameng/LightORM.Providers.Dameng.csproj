@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+	<Import Project="../../versions.props"/>
 	<PropertyGroup>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -10,8 +10,8 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>Nuget.md</PackageReadmeFile>
+		<Version>$(DamengVersion)</Version>
 	</PropertyGroup>
-	<Import Project="Versions.props" />
 	<Import Project="..\..\SupportedFrameworks.props" />
 	<ItemGroup>
 		<None Include="..\..\Nuget.md">
@@ -23,5 +23,12 @@
 	<ItemGroup>
 	  <PackageReference Include="DM.DmProvider" Version="8.3.1.47463" />
 	</ItemGroup>
-	
+
+	<ItemGroup Condition="'$(Configuration)' == 'RELEASE'">
+		<PackageReference Include="MT.LightORM" Version="$(DamengDepVersion)" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' == 'DEBUG'">
+		<ProjectReference Include="..\..\LightORM\LightORM.csproj" />
+	</ItemGroup>
+
 </Project>
