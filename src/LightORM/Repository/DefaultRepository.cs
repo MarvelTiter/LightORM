@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace LightORM.Repository;
 
-internal sealed class DefaultRepository<
+public sealed class DefaultRepository<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif

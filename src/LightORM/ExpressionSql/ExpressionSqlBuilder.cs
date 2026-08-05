@@ -1,5 +1,4 @@
 ﻿using LightORM.Implements;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 
 namespace LightORM;
@@ -175,7 +174,6 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         set => ExpressionSqlOptions.Instance.Value.ThrowExceptionWhileMethodResolveNotMap = value;
     }
 
-
     public IExpressionContextSetup SetDefault(string key)
     {
         ExpressionSqlOptions.SetDefaultDatabase(key);
@@ -225,6 +223,12 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         return this;
     }
 
+    public IExpressionContextSetup UseInterceptor<T>(T interceptor) where T : AdoInterceptorBase
+    {
+        ExpressionSqlOptions.AddStateLessInterceptor(typeof(T), interceptor);
+        return this;
+    }
+
     public IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new()
     {
         throw new NotImplementedException();
@@ -235,5 +239,4 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         throw new NotSupportedException();
     }
 
-    public ExpressionSqlOptions Build() => new();
 }

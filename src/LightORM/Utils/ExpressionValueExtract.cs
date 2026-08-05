@@ -1,16 +1,6 @@
 ﻿using LightORM.Extension;
-using LightORM.Implements;
-using LightORM.Interfaces.ExpSql;
 using LightORM.Performances;
-using Microsoft.Extensions.Options;
-using System;
 using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace LightORM.Utils;
 

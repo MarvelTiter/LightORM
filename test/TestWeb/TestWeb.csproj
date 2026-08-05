@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LightORM\LightORM.csproj" />
+    <ProjectReference Include="..\..\src\LightORM.Extensions.DependencyInjection\LightORM.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\Providers\LightORM.Providers.MySql\LightORM.Providers.MySql.csproj" />
     <ProjectReference Include="..\..\src\Providers\LightORM.Providers.Oracle\LightORM.Providers.Oracle.csproj" />
     <ProjectReference Include="..\..\src\Providers\LightORM.Providers.Sqlite\LightORM.Providers.Sqlite.csproj" />

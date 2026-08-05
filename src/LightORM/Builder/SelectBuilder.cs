@@ -1,6 +1,4 @@
 ﻿using LightORM.Extension;
-using LightORM.Performances;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;

@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;
@@ -72,7 +72,7 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-        TReturn>(Expression<Func<T1, TReturn>> exp);
+    TReturn>(Expression<Func<T1, TReturn>> exp);
 
     IEnumerable<TReturn> ToList<
 #if NET8_0_OR_GREATER
@@ -102,17 +102,15 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 #endif
     TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default);
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default);
-
+#endif
 
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
@@ -136,16 +134,16 @@ public interface IExpSelect<T1> : IExpSelect0<IExpSelect<T1>, T1>
 #endif
     TReturn>(CancellationToken cancellationToken = default);
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// 需要确保SELECT的列名与TReturn类型的属性名一致
     /// </summary>
     /// <typeparam name="TReturn"></typeparam>
     /// <returns></returns>
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(CancellationToken cancellationToken = default);
+#endif
 
     #endregion
 

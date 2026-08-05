@@ -3,7 +3,6 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using LightORM.Implements;
-using System.ComponentModel.DataAnnotations;
 using LightORM.Models;
 
 namespace LightORM.Providers.Sqlite;

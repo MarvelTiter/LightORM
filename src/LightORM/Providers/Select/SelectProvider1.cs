@@ -1,6 +1,5 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
-using LightORM.Utils.Vistors;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -324,10 +323,9 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
 #endif
     TReturn>(CancellationToken cancellationToken = default) => this.InternalToListAsync<TReturn>(cancellationToken);
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<T1, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
@@ -335,9 +333,7 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
     }
 
     public IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
@@ -345,11 +341,10 @@ T1> : SelectProvider0<IExpSelect<T1>, T1>, IExpSelect<T1>
     }
 
     public IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(CancellationToken cancellationToken = default)
         => this.InternalToEnumerableAsync<TReturn>(cancellationToken);
+#endif
 
     #endregion
 

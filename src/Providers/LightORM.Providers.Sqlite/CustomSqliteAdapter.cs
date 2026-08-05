@@ -1,9 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
-using LightORM.Interfaces.ExpSql;
 using LightORM.Models;
-using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace LightORM.Providers.Sqlite;

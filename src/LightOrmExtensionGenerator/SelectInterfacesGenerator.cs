@@ -121,16 +121,14 @@ public interface IExpSelect<{{argsStr}}> : IExpSelect0<IExpSelect<{{argsStr}}>, 
 #endif
     TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default);
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default);
+#endif
 
     /// <summary>
     /// 转换成<see cref="IExpSelect{T1}"/>
@@ -201,16 +199,14 @@ TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp);
 #endif
     TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default);
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default);
+#endif
 
     /// <summary>
     /// 转换成<see cref="IExpSelect{TTable}"/>

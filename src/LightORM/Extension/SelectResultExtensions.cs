@@ -43,16 +43,16 @@ public static class SelectResultExtensions
             return select.Executor.Execute(sql, parameters).ToListAsync<TReturn>(cancellationToken);
         }
 
-        public IAsyncEnumerable<TReturn> InternalToEnumerableAsync<
 #if NET8_0_OR_GREATER
+        public IAsyncEnumerable<TReturn> InternalToEnumerableAsync<
    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
             TReturn>(CancellationToken cancellationToken = default)
         {
             var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).ToAsyncList<TReturn>(cancellationToken);
         }
+#endif
 
         public Task<TReturn?> InternalSingleAsync<
 #if NET8_0_OR_GREATER

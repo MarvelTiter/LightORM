@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Attributes.Mapping;
+﻿namespace LightORM.Attributes.Mapping;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class MappingBaseAttribute: Attribute

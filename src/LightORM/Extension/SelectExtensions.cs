@@ -1,5 +1,4 @@
-﻿using LightORM.Utils.Vistors;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;

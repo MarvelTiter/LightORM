@@ -199,10 +199,9 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async IAsyncEnumerable<T> QueryAsync<
 #if NET8_0_OR_GREATER
+    public static async IAsyncEnumerable<T> QueryAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     T>(this ISqlExecutor self
         , string sql
         , object? param = null
@@ -234,14 +233,11 @@ public static partial class SqlExecutorExtensions
         }
         finally
         {
-#if NET6_0_OR_GREATER
             if (reader is not null)
             {
                 await reader.CloseAsync();
             }
-#else
             reader?.Close();
-#endif
         }
     }
 
@@ -276,16 +272,14 @@ public static partial class SqlExecutorExtensions
         }
         finally
         {
-#if NET6_0_OR_GREATER
             if (reader is not null)
             {
                 await reader.CloseAsync();
             }
-#else
             reader?.Close();
-#endif
         }
     }
+#endif
 
     public static async Task<T?> QuerySingleAsync<
 #if NET8_0_OR_GREATER

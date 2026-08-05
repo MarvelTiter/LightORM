@@ -12,11 +12,7 @@ public interface IExpressionContextSetup
     IExpressionContextSetup SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider);
     IExpressionContextSetup SetTableContext(ITableContext context);
 
-    IExpressionContextSetup UseInterceptor<
-#if NET8_0_OR_GREATER
-        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
-#endif
-        T>() where T : AdoInterceptorBase;
+    IExpressionContextSetup UseInterceptor<T>(T interceptor) where T : AdoInterceptorBase;
 
     IExpressionContextSetup UseInitial<T>() where T : DbInitialContext, new();
 

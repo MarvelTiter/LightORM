@@ -1,5 +1,4 @@
-﻿using LightORM;
-using LightORM.Performances;
+﻿using LightORM.Performances;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 

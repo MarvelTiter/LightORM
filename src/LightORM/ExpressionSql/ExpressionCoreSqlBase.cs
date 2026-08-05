@@ -1,6 +1,5 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Providers;
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -17,7 +16,11 @@ internal abstract class ExpressionCoreSqlBase : IContext
         {
             throw new LightOrmException("selects 数量为0");
         }
-        string[] sqls = ArrayPool<string>.Shared.Rent(selects.Length);
+#if NET8_0_OR_GREATER
+        string[] sqls = System.Buffers.ArrayPool<string>.Shared.Rent(selects.Length);
+#else
+        string[] sqls = new string[selects.Length];
+#endif
         Dictionary<string, object> parameters = [];
         try
         {
@@ -46,7 +49,9 @@ internal abstract class ExpressionCoreSqlBase : IContext
         }
         finally
         {
-            ArrayPool<string>.Shared.Return(sqls);
+#if NET8_0_OR_GREATER
+            System.Buffers.ArrayPool<string>.Shared.Return(sqls);
+#endif
         }
     }
 
@@ -56,7 +61,11 @@ internal abstract class ExpressionCoreSqlBase : IContext
         {
             throw new LightOrmException("selects 数量为0");
         }
-        string[] sqls = ArrayPool<string>.Shared.Rent(selects.Length);
+#if NET8_0_OR_GREATER
+        string[] sqls = System.Buffers.ArrayPool<string>.Shared.Rent(selects.Length);
+#else
+        string[] sqls = new string[selects.Length];
+#endif
         Dictionary<string, object> parameters = [];
         try
         {
@@ -85,7 +94,9 @@ internal abstract class ExpressionCoreSqlBase : IContext
         }
         finally
         {
-            ArrayPool<string>.Shared.Return(sqls);
+#if NET8_0_OR_GREATER
+            System.Buffers.ArrayPool<string>.Shared.Return(sqls);
+#endif
         }
     }
 

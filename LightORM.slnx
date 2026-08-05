@@ -14,6 +14,9 @@
     <Project Path="src/LightOrmExtensionGenerator/LightOrmExtensionGenerator.csproj" />
     <Project Path="src/LightOrmTableContextGenerator/LightOrmTableContextGenerator.csproj" />
   </Folder>
+  <Folder Name="/src/ExtensionProject/">
+    <Project Path="src/LightORM.Extensions.DependencyInjection/LightORM.Extensions.DependencyInjection.csproj" Id="9880fd91-5a84-4ad3-bb3e-c912f7c647b8" />
+  </Folder>
   <Folder Name="/src/GenShared/">
     <Project Path="src/GenShared/Generators.Shared/Generators.Shared.shproj" />
   </Folder>

@@ -3,8 +3,6 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System;
-using System.Runtime.CompilerServices;
 namespace LightORM.Cache;
 
 internal class AbstractTableType(Type type)
