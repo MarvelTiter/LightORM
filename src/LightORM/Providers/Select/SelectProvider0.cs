@@ -352,7 +352,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         var parameters = SqlBuilder.DbParameters;
         return await Executor.Execute(sql, parameters).ToListAsync<T1>(cancellationToken);
     }
-
+#if NET8_0_OR_GREATER
     public IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default)
     {
         Expression<Func<T1, T1>> exp = t => t;
@@ -361,6 +361,7 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
         var parameters = SqlBuilder.DbParameters;
         return Executor.Execute(sql, parameters).ToAsyncList<T1>(cancellationToken);
     }
+#endif
 
     public Task<DataTable> ToDataTableAsync(CancellationToken cancellationToken = default)
     {

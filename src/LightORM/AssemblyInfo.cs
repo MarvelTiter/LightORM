@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
 [assembly: InternalsVisibleTo("LightORMTest.PostgreSQL")]
+[assembly:InternalsVisibleTo("LightORM.Extensions.DependencyInjection")]
 [assembly: SelectExtension(ArgumentCount = 2)]
 [assembly: SelectExtension(ArgumentCount = 3)]
 [assembly: SelectExtension(ArgumentCount = 4)]

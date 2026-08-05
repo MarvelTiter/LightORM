@@ -161,10 +161,9 @@ public static class ExecuteResultExtensions
             }
         }
 
-        public async IAsyncEnumerable<T> ToAsyncList<
 #if NET8_0_OR_GREATER
+        public async IAsyncEnumerable<T> ToAsyncList<
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
         T>([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             DbDataReader? reader = null;
@@ -187,14 +186,11 @@ public static class ExecuteResultExtensions
             }
             finally
             {
-#if NET6_0_OR_GREATER
                 if (reader is not null)
                 {
                     await reader.CloseAsync();
                 }
-#else
             reader?.Close();
-#endif
             }
         }
 
@@ -220,16 +216,14 @@ public static class ExecuteResultExtensions
             }
             finally
             {
-#if NET6_0_OR_GREATER
                 if (reader is not null)
                 {
                     await reader.CloseAsync();
                 }
-#else
             reader?.Close();
-#endif
             }
         }
+#endif
 
         public async Task<T?> QuerySingleAsync<
 #if NET8_0_OR_GREATER

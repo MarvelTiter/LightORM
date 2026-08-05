@@ -1,11 +1,13 @@
-﻿using LightORM;
-using LightORM.Interfaces;
-using Microsoft.Data.SqlClient;
+﻿using LightORM.Interfaces;
 using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
 using LightORM.Models;
-
+#if NET462_OR_GREATER
+using System.Data.SqlClient;
+#else
+using  Microsoft.Data.SqlClient;
+#endif
 namespace LightORM.Providers.SqlServer;
 
 public enum SqlServerVersion
@@ -41,6 +43,7 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
         DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;
+
     }
 
     public override DbBaseType DbBaseType => DbBaseType.SqlServer;

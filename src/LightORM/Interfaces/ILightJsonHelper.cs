@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Interfaces;
+﻿namespace LightORM.Interfaces;
 
 /// <summary>
 /// 处理JSON列的序列化和反序列化

@@ -1,5 +1,4 @@
-﻿using LightORM.Performances;
-using System.Text;
+﻿using System.Text;
 
 namespace LightORM.Extension;
 

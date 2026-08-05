@@ -1,6 +1,12 @@
-<Project>
+﻿<Project>
 	<PropertyGroup>
-		<MainProjectVersion>2026.08.01.1</MainProjectVersion>
+		<MainProjectVersion>2026.08.05.1</MainProjectVersion>
+
+		<!-- Dependency -->
+		<DependencyVersion>2026.08.05.1</DependencyVersion>
+		<!-- Dependency依赖版本 -->
+		<DependencyDepVersion>2026.08.05.1</DependencyDepVersion>
+
 		<!-- 达梦 -->
 		<DamengVersion>2026.06.19.1</DamengVersion>
 		<!-- 达梦依赖版本 -->
@@ -32,9 +38,9 @@
 		<SqliteDepVersion>2026.06.19.1</SqliteDepVersion>
 
 		<!-- SqlServer -->
-		<SqlServerVersion>2026.06.19.1</SqlServerVersion>
+		<SqlServerVersion>2026.08.05.1</SqlServerVersion>
 		<!-- SqlServer依赖版本 -->
 		<SqlServerDepVersion>2026.06.19.1</SqlServerDepVersion>
-		
+
 	</PropertyGroup>
 </Project>

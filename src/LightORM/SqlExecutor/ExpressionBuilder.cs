@@ -8,10 +8,10 @@ using System.Reflection;
 using System.Text;
 
 namespace LightORM.SqlExecutor;
-
 internal partial class ExpressionBuilder
 {
     private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
+    private readonly record struct UnderlyingTypeInfo(Type Type, bool IsNullable);
 
     public static Func<IDataReader, T> BuildDeserializer<
 #if NET8_0_OR_GREATER
@@ -639,10 +639,10 @@ internal partial class ExpressionBuilder
         }
     }
 
-    private static (Type Type, bool IsNullable) GetUnderlyingType(Type targetType)
+    private static UnderlyingTypeInfo GetUnderlyingType(Type targetType)
     {
         var t = Nullable.GetUnderlyingType(targetType);
-        return (t ?? targetType, t is not null);
+        return new(t ?? targetType, t is not null);
     }
 }
 

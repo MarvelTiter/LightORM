@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using LightORM.Extension;
-using System.Collections.Concurrent;
 using System.Threading;
 
 namespace LightORM.Models;

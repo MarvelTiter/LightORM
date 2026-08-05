@@ -1,9 +1,7 @@
 ﻿using LightORM.Performances;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace LightORM.Utils.Vistors;
 

@@ -1,5 +1,4 @@
 ﻿using LightORM.Extension;
-using LightORM.Utils.Vistors;
 using System.Diagnostics.CodeAnalysis;
 
 namespace LightORM.Repository;

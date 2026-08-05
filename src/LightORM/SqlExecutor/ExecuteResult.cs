@@ -168,10 +168,9 @@ TParameter>(ISqlExecutor ado, string sql, TParameter? param, DbTransaction? tran
         }
     }
 
-    public async IAsyncEnumerable<T> ToAsyncList<
 #if NET8_0_OR_GREATER
+    public async IAsyncEnumerable<T> ToAsyncList<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     T>([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         DbDataReader? reader = null;
@@ -194,14 +193,11 @@ TParameter>(ISqlExecutor ado, string sql, TParameter? param, DbTransaction? tran
         }
         finally
         {
-#if NET6_0_OR_GREATER
             if (reader is not null)
             {
                 await reader.CloseAsync();
             }
-#else
             reader?.Close();
-#endif
         }
     }
 
@@ -227,16 +223,14 @@ TParameter>(ISqlExecutor ado, string sql, TParameter? param, DbTransaction? tran
         }
         finally
         {
-#if NET6_0_OR_GREATER
             if (reader is not null)
             {
                 await reader.CloseAsync();
             }
-#else
             reader?.Close();
-#endif
         }
     }
+#endif
 
     public async Task<T?> SingleAsync<
 #if NET8_0_OR_GREATER

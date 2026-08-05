@@ -34,7 +34,10 @@ public interface IExpSelect0<out TSelect, T1> : IExpSelect where TSelect : IExpS
     TReturn>();
     DataTable ToDataTable();
     Task<IList<T1>> ToListAsync(CancellationToken cancellationToken = default);
+#if NET8_0_OR_GREATER
+
     IAsyncEnumerable<T1> ToEnumerableAsync(CancellationToken cancellationToken = default);
+#endif
     Task<T1?> FirstAsync(CancellationToken cancellationToken = default);
     Task<TReturn?> FirstAsync<
 #if NET8_0_OR_GREATER

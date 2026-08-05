@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data.Common;
 
 namespace LightORM.Models;
 
@@ -38,10 +33,9 @@ public class MultipleResult(DbDataReader reader) : IDisposable
         }
     }
 
-    public async IAsyncEnumerable<T> ReadAsync<
 #if NET8_0_OR_GREATER
+    public async IAsyncEnumerable<T> ReadAsync<
     [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)]
-#endif
     T>()
     {
         Check();
@@ -51,6 +45,7 @@ public class MultipleResult(DbDataReader reader) : IDisposable
             yield return deserializer(reader);
         }
     }
+#endif
 
     public async Task<IList<T>> ReadListAsync<
 #if NET8_0_OR_GREATER

@@ -300,10 +300,9 @@ internal sealed class SelectProvider{{count}}<
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<{{argsStr}}, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
@@ -311,14 +310,13 @@ internal sealed class SelectProvider{{count}}<
     }
 
     public IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<{{argsStr}}, object>> exp, CancellationToken cancellationToken = default)
     {
         this.HandleResult(exp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
+#endif
 
     public IExpSelect<TTable> AsTable<
 #if NET8_0_OR_GREATER
@@ -441,10 +439,9 @@ internal sealed class SelectProvider{{count}}<
         return this.InternalToListAsync<TReturn>(cancellationToken);
     }
 
-    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    public IAsyncEnumerable<TReturn> ToEnumerableAsync<
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<TypeSet<{{argsStr}}>, TReturn>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
@@ -453,15 +450,14 @@ internal sealed class SelectProvider{{count}}<
     }
 
     public IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
     TReturn>(Expression<Func<TypeSet<{{argsStr}}>, object>> exp, CancellationToken cancellationToken = default)
     {
         var flatExp = FlatTypeSet.Default.Flat(exp)!;
         this.HandleResult(flatExp, null);
         return this.InternalToEnumerableAsync<TReturn>(cancellationToken);
     }
+#endif
 
     public IExpSelect<TTable> AsTable<
 #if NET8_0_OR_GREATER

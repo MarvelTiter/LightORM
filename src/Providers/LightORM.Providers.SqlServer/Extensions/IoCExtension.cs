@@ -1,6 +1,5 @@
 ﻿using LightORM.Interfaces;
 using LightORM.Models;
-using Microsoft.Data.SqlClient;
 
 namespace LightORM.Providers.SqlServer.Extensions;
 

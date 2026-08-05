@@ -1,5 +1,4 @@
-﻿using LightORM.DbStruct;
-namespace LightORM;
+﻿namespace LightORM;
 
 [Obsolete("use LightTableAttribute instead")]
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]

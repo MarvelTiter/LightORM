@@ -1,9 +1,7 @@
 ﻿using System.Collections.Concurrent;
-using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Threading;
 namespace LightORM.SqlExecutor;
 

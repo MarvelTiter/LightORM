@@ -2,7 +2,6 @@
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
-using Microsoft.Extensions.Options;
 using System.Text;
 
 namespace LightORM.Providers.Dameng;

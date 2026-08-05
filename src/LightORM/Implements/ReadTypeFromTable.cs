@@ -1,6 +1,4 @@
-﻿using LightORM.DbStruct;
-
-namespace LightORM.Implements;
+﻿namespace LightORM.Implements;
 
 // public abstract class ReadTypeFromTable
 // {

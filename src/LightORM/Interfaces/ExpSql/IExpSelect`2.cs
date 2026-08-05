@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM;
@@ -86,16 +86,14 @@ public interface IExpSelect<T1, T2> : IExpSelect0<IExpSelect<T1, T2>, T1>
 #endif
         TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
         TReturn>(Expression<Func<T1, T2, TReturn>> exp, CancellationToken cancellationToken = default);
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
         TReturn>(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default);
+#endif
 
     #endregion
 
@@ -164,16 +162,15 @@ TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp);
 #endif
         TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<TReturn> ToEnumerableAsync<
 #if NET8_0_OR_GREATER
+    IAsyncEnumerable<TReturn> ToEnumerableAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
         TReturn>(Expression<Func<TypeSet<T1, T2>, TReturn>> exp, CancellationToken cancellationToken = default);
+
     IAsyncEnumerable<TReturn> ToEnumerableAsync<
-#if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-#endif
         TReturn>(Expression<Func<TypeSet<T1, T2>, object>> exp, CancellationToken cancellationToken = default);
+#endif
 
     ///// <summary>
     ///// 外部套一层 SELECT * FROM ( ... ) 后转换成<see cref="IExpSelect{T1}"/>

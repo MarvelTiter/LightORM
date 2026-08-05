@@ -10,6 +10,9 @@ namespace LightORM.Cache;
 
 internal static class DbParameterReader
 {
+    private readonly record struct DbTypeInfo(object? FinalValue, DbType Type);
+    private readonly record struct UnderlyingTypeInfo(bool IsNullable, bool IsEnum);
+
     private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object>> cacheReaders = [];
     private static readonly ConcurrentDictionary<Certificate, Action<object, Dictionary<string, object>>> readObjectToDicCache = [];
     public static void HandleDbParameter(this SqlExecuteContext context, string prefix, DbCommand command)
@@ -77,11 +80,11 @@ internal static class DbParameterReader
             cmd.Parameters.Add(p);
         }
 
-        static (object? finalValue, DbType dbType) GetDbTypeAndValue(object? value)
+        static DbTypeInfo GetDbTypeAndValue(object? value)
         {
             if (value == null)
             {
-                return (null, DbType.Object);
+                return new(null, DbType.Object);
             }
             var t = value.GetType();
             var underlying = Nullable.GetUnderlyingType(t) ?? t;
@@ -93,7 +96,7 @@ internal static class DbParameterReader
                 {
                     dbType = DbType.Object;
                 }
-                return (converted, dbType);
+                return new(converted, dbType);
             }
             else
             {
@@ -101,7 +104,7 @@ internal static class DbParameterReader
                 {
                     dbType = DbType.Object;
                 }
-                return (value, dbType);
+                return new(value, dbType);
             }
         }
     }
@@ -215,7 +218,7 @@ internal static class DbParameterReader
         return lambda.Compile();
 
 
-        static (bool IsNullable, bool IsEnum) GetUnderlyingType(Type t, out Type realType)
+        static UnderlyingTypeInfo GetUnderlyingType(Type t, out Type realType)
         {
             var type = Nullable.GetUnderlyingType(t);
             var isNullable = false;
@@ -231,7 +234,7 @@ internal static class DbParameterReader
                 type = Enum.GetUnderlyingType(type);
             }
             realType = type;
-            return (isNullable, isEnum);
+            return new(isNullable, isEnum);
         }
     }
 

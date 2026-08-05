@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace LightORM.Extension;
 
@@ -65,13 +66,33 @@ public static class StringBuilderHelper
         return stringBuilder.ToString(s, e - s + 1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CheckEmpty(
+#if NET8_0_OR_GREATER
+         ReadOnlySpan<char> content
+#else
+         string content
+#endif
+        )
+    {
+#if NET8_0_OR_GREATER
+        return content.IsEmpty;
+#else
+        return string.IsNullOrEmpty(content);
+#endif
+    }
+
     public static int IndexOf(this StringBuilder stringBuilder
+#if NET8_0_OR_GREATER
         , ReadOnlySpan<char> content
+#else
+        , string content
+#endif
         , int startIndex = 0
         , int count = -1)
     {
         if (stringBuilder == null) throw new ArgumentNullException(nameof(stringBuilder));
-        if (content.IsEmpty) throw new ArgumentNullException(nameof(content));
+        if (CheckEmpty(content)) throw new ArgumentNullException(nameof(content));
 
         int sbLength = stringBuilder.Length;
         int valueLength = content.Length;

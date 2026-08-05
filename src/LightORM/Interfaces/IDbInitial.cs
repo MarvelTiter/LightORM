@@ -1,6 +1,4 @@
-﻿using System.Data.Common;
-
-namespace LightORM;
+﻿namespace LightORM;
 
 public interface IDbInitial
 {

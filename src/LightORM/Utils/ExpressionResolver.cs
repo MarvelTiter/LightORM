@@ -5,18 +5,13 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Metrics;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Xml.Linq;
 namespace LightORM;
 
 internal static class ExpressionExtensions
 {
-    private static readonly ConcurrentDictionary<(SqlAction, ulong), ExpressionResolvedResult> expressionResolvedResultCache = new();
+    private readonly record struct CacheKey(SqlAction SqlAction, ulong hash);
+    private static readonly ConcurrentDictionary<CacheKey, ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
         //resolve.Visit(expression);
@@ -29,7 +24,7 @@ internal static class ExpressionExtensions
             hash = ExpressionHasher.Default.ComputeHash64(expression);
             Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {hash}");
         }
-        var key = (options.SqlAction, hash);
+        CacheKey key = new (options.SqlAction, hash);
         if (enableCache && expressionResolvedResultCache.TryGetValue(key, out var result))
         {
             //result.DbParameters
@@ -611,7 +606,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             if (v == null)
             {
                 // 方便binary按顺序处理，替换操作在ExpressionResolvedResult.ReplaceConstantValue中处理
-                var name = new string(Guid.NewGuid().ToString("N").AsSpan(0, 8).ToArray());
+                var name = Guid.NewGuid().ToString("N").Substring(0, 8);
                 Sql.Append(name);
                 DbParameters.Add(new(name, null, ExpValueType.ConstantNull));
                 return;
