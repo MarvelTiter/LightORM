@@ -29,11 +29,16 @@ jobs:
         mkdir -p $HOME/.local-nuget
         dotnet nuget add source $HOME/.local-nuget --name local
 
-    - name: Main
+    - name: LightORM
       run: |
         dotnet build ./src/LightOrmTableContextGenerator/LightOrmTableContextGenerator.csproj -c Release
         dotnet build ./src/LightORM/LightORM.csproj -c Release
         dotnet pack ./src/LightORM/LightORM.csproj -c Release -o $HOME/.local-nuget
+
+    - name: LightORM.Extensions.DependencyInjection
+      run: |
+        dotnet build ./src/LightORM.Extensions.DependencyInjection/LightORM.Extensions.DependencyInjection.csproj -c Release
+        dotnet pack ./src/LightORM.Extensions.DependencyInjection/LightORM.Extensions.DependencyInjection.csproj -c Release -o $HOME/.local-nuget
 
     - name: SqlServer Provider
       run: |
