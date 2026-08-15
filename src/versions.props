@@ -3,9 +3,9 @@
 		<MainProjectVersion>2026.08.15.1</MainProjectVersion>
 
 		<!-- Dependency -->
-		<DependencyVersion>2026.08.05.1</DependencyVersion>
+		<DependencyVersion>2026.08.15.1</DependencyVersion>
 		<!-- Dependency依赖版本 -->
-		<DependencyDepVersion>2026.08.05.1</DependencyDepVersion>
+		<DependencyDepVersion>2026.08.15.1</DependencyDepVersion>
 
 		<!-- 达梦 -->
 		<DamengVersion>2026.08.15.1</DamengVersion>
@@ -33,9 +33,9 @@
 		<PgSqlDepVersion>2026.08.15.1</PgSqlDepVersion>
 
 		<!-- Sqlite -->
-		<SqliteVersion>2026.06.19.1</SqliteVersion>
+		<SqliteVersion>2026.08.15.1</SqliteVersion>
 		<!-- Sqlite依赖版本 -->
-		<SqliteDepVersion>2026.06.19.1</SqliteDepVersion>
+		<SqliteDepVersion>2026.08.15.1</SqliteDepVersion>
 
 		<!-- SqlServer -->
 		<SqlServerVersion>2026.08.15.1</SqlServerVersion>
