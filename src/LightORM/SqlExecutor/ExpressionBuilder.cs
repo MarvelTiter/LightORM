@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 
 namespace LightORM.SqlExecutor;
+
 internal partial class ExpressionBuilder
 {
     private static readonly ConcurrentDictionary<string, Delegate> dynamicDelegates = [];
@@ -17,7 +18,7 @@ internal partial class ExpressionBuilder
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        T>(DbDataReader reader)
+    T>(DbDataReader reader)
     {
         var type = typeof(T);
 
@@ -73,7 +74,7 @@ internal partial class ExpressionBuilder
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
-        Target>(DbDataReader reader, CultureInfo Culture)
+    Target>(DbDataReader reader, CultureInfo Culture)
     {
         ParameterExpression recordInstanceExp = Expression.Parameter(typeof(IDataReader), "reader");
         Type TargetType = typeof(Target);
@@ -202,7 +203,7 @@ internal partial class ExpressionBuilder
 
                     var targetMember = targetType.GetProperty(col.PropertyName)!;
 
-                    FindMatchValueExpression(Bindings, col, targetMember);
+                    FindMatchValueExpression(Bindings, col, targetMember, false);
 
                     //void work()
                     //{
@@ -240,7 +241,7 @@ internal partial class ExpressionBuilder
 
                     var targetMember = targetType.GetProperty(col.PropertyName)!;
 
-                    FindMatchValueExpression(Bindings, col, targetMember);
+                    FindMatchValueExpression(Bindings, col, targetMember, true);
 
                     //void work()
                     //{
@@ -283,7 +284,7 @@ internal partial class ExpressionBuilder
                         }
 
                         var flatTargetMember = flatType.GetProperty(flatCol.PropertyName)!;
-                        FindMatchValueExpression(flatBindings, flatCol, flatTargetMember);
+                        FindMatchValueExpression(flatBindings, flatCol, flatTargetMember, false);
                         //void work()
                         //{
                         //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
@@ -316,14 +317,15 @@ internal partial class ExpressionBuilder
 
                 return Expression.MemberInit(Expression.New(targetType), Bindings);
 
-                void FindMatchValueExpression(List<MemberBinding> bindings, ITableColumnInfo col, PropertyInfo property)
+                void FindMatchValueExpression(List<MemberBinding> bindings, ITableColumnInfo col, PropertyInfo property, bool isJson)
                 {
                     for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
                     {
                         //Check if the RecordFieldName matches the TargetMember
                         if (MemberMatchesName(col, reader.GetName(Ordinal)))
                         {
-                            Expression TargetValueExpression = GetTargetValueExpression(
+                            Func<DbDataReader, CultureInfo, ParameterExpression, DataTable, int, Type, Expression> func = isJson ? GetTargetJsonExpression : GetTargetValueExpression;
+                            Expression TargetValueExpression = func(
                                 reader,
                                 Culture,
                                 recordInstanceExp,
@@ -595,7 +597,7 @@ internal partial class ExpressionBuilder
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
 #endif
-            T>(Expression sourceExpression)
+        T>(Expression sourceExpression)
         {
             MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string)])!;
             MethodCallExpression CallExpression = Expression.Call(ParseMetod, [sourceExpression]);
@@ -625,7 +627,7 @@ internal partial class ExpressionBuilder
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
 #endif
-            T>(Expression sourceExpression, CultureInfo culture)
+        T>(Expression sourceExpression, CultureInfo culture)
         {
             MethodInfo ParseMetod = typeof(T).GetMethod("Parse", [typeof(string), typeof(NumberFormatInfo)])!;
             ConstantExpression ProviderExpression = Expression.Constant(culture.NumberFormat, typeof(NumberFormatInfo));

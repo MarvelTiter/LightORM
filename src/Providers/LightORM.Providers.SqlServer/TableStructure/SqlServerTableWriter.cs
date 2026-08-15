@@ -89,7 +89,9 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
     protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         var dbType = ConvertToDbType(option, column);
-        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{(dbType.ToUpper().Contains("CHAR") && !column.IsJson ? $"({column.Length ?? option.DefaultStringLength})" : "")}";
+        var length = (dbType.Contains("Char") || dbType.Contains("Binary")) && !column.IsJson ? $"({column.Length ?? option.DefaultStringLength})" : "";
+        string dataType = $"{DbEmphasis(option, column.Name)} {dbType}{length}";
+
         string identity = column.AutoIncrement ? " IDENTITY(1,1)" : "";
         string notNull = column.NotNull ? " NOT NULL" : "";
         return $"{dataType}{identity}{notNull}";

@@ -204,7 +204,7 @@ internal class UpdateBuilder<T> : SqlBuilder
                    })
                    .ToArray();
 
-        BatchInfos = columns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count, DbParameters);
+        BatchInfos = columns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count, DbParameters);
         //var update = $"UPDATE {GetTableName(database, MainTable, false)} SET";
         //var primaryWhen = $"WHEN {string.Join(" AND ", primaryCol.Select(p => $"{AttachPrefix(p.ColumnName)}_{{0}}"))}";
         foreach (var batch in BatchInfos)
@@ -244,7 +244,7 @@ internal class UpdateBuilder<T> : SqlBuilder
                         sb.WithPrefix(item.ParameterName, database);
                     }
                     sb.Append(" THEN ");
-                    sb.AppendLine(GetValueExpression(currentCol));
+                    sb.AppendLine(database.GetValueExpression(currentCol));
                     //if (currentCol.IsVersion)
                     //{
                     //    rowDatas.Add(currentCol);
@@ -300,51 +300,10 @@ internal class UpdateBuilder<T> : SqlBuilder
         }
         batchDone = true;
 
-        string GetValueExpression(SimpleColumn col)
-        {
-            if (col.Value is null)
-            {
-                return "NULL";
-            }
-            if (col.isStaticValue)
-            {
-                return FormatStaticValue(col.Value);
-            }
-            return database.AttachPrefix(col.ParameterName);
-        }
-
-        string FormatStaticValue(object value)
-        {
-            return value switch
-            {
-                // 字符串：用单引号包裹，并转义单引号（基础防护）
-                string s => $"'{s.Replace("'", "''")}'",
-
-                // 布尔值：根据 SQL 标准，多数数据库用 1/0，PostgreSQL 用 true/false
-                bool b => database.FormatBooleanValue(b),
-
-                // 整数类型
-                sbyte or byte or short or ushort or int or uint or long or ulong => $"{value}",
-
-                // 浮点数
-                float f => f.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                double d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                decimal m => m.ToString(System.Globalization.CultureInfo.InvariantCulture),
-
-                // 日期时间（可选支持）
-                DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'",
-#if NET6_0_OR_GREATER
-                DateOnly dOnly => $"'{dOnly:yyyy-MM-dd}'",
-                TimeOnly tOnly => $"'{tOnly:HH:mm:ss}'",
-#endif
-                // Guid（可选）
-                Guid g => $"'{g}'",
-
-                // 不支持的类型：抛出异常或返回 NULL / 占位符
-                _ => throw new NotSupportedException($"Static value of type '{value.GetType()}' is not supported in SQL literal generation.")
-            };
-        }
+        
     }
+
+    
 
     public override string ToSqlString(IDatabaseAdapter database)
     {
@@ -418,7 +377,7 @@ internal class UpdateBuilder<T> : SqlBuilder
                 sb.Append(fieldSql);
                 if (c.IsJsonColumn)
                 {
-                    database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                    database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
                 }
                 sb.AppendLine(",");
                 continue;
@@ -440,7 +399,7 @@ internal class UpdateBuilder<T> : SqlBuilder
             if (c.IsJsonColumn)
             {
                 // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
                 var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
                 var jsonString = jsonHandler.Serialize(value);
                 DbParameters[c.PropertyName] = jsonString;

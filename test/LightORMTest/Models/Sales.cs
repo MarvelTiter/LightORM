@@ -4,15 +4,18 @@ using System.Text;
 
 namespace LightORMTest.Models;
 
-[LightTable(Name = "sales")]
+[LightTable(Name = "SALES")]
 public class Sales
 {
-    [LightColumn(Name = "region")]
+    [LightColumn(Name = "REGION", PrimaryKey = true)]
     public string? Region { get; set; }
-    [LightColumn(Name = "province")]
+    [LightColumn(Name = "PROVINCE", PrimaryKey = true)]
     public string? Province { get; set; }
-    [LightColumn(Name = "product")]
+    [LightColumn(Name = "PRODUCT")]
     public string? Product { get; set; }
-    [LightColumn(Name = "amount")]
+    [LightColumn(Name = "AMOUNT")]
     public int Amount { get; set; }
+
+    [LightColumn(Name = "VERSION", Version = true)]
+    public int Version { get; set; }
 }

@@ -294,6 +294,40 @@ public partial class ExecutionTest : TestBase
         Assert.HasCount(2, users2);
     }
 
+    [TestMethod]
+    public async Task InsertOrUpdateTest()
+    {
+        var nr = new Role()
+        {
+            RoleId = "Admin",
+            RoleName = "管理员22"
+        };
+        //await Db.Insert(nr).ExecuteAsync(TestContext.CancellationToken);
+        var e1 = await Db.Insert(nr).IgnoreIfExits().ExecuteAsync(TestContext.CancellationToken);
+        var e2 = await Db.Insert(nr).OrUpdate().ExecuteAsync(TestContext.CancellationToken);
+        Assert.AreEqual(0, e1);
+        if (DbType == DbBaseType.MySql)
+            Assert.AreEqual(2, e2);
+        else
+            Assert.AreEqual(1, e2);
+        var nu = new Sales()
+        {
+            Region = "华东",
+            Province = "上海",
+            Product = "笔记本电脑2",
+            Amount = 111,
+            Version = 1,
+        };
+
+        var e3 = await Db.Insert(nu).IgnoreIfExits().ExecuteAsync(TestContext.CancellationToken);
+        var e4 = await Db.Insert(nu).OrUpdate().ExecuteAsync(TestContext.CancellationToken);
+        Assert.AreEqual(0, e3);
+        if (DbType == DbBaseType.MySql)
+            Assert.AreEqual(2, e4);
+        else
+            Assert.AreEqual(1, e4);
+    }
+
     [NotNull]
     public TestContext? TestContext { get; set; }
 }

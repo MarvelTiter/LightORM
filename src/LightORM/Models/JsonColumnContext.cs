@@ -28,12 +28,26 @@ public enum ActionType
     ParameterValue
 }
 
+public readonly record struct MapEntry(string Column, string Value);
+
+internal readonly record struct UpsertContext(SqlBuilder Builder, Dictionary<ITableColumnInfo, MapEntry> ColumnValueMap, Dictionary<string, object> Parameters, bool IgnoreWhenMap);
+
+internal readonly record struct BatchActionContext(SqlBuilder Builder, ITableColumnInfo[] InsertColumns, List<BatchSqlInfo> Batchs);
+
 public readonly record struct JsonColumnParameterContext(ActionType ActionType
-    , ITableColumnInfo? Column = null
+    , ITableColumnInfo Column
     , StringBuilder? Sql = null
+    , Dictionary<ITableColumnInfo, MapEntry>? ColumnValueMap = null
     , Dictionary<string, object>? Parameters = null
     , ILightJsonHelper? JsonHelper = null
     , object? Value = null)
 {
-
+    public void UpdateMapEntry(Func<MapEntry, MapEntry> handle)
+    {
+        if (ColumnValueMap?.TryGetValue(Column, out var old) == true)
+        {
+            var n = handle(old);
+            ColumnValueMap[Column] = n;
+        }
+    }
 }

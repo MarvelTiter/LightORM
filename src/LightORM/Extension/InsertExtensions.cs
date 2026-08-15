@@ -4,31 +4,38 @@ namespace LightORM;
 
 public static class InsertExtensions
 {
-    public static int InsertEach<T>(this IExpInsert<T> insert, IEnumerable<T> entities)
+    extension<T>(IExpInsert<T> insert)
     {
-        if (insert is null) throw new ArgumentNullException(nameof(insert));
-        if (entities is null) throw new ArgumentNullException(nameof(entities));
-        int count = 0;
-        foreach (var entity in entities)
+        public int InsertEach(IEnumerable<T> entities)
         {
-            insert.SetTargetObject(entity);
-            count += insert.Execute();
+            int count = 0;
+            foreach (var entity in entities)
+            {
+                insert.SetTargetObject(entity);
+                count += insert.Execute();
+            }
+            return count;
         }
-        return count;
-    }
 
-    public static async Task<int> InsertEachAsync<T>(this IExpInsert<T> insert
-        , IEnumerable<T> entities
-        , CancellationToken cancellationToken = default)
-    {
-        if (insert is null) throw new ArgumentNullException(nameof(insert));
-        if (entities is null) throw new ArgumentNullException(nameof(entities));
-        int count = 0;
-        foreach (var entity in entities)
+        public async Task<int> InsertEachAsync(IEnumerable<T> entities
+            , CancellationToken cancellationToken = default)
         {
-            insert.SetTargetObject(entity);
-            count += await insert.ExecuteAsync(cancellationToken: cancellationToken);
+            int count = 0;
+            foreach (var entity in entities)
+            {
+                insert.SetTargetObject(entity);
+                count += await insert.ExecuteAsync(cancellationToken: cancellationToken);
+            }
+            return count;
         }
-        return count;
+
+        public IExpInsert<T> OrUpdate()
+        {
+            return insert.OrUpdate<int>(null, null);
+        }
+        public IExpInsert<T> OrUpdate(Expression<Func<T, bool>> wherePredicate)
+        {
+            return insert.OrUpdate<int>(wherePredicate, null);
+        }
     }
 }

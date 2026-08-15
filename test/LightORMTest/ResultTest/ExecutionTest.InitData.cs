@@ -12,7 +12,8 @@ public partial class ExecutionTest
         await Db.Delete<Role>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
         await Db.Delete<RolePermission>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
         await Db.Delete<Permission>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Insert<User>().InsertEachAsync([
+        await Db.Delete<Sales>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
             new User()
             {
                 UserId = "test01",
@@ -49,8 +50,8 @@ public partial class ExecutionTest
                 Password = "helloworld",
                 Sign = SignType.Svip
             }
-        ], TestContext.CancellationToken);
-        await Db.Insert<UserRole>().InsertEachAsync([
+        ]).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
             new UserRole()
             {
                 UserId = "test01",
@@ -71,8 +72,8 @@ public partial class ExecutionTest
                 UserId = "test03",
                 RoleId = "SuperAdmin"
             }
-        ], TestContext.CancellationToken);
-        await Db.Insert<Role>().InsertEachAsync([
+        ]).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
             new Role()
             {
                 RoleId = "Admin",
@@ -83,8 +84,8 @@ public partial class ExecutionTest
                 RoleId = "SuperAdmin",
                 RoleName = "超级管理员"
             }
-        ], TestContext.CancellationToken);
-        await Db.Insert<Permission>().InsertEachAsync([
+        ]).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
             new Permission()
             {
                 PermissionId = "P001",
@@ -217,8 +218,8 @@ public partial class ExecutionTest
                 Path = "",
                 Sort = 4
             }
-        ], TestContext.CancellationToken);
-        await Db.Insert<RolePermission>().InsertEachAsync([
+        ]).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
             new RolePermission()
             {
                 RoleId = "Admin",
@@ -319,6 +320,36 @@ public partial class ExecutionTest
                 RoleId = "SuperAdmin",
                 PermissionId = "P010"
             }
-        ], TestContext.CancellationToken);
+        ]).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
+                new Sales { Region = "华东", Province = "上海", Product = "笔记本电脑", Amount = 1500, Version = 1 },
+                new Sales { Region = "华东", Province = "江苏", Product = "笔记本电脑", Amount = 2200, Version = 1 },
+                new Sales { Region = "华东", Province = "浙江", Product = "笔记本电脑", Amount = 1800, Version = 1 },
+                new Sales { Region = "华东", Province = "安徽", Product = "笔记本电脑", Amount = 800, Version = 1 },
+                new Sales { Region = "华东", Province = "福建", Product = "笔记本电脑", Amount = 1200, Version = 1 },
+                new Sales { Region = "华南", Province = "广东", Product = "智能手机", Amount = 3500, Version = 1 },
+                new Sales { Region = "华南", Province = "广西", Product = "智能手机", Amount = 900, Version = 1 },
+                new Sales { Region = "华南", Province = "海南", Product = "智能手机", Amount = 400, Version = 1 },
+                new Sales { Region = "华北", Province = "北京", Product = "台式电脑", Amount = 1100, Version = 1 },
+                new Sales { Region = "华北", Province = "天津", Product = "台式电脑", Amount = 600, Version = 1 },
+                new Sales { Region = "华北", Province = "河北", Product = "台式电脑", Amount = 1000, Version = 1 },
+                new Sales { Region = "华北", Province = "山西", Product = "台式电脑", Amount = 700, Version = 1 },
+                new Sales { Region = "华北", Province = "内蒙古", Product = "台式电脑", Amount = 300, Version = 1 },
+                new Sales { Region = "华中", Province = "河南", Product = "服务器", Amount = 500, Version = 1 },
+                new Sales { Region = "华中", Province = "湖北", Product = "服务器", Amount = 600, Version = 1 },
+                new Sales { Region = "华中", Province = "湖南", Product = "服务器", Amount = 450, Version = 1 },
+                new Sales { Region = "西南", Province = "四川", Product = "平板电脑", Amount = 900, Version = 1 },
+                new Sales { Region = "西南", Province = "贵州", Product = "平板电脑", Amount = 350, Version = 1 },
+                new Sales { Region = "西南", Province = "云南", Product = "平板电脑", Amount = 400, Version = 1 },
+                new Sales { Region = "西南", Province = "重庆", Product = "平板电脑", Amount = 550, Version = 1 },
+                new Sales { Region = "东北", Province = "辽宁", Product = "显示器", Amount = 650, Version = 1 },
+                new Sales { Region = "东北", Province = "吉林", Product = "显示器", Amount = 300, Version = 1 },
+                new Sales { Region = "东北", Province = "黑龙江", Product = "显示器", Amount = 400, Version = 1 },
+                new Sales { Region = "西北", Province = "陕西", Product = "键盘鼠标", Amount = 350, Version = 1 },
+                new Sales { Region = "西北", Province = "甘肃", Product = "键盘鼠标", Amount = 200, Version = 1 },
+                new Sales { Region = "西北", Province = "青海", Product = "键盘鼠标", Amount = 100, Version = 1 },
+                new Sales { Region = "西北", Province = "宁夏", Product = "键盘鼠标", Amount = 80, Version = 1 },
+                new Sales { Region = "西北", Province = "新疆", Product = "键盘鼠标", Amount = 150, Version = 1 }
+            ]).ExecuteAsync(TestContext.CancellationToken);
     }
 }

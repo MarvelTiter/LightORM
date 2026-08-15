@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class CustomDamengAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal static readonly CustomDamengAdapter TestInstance = new CustomDamengAdapter(new DamengMethodResolver(new()), new());
     public override string Prefix => ":";

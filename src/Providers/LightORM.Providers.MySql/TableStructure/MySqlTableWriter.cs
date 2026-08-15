@@ -25,7 +25,7 @@ public class MySqlTableWriter : LightORM.Implements.WriteTableFromType
         sql.AppendLine(@$"
 CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
     {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(option, col)))}{primaryKeyConstraint}
-)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
         int i = 1;
         foreach (DbIndex index in table.Indexs)
@@ -47,7 +47,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
     protected override string BuildColumn(TableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
-        if (dataType.Contains("VARCHAR"))
+        if (dataType.Contains("VARCHAR") || dataType == "BINARY")
         {
             dataType = $"{dataType}({column.Length ?? option.DefaultStringLength})";
         }

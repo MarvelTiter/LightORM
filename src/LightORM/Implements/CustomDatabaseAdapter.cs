@@ -1,10 +1,11 @@
-﻿using System.Data.Common;
+﻿using LightORM.Extension;
+using System.Data.Common;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
 
-public abstract class CustomDatabaseAdapter : IDatabaseAdapter
+internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
 {
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }
@@ -16,7 +17,7 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
     {
         // 数据查询（DQL/DML）
         "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE",
-        "INTO", "VALUES", "SET",
+        "INTO", "VALUES", "SET", "MERGE",
 
         // 数据连接与组合
         "JOIN", "INNER", "OUTER", "LEFT", "RIGHT", "FULL", "ON",
@@ -78,7 +79,7 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual void HandleBooleanValue(StringBuilder sql, bool value)
     {
-        sql.Append(value ? '1' : '0');
+        sql.Append(FormatBooleanValue(value));
     }
 
     public virtual string FormatBooleanValue(bool value)
@@ -116,7 +117,7 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual string DeleteTemplate => throw new NotImplementedException();
 
-    bool? IDatabaseAdapter.QuoteIdentifiers { get ; set ; }
+    bool? IDatabaseAdapter.QuoteIdentifiers { get; set; }
 
     public virtual void HandleJsonColumn(JsonColumnContext context)
     {
@@ -126,4 +127,58 @@ public abstract class CustomDatabaseAdapter : IDatabaseAdapter
     public virtual void HandleJsonParameter(JsonColumnParameterContext context) { }
 
     public virtual void DbCommandInit(DbCommand dbCommand) { }
+
+    public virtual StringBuilder HandleInsertOrUpdate(UpsertContext context)
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual void HandleBatchInsert(BatchActionContext context)
+    {
+        var batchs = context.Batchs;
+        var builder = context.Builder;
+        var insertColumns = context.InsertColumns;
+        foreach (var item in batchs)
+        {
+            StringBuilder sb = CreateInsertBuilder();//new(insert);//
+            for (int i = 0; i < item.Parameters.Count; i++)
+            {
+                List<SimpleColumn>? dic = item.Parameters[i];
+                if (i > 0)
+                {
+                    sb.Append(',');
+                    sb.AppendLine();
+                }
+                sb.Append('(');
+                foreach (var c in dic)
+                {
+                    sb.Append(this.GetValueExpression(c));
+                    sb.Append(',');
+                }
+                sb.RemoveLast(1);
+                sb.Append(')');
+            }
+            builder.HandleSqlParameters(sb, this);
+            item.Sql = sb.ToString();
+        }
+
+
+        StringBuilder CreateInsertBuilder()
+        {
+            var sb = new StringBuilder("INSERT INTO ");
+            //sb.Append(GetTableName(database, MainTable, false));
+            sb.AppendTableName(this, builder.MainTable, false).AppendLine();
+            sb.Append('(');
+            foreach (var item in insertColumns)
+            {
+                sb.AppendEmphasis(item.ColumnName, this);
+                sb.Append(',');
+            }
+            sb.RemoveLast(1);
+            sb.Append(')');
+            sb.AppendLine();
+            sb.AppendLine("VALUES");
+            return sb;
+        }
+    }
 }

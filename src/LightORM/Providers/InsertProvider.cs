@@ -105,6 +105,26 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         return this;
     }
 
+    public IExpInsert<T> OrUpdate<Columns>(Expression<Func<T, bool>>? where, Expression<Func<T, Columns>>? columns)
+    {
+        if (columns is not null)
+        {
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Insert, columns));
+        }
+        if (where is not null)
+        {
+            sqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.UpdateWhere, where));
+        }
+        sqlBuilder.UpdateOnConflict = true;
+        return this;
+    }
+
+    public IExpInsert<T> IgnoreIfExits()
+    {
+        sqlBuilder.IgnoreOnConflict = true;
+        return this;
+    }
+
     public int Execute()
     {
         var sql = sqlBuilder.ToSqlString(Database);
@@ -202,7 +222,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                     sb.AppendLine("----行数据");
                     item.ForEach(row =>
                     {
-                        if (row.isStaticValue) return;
+                        if (row.IsStaticValue) return;
                         sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
                     });
                 }

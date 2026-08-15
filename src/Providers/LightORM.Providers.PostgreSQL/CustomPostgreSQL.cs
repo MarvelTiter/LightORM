@@ -8,7 +8,8 @@ using System.Text;
 
 namespace LightORM.Providers.PostgreSQL;
 
-internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+#pragma warning disable CS9113 // 参数未读。
+internal sealed partial class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal readonly static CustomPostgreSQL Instance = new(new PostgreSQLMethodResolver(), new());
 
@@ -25,11 +26,6 @@ internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions 
         sql.Append(builder.Skip);
     }
 
-    public override void HandleBooleanValue(StringBuilder sql, bool value)
-    {
-        sql.Append(value ? "TRUE" : "FALSE");
-    }
-
     public override string FormatBooleanValue(bool value)
     {
         return value ? "TRUE" : "FALSE";
@@ -44,9 +40,12 @@ internal class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions 
 
     public override void HandleJsonParameter(JsonColumnParameterContext context)
     {
-        if (context.ActionType == ActionType.Parameterized && context.Sql is not null)
+        if (context.ActionType == ActionType.Parameterized)
         {
-            context.Sql.Append("::JSON");
+            context.UpdateMapEntry(e =>
+            {
+                return e with { Value = $"{e.Value}::JSON" };
+            });
         }
         else if (context.ActionType == ActionType.ParameterValue && context.Parameters is not null && context.Column is not null)
         {
