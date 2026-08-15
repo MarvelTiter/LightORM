@@ -60,8 +60,8 @@ public class LightOrmAop : AdoInterceptorBase
 {
     public override void AfterExecute(SqlExecuteContext context)
     {
-        if (context.Sql?.Contains("-- ") == false)
-            return;
+        //if (context.Sql?.Contains("-- ") == false)
+        //    return;
 
         Debug.WriteLine($"""
 

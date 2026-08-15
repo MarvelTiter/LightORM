@@ -6,7 +6,8 @@ using System.Text;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class CustomMySqlAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+#pragma warning disable CS9113 // 参数未读。
+internal sealed partial class CustomMySqlAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal static readonly CustomMySqlAdapter Instance = new(new MySqlMethodResolver(), new());
     public override string Prefix => "?";

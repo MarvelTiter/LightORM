@@ -10,7 +10,8 @@ internal class InsertBuilder<T> : SqlBuilder
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     HashSet<string> IgnoreMembers { get; set; } = [];
     HashSet<string> Members { get; set; } = [];
-
+    public bool UpdateOnConflict { get; set; }
+    public bool IgnoreOnConflict { get; set; }
     public bool IsReturnIdentity { get; set; }
 
     public void AddMember(string member, object? value)
@@ -88,57 +89,14 @@ internal class InsertBuilder<T> : SqlBuilder
         ResolveExpressions(database);
 
         var insertColumns = GetInsertColumns();
+
         // TODO 批量插入对JSON列处理
-        BatchInfos = insertColumns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
-        foreach (var item in BatchInfos)
-        {
-            StringBuilder sb = CreateInsertBuilder();//new(insert);//
-            for (int i = 0; i < item.Parameters.Count; i++)
-            {
-                List<SimpleColumn>? dic = item.Parameters[i];
-                if (i > 0)
-                {
-                    sb.Append(',');
-                    sb.AppendLine();
-                }
-                sb.Append('(');
-                foreach (var c in dic)
-                {
-                    if (c.Value is null)
-                    {
-                        sb.Append("NULL");
-                    }
-                    else
-                    {
-                        sb.WithPrefix(c.ParameterName, database);
-                    }
-                    sb.Append(',');
-                }
-                sb.RemoveLast(1);
-                sb.Append(')');
-            }
-            HandleSqlParameters(sb, database);
-            item.Sql = sb.ToString();
-        }
+        BatchInfos = insertColumns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
+
+        database.HandleBatchInsert(new(this, insertColumns, BatchInfos));
+
         batchDone = true;
 
-        StringBuilder CreateInsertBuilder()
-        {
-            var sb = new StringBuilder("INSERT INTO ");
-            //sb.Append(GetTableName(database, MainTable, false));
-            sb.AppendTableName(database, MainTable, false).AppendLine();
-            sb.Append('(');
-            foreach (var item in insertColumns)
-            {
-                sb.AppendEmphasis(item.ColumnName, database);
-                sb.Append(',');
-            }
-            sb.RemoveLast(1);
-            sb.Append(')');
-            sb.AppendLine();
-            sb.AppendLine("VALUES");
-            return sb;
-        }
     }
 
     public override string ToSqlString(IDatabaseAdapter database)
@@ -158,8 +116,9 @@ internal class InsertBuilder<T> : SqlBuilder
 
         var insertColumns = GetInsertColumns();
 
-        StringBuilder columns = new();
-        StringBuilder values = new();
+        //StringBuilder columns = new();
+        //StringBuilder values = new();
+        Dictionary<ITableColumnInfo, MapEntry> columnValueMap = new(TableColumnInfoEqual.Default);
         if (insertColumns.Length == 0)
         {
             throw new LightOrmException("需要插入的列数为0");
@@ -188,15 +147,15 @@ internal class InsertBuilder<T> : SqlBuilder
                 }
                 DbParameters.Add(item.PropertyName, val);
             }
-            columns.AppendEmphasis(item.ColumnName, database);
-            columns.Append(',');
-
+            //columns.AppendEmphasis(item.ColumnName, database);
+            //columns.Append(',');
             if (val is bool b)
             {
                 //var boolValue = database.HandleBooleanValue(b);
                 //values.Append(boolValue);
-                database.HandleBooleanValue(values, b);
+                //database.HandleBooleanValue(values, b);
                 DbParameters.Remove(item.PropertyName);
+                columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.FormatBooleanValue(b)));
             }
             else
             {
@@ -206,37 +165,49 @@ internal class InsertBuilder<T> : SqlBuilder
                     var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
                     var jsonString = jsonHandler.Serialize(val);
                     DbParameters[item.PropertyName] = jsonString;
-                    values.WithPrefix(item.PropertyName, database);
+                    //values.WithPrefix(item.PropertyName, database);
                     // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    database.HandleJsonParameter(new(ActionType.Parameterized, item, values, DbParameters));
+                    columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.AttachPrefix(item.PropertyName)));
+                    database.HandleJsonParameter(new(ActionType.Parameterized, item, null, columnValueMap, DbParameters));
                 }
                 else
                 {
-                    values.WithPrefix(item.PropertyName, database);
+                    //values.WithPrefix(item.PropertyName, database);
+                    columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.AttachPrefix(item.PropertyName)));
                 }
             }
-            values.Append(',');
+            //values.Append(',');
         }
-        columns.RemoveLast(1);
-        values.RemoveLast(1);
-        StringBuilder sb = new("INSERT INTO ");
-        //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
-        sb.AppendTableName(database, MainTable, false).AppendLine();
-        sb.Append('(');
-        sb.Append(columns);
-        sb.AppendLine(")");
-        sb.AppendLine("VALUES");
-        sb.Append('(');
-        sb.Append(values);
-        sb.AppendLine(")");
-
-        if (IsReturnIdentity)
+        //columns.RemoveLast(1);
+        //values.RemoveLast(1);
+        StringBuilder sb;
+        if ((UpdateOnConflict || IgnoreOnConflict) && insertColumns.Any(i => i.IsPrimaryKey))
         {
-            sb.Append(';');
-            //sb.Append(database.ReturnIdentitySql());
-            database.ReturnIdentitySql(sb);
+            sb = database.HandleInsertOrUpdate(new(this, columnValueMap, DbParameters, IgnoreOnConflict));
         }
+        else
+        {
+            sb = new("INSERT INTO ");
+            //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
+            sb.AppendTableName(database, MainTable, false).AppendLine();
+            sb.Append('(');
+            sb.AppendEntryColumns(columnValueMap.Values);
+            sb.AppendLine(")");
+            sb.AppendLine("VALUES");
+            sb.Append('(');
+            sb.AppendEntryValues(columnValueMap.Values);
+            sb.AppendLine(")");
+
+            if (IsReturnIdentity)
+            {
+                sb.Append(';');
+                //sb.Append(database.ReturnIdentitySql());
+                database.ReturnIdentitySql(sb);
+            }
+        }
+
         HandleSqlParameters(sb, database);
         return sb.Trim();
     }
+
 }

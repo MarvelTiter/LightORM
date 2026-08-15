@@ -6,7 +6,7 @@ using System.Text;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class CustomSqliteAdapter(ISqlMethodResolver methodResolver, TableOptions options) : CustomDatabaseAdapter(methodResolver)
+internal sealed class CustomSqliteAdapter(ISqlMethodResolver methodResolver, TableOptions options) : CustomDatabaseAdapter(methodResolver)
 {
     /// <summary>
     /// 测试用

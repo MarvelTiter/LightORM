@@ -267,11 +267,19 @@ internal abstract class ExpressionCoreSqlBase : IContext
 
     protected static async Task<bool> InternalDropTableAsync(ISqlExecutor ado, string tableName, CancellationToken cancellationToken)
     {
-        if (ado.Database.DbHandler is null)
-            throw new NotSupportedException();
-        var sql = ado.Database.DbHandler.GetDropTableSql(tableName);
-        await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
-        return true;
+        try
+        {
+            if (ado.Database.DbHandler is null)
+                throw new NotSupportedException();
+            var sql = ado.Database.DbHandler.GetDropTableSql(tableName);
+            await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+
     }
 
     private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)

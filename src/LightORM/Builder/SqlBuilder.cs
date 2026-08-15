@@ -42,7 +42,7 @@ internal abstract class SqlBuilder : ISqlBuilder
     }
     protected ResolveContext? ResolveCtx { get; set; }
 
-    protected void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
+    internal void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
     {
         //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
         //var uniqueParameters = ResolvedValues.RemoveProperty();
@@ -142,7 +142,7 @@ internal abstract class SqlBuilder : ISqlBuilder
         }
     }
 
-    protected static object VersionPlus(object? oldVersion)
+    internal static object VersionPlus(object? oldVersion)
     {
         return oldVersion switch
         {

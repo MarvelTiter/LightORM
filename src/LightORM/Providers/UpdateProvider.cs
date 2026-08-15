@@ -262,7 +262,7 @@ namespace LightORM.Providers
                         sb.AppendLine("----行数据");
                         item.ForEach(row =>
                         {
-                            if (row.isStaticValue) return;
+                            if (row.IsStaticValue) return;
                             sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
                         });
                     }

@@ -16,5 +16,18 @@ public interface IExpInsert<T> : ISql
     internal void SetTargetObject(T? entity);
     //IExpInsert<T> NoParameter();
     IExpInsert<T> ReturnIdentity();
+    /// <summary>
+    /// 如果存在则更新，否则插入
+    /// </summary>
+    /// <typeparam name="Columns"></typeparam>
+    /// <param name="where"></param>
+    /// <param name="columns"></param>
+    /// <returns></returns>
+    IExpInsert<T> OrUpdate<Columns>(Expression<Func<T, bool>>? where, Expression<Func<T,Columns>>? columns);
+    /// <summary>
+    /// 如果存在则忽略
+    /// </summary>
+    /// <returns></returns>
+    IExpInsert<T> IgnoreIfExits();
     Task<int> ExecuteAsync(CancellationToken cancellationToken = default);
 }

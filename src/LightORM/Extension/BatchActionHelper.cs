@@ -25,6 +25,7 @@
         }
         public static List<BatchSqlInfo> GenBatchInfos<T>(this ITableColumnInfo[] columns
             , T[] datas
+            , IDatabaseAdapter database
             , int limit = 2000
             , Dictionary<string, object>? additionalParameters = null)
         {
@@ -42,6 +43,10 @@
                     foreach (var col in columns)
                     {
                         var isStatic = GetValue(col, obj!, additionalParameters, out var val);
+                        if (val is bool)
+                        {
+                            isStatic = true;
+                        }
                         dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val, isStatic)
                         );
                     }

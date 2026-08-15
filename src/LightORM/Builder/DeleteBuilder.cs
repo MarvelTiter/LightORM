@@ -128,7 +128,7 @@ internal class DeleteBuilder<T> : SqlBuilder
         {
             throw new LightOrmException("没有主键并且未设置Where条件");
         }
-        BatchInfos = columns.GenBatchInfos(TargetObjects, 2000 - DbParameters.Count);
+        BatchInfos = columns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
         //var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
         foreach (var batch in BatchInfos)
         {

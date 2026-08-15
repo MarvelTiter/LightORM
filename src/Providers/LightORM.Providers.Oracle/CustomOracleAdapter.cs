@@ -1,4 +1,5 @@
-﻿using LightORM.Extension;
+﻿using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
@@ -9,7 +10,8 @@ using System.Text;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class CustomOracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+#pragma warning disable CS9113 // 参数未读。
+internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal readonly static CustomOracleAdapter Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";
@@ -40,6 +42,7 @@ public sealed class CustomOracleAdapter(ISqlMethodResolver methodResolver, Table
         sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
+    
     public override string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
     {
         var sb = new StringBuilder();

@@ -31,10 +31,10 @@ internal partial class SelectBuilder
             return inner.FormatBooleanValue(value);
         }
 
-        public void HandleBooleanValue(StringBuilder sql, bool value)
-        {
-            inner.HandleBooleanValue(sql, value);
-        }
+        //public void HandleBooleanValue(StringBuilder sql, bool value)
+        //{
+        //    inner.HandleBooleanValue(sql, value);
+        //}
 
         public string HandleBooleanValueForBulkCopy(bool value)
         {
@@ -79,6 +79,16 @@ internal partial class SelectBuilder
         public string RewriteParameterReferences(string sql, string prefix)
         {
             return inner.RewriteParameterReferences(sql, prefix);
+        }
+
+        void IDatabaseAdapter.HandleBatchInsert(BatchActionContext context)
+        {
+            inner.HandleBatchInsert(context);
+        }
+
+        StringBuilder IDatabaseAdapter.HandleInsertOrUpdate(UpsertContext context)
+        {
+            return inner.HandleInsertOrUpdate(context);
         }
     }
 }

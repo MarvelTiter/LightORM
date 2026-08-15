@@ -24,11 +24,11 @@ namespace LightORM.Interfaces
         //string DeleteTemplate { get; }
         void Paging(ISelectSqlBuilder builder, StringBuilder sql);
         void ReturnIdentitySql(StringBuilder sql);
-        void HandleBooleanValue(StringBuilder sql, bool value);
+        //void HandleBooleanValue(StringBuilder sql, bool value);
         string FormatBooleanValue(bool value);
         void HandleDateValue(StringBuilder sql, DateTime value);
         string HandleBooleanValueForBulkCopy(bool value);
-        
+
         bool IsKeyWord(string keyWork);
         void AddKeyWord(IEnumerable<string> keyworks);
 
@@ -36,6 +36,10 @@ namespace LightORM.Interfaces
         string RewriteParameterReferences(string sql, string prefix);
         void HandleJsonColumn(JsonColumnContext context);
         void HandleJsonParameter(JsonColumnParameterContext context);
+
+        internal StringBuilder HandleInsertOrUpdate(UpsertContext context);
+
+        internal void HandleBatchInsert(BatchActionContext context);
 
     }
 }
