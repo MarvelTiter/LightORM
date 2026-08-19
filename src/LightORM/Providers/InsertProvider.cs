@@ -28,6 +28,22 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
 
     public void UpdateTableName(string tableName) => sqlBuilder.MainTable.OverriddenTableName = tableName;
 
+    #region 自定义控制
+
+    public IExpInsert<T> NoQuoteIdentifiers()
+    {
+        sqlBuilder.QuoteIdentifiers = false;
+        return this;
+    }
+
+    public IExpInsert<T> QuoteIdentifiers()
+    {
+        sqlBuilder.QuoteIdentifiers = true;
+        return this;
+    }
+
+    #endregion
+
     public void SetTargetObject(T? entity)
     {
         sqlBuilder.TargetObject = entity;

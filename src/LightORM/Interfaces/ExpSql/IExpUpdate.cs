@@ -1,6 +1,6 @@
 ﻿namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpUpdate<T> : ISql<IExpUpdate<T>, T>
+public interface IExpUpdate<T> : ISqlWhereAndExecute<IExpUpdate<T>, T>
 {
     IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns);
     IExpUpdate<T> UpdateByName(string propertyName, object? value = null);

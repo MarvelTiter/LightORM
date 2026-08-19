@@ -1,6 +1,6 @@
 ﻿namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpDelete<T> : ISql<IExpDelete<T>, T>
+public interface IExpDelete<T> : ISqlWhereAndExecute<IExpDelete<T>, T>
 {
     /// <summary>
     /// 全表删除

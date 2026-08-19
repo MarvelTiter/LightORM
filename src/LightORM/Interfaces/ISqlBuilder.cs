@@ -30,6 +30,8 @@ namespace LightORM.Interfaces
         /// 是否参数化
         /// </summary>
         internal bool? IsParameterized { get; set; }
+        bool? QuoteIdentifiers { get; set; }
+
         /// <summary>
         /// 到Sql字符串
         /// </summary>

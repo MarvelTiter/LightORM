@@ -101,6 +101,10 @@ internal class InsertBuilder<T> : SqlBuilder
 
     public override string ToSqlString(IDatabaseAdapter database)
     {
+        if (QuoteIdentifiers.HasValue)
+        {
+            database = new ScopedDatabaseAdapter(database, QuoteIdentifiers.Value);
+        }
         if (IsBatchInsert)
         {
             CreateInsertBatchSql(database);
@@ -183,7 +187,7 @@ internal class InsertBuilder<T> : SqlBuilder
         StringBuilder sb;
         if ((UpdateOnConflict || IgnoreOnConflict) && insertColumns.Any(i => i.IsPrimaryKey))
         {
-            sb = database.HandleInsertOrUpdate(new(this, columnValueMap, DbParameters, IgnoreOnConflict));
+            sb = database.HandleInsertOrUpdate(new(this, columnValueMap, DbParameters, IgnoreOnConflict, database));
         }
         else
         {

@@ -28,6 +28,21 @@ namespace LightORM.Providers
 
         public void UpdateTableName(string tableName) => sqlBuilder.MainTable.OverriddenTableName = tableName;
 
+        #region 自定义控制
+
+        public IExpUpdate<T> NoQuoteIdentifiers()
+        {
+            sqlBuilder.QuoteIdentifiers = false;
+            return this;
+        }
+
+        public IExpUpdate<T> QuoteIdentifiers()
+        {
+            sqlBuilder.QuoteIdentifiers = true;
+            return this;
+        }
+
+        #endregion
         public int Execute()
         {
             var sql = sqlBuilder.ToSqlString(Database);

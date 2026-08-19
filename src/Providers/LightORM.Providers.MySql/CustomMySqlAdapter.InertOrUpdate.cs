@@ -13,12 +13,13 @@ internal partial class CustomMySqlAdapter
 {
     public override StringBuilder HandleInsertOrUpdate(UpsertContext context)
     {
+        var database = context.ScopedAdapter;
         var columnValueMaps = context.ColumnValueMap;
         var sb = new StringBuilder();
         if (context.IgnoreWhenMap)
         {
             sb = new("INSERT IGNORE INTO ");
-            sb.AppendTableName(this, context.Builder.MainTable, false).AppendLine();
+            sb.AppendTableName(database, context.Builder.MainTable, false).AppendLine();
             sb.Append('(');
             sb.AppendEntryColumns(columnValueMaps.Values);
             sb.AppendLine(")");
@@ -31,7 +32,7 @@ internal partial class CustomMySqlAdapter
         {
             sb = new("INSERT INTO ");
             //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
-            sb.AppendTableName(this, context.Builder.MainTable, false).AppendLine();
+            sb.AppendTableName(database, context.Builder.MainTable, false).AppendLine();
             sb.Append('(');
             sb.AppendEntryColumns(columnValueMaps.Values);
             sb.AppendLine(")");
@@ -63,7 +64,7 @@ internal partial class CustomMySqlAdapter
                 var newVersion = SqlBuilder.VersionPlus(oldVersion);
                 var verionName = $"{vc.Key.PropertyName}_n";
                 context.Parameters[verionName] = newVersion;
-                sb.Append("    ").Append(vc.Value.Column).Append(" = ").Append("IF(").Append(vc.Value.Column).Append(" = ").WithPrefix(vc.Key.PropertyName, this).Append(", ").WithPrefix(verionName, this).Append(',').Append(vc.Value.Column).Append(')').AppendLine(",");
+                sb.Append("    ").Append(vc.Value.Column).Append(" = ").Append("IF(").Append(vc.Value.Column).Append(" = ").WithPrefix(vc.Key.PropertyName, database).Append(", ").WithPrefix(verionName, database).Append(',').Append(vc.Value.Column).Append(')').AppendLine(",");
             }
             sb.RemoveLast(SqlBuilder.N.Length + 1);
         }

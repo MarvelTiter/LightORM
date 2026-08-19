@@ -2,7 +2,7 @@
 
 namespace LightORM.Interfaces.ExpSql;
 
-public interface IExpInsert<T> : ISql
+public interface IExpInsert<T> : ISql<IExpInsert<T>, T>
 {
     //IExpInsert<T> AppendData(T item);
     //IExpInsert<T> AppendData(IEnumerable<T> items);

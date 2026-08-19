@@ -13,9 +13,10 @@ internal partial class CustomOracleAdapter
 {
     public override StringBuilder HandleInsertOrUpdate(UpsertContext context)
     {
+        var database = context.ScopedAdapter;
         var columnValueMaps = context.ColumnValueMap;
         var sb = new StringBuilder();
-        sb.Append("MERGE INTO ").AppendTableName(this, context.Builder.MainTable, false).AppendLine(" t");
+        sb.Append("MERGE INTO ").AppendTableName(database, context.Builder.MainTable, false).AppendLine(" t");
         sb.Append("USING (SELECT ");
         foreach (var e in columnValueMaps.Values)
         {
@@ -28,9 +29,9 @@ internal partial class CustomOracleAdapter
         {
             var k = whereKey[i];
             if (i == 0)
-                sb.Append("ON (t.").AppendEmphasis(k.ColumnName, this).Append(" = ").Append("s.").AppendEmphasis(k.ColumnName, this);
+                sb.Append("ON (t.").AppendEmphasis(k.ColumnName, database).Append(" = ").Append("s.").AppendEmphasis(k.ColumnName, database);
             else
-                sb.Append(" AND t.").AppendEmphasis(k.ColumnName, this).Append(" = ").Append("s.").AppendEmphasis(k.ColumnName, this);
+                sb.Append(" AND t.").AppendEmphasis(k.ColumnName, database).Append(" = ").Append("s.").AppendEmphasis(k.ColumnName, database);
         }
         sb.AppendLine(")");
         if (!context.IgnoreWhenMap)
@@ -48,7 +49,7 @@ internal partial class CustomOracleAdapter
                     var verionName = $"{kv.Key.PropertyName}_n";
                     context.Parameters[verionName] = newVersion;
                     sb.Append(' ');
-                    sb.Append(kv.Value.Column).Append(" = ").WithPrefix(verionName, this).Append(',');
+                    sb.Append(kv.Value.Column).Append(" = ").WithPrefix(verionName, database).Append(',');
                 }
                 else
                 {

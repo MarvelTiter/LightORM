@@ -9,6 +9,7 @@ public class DeleteSql : TestBase
 
         var sql = Db.Delete(datas.ToArray())
             .Where(s => s.PriInfo.Age == 100)
+            .NoQuoteIdentifiers()
             .ToSql();
         Console.WriteLine(sql);
         List<UserFlat> GetList()

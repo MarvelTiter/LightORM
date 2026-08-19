@@ -2,11 +2,12 @@
 using LightORM.Implements;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
 
 namespace LightORM.Builder;
 //internal readonly struct 
-internal abstract class SqlBuilder : ISqlBuilder
+internal abstract partial class SqlBuilder : ISqlBuilder
 {
     public static string N { get; } = Environment.NewLine;
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
@@ -41,6 +42,7 @@ internal abstract class SqlBuilder : ISqlBuilder
 
     }
     protected ResolveContext? ResolveCtx { get; set; }
+    public bool? QuoteIdentifiers { get; set; }
 
     internal void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
     {

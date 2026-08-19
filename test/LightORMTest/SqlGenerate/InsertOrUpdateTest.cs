@@ -15,7 +15,7 @@ public class InsertOrUpdateTest : TestBase
             Age = 18,
             UserName = "测试",
         };
-        var sql = Db.Insert(user).OrUpdate().ToSqlWithParameters();
+        var sql = Db.Insert(user).OrUpdate().NoQuoteIdentifiers().ToSqlWithParameters();
         Console.WriteLine(sql);
     }
 }

@@ -64,7 +64,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
     public int NextTableIndex => SelectedTables.Count + Joins.Count + TableIndexFix;
-    public bool? QuoteIdentifiers { get; set; }
+
     private List<TagInfo>? Tags { get; set; }
 
     public void AddTag(TagInfo tag)

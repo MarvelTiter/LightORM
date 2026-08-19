@@ -307,6 +307,10 @@ internal class UpdateBuilder<T> : SqlBuilder
 
     public override string ToSqlString(IDatabaseAdapter database)
     {
+        if (QuoteIdentifiers.HasValue)
+        {
+            database = new ScopedDatabaseAdapter(database, QuoteIdentifiers.Value);
+        }
         ResolveExpressions(database);
         if (IsBatchUpdate)
         {
