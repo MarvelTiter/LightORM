@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="LightORM.Providers.Sqlite" Version="0.1.4" />
+    <PackageReference Include="LightORM.Providers.Sqlite" Version="2026.8.15.1" />
     <!--<PackageReference Include="MT.LightORM" Version="3.2.1" />-->
   </ItemGroup>
 

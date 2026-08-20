@@ -3,5 +3,5 @@ using BenchmarkTest;
 using LightORM.Providers.Sqlite.Extensions;
 
 Console.WriteLine("Hello, World!");
-BenchmarkDotNet.Running.BenchmarkRunner.Run<SqlBuild>();
+BenchmarkDotNet.Running.BenchmarkRunner.Run<StringBuilderPoolTest>();
 

@@ -318,15 +318,31 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         {
             database = new ScopedDatabaseAdapter(database, QuoteIdentifiers.Value);
         }
+        using var _ = StringBuilderPool.Get(out var sql, estimatedSize);
+        Build(sql, database, Depth);
+        HandleSqlParameters(sql, database);
+        sql.Trim();
+        var sqlString = sql.ToString();
+        return sqlString;
+    }
+
+    public string ToSqlStringOld(IDatabaseAdapter database)
+    {
+        //SubQuery?.ResolveExpressions();
+        var estimatedSize = EstimateSqlLength();
+        if (QuoteIdentifiers.HasValue)
+        {
+            database = new ScopedDatabaseAdapter(database, QuoteIdentifiers.Value);
+        }
         StringBuilder sql = new(estimatedSize);
         Build(sql, database, Depth);
         HandleSqlParameters(sql, database);
         sql.Trim();
         var sqlString = sql.ToString();
-        //SelectBuilderPool.Return(this);
         return sqlString;
-
     }
+
+
     private const string UNIT_IDENT = "    ";
     public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
