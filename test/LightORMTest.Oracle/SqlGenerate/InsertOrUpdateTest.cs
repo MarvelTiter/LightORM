@@ -11,7 +11,14 @@ public class InsertOrUpdateTest : LightORMTest.SqlGenerate.InsertOrUpdateTest
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseOracle(ConnectString.Value);
+        option.UseOracle(c =>
+        {
+            c.MasterConnectionString = ConnectString.Value;
+            c.ConfigureOracle(t =>
+            {
+                t.OverVersion = true;
+            });
+        });
         option.UseInterceptor<LightOrmAop>();
     }
 }

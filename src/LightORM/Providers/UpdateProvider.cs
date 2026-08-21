@@ -12,7 +12,7 @@ namespace LightORM.Providers
         public UpdateProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            sqlBuilder = new UpdateBuilder<T>();
+            sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
@@ -20,7 +20,7 @@ namespace LightORM.Providers
         public UpdateProvider(ISqlExecutor executor, T[] entities)
         {
             this.executor = executor;
-            sqlBuilder = new UpdateBuilder<T>();
+            sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.IsBatchUpdate = true;
             sqlBuilder.TargetObjects = entities;
@@ -137,7 +137,7 @@ namespace LightORM.Providers
             return this;
         }
 
-        
+
 
         public IExpUpdate<T> SetIf<TField>(bool condition, Expression<Func<T, TField>> exp, TField value)
         {

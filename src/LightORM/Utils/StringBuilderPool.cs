@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using LightORM.AssemblyControl;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
 
@@ -12,8 +13,13 @@ internal static class StringBuilderPool
     private static int itemCount = 0;
     [ThreadStatic]
     private static StringBuilder? fast;
-    public static IDisposable Get(out StringBuilder builder, int capacity = 256)
+    public static IDisposable Get(out StringBuilder builder, int capacity = 128)
     {
+        if (!BenchmarkConfig.UseStringBuilderPool)
+        {
+            builder = new StringBuilder(capacity);
+            return new BuilderWrap(null);
+        }
         var item = fast;
 
         if (item is not null)
@@ -58,10 +64,11 @@ internal static class StringBuilderPool
         Interlocked.Decrement(ref itemCount);
     }
 
-    private class BuilderWrap(StringBuilder builder) : IDisposable
+    private class BuilderWrap(StringBuilder? builder) : IDisposable
     {
         public void Dispose()
         {
+            if (builder == null) return;
             Return(builder);
         }
     }

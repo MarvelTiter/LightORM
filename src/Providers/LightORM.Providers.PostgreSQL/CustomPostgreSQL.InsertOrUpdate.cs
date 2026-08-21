@@ -11,19 +11,19 @@ namespace LightORM.Providers.PostgreSQL;
 
 internal partial class CustomPostgreSQL
 {
-    public override StringBuilder HandleInsertOrUpdate(UpsertContext context)
+    public override void HandleInsertOrUpdate(UpsertContext context)
     {
         var database = context.ScopedAdapter;
         var columnValueMaps = context.ColumnValueMap;
-        var sb = new StringBuilder();
+        var sb = context.Sql;
 
         OnConflict();
 
-        return sb;
+        return ;
 
         void OnConflict()
         {
-            sb = new("INSERT INTO ");
+            sb.Append("INSERT INTO ");
             //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
             sb.AppendTableName(database, context.Builder.MainTable, false).AppendLine();
             sb.Append('(');

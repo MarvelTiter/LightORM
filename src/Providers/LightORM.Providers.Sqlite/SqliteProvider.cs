@@ -9,11 +9,11 @@ namespace LightORM.Providers.Sqlite;
 
 public sealed class SqliteProvider : BaseDatabaseProvider
 {
-    public static SqliteProvider Create(DataBaseOption option) => new(option);
+    public static SqliteProvider Create(DataBaseOption<SqliteTableOptions> option) => new(option);
 
-    public static SqliteProvider Create(Action<DataBaseOption> setting)
+    public static SqliteProvider Create(Action<DataBaseOption<SqliteTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<SqliteTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -22,7 +22,7 @@ public sealed class SqliteProvider : BaseDatabaseProvider
         return Create(dbOption);
     }
 
-    private SqliteProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private SqliteProvider(DataBaseOption<SqliteTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new SqliteTableHandler(option.GenerateOption);
         var sqlMethodResolver = new SqliteMethodResolver(option.GenerateOption);

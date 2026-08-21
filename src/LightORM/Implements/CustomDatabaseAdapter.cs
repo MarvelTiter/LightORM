@@ -87,6 +87,11 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         return value ? "1" : "0";
     }
 
+    public virtual string FormatDateTimeValue(DateTime value)
+    {
+        throw new NotImplementedException();
+    }
+
     public abstract void HandleDateValue(StringBuilder sql, DateTime dateTime);
 
     public virtual string HandleBooleanValueForBulkCopy(bool value)
@@ -128,7 +133,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual void DbCommandInit(DbCommand dbCommand) { }
 
-    public virtual StringBuilder HandleInsertOrUpdate(UpsertContext context)
+    public virtual void HandleInsertOrUpdate(UpsertContext context)
     {
         throw new NotImplementedException();
     }
@@ -137,10 +142,12 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
     {
         var batchs = context.Batchs;
         var builder = context.Builder;
-        var insertColumns = context.InsertColumns;
+        var insertColumns = context.TargetColumns;
+        var database = context.ScopedAdapter;
         foreach (var item in batchs)
         {
-            StringBuilder sb = CreateInsertBuilder();//new(insert);//
+            using var _ = StringBuilderPool.Get(out var sb);
+            PreHandleInsertBuilder(sb);
             for (int i = 0; i < item.Parameters.Count; i++)
             {
                 List<SimpleColumn>? dic = item.Parameters[i];
@@ -163,11 +170,11 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         }
 
 
-        StringBuilder CreateInsertBuilder()
+        void PreHandleInsertBuilder(StringBuilder sb)
         {
-            var sb = new StringBuilder("INSERT INTO ");
+            sb.Append("INSERT INTO ");
             //sb.Append(GetTableName(database, MainTable, false));
-            sb.AppendTableName(this, builder.MainTable, false).AppendLine();
+            sb.AppendTableName(database, builder.MainTable, false).AppendLine();
             sb.Append('(');
             foreach (var item in insertColumns)
             {
@@ -178,7 +185,173 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
             sb.Append(')');
             sb.AppendLine();
             sb.AppendLine("VALUES");
-            return sb;
+        }
+    }
+
+    public virtual void HandleBatchUpdate(BatchActionContext context)
+    {
+        var batchs = context.Batchs;
+        var builder = context.Builder;
+        var updateColumns = context.TargetColumns;
+        var database = context.ScopedAdapter;
+        foreach (var batch in batchs)
+        {
+            // 每一个BatchSqInfo就是每批次更新的数据量
+            //StringBuilder sb = new("UPDATE ");
+            using var _ = StringBuilderPool.Get(out var sb);
+            sb.Append("UPDATE ");
+            //sb.Append(GetTableName(database, MainTable, false));
+            sb.AppendTableName(database, builder.MainTable, false);
+            sb.Append(" SET ");
+            for (int i = 0; i < updateColumns.Length; i++)
+            {
+                ITableColumnInfo? col = updateColumns[i];
+                if (col.IsPrimaryKey) continue;
+                //sb.Append($"\n{database.AttachEmphasis(col.ColumnName)} = CASE ");
+                sb.AppendEmphasis(col.ColumnName, database);
+                sb.AppendLine(" = CASE");
+                // 每一条记录的参数数量
+                for (var rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
+                {
+                    var rowDatas = batch.Parameters[rowIndex];
+                    var currentCol = rowDatas.First(r => r.PropName == col.PropertyName);
+                    if (currentCol.IsVersion)
+                    {
+                        var newVersion = SqlBuilder.VersionPlus(currentCol.Value);
+                        var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_n", Value = newVersion, IsVersion = false };
+                        rowDatas.Add(newCol);
+                        currentCol = newCol;
+                    }
+                    bool first = true;
+                    sb.Append("  WHEN ");
+                    foreach (var item in rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion))
+                    {
+                        if (!first) sb.Append(" AND ");
+                        first = false;
+                        sb.AppendEmphasis(item.ColumnName, database);
+                        sb.Append(" = ");
+                        sb.WithPrefix(item.ParameterName, database);
+                    }
+                    sb.Append(" THEN ");
+                    sb.AppendLine(database.GetValueExpression(currentCol));
+                }
+
+                sb.Append("END, ");
+            }
+
+            sb.RemoveLast(2);
+
+            var pValues = batch.Parameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey | r.IsVersion)).GroupBy(c => c.ColumnName).ToList();
+            if (pValues.Count == 0 && builder.Where.Count == 0)
+            {
+                throw new LightOrmException($"类型{builder.MainTable.Type}, 没有主键并且缺失Where条件");
+            }
+            sb.AppendLine();
+            sb.Append("WHERE ");
+            for (int k = 0; k < pValues.Count; k++)
+            {
+                IGrouping<string, SimpleColumn>? item = pValues[k];
+                if (k > 0)
+                {
+                    sb.AppendLine();
+                    sb.Append("AND ");
+                }
+                sb.Append('(');
+                sb.AppendEmphasis(item.Key, database);
+                sb.Append(" IN (");
+                foreach (var i in item)
+                {
+                    sb.WithPrefix(i.ParameterName, database);
+                    sb.Append(',');
+                }
+                sb.RemoveLast(1);
+                sb.Append("))");
+            }
+            if (builder.Where.Count > 0)
+            {
+                //if (pValues.Count == 0)
+                for (int i = 0; i < builder.Where.Count; i++)
+                {
+                    if (i > 0 || pValues.Count > 0)
+                    {
+                        sb.AppendLine();
+                        sb.Append("AND ");
+                    }
+                    sb.Append(builder.Where[i]);
+                }
+            }
+            builder.HandleSqlParameters(sb, database);
+            batch.Sql = sb.ToString();
+        }
+    }
+
+    public virtual void HandleBatchDelete<T>(BatchActionContext<DeleteBuilder<T>> context)
+    {
+        var batchs = context.Batchs;
+        var builder = context.Builder;
+        var keyColumns = context.TargetColumns;
+        var database = context.ScopedAdapter;
+
+        foreach (var batch in batchs)
+        {
+            using var _ = StringBuilderPool.Get(out var sb);
+            sb.Append("DELETE FROM ");
+            //sb.AppendLine(GetTableName(database, MainTable, false));
+            sb.AppendTableName(database, builder.MainTable, false).AppendLine();
+            sb.Append("WHERE ");
+            if (builder.TargetObjects.Length == 0)
+            {
+                sb.Append("1=0");
+                batch.Sql = sb.ToString();
+                break;
+            }
+            sb.Append('(');
+            for (int rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
+            {
+                List<SimpleColumn>? row = batch.Parameters[rowIndex];
+                if (keyColumns.Length > 1)
+                {
+                    sb.Append('(');
+                    for (var i = 0; i < row.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(" AND ");
+                        }
+                        sb.AppendEmphasis(row[i].ColumnName, database);
+                        sb.Append(" = ");
+                        sb.WithPrefix(row[i].ParameterName, database);
+                    }
+                    sb.Append(')');
+                    if (rowIndex < batch.Parameters.Count - 1)
+                        sb.Append(" OR ");
+                }
+                else
+                {
+                    if (rowIndex == 0)
+                    {
+                        // 这里直接访问索引0是安全的，因为进入到else分支的话，说明row.Count == 1, 而row.Count是跟前面的columns的数量是一致的
+                        sb.AppendEmphasis(row[0].ColumnName, database);
+                        sb.Append(" IN (");
+
+                    }
+                    sb.WithPrefix(row[0].ParameterName, database);
+                    if (rowIndex < batch.Parameters.Count - 1)
+                        sb.Append(',');
+                    else
+                        sb.Append(')');
+                }
+            }
+            sb.Append(')');
+
+            foreach (var w in builder.Where)
+            {
+                sb.AppendLine();
+                sb.Append("AND ");
+                sb.Append(w);
+            }
+            builder.HandleSqlParameters(sb, database);
+            batch.Sql = sb.ToString();
         }
     }
 }

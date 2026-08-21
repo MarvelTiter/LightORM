@@ -6,26 +6,37 @@ namespace LightORM.Providers.Sqlite.Extensions;
 
 public static class IoCExtension
 {
-    public static void UseSqlite(this IExpressionContextSetup options, string masterConnectString, params string[] slaveConnectStrings)
+    extension(IExpressionContextSetup options)
+    {
+        public void UseSqlite(string masterConnectString, params string[] slaveConnectStrings)
         => UseSqlite(options, "MainDb", masterConnectString, slaveConnectStrings);
-    public static void UseSqlite(this IExpressionContextSetup options, string? key, string masterConnectString, params string[] slaveConnectStrings)
-    {
-        UseSqlite(options, set =>
+        public void UseSqlite(string? key, string masterConnectString, params string[] slaveConnectStrings)
         {
-            set.DbKey = key;
-            set.MasterConnectionString = masterConnectString;
-            set.SalveConnectionStrings = slaveConnectStrings;
-        });
-    }
-    public static void UseSqlite(this IExpressionContextSetup options, Action<IDbOption> setting)
-    {
-        var dbOption = new DataBaseOption();
-        setting.Invoke(dbOption);
-        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
-        {
-            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+            UseSqlite(options, set =>
+            {
+                set.DbKey = key;
+                set.MasterConnectionString = masterConnectString;
+                set.SalveConnectionStrings = slaveConnectStrings;
+            });
         }
-        var provider = SqliteProvider.Create(dbOption);
-        options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.Sqlite, provider);
+        public void UseSqlite(Action<IDbOption> setting)
+        {
+            var dbOption = new DataBaseOption<SqliteTableOptions>();
+            setting.Invoke(dbOption);
+            if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+            {
+                throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+            }
+            var provider = SqliteProvider.Create(dbOption);
+            options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.Sqlite, provider);
+        }
+    }
+
+    extension(IDbOption option)
+    {
+        public void ConfiguraSqlite(Action<SqliteTableOptions> config)
+        {
+            config.Invoke(option.GetOption<SqliteTableOptions>());
+        }
     }
 }

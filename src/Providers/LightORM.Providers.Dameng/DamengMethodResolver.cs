@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class DamengMethodResolver(TableOptions tableOptions) : BaseSqlMethodResolver
+public sealed class DamengMethodResolver(DamengTableOptions tableOptions) : BaseSqlMethodResolver
 {
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {

@@ -7,11 +7,11 @@ namespace LightORM.Providers.SqlServer;
 
 internal partial class CustomSqlServerAdapter
 {
-    public override StringBuilder HandleInsertOrUpdate(UpsertContext context)
+    public override void HandleInsertOrUpdate(UpsertContext context)
     {
         var database = context.ScopedAdapter;
         var columnValueMaps = context.ColumnValueMap;
-        var sb = new StringBuilder();
+        var sb = context.Sql;
         sb.Append("MERGE INTO ").AppendTableName(database, context.Builder.MainTable, false).AppendLine(" t");
         sb.Append("USING (SELECT ");
         foreach (var e in columnValueMaps.Values)
@@ -78,6 +78,5 @@ internal partial class CustomSqlServerAdapter
             .Append(") VALUES (")
             .AppendEntryValues(columnValueMaps.Values)
             .Append(");");
-        return sb;
     }
 }

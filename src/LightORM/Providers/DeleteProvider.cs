@@ -14,7 +14,7 @@ namespace LightORM.Providers
         public DeleteProvider(ISqlExecutor executor, T? entity)
         {
             this.executor = executor;
-            sqlBuilder = new DeleteBuilder<T>();
+            sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
@@ -22,7 +22,7 @@ namespace LightORM.Providers
         public DeleteProvider(ISqlExecutor executor, T[] entities)
         {
             this.executor = executor;
-            sqlBuilder = new DeleteBuilder<T>();
+            sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObjects = entities;
             sqlBuilder.IsBatchDelete = true;
@@ -35,7 +35,7 @@ namespace LightORM.Providers
         public IExpDelete<T> NoQuoteIdentifiers()
         {
             sqlBuilder.QuoteIdentifiers = false;
-            return this ;
+            return this;
         }
 
         public IExpDelete<T> QuoteIdentifiers()

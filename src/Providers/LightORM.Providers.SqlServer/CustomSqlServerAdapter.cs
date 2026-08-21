@@ -7,7 +7,7 @@ using System.Text;
 namespace LightORM.Providers.SqlServer;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, ISqlMethodResolver methodResolver, SqlServerTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     public SqlServerVersion Version { get; } = version;
     public override string Prefix => "@";

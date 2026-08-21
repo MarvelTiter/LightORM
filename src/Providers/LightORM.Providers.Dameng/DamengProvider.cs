@@ -10,10 +10,10 @@ namespace LightORM.Providers.Dameng;
 public sealed class DamengProvider : BaseDatabaseProvider
 {
     public static readonly DbBaseType Dameng = new ("Dameng");
-    public static DamengProvider Create(DataBaseOption option) => new(option);
-    public static DamengProvider Create(Action<DataBaseOption> setting)
+    public static DamengProvider Create(DataBaseOption<DamengTableOptions> option) => new(option);
+    public static DamengProvider Create(Action<DataBaseOption<DamengTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<DamengTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -22,7 +22,7 @@ public sealed class DamengProvider : BaseDatabaseProvider
         return Create(dbOption);
     }
 
-    private DamengProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private DamengProvider(DataBaseOption<DamengTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new DamengTableHandler(option.GenerateOption);
         var sqlMethodResolver = new DamengMethodResolver(option.GenerateOption);

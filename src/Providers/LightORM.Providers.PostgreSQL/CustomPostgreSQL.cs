@@ -9,7 +9,7 @@ using System.Text;
 namespace LightORM.Providers.PostgreSQL;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomPostgreSQL(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomPostgreSQL(ISqlMethodResolver methodResolver, PostgreSQLTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal readonly static CustomPostgreSQL Instance = new(new PostgreSQLMethodResolver(), new());
 

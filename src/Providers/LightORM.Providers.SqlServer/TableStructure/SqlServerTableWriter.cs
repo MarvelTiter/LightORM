@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer.TableStructure;
 
-public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
+public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType<SqlServerTableOptions>
 {
-    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(SqlServerTableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -86,7 +86,7 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableOptions option, DbColumn column)
+    protected override string BuildColumn(SqlServerTableOptions option, DbColumn column)
     {
         var dbType = ConvertToDbType(option, column);
         var length = (dbType.Contains("Char") || dbType.Contains("Binary")) && !column.IsJson ? $"({column.Length ?? option.DefaultStringLength})" : "";
@@ -97,7 +97,7 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
         return $"{dataType}{identity}{notNull}";
     }
 
-    protected override string ConvertToDbType(TableOptions option, DbColumn type)
+    protected override string ConvertToDbType(SqlServerTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -132,7 +132,7 @@ public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType
         };
     }
 
-    protected override string DbEmphasis(TableOptions option, string name) => $"[{name}]";
+    protected override string DbEmphasis(SqlServerTableOptions option, string name) => $"[{name}]";
 
     private static object CheckDefaultValue(DbColumn column)
     {

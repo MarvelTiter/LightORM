@@ -5,10 +5,10 @@ using LightORM.Providers.Sqlite.TableStructure;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteTableHandler(TableOptions generateOption) 
-    : BaseDatabaseHandler<SqliteTableWriter>
+public sealed class SqliteTableHandler(SqliteTableOptions generateOption) 
+    : BaseDatabaseHandler<SqliteTableWriter, SqliteTableOptions>
 {
-    public override TableOptions Options => generateOption;
+    public override SqliteTableOptions Options => generateOption;
 
     public override string GetTablesSql()
     {

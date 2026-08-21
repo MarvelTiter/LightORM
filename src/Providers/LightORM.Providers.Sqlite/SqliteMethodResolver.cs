@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteMethodResolver(TableOptions tableOptions) : BaseSqlMethodResolver
+public sealed class SqliteMethodResolver(SqliteTableOptions tableOptions) : BaseSqlMethodResolver
 {
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {

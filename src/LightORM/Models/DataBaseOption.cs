@@ -2,13 +2,14 @@
 
 namespace LightORM.Models;
 
-public sealed class DataBaseOption : IDbOption
+public sealed class DataBaseOption<T> : IDbOption
+    where T : TableOptions, new()
 {
     public string? DbKey { get; set; }
     public string? MasterConnectionString { get; set; }
     public string[]? SalveConnectionStrings { get; set; }
-        public DbProviderFactory? NewFactory { get; set; }
-    public TableOptions GenerateOption { get; set; } = new();
+    public DbProviderFactory? NewFactory { get; set; }
+    public T GenerateOption { get; set; } = new();
     public HashSet<string> Keyworks { get; set; } = [];
     public bool IsUseIdentifierQuote { get; set; } = true;
     public Action<ISqlMethodResolver>? SqlMethodConfiguration { get; set; }
@@ -36,9 +37,14 @@ public sealed class DataBaseOption : IDbOption
         return this;
     }
 
-    public IDbOption TableConfiguration(Action<TableOptions> action)
+    TOption IDbOption.GetOption<TOption>()
     {
-        action.Invoke(GenerateOption);
-        return this;
+        return (GenerateOption as TOption)!;
     }
+
+    //public IDbOption TableConfiguration(Action<TableOptions> action)
+    //{
+    //    action.Invoke(GenerateOption);
+    //    return this;
+    //}
 }

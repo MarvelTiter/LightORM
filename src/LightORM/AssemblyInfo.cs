@@ -44,6 +44,11 @@ namespace LightORM.AssemblyControl
         public static readonly bool ShowExpressionHashCodeDebugInfo = true;
     }
 
+    internal static class BenchmarkConfig
+    {
+        public static bool UseStringBuilderPool { get; set; }
+    }
+
     internal static class AOTControl
     {
         public static bool AOTSupported = false;

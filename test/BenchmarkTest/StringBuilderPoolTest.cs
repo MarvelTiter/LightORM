@@ -8,9 +8,12 @@ using System.Text;
 
 namespace BenchmarkTest;
 
+
 [MemoryDiagnoser]
 public class StringBuilderPoolTest
 {
+    [Params(false, true)]
+    public bool UsePool { get; set; }
     class Jobs
     {
         public string? Plate { get; set; }
@@ -19,6 +22,7 @@ public class StringBuilderPoolTest
     [GlobalSetup]
     public void Setup()
     {
+        global::LightORM.AssemblyControl.BenchmarkConfig.UseStringBuilderPool = UsePool;
         ExpSqlFactory.Configuration(config =>
         {
             config.UseSqlite("Data Source=:memory:;Version=3;New=True;");
@@ -32,7 +36,7 @@ public class StringBuilderPoolTest
         var select = db.Select<Job>();
         var builder = select.SqlBuilder;
         var database = select.Executor.Database.DatabaseAdapter;
-        return builder.ToSqlStringOld(database);
+        return builder.ToSqlString(database);
     }
 
     [Benchmark]
@@ -114,7 +118,7 @@ public class StringBuilderPoolTest
             });
         var builder = select.SqlBuilder;
         var database = select.Executor.Database.DatabaseAdapter;
-        return builder.ToSqlStringOld(database);
+        return builder.ToSqlString(database);
     }
 
     [Benchmark]

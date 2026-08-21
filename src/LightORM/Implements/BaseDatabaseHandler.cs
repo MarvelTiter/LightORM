@@ -3,11 +3,12 @@ using LightORM.Extension;
 
 namespace LightORM.Implements;
 
-public abstract class BaseDatabaseHandler<TWriter> : IDatabaseTableHandler
-    where TWriter : WriteTableFromType, new()
+public abstract class BaseDatabaseHandler<TWriter,TOption> : IDatabaseTableHandler
+    where TWriter : WriteTableFromType<TOption>, new()
+    where TOption : TableOptions
 {
     protected TWriter Writer { get; } = new();
-    public abstract TableOptions Options { get; }
+    public abstract TOption Options { get; }
     public IEnumerable<string> GenerateDbTable<T>()
     {
         try

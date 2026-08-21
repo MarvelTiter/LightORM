@@ -13,11 +13,11 @@ namespace LightORM.Providers.PostgreSQL;
 
 public sealed class PostgreSQLProvider : BaseDatabaseProvider
 {
-    public static PostgreSQLProvider Create(DataBaseOption option) => new(option);
+    public static PostgreSQLProvider Create(DataBaseOption<PostgreSQLTableOptions> option) => new(option);
 
-    public static PostgreSQLProvider Create(Action<DataBaseOption> setting)
+    public static PostgreSQLProvider Create(Action<DataBaseOption<PostgreSQLTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<PostgreSQLTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -28,7 +28,7 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
 
     public override DbBaseType DbBaseType => DbBaseType.PostgreSQL;
 
-    private PostgreSQLProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private PostgreSQLProvider(DataBaseOption<PostgreSQLTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new PostgreSQLTableHandler(option.GenerateOption);
         var sqlMethodResolver = new PostgreSQLMethodResolver();

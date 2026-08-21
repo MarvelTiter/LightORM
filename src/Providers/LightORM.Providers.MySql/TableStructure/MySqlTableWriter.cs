@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.MySql.TableStructure;
 
-public class MySqlTableWriter : LightORM.Implements.WriteTableFromType
+public class MySqlTableWriter : LightORM.Implements.WriteTableFromType<MySqlTableOptions>
 {
-    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(MySqlTableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         var primaryKeys = table.Columns.Where(col => col.PrimaryKey);
@@ -25,7 +25,7 @@ public class MySqlTableWriter : LightORM.Implements.WriteTableFromType
         sql.AppendLine(@$"
 CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
     {string.Join($",{Environment.NewLine}    ", table.Columns.Select(col => BuildColumn(option, col)))}{primaryKeyConstraint}
-)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+)ENGINE={option.Engine} DEFAULT CHARSET={option.Charset} COLLATE={option.Collation}
 ");
         int i = 1;
         foreach (DbIndex index in table.Indexs)
@@ -44,7 +44,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableOptions option, DbColumn column)
+    protected override string BuildColumn(MySqlTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR") || dataType == "BINARY")
@@ -59,7 +59,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         return $"{DbEmphasis(option, column.Name)} {dataType} {notNull} {identity} {commentClause} {defaultValueClause}";
     }
 
-    protected override string ConvertToDbType(TableOptions option, DbColumn type)
+    protected override string ConvertToDbType(MySqlTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -94,7 +94,7 @@ CREATE TABLE{existsClause} {DbEmphasis(option, table.Name)}(
         };
     }
 
-    protected override string DbEmphasis(TableOptions option, string name) => $"`{name}`";
+    protected override string DbEmphasis(MySqlTableOptions option, string name) => $"`{name}`";
 
     private static object CheckDefaultValue(DbColumn column)
     {

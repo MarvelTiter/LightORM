@@ -29,6 +29,11 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
         return inner.FormatBooleanValue(value);
     }
 
+    public string FormatDateTimeValue(DateTime value)
+    {
+        return inner.FormatDateTimeValue(value);
+    }
+
     //public void HandleBooleanValue(StringBuilder sql, bool value)
     //{
     //    inner.HandleBooleanValue(sql, value);
@@ -74,18 +79,13 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
         inner.ReturnIdentitySql(sql);
     }
 
-    public string RewriteParameterReferences(string sql, string prefix)
-    {
-        return inner.RewriteParameterReferences(sql, prefix);
-    }
+    public string RewriteParameterReferences(string sql, string prefix) => inner.RewriteParameterReferences(sql, prefix);
 
-    void IDatabaseAdapter.HandleBatchInsert(BatchActionContext context)
-    {
-        inner.HandleBatchInsert(context);
-    }
+    void IDatabaseAdapter.HandleBatchInsert(BatchActionContext context) => inner.HandleBatchInsert(context);
 
-    StringBuilder IDatabaseAdapter.HandleInsertOrUpdate(UpsertContext context)
-    {
-        return inner.HandleInsertOrUpdate(context);
-    }
+    void IDatabaseAdapter.HandleBatchUpdate(BatchActionContext context) => inner.HandleBatchUpdate(context);
+
+    void IDatabaseAdapter.HandleInsertOrUpdate(UpsertContext context) => inner.HandleInsertOrUpdate(context);
+
+    void IDatabaseAdapter.HandleBatchDelete<T>(BatchActionContext<DeleteBuilder<T>> context) => inner.HandleBatchDelete(context);
 }

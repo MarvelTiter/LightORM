@@ -1,10 +1,8 @@
-﻿using LightORM.Extension;
+﻿using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using LightORM.Utils;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.Oracle;
 
@@ -14,11 +12,13 @@ internal partial class CustomOracleAdapter
     {
         var batchs = context.Batchs;
         var builder = context.Builder;
-        var insertColumns = context.InsertColumns;
+        var insertColumns = context.TargetColumns;
+        var database = context.ScopedAdapter;
         foreach (var item in batchs)
         {
-            StringBuilder sb = new("INSERT ALL");
-            sb.AppendLine();
+            //StringBuilder sb = new("INSERT ALL");
+            using var _ = StringBuilderPool.Get(out var sb);
+            sb.AppendLine("INSERT ALL");
             for (int i = 0; i < item.Parameters.Count; i++)
             {
                 AttachInserts(sb);
@@ -41,7 +41,7 @@ internal partial class CustomOracleAdapter
         void AttachInserts(StringBuilder sb)
         {
             sb.Append("    INTO ");
-            sb.AppendTableName(this, builder.MainTable, false);
+            sb.AppendTableName(database, builder.MainTable, false);
             sb.Append(" (");
             foreach (var item in insertColumns)
             {

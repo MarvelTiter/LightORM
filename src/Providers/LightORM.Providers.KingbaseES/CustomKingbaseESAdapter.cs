@@ -9,7 +9,7 @@ using System.Text;
 namespace LightORM.Providers.KingbaseES;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, KingbaseESTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal readonly static CustomKingbaseESAdapter Instance = new(new KingbaseESMethodResolver(), new());
 
