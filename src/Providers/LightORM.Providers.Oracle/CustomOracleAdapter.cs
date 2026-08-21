@@ -11,7 +11,7 @@ using System.Text;
 namespace LightORM.Providers.Oracle;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResolver, TableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResolver, OracleTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
 {
     internal readonly static CustomOracleAdapter Instance = new(new OracleMethodResolver(), new());
     public override string Prefix => ":";

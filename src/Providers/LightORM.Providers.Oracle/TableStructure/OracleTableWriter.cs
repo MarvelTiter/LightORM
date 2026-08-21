@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.Oracle.TableStructure;
 
-public class OracleTableWriter : LightORM.Implements.WriteTableFromType
+public class OracleTableWriter : LightORM.Implements.WriteTableFromType<OracleTableOptions>
 {
-    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(OracleTableOptions option, DbTable table)
     {
         var tableSpace = option.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
 
@@ -133,7 +133,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         }
     }
 
-    protected override string BuildColumn(TableOptions option, DbColumn column)
+    protected override string BuildColumn(OracleTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR"))
@@ -147,7 +147,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         return $"{DbEmphasis(option, column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
     }
 
-    protected override string ConvertToDbType(TableOptions option, DbColumn type)
+    protected override string ConvertToDbType(OracleTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -190,7 +190,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         };
     }
 
-    protected override string DbEmphasis(TableOptions option, string name) => $"\"{name.ToUpper()}\"";
+    protected override string DbEmphasis(OracleTableOptions option, string name) => $"\"{name.ToUpper()}\"";
 
     private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
     {
@@ -220,7 +220,7 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType
         return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
-    private string AttachUserId(TableOptions option, string name)
+    private string AttachUserId(OracleTableOptions option, string name)
     {
         if (option.UserId != null)
             return $"\"{option.UserId}\".\"{name.ToUpper()}\"";

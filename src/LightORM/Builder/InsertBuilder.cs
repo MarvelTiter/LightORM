@@ -5,7 +5,7 @@ namespace LightORM.Builder;
 
 internal class InsertBuilder<T> : SqlBuilder
 {
-    public new T? TargetObject { get; set; }
+    //public new T? TargetObject { get; set; }
     public T[] TargetObjects { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
     HashSet<string> IgnoreMembers { get; set; } = [];
@@ -93,7 +93,7 @@ internal class InsertBuilder<T> : SqlBuilder
         // TODO 批量插入对JSON列处理
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
 
-        database.HandleBatchInsert(new(this, insertColumns, BatchInfos));
+        database.HandleBatchInsert(new(this, insertColumns, BatchInfos, database));
 
         batchDone = true;
 
@@ -184,14 +184,14 @@ internal class InsertBuilder<T> : SqlBuilder
         }
         //columns.RemoveLast(1);
         //values.RemoveLast(1);
-        StringBuilder sb;
+        using var _ = StringBuilderPool.Get(out var sb);
         if ((UpdateOnConflict || IgnoreOnConflict) && insertColumns.Any(i => i.IsPrimaryKey))
         {
-            sb = database.HandleInsertOrUpdate(new(this, columnValueMap, DbParameters, IgnoreOnConflict, database));
+            database.HandleInsertOrUpdate(new(this, sb, columnValueMap, DbParameters, IgnoreOnConflict, database));
         }
         else
         {
-            sb = new("INSERT INTO ");
+            sb.Append("INSERT INTO ");
             //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
             sb.AppendTableName(database, MainTable, false).AppendLine();
             sb.Append('(');

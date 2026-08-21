@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.Sqlite.TableStructure;
 
-public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
+public class SqliteTableWriter : LightORM.Implements.WriteTableFromType<SqliteTableOptions>
 {
     private readonly ThreadLocal<bool> useAutoIncrement = new ThreadLocal<bool>(() => false);
 
-    public override IEnumerable<string> BuildTableSql(TableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(SqliteTableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
         DbColumn[] primaryKeys = [.. table.Columns.Where(col => col.PrimaryKey)];
@@ -49,7 +49,7 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(TableOptions option, DbColumn column)
+    protected override string BuildColumn(SqliteTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         string identity = column.AutoIncrement ? $"AUTOINCREMENT" : "";
@@ -69,7 +69,7 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         return $"{DbEmphasis(option, column.Name)} {dataType} {notNull} {identity} {defaultValueClause}";
     }
 
-    protected override string ConvertToDbType(TableOptions option, DbColumn type)
+    protected override string ConvertToDbType(SqliteTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -114,5 +114,5 @@ public class SqliteTableWriter : LightORM.Implements.WriteTableFromType
         }
     }
 
-    protected override string DbEmphasis(TableOptions option, string name) => $"`{name}`";
+    protected override string DbEmphasis(SqliteTableOptions option, string name) => $"`{name}`";
 }

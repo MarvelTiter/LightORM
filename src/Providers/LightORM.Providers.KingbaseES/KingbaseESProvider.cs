@@ -9,11 +9,11 @@ namespace LightORM.Providers.KingbaseES;
 public class KingbaseESProvider : BaseDatabaseProvider
 {
     public static readonly DbBaseType KingbaseEs = new("KingbaseES");
-    public static KingbaseESProvider Create(DataBaseOption option) => new(option);
+    public static KingbaseESProvider Create(DataBaseOption<KingbaseESTableOptions> option) => new(option);
 
-    public static KingbaseESProvider Create(Action<DataBaseOption> setting)
+    public static KingbaseESProvider Create(Action<DataBaseOption<KingbaseESTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<KingbaseESTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -21,7 +21,7 @@ public class KingbaseESProvider : BaseDatabaseProvider
         }
         return Create(dbOption);
     }
-    private KingbaseESProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private KingbaseESProvider(DataBaseOption<KingbaseESTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new KingbaseESTableHandler(option.GenerateOption);
         var sqlMethodResolver = new KingbaseESMethodResolver();

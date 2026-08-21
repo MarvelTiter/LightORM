@@ -19,12 +19,12 @@ public enum SqlServerVersion
 
 public sealed class SqlServerProvider : BaseDatabaseProvider
 {
-    public static SqlServerProvider Create(SqlServerVersion version, DataBaseOption option)
+    public static SqlServerProvider Create(SqlServerVersion version, DataBaseOption<SqlServerTableOptions> option)
         => new(version, option);
 
-    public static SqlServerProvider Create(SqlServerVersion version, Action<DataBaseOption> setting)
+    public static SqlServerProvider Create(SqlServerVersion version, Action<DataBaseOption<SqlServerTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<SqlServerTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -34,7 +34,7 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
     }
 
     private SqlServerProvider(SqlServerVersion version
-        , DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+        , DataBaseOption<SqlServerTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new SqlServerTableHandler(option.GenerateOption);
         var sqlMethodResolver = new SqlServerMethodResolver(version);

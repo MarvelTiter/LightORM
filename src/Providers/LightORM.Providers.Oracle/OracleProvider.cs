@@ -9,10 +9,10 @@ namespace LightORM.Providers.Oracle;
 
 public sealed class OracleProvider : BaseDatabaseProvider
 {
-    public static OracleProvider Create(DataBaseOption option) => new(option);
-    public static OracleProvider Create(Action<DataBaseOption> setting)
+    public static OracleProvider Create(DataBaseOption<OracleTableOptions> option) => new(option);
+    public static OracleProvider Create(Action<DataBaseOption<OracleTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<OracleTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -20,7 +20,7 @@ public sealed class OracleProvider : BaseDatabaseProvider
         }
         return Create(dbOption);
     }
-    private OracleProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private OracleProvider(DataBaseOption<OracleTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new OracleTableHandler(option.GenerateOption);
         var sqlMethodResolver = new OracleMethodResolver();

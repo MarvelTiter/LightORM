@@ -5,28 +5,39 @@ namespace LightORM.Providers.SqlServer.Extensions;
 
 public static class IoCExtension
 {
-    public static void UseSqlServer(this IExpressionContextSetup options, SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
+    extension(IExpressionContextSetup options)
+    {
+        public void UseSqlServer(SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
         => options.UseSqlServer("MainDb", version, masterConnectString, slaveConnectStrings);
-    public static void UseSqlServer(this IExpressionContextSetup options, string? key, SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
-    {
-        //var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
-        //options.SetDatabase(key, DbBaseType.SqlServer, provider);
-        UseSqlServer(options, version, set =>
+        public void UseSqlServer(string? key, SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
         {
-            set.DbKey = key;
-            set.MasterConnectionString = masterConnectString;
-            set.SalveConnectionStrings = slaveConnectStrings;
-        });
-    }
-    public static void UseSqlServer(this IExpressionContextSetup options, SqlServerVersion version, Action<IDbOption> setting)
-    {
-        var dbOption = new DataBaseOption();
-        setting.Invoke(dbOption);
-        if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
-        {
-            throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+            //var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
+            //options.SetDatabase(key, DbBaseType.SqlServer, provider);
+            UseSqlServer(options, version, set =>
+            {
+                set.DbKey = key;
+                set.MasterConnectionString = masterConnectString;
+                set.SalveConnectionStrings = slaveConnectStrings;
+            });
         }
-        var provider = SqlServerProvider.Create(version, dbOption);
-        options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.SqlServer, provider);
+        public void UseSqlServer(SqlServerVersion version, Action<IDbOption> setting)
+        {
+            var dbOption = new DataBaseOption<SqlServerTableOptions>();
+            setting.Invoke(dbOption);
+            if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
+            {
+                throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
+            }
+            var provider = SqlServerProvider.Create(version, dbOption);
+            options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.SqlServer, provider);
+        }
+    }
+
+    extension(IDbOption option)
+    {
+        public void ConfiguraSqlServer(Action<SqlServerTableOptions> config)
+        {
+            config.Invoke(option.GetOption<SqlServerTableOptions>());
+        }
     }
 }

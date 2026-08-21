@@ -9,13 +9,6 @@ public record TableOptions
     public bool NotCreateIfExists { get; set; }
     public bool UseUnicodeString { get; set; } = true;
     public bool SupportComment { get; set; } = true;
-
-    /// <summary>
-    /// 当前仅Oracle对此属性有支持，高级版本的Oracle，适用自增列语法 GENERATED ALWAYS AS IDENTITY
-    /// </summary>
-    public bool OverVersion { get; set; }
-    public string? TableSpace { get; set; }
-    public string? UserId { get; set; }
     public JSONBackend JSONBackend { get; set; } = JSONBackend.Text;
     public string? SpecificJsonColumnDbType { get; set; }
 
@@ -25,4 +18,6 @@ public record TableOptions
         get => UseUnicodeString ? defaultStringLength / 2 : defaultStringLength;
         set => defaultStringLength = value;
     }
+
+   
 }

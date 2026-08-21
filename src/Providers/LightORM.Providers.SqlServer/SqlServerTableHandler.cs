@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerTableHandler(TableOptions tableOptions)
-    : BaseDatabaseHandler<SqlServerTableWriter>
+public sealed class SqlServerTableHandler(SqlServerTableOptions tableOptions)
+    : BaseDatabaseHandler<SqlServerTableWriter, SqlServerTableOptions>
 {
-    public override TableOptions Options => tableOptions;
+    public override SqlServerTableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         return "SELECT NAME TableName FROM SYSOBJECTS WHERE XTYPE = 'U' ORDER BY NAME";

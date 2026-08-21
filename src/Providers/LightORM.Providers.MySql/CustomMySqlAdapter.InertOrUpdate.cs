@@ -11,14 +11,14 @@ namespace LightORM.Providers.MySql;
 
 internal partial class CustomMySqlAdapter
 {
-    public override StringBuilder HandleInsertOrUpdate(UpsertContext context)
+    public override void HandleInsertOrUpdate(UpsertContext context)
     {
         var database = context.ScopedAdapter;
         var columnValueMaps = context.ColumnValueMap;
-        var sb = new StringBuilder();
+        var sb = context.Sql;
         if (context.IgnoreWhenMap)
         {
-            sb = new("INSERT IGNORE INTO ");
+            sb.Append("INSERT IGNORE INTO ");
             sb.AppendTableName(database, context.Builder.MainTable, false).AppendLine();
             sb.Append('(');
             sb.AppendEntryColumns(columnValueMaps.Values);
@@ -30,7 +30,7 @@ internal partial class CustomMySqlAdapter
         }
         else
         {
-            sb = new("INSERT INTO ");
+            sb.Append("INSERT INTO ");
             //sb.AppendLine($" {GetTableName(database, MainTable, false)} ");
             sb.AppendTableName(database, context.Builder.MainTable, false).AppendLine();
             sb.Append('(');
@@ -69,7 +69,5 @@ internal partial class CustomMySqlAdapter
             sb.RemoveLast(SqlBuilder.N.Length + 1);
         }
         
-
-        return sb;
     }
 }

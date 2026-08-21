@@ -9,10 +9,10 @@ using LightORM.Providers.MySql.TableStructure;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class MySqlTableHandler(string database, TableOptions tableOptions)
-    : BaseDatabaseHandler<MySqlTableWriter>
+public sealed class MySqlTableHandler(string database, MySqlTableOptions tableOptions)
+    : BaseDatabaseHandler<MySqlTableWriter, MySqlTableOptions>
 {
-    public override TableOptions Options => tableOptions;
+    public override MySqlTableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         return $"""

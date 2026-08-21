@@ -4,10 +4,10 @@ using LightORM.Providers.KingbaseES.TableStructure;
 
 namespace LightORM.Providers.KingbaseES;
 
-public sealed class KingbaseESTableHandler(TableOptions tableOptions)
-    : BaseDatabaseHandler<KingbaseESTableWriter>
+public sealed class KingbaseESTableHandler(KingbaseESTableOptions tableOptions)
+    : BaseDatabaseHandler<KingbaseESTableWriter, KingbaseESTableOptions>
 {
-    public override TableOptions Options => tableOptions;
+    public override KingbaseESTableOptions Options => tableOptions;
 
     public override string GetTablesSql()
     {

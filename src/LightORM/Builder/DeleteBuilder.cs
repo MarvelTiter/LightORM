@@ -8,7 +8,7 @@ namespace LightORM.Builder;
 //#endif
 internal class DeleteBuilder<T> : SqlBuilder
 {
-    public new T? TargetObject { get; set; }
+    //public new T? TargetObject { get; set; }
     public T[] TargetObjects { get; set; } = [];
     private bool batchDone = false;
     public bool IsBatchDelete { get; set; }
@@ -130,66 +130,8 @@ internal class DeleteBuilder<T> : SqlBuilder
         }
         BatchInfos = columns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
         //var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
-        foreach (var batch in BatchInfos)
-        {
-            StringBuilder sb = new("DELETE FROM ");
-            //sb.AppendLine(GetTableName(database, MainTable, false));
-            sb.AppendTableName(database, MainTable, false).AppendLine();
-            sb.Append("WHERE ");
-            if (TargetObjects.Length == 0)
-            {
-                sb.Append("1=0");
-                batch.Sql = sb.ToString();
-                break;
-            }
-            sb.Append('(');
-            for (int rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
-            {
-                List<SimpleColumn>? row = batch.Parameters[rowIndex];
-                if (columns.Length > 1)
-                {
-                    sb.Append('(');
-                    for (var i = 0; i < row.Count; i++)
-                    {
-                        if (i > 0)
-                        {
-                            sb.Append(" AND ");
-                        }
-                        sb.AppendEmphasis(row[i].ColumnName, database);
-                        sb.Append(" = ");
-                        sb.WithPrefix(row[i].ParameterName, database);
-                    }
-                    sb.Append(')');
-                    if (rowIndex < batch.Parameters.Count - 1)
-                        sb.Append(" OR ");
-                }
-                else
-                {
-                    if (rowIndex == 0)
-                    {
-                        // 这里直接访问索引0是安全的，因为进入到else分支的话，说明row.Count == 1, 而row.Count是跟前面的columns的数量是一致的
-                        sb.AppendEmphasis(row[0].ColumnName, database);
-                        sb.Append(" IN (");
+        database.HandleBatchDelete<T>(new(this, columns, BatchInfos, database));
 
-                    }
-                    sb.WithPrefix(row[0].ParameterName, database);
-                    if (rowIndex < batch.Parameters.Count - 1)
-                        sb.Append(',');
-                    else
-                        sb.Append(')');
-                }
-            }
-            sb.Append(')');
-
-            foreach (var w in Where)
-            {
-                sb.AppendLine();
-                sb.Append("AND ");
-                sb.Append(w);
-            }
-            HandleSqlParameters(sb, database);
-            batch.Sql = sb.ToString();
-        }
         batchDone = true;
     }
     public override string ToSqlString(IDatabaseAdapter database)
@@ -224,7 +166,7 @@ internal class DeleteBuilder<T> : SqlBuilder
         {
             throw new LightOrmException("Where Condition is null and not provider a entity value");
         }
-        StringBuilder sql;
+        using var _ = StringBuilderPool.Get(out var sql);
         sql = new("DELETE FROM ");
         //sql.AppendLine(GetTableName(database, MainTable, false));
         sql.AppendTableName(database, MainTable, false).AppendLine();

@@ -10,11 +10,11 @@ namespace LightORM.Providers.MySql;
 
 public sealed class MySqlProvider : BaseDatabaseProvider
 {
-    public static MySqlProvider Create(DataBaseOption option) => new (option);
+    public static MySqlProvider Create(DataBaseOption<MySqlTableOptions> option) => new (option);
 
-    public static MySqlProvider Create(Action<DataBaseOption> setting)
+    public static MySqlProvider Create(Action<DataBaseOption<MySqlTableOptions>> setting)
     {
-        var dbOption = new DataBaseOption();
+        var dbOption = new DataBaseOption<MySqlTableOptions>();
         setting.Invoke(dbOption);
         if (string.IsNullOrEmpty(dbOption.MasterConnectionString))
         {
@@ -23,7 +23,7 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         return Create(dbOption);
     }
 
-    private MySqlProvider(DataBaseOption option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private MySqlProvider(DataBaseOption<MySqlTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         var master = option.MasterConnectionString!;
         var match = Regex.Match(master, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);

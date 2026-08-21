@@ -4,13 +4,6 @@ namespace LightORM.ExpressionSql;
 
 public class DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler) : IDbInitial
 {
-    private readonly TableOptions tableOption = new();
-    public IDbInitial Configuration(Action<TableOptions> option)
-    {
-        option?.Invoke(tableOption);
-        return this;
-    }
-
     public IDbInitial CreateTable<T>(params T[]? datas)
     {
         try

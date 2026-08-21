@@ -30,9 +30,10 @@ public enum ActionType
 
 public readonly record struct MapEntry(string Column, string Value);
 
-internal readonly record struct UpsertContext(SqlBuilder Builder, Dictionary<ITableColumnInfo, MapEntry> ColumnValueMap, Dictionary<string, object> Parameters, bool IgnoreWhenMap, IDatabaseAdapter ScopedAdapter);
+internal readonly record struct UpsertContext(SqlBuilder Builder, StringBuilder Sql, Dictionary<ITableColumnInfo, MapEntry> ColumnValueMap, Dictionary<string, object> Parameters, bool IgnoreWhenMap, IDatabaseAdapter ScopedAdapter);
 
-internal readonly record struct BatchActionContext(SqlBuilder Builder, ITableColumnInfo[] InsertColumns, List<BatchSqlInfo> Batchs);
+internal readonly record struct BatchActionContext(SqlBuilder Builder, ITableColumnInfo[] TargetColumns, List<BatchSqlInfo> Batchs, IDatabaseAdapter ScopedAdapter);
+internal readonly record struct BatchActionContext<TBuilder>(TBuilder Builder, ITableColumnInfo[] TargetColumns, List<BatchSqlInfo> Batchs, IDatabaseAdapter ScopedAdapter) where TBuilder : SqlBuilder;
 
 public readonly record struct JsonColumnParameterContext(ActionType ActionType
     , ITableColumnInfo Column

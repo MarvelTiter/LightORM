@@ -26,6 +26,7 @@ namespace LightORM.Interfaces
         void ReturnIdentitySql(StringBuilder sql);
         //void HandleBooleanValue(StringBuilder sql, bool value);
         string FormatBooleanValue(bool value);
+        string FormatDateTimeValue(DateTime value);
         void HandleDateValue(StringBuilder sql, DateTime value);
         string HandleBooleanValueForBulkCopy(bool value);
 
@@ -37,9 +38,12 @@ namespace LightORM.Interfaces
         void HandleJsonColumn(JsonColumnContext context);
         void HandleJsonParameter(JsonColumnParameterContext context);
 
-        internal StringBuilder HandleInsertOrUpdate(UpsertContext context);
+        internal void HandleInsertOrUpdate(UpsertContext context);
 
         internal void HandleBatchInsert(BatchActionContext context);
 
+        internal void HandleBatchUpdate(BatchActionContext context);
+
+        internal void HandleBatchDelete<T>(BatchActionContext<DeleteBuilder<T>> context);
     }
 }

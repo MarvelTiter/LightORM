@@ -7,15 +7,16 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
 [assembly: InternalsVisibleTo("LightORMTest.PostgreSQL")]
+[assembly: InternalsVisibleTo("BenchmarkTest")]
 
-[assembly:InternalsVisibleTo("LightORM.Extensions.DependencyInjection")]
-[assembly:InternalsVisibleTo("LightORM.Providers.Dameng")]
-[assembly:InternalsVisibleTo("LightORM.Providers.KingbaseES")]
-[assembly:InternalsVisibleTo("LightORM.Providers.MySql")]
-[assembly:InternalsVisibleTo("LightORM.Providers.Oracle")]
-[assembly:InternalsVisibleTo("LightORM.Providers.PostgreSQL")]
-[assembly:InternalsVisibleTo("LightORM.Providers.Sqlite")]
-[assembly:InternalsVisibleTo("LightORM.Providers.SqlServer")]
+[assembly: InternalsVisibleTo("LightORM.Extensions.DependencyInjection")]
+[assembly: InternalsVisibleTo("LightORM.Providers.Dameng")]
+[assembly: InternalsVisibleTo("LightORM.Providers.KingbaseES")]
+[assembly: InternalsVisibleTo("LightORM.Providers.MySql")]
+[assembly: InternalsVisibleTo("LightORM.Providers.Oracle")]
+[assembly: InternalsVisibleTo("LightORM.Providers.PostgreSQL")]
+[assembly: InternalsVisibleTo("LightORM.Providers.Sqlite")]
+[assembly: InternalsVisibleTo("LightORM.Providers.SqlServer")]
 
 [assembly: SelectExtension(ArgumentCount = 2)]
 [assembly: SelectExtension(ArgumentCount = 3)]
@@ -41,6 +42,11 @@ namespace LightORM.AssemblyControl
         public static readonly bool ShowExpressionResolveDebugInfo = false;
         public static readonly bool ShowSqlExecutorDebugInfo = true;
         public static readonly bool ShowExpressionHashCodeDebugInfo = true;
+    }
+
+    internal static class BenchmarkConfig
+    {
+        public static bool UseStringBuilderPool { get; set; }
     }
 
     internal static class AOTControl

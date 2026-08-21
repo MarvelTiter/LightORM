@@ -5,6 +5,7 @@ namespace LightORM;
 public interface IDbOption
 {
     string? DbKey { get; set; }
+    internal TOption GetOption<TOption>() where TOption : TableOptions;
     string? MasterConnectionString { get; set; }
     string[]? SalveConnectionStrings { get; set; }
     IDbOption ConfigurationMethodResolver(Action<ISqlMethodResolver> action);
@@ -15,5 +16,5 @@ public interface IDbOption
     /// <param name="keyWords"></param>
     IDbOption AddDbKeyWords(params string[] keyWords);
     IDbOption  UseIdentifierQuote(bool value = true);
-    IDbOption TableConfiguration(Action<TableOptions> action);
+    //IDbOption TableConfiguration(Action<TableOptions> action);
 }
