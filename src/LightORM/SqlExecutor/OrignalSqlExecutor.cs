@@ -1,16 +1,15 @@
-﻿using System.Collections.Concurrent;
+﻿using LightORM.Performances;
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 namespace LightORM.SqlExecutor;
 
-internal partial class SqlExecutor : ISqlExecutor
+internal partial class OrignalSqlExecutor : ISqlExecutor
 {
     public string Id { get; set; }
-    internal static readonly ConcurrentDictionary<IDatabaseProvider, ConnectionPool> Pools = [];
     private static readonly ConcurrentDictionary<IDatabaseProvider, int> PoolSizes = [];
-    public IDatabaseProvider Database { get; private set; }
+    public IDatabaseProvider Provider { get; private set; }
     /// <summary>
     /// 数据库事务
     /// </summary>
@@ -22,30 +21,28 @@ internal partial class SqlExecutor : ISqlExecutor
     public AdoInterceptor Interceptor { get; }
     public ConnectionPool Pool { get; }
 
-    public SqlExecutor(IDatabaseProvider database, int poolSize, AdoInterceptor interceptor, string? id = null)
+    public OrignalSqlExecutor(IDatabaseProvider provider, int poolSize, AdoInterceptor interceptor, string? id = null)
     {
-        Database = database;
+        Provider = provider;
         Interceptor = interceptor;
-        _ = PoolSizes.GetOrAdd(database, poolSize);
-        Pool = Pools.GetOrAdd(database, db =>
+        Pool = ConnectionPool.Pools.GetOrAdd(provider, db =>
         {
-            PoolSizes.TryGetValue(db, out var size);
             return new ConnectionPool(() =>
             {
                 var conn = db.DbProviderFactory.CreateConnection()!;
                 conn.ConnectionString = db.MasterConnectionString;
                 return conn;
-            }, size);
+            }, ExpressionSqlOptions.Instance.Value.PoolSize);
         });
         Id = id ?? Guid.NewGuid().ToString();
-        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Database, new AsyncLocal<TransactionContext?>());
+        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Provider, new AsyncLocal<TransactionContext?>());
     }
 
-    public SqlExecutor(IDatabaseProvider database, AdoInterceptor interceptor, string? id = null)
+    public OrignalSqlExecutor(IDatabaseProvider database, AdoInterceptor interceptor, string? id = null)
     {
-        Database = database;
+        Provider = database;
         Interceptor = interceptor;
-        Pool = Pools.GetOrAdd(database, db =>
+        Pool = ConnectionPool.Pools.GetOrAdd(database, db =>
         {
             PoolSizes.TryGetValue(db, out var size);
             return new ConnectionPool(() =>
@@ -56,7 +53,7 @@ internal partial class SqlExecutor : ISqlExecutor
             }, size);
         });
         Id = id ?? Guid.NewGuid().ToString();
-        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Database, new AsyncLocal<TransactionContext?>());
+        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Provider, new AsyncLocal<TransactionContext?>());
     }
 
     public int ExecuteNonQuery<
@@ -246,7 +243,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
@@ -289,7 +286,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataTable();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
@@ -511,7 +508,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataSet();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
@@ -554,7 +551,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataTable();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
         CommandResult? commandResult = default;
         try
@@ -686,7 +683,7 @@ internal partial class SqlExecutor : ISqlExecutor
 
     public object Clone()
     {
-        return new SqlExecutor(Database, Interceptor);
+        return new OrignalSqlExecutor(Provider, Interceptor);
     }
 
     private bool disposedValue;
@@ -708,21 +705,5 @@ internal partial class SqlExecutor : ISqlExecutor
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
-    }
-}
-
-internal class StopwatchHelper
-{
-    public static long GetTimestamp() => Stopwatch.GetTimestamp();
-    public static TimeSpan GetElapsedTime(long startingTimestamp)
-    {
-#if NET8_0_OR_GREATER
-        return Stopwatch.GetElapsedTime(startingTimestamp);
-#else   
-        var end = Stopwatch.GetTimestamp();
-        var tickFrequency = (double)(10000 * 1000 / Stopwatch.Frequency);
-        var tick = (end - startingTimestamp) * tickFrequency;
-        return new TimeSpan((long)tick);
-#endif
     }
 }

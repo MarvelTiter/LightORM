@@ -10,7 +10,7 @@ internal class GroupSelectProvider<TGroup, TTables> : IExpSelectGroup<TGroup, TT
     public SelectBuilder SqlBuilder { get; }
     public LambdaExpression KeySelector { get; }
     public ISqlExecutor Executor => DbContext.Ado;
-    public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
+    public IDatabaseAdapter Database => Executor.Provider.DatabaseAdapter;
     public bool IsSubQuery { get; set; }
     public GroupSelectProvider(IContext dbContext, SelectBuilder builder, LambdaExpression keySelector)
     {

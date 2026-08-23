@@ -17,7 +17,7 @@ public abstract class DbInitialContext
         {
             throw new LightOrmException($"{key} not register");
         }
-        using var executor = new SqlExecutor.SqlExecutor(db, new AdoInterceptor(option.Interceptors));
+        using var executor = new SqlExecutor.OrignalSqlExecutor(db, new AdoInterceptor(option.Interceptors));
         option.DatabaseHandlers.TryGetValue(key, out var handler);
         if (handler is null)
         {

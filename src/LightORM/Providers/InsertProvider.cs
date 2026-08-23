@@ -6,10 +6,10 @@ namespace LightORM.Providers;
 
 internal sealed class InsertProvider<T> : IExpInsert<T>
 {
-    private readonly ISqlExecutor executor;
+    private readonly SqlAdo executor;
     private readonly InsertBuilder<T> sqlBuilder;
-    private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
-    public InsertProvider(ISqlExecutor executor, T? entity)
+    private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
+    public InsertProvider(SqlAdo executor, T? entity)
     {
         this.executor = executor;
         sqlBuilder = new();
@@ -17,7 +17,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         sqlBuilder.TargetObject = entity;
     }
 
-    public InsertProvider(ISqlExecutor executor, T[] entities)
+    public InsertProvider(SqlAdo executor, T[] entities)
     {
         this.executor = executor;
         sqlBuilder = new();

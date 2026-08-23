@@ -45,7 +45,7 @@ namespace LightORM.Extension
 #endif
         public static void Do(ISqlExecutor executor, object item, IncludeInfo include)
         {
-            var database = executor.Database.DatabaseAdapter;
+            var database = executor.Provider.DatabaseAdapter;
             SelectBuilder includeBuilder = BuildSql(database, include, item);
             var selectedType = include.NavigateInfo!.NavigateType;
             string sql = includeBuilder.ToSqlString(database);

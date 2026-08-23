@@ -9,6 +9,9 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
     public bool IsTransaction { get; set; }
 
     public override ExpressionSqlOptions Options { get; }
+
+    private readonly DatabaseConnection databaseConnection;
+
     public SingleScopedExpressionCoreSql(ISqlExecutor sqlExecutor, ExpressionSqlOptions options)
     {
         Ado = sqlExecutor;
@@ -17,6 +20,7 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
     }
     public override ISqlExecutor Ado { get; }
 
+    public SqlExecutor.SqlAdo Ado1 {  get; }
 
     public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified) => Ado.BeginTransaction(isolationLevel);
 

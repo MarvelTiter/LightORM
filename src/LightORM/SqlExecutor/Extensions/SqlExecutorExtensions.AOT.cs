@@ -6,7 +6,7 @@ namespace LightORM;
 
 public static partial class SqlExecutorExtensions
 {
-    extension(ISqlExecutor executor)
+    extension(SqlAdo executor)
     {
         public ExecuteResult<TParameter> Execute<
 #if NET8_0_OR_GREATER

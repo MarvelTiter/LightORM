@@ -10,7 +10,7 @@ public static class ScalarValueExtension
             {
                 return default;
             }
-            return SqlExecutor.SqlExecutor.ChangeType<T>(scalarValue.Value);
+            return SqlExecutor.OrignalSqlExecutor.ChangeType<T>(scalarValue.Value);
         }
     }
 }

@@ -54,7 +54,7 @@ public static class ExpressionContextExtension
                         if (value is bool b)
                         {
                             // bool类型特殊处理
-                            row[col.ColumnName] = ado.Database.DatabaseAdapter.HandleBooleanValueForBulkCopy(b);
+                            row[col.ColumnName] = ado.Provider.DatabaseAdapter.HandleBooleanValueForBulkCopy(b);
                             continue;
                         }
 
@@ -75,7 +75,7 @@ public static class ExpressionContextExtension
         /// <returns></returns>
         public int BulkCopy(DataTable dataTable)
         {
-            return ado.Database.BulkCopy(dataTable);
+            return ado.Provider.BulkCopy(dataTable);
         }
     }
 

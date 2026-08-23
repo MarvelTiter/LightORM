@@ -6,10 +6,10 @@ namespace LightORM.Providers
 {
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
-        private readonly ISqlExecutor executor;
+        private readonly SqlAdo executor;
         private readonly UpdateBuilder<T> sqlBuilder;
-        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
-        public UpdateProvider(ISqlExecutor executor, T? entity)
+        private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
+        public UpdateProvider(SqlAdo executor, T? entity)
         {
             this.executor = executor;
             sqlBuilder = new();
@@ -17,7 +17,7 @@ namespace LightORM.Providers
             sqlBuilder.TargetObject = entity;
         }
 
-        public UpdateProvider(ISqlExecutor executor, T[] entities)
+        public UpdateProvider(SqlAdo executor, T[] entities)
         {
             this.executor = executor;
             sqlBuilder = new();

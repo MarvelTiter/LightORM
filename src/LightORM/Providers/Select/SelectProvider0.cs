@@ -15,9 +15,9 @@ internal class SelectProvider0<TSelect,
 T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
 {
     public SelectBuilder SqlBuilder { get; set; } = default!;
-    public ISqlExecutor Executor => DbContext.Ado;
-    public DbBaseType DbType => Executor.Database.DbBaseType;
-    public IDatabaseAdapter Database => Executor.Database.DatabaseAdapter;
+    public SqlAdo Executor => DbContext.Ado;
+    public DbBaseType DbType => Executor.Provider.DbBaseType;
+    public IDatabaseAdapter Database => Executor.Provider.DatabaseAdapter;
     public bool IsSubQuery { get; set; }
     public IContext DbContext { get; }
 

@@ -9,9 +9,9 @@ public readonly struct ExecuteResult<
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-TParameter>(ISqlExecutor ado, string sql, TParameter? param, DbTransaction? trans, CommandType commandType = CommandType.Text)
+TParameter>(SqlAdo ado, string sql, TParameter? param, DbTransaction? trans, CommandType commandType = CommandType.Text)
 {
-    internal ISqlExecutor Ado { get; } = ado;
+    internal SqlAdo Ado { get; } = ado;
     internal string Sql { get; } = sql;
     internal TParameter? Param { get; } = param;
     internal DbTransaction? Trans { get; } = trans;
@@ -269,9 +269,9 @@ TParameter>(ISqlExecutor ado, string sql, TParameter? param, DbTransaction? tran
 
 }
 
-public readonly struct ExecuteResult(ISqlExecutor ado, string sql, DbTransaction? trans, CommandType commandType = CommandType.Text)
+public readonly struct ExecuteResult(SqlAdo ado, string sql, DbTransaction? trans, CommandType commandType = CommandType.Text)
 {
-    internal ISqlExecutor Ado { get; } = ado;
+    internal SqlAdo Ado { get; } = ado;
     internal string Sql { get; } = sql;
     internal NullDbParameter Param { get; } = NullDbParameter.Instance;
     internal DbTransaction? Trans { get; } = trans;

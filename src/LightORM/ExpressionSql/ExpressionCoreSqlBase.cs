@@ -5,10 +5,10 @@ using System.Threading;
 
 namespace LightORM.ExpressionSql;
 
-internal abstract class ExpressionCoreSqlBase : IContext
+internal abstract class ExpressionCoreSqlBase(ExpressionSqlOptions options) : IContext
 {
-    public abstract ISqlExecutor Ado { get; }
-    public abstract ExpressionSqlOptions Options { get; }
+    public abstract SqlAdo Ado { get; }
+    public ExpressionSqlOptions Options { get; } = options;
 
     public MultipleResult QueryMultiple(params IExpSelect[] selects)
     {
@@ -27,11 +27,11 @@ internal abstract class ExpressionCoreSqlBase : IContext
             for (var i = 0; i < selects.Length; i++)
             {
                 var select = selects[i];
-                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.DatabaseAdapter);
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Provider.DatabaseAdapter);
 
                 if (select.SqlBuilder.DbParameters.Count > 0)
                 {
-                    sqls[i] = Ado.Database.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
+                    sqls[i] = Ado.Provider.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
 
                     foreach (var item in select.SqlBuilder.DbParameters)
                     {
@@ -43,7 +43,7 @@ internal abstract class ExpressionCoreSqlBase : IContext
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
+            var sql = Ado.Provider.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
             var reader = Ado.ExecuteReader(sql, parameters);
             return new MultipleResult(reader);
         }
@@ -72,11 +72,11 @@ internal abstract class ExpressionCoreSqlBase : IContext
             for (var i = 0; i < selects.Length; i++)
             {
                 var select = selects[i];
-                var originSql = select.SqlBuilder.ToSqlString(Ado.Database.DatabaseAdapter);
+                var originSql = select.SqlBuilder.ToSqlString(Ado.Provider.DatabaseAdapter);
 
                 if (select.SqlBuilder.DbParameters.Count > 0)
                 {
-                    sqls[i] = Ado.Database.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
+                    sqls[i] = Ado.Provider.DatabaseAdapter.RewriteParameterReferences(originSql, $"q{i}");
 
                     foreach (var item in select.SqlBuilder.DbParameters)
                     {
@@ -88,7 +88,7 @@ internal abstract class ExpressionCoreSqlBase : IContext
                     sqls[i] = originSql;
                 }
             }
-            var sql = Ado.Database.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
+            var sql = Ado.Provider.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
             var reader = await Ado.ExecuteReaderAsync(sql, parameters, cancellationToken: cancellationToken);
             return new MultipleResult(reader);
         }
@@ -210,7 +210,7 @@ internal abstract class ExpressionCoreSqlBase : IContext
         return await InternalDropTableAsync(ado, t.TableName, cancellationToken);
     }
 
-    protected static string InternalCreateTableSql<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
+    protected static string InternalCreateTableSql<T>(SqlAdo ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
     {
         try
         {
@@ -222,7 +222,7 @@ internal abstract class ExpressionCoreSqlBase : IContext
         }
     }
 
-    protected static async Task<bool> InternalCreateTableAsync<T>(ISqlExecutor ado, ExpressionSqlOptions options, Action<TableOptions>? action, CancellationToken cancellationToken)
+    protected static async Task<bool> InternalCreateTableAsync<T>(SqlAdo ado, ExpressionSqlOptions options, Action<TableOptions>? action, CancellationToken cancellationToken)
     {
         try
         {
@@ -232,46 +232,46 @@ internal abstract class ExpressionCoreSqlBase : IContext
                 return false;
             }
 
-            ado.BeginTransaction();
+            //ado.BeginTransaction();
             foreach (var s in sqls)
             {
                 await ado.ExecuteNonQueryAsync(s, cancellationToken: cancellationToken);
             }
 
-            await ado.CommitTransactionAsync(cancellationToken);
+            //await ado.CommitTransactionAsync(cancellationToken);
             return true;
         }
         catch (Exception)
         {
-            await ado.RollbackTransactionAsync(cancellationToken);
+            //await ado.RollbackTransactionAsync(cancellationToken);
             return false;
         }
     }
 
-    protected static async Task<IList<ReadedTable>> InternalGetTablesAsync(ISqlExecutor ado, ExpressionSqlOptions _)
+    protected static async Task<IList<ReadedTable>> InternalGetTablesAsync(SqlAdo ado, ExpressionSqlOptions _)
     {
-        if (ado.Database.DbHandler is null)
+        if (ado.Provider.DbHandler is null)
             return [];
-        var sql = ado.Database.DbHandler.GetTablesSql();
+        var sql = ado.Provider.DbHandler.GetTablesSql();
         return await ado.Execute(sql).ToListAsync<ReadedTable>();
     }
 
-    protected static async Task<ReadedTable> InternalTableStructAsync(ReadedTable table, ISqlExecutor ado, ExpressionSqlOptions _)
+    protected static async Task<ReadedTable> InternalTableStructAsync(ReadedTable table, SqlAdo ado, ExpressionSqlOptions _)
     {
-        if (ado.Database.DbHandler is null)
+        if (ado.Provider.DbHandler is null)
             throw new NotSupportedException();
-        var sql = ado.Database.DbHandler.GetTableStructSql(table.TableName!);
+        var sql = ado.Provider.DbHandler.GetTableStructSql(table.TableName!);
         var columns = await ado.Execute(sql).ToListAsync<ReadedTableColumn>();
         return table with { Columns = columns };
     }
 
-    protected static async Task<bool> InternalDropTableAsync(ISqlExecutor ado, string tableName, CancellationToken cancellationToken)
+    protected static async Task<bool> InternalDropTableAsync(SqlAdo ado, string tableName, CancellationToken cancellationToken)
     {
         try
         {
-            if (ado.Database.DbHandler is null)
+            if (ado.Provider.DbHandler is null)
                 throw new NotSupportedException();
-            var sql = ado.Database.DbHandler.GetDropTableSql(tableName);
+            var sql = ado.Provider.DbHandler.GetDropTableSql(tableName);
             await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
             return true;
         }
@@ -282,11 +282,11 @@ internal abstract class ExpressionCoreSqlBase : IContext
 
     }
 
-    private static IEnumerable<string> GenerateDbTable<T>(ISqlExecutor ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
+    private static IEnumerable<string> GenerateDbTable<T>(SqlAdo ado, ExpressionSqlOptions option, Action<TableOptions>? action = null)
     {
-        if (ado.Database.DbHandler is null)
+        if (ado.Provider.DbHandler is null)
             return [];
-        var tableSql = ado.Database.DbHandler.GenerateDbTable<T>();
+        var tableSql = ado.Provider.DbHandler.GenerateDbTable<T>();
         return tableSql;
     }
 

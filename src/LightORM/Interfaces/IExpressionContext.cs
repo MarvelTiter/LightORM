@@ -5,7 +5,7 @@ namespace LightORM;
 
 public interface IContext
 {
-    ISqlExecutor Ado { get; }
+    SqlAdo Ado { get; }
     MultipleResult QueryMultiple(params IExpSelect[] selects);
     Task<MultipleResult> QueryMultipleAsync(IExpSelect[] selects, CancellationToken cancellationToken);
 
@@ -37,7 +37,7 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
 {
     string Id { get; }
     internal ExpressionSqlOptions Options { get; }
-    internal ISqlExecutor GetAdo(string key);
+    internal SqlAdo GetAdo(string key);
     /// <summary>
     /// 与<see cref="IExpSelect{T1}.Union(IExpSelect{T1})"/>不同的是，当Union个数大于1时，该方法会嵌套为子查询
     /// </summary>
@@ -124,19 +124,9 @@ public interface IDefinedTableAction
 /// </summary>
 public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
-    ISqlExecutor DefaultAdo { get; }
+    SqlAdo DefaultAdo { get; }
     ITransientExpressionContext SwitchDatabase(string key);
     string Id { get; }
-//    IExpSelect<T> Select<
-//#if NET8_0_OR_GREATER
-//       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-//#endif
-//        T>();
-//    IExpInsert<T> Insert<T>(params T[] entities);
-//    IExpUpdate<T> Update<T>();
-//    IExpUpdate<T> Update<T>(params T[] entities);
-//    IExpDelete<T> Delete<T>();
-//    IExpDelete<T> Delete<T>(params T[] entity);
     void BeginTransaction(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     Task BeginTransactionAsync(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction(string key = ConstString.Main);
@@ -157,16 +147,6 @@ public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IC
 public interface ISingleScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
     string Id { get; }
-//    IExpSelect<T> Select<
-//#if NET8_0_OR_GREATER
-//       [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-//#endif
-//    T>();
-//    IExpInsert<T> Insert<T>(params T[] entities);
-//    IExpUpdate<T> Update<T>();
-//    IExpUpdate<T> Update<T>(params T[] entities);
-//    IExpDelete<T> Delete<T>();
-//    IExpDelete<T> Delete<T>(params T[] entity);
     void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction();

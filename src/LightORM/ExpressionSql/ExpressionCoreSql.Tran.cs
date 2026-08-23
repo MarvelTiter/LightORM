@@ -7,7 +7,7 @@ namespace LightORM.ExpressionSql
         public ISingleScopedExpressionContext Use(IDatabaseProvider db)
         {
             // 确保Use之后，拿到的ISqlExecutor是对应的
-            var ado = new SqlExecutor.SqlExecutor(db, Options.PoolSize, new AdoInterceptor(Options.Interceptors));
+            var ado = new SqlExecutor.OrignalSqlExecutor(db, Options.PoolSize, new AdoInterceptor(Options.Interceptors));
             return new SingleScopedExpressionCoreSql(ado, Options);
         }
 

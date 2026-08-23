@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using static LightORM.SqlExecutor.SqlExecutor;
+using static LightORM.SqlExecutor.OrignalSqlExecutor;
 
 namespace LightORM.ExpressionSql;
 

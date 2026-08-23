@@ -6,12 +6,12 @@ namespace LightORM.Providers
 {
     internal sealed class DeleteProvider<T> : IExpDelete<T>
     {
-        private readonly ISqlExecutor executor;
+        private readonly SqlAdo executor;
         private readonly DeleteBuilder<T> sqlBuilder;
-        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
+        private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
         //public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
         //public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
-        public DeleteProvider(ISqlExecutor executor, T? entity)
+        public DeleteProvider(SqlAdo executor, T? entity)
         {
             this.executor = executor;
             sqlBuilder = new();
@@ -19,7 +19,7 @@ namespace LightORM.Providers
             sqlBuilder.TargetObject = entity;
         }
 
-        public DeleteProvider(ISqlExecutor executor, T[] entities)
+        public DeleteProvider(SqlAdo executor, T[] entities)
         {
             this.executor = executor;
             sqlBuilder = new();

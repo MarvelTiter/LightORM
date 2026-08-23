@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace LightORM.SqlExecutor;
 
-internal partial class SqlExecutor
+internal partial class OrignalSqlExecutor
 {
     // 事务上下文管理
     internal static readonly ConcurrentDictionary<IDatabaseProvider, AsyncLocal<TransactionContext?>> AsyncLocalTransactionContexts = new();
