@@ -16,9 +16,25 @@ namespace System
             }
         }
 
+        extension(ObjectDisposedException)
+        {
+            public static void ThrowIf(bool condition, object instance)
+            {
+                if (condition)
+                    ThrowObjectDisposedException(instance);
+            }
+
+        }
+
         [DoesNotReturn]
         internal static void Throw(string? paramName) =>
            throw new ArgumentNullException(paramName);
+
+        [DoesNotReturn]
+        internal static void ThrowObjectDisposedException(object? instance)
+        {
+            throw new ObjectDisposedException(instance?.GetType().FullName);
+        }
     }
 }
 

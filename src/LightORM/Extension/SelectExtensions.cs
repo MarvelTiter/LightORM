@@ -51,7 +51,7 @@ public static partial class SelectExtensions
         public DataTable ToDataTable(Expression<Func<T1, object>> exp)
         {
             select.HandleResult(exp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTable(sql, parameters);
         }
@@ -59,7 +59,7 @@ public static partial class SelectExtensions
         public Task<DataTable> ToDataTableAsync(Expression<Func<T1, object>> exp, CancellationToken cancellationToken = default)
         {
             select.HandleResult(exp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
         }
@@ -82,7 +82,7 @@ public static partial class SelectExtensions
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
         {
-            return new SelectProvider2<T1, T2>(instance.SwitchDatabase(key));
+            return new SelectProvider2<T1, T2>(instance.CreateScoped(key));
         }
 
         return new SelectProvider2<T1, T2>(instance);
@@ -125,7 +125,7 @@ public static partial class SelectExtensions
         public DataTable ToDataTable(Expression<Func<T1, T2, object>> exp)
         {
             select.HandleResult(exp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTable(sql, parameters);
         }
@@ -133,7 +133,7 @@ public static partial class SelectExtensions
         public Task<DataTable> ToDataTableAsync(Expression<Func<T1, T2, object>> exp, CancellationToken cancellationToken = default)
         {
             select.HandleResult(exp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
         }
@@ -172,7 +172,7 @@ public static partial class SelectExtensions
         {
             var flatExp = FlatTypeSet.Default.Flat(exp)!;
             select.HandleResult(flatExp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTable(sql, parameters);
         }
@@ -181,7 +181,7 @@ public static partial class SelectExtensions
         {
             var flatExp = FlatTypeSet.Default.Flat(exp)!;
             select.HandleResult(flatExp, null);
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteDataTableAsync(sql, parameters, cancellationToken: cancellationToken);
         }

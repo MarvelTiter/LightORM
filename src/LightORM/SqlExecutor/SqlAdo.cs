@@ -1,63 +1,107 @@
-﻿using System.Collections.Concurrent;
+﻿using LightORM.Performances;
+using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 namespace LightORM.SqlExecutor;
 
-internal partial class SqlExecutor : ISqlExecutor
+internal readonly struct PrepareResult(DbCommand command, bool isBreak)
 {
-    public string Id { get; set; }
-    internal static readonly ConcurrentDictionary<IDatabaseProvider, ConnectionPool> Pools = [];
-    private static readonly ConcurrentDictionary<IDatabaseProvider, int> PoolSizes = [];
-    public IDatabaseProvider Database { get; private set; }
-    /// <summary>
-    /// 数据库事务
-    /// </summary>
-    public DbTransaction? DbTransaction
+    public DbCommand Command { get; } = command;
+    public bool Break { get; } = isBreak;
+}
+public readonly struct SqlAdo
+{
+    internal SqlAdo(DatabaseConnection connection)
     {
-        get => CurrentTransactionContext.Value?.Transaction;
+        Connection = connection;
     }
+    internal DatabaseConnection Connection { get; }
+    public IDatabaseProvider Provider => Connection.Provider;
+    internal AdoInterceptor Interceptor => Connection.Interceptor;
 
-    public AdoInterceptor Interceptor { get; }
-    public ConnectionPool Pool { get; }
+    internal void UseExternalTransaction(DbTransaction transaction) => Connection.UseExternalTransaction(transaction);
 
-    public SqlExecutor(IDatabaseProvider database, int poolSize, AdoInterceptor interceptor, string? id = null)
+    internal void DisposeConnection()
     {
-        Database = database;
-        Interceptor = interceptor;
-        _ = PoolSizes.GetOrAdd(database, poolSize);
-        Pool = Pools.GetOrAdd(database, db =>
+        if (Connection.UnderTransaction)
         {
-            PoolSizes.TryGetValue(db, out var size);
-            return new ConnectionPool(() =>
-            {
-                var conn = db.DbProviderFactory.CreateConnection()!;
-                conn.ConnectionString = db.MasterConnectionString;
-                return conn;
-            }, size);
-        });
-        Id = id ?? Guid.NewGuid().ToString();
-        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Database, new AsyncLocal<TransactionContext?>());
+            return;
+        }
+        Connection.Dispose();
     }
 
-    public SqlExecutor(IDatabaseProvider database, AdoInterceptor interceptor, string? id = null)
+    private void DisposeCommand(PrepareResult result)
     {
-        Database = database;
-        Interceptor = interceptor;
-        Pool = Pools.GetOrAdd(database, db =>
-        {
-            PoolSizes.TryGetValue(db, out var size);
-            return new ConnectionPool(() =>
-            {
-                var conn = db.DbProviderFactory.CreateConnection()!;
-                conn.ConnectionString = db.MasterConnectionString;
-                return conn;
-            }, size);
-        });
-        Id = id ?? Guid.NewGuid().ToString();
-        CurrentTransactionContext = AsyncLocalTransactionContexts.GetOrAdd(Database, new AsyncLocal<TransactionContext?>());
+        DisposeConnection();
+        result.Command.Parameters.Clear();
+        result.Command.Dispose();
     }
+
+#if NET8_0_OR_GREATER
+
+    private ValueTask DisposeCommandAsync(PrepareResult result)
+    {
+        DisposeConnection();
+        result.Command.Parameters.Clear();
+        return result.Command.DisposeAsync();
+    }
+#endif
+
+    #region prepare
+    private PrepareResult PrepareCommand(CommandType commandType, SqlExecuteContext et)
+    {
+        if (Connection.IsOccurException == true)
+        {
+            return new(null!, true);
+        }
+        //DbLog?.Invoke(commandText, dbParameters);
+        Interceptor.NotifyPrepareCommand(et);
+        DbConnection conn = Connection.GetCurrentConnection();
+        if (conn.State != ConnectionState.Open)
+        {
+            conn.Open();
+        }
+        var command = conn.CreateCommand();
+        command.CommandType = commandType;
+        Provider.DatabaseAdapter.DbCommandInit(command);
+        if (Connection.Transaction is not null)
+        {
+            command.Transaction = Connection.Transaction;
+        }
+        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        return new(command, false);
+    }
+
+    private async Task<PrepareResult> PrepareCommandAsync(CommandType commandType, SqlExecuteContext et, CancellationToken cancellationToken = default)
+    {
+        if (Connection.IsOccurException == true)
+        {
+            return new(null!, true);
+        }
+        //DbLog?.Invoke(commandText, dbParameters);
+        Interceptor.NotifyPrepareCommand(et);
+        DbConnection conn = Connection.GetCurrentConnection();
+        if (conn.State != ConnectionState.Open)
+        {
+            await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var command = conn.CreateCommand();
+        command.CommandType = commandType;
+        Provider.DatabaseAdapter.DbCommandInit(command);
+
+        if (Connection.Transaction is not null)
+        {
+            command.Transaction = Connection.Transaction;
+        }
+        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        return new(command, false);
+    }
+    #endregion
+
+    #region execute
 
     public int ExecuteNonQuery<
 #if NET8_0_OR_GREATER
@@ -66,7 +110,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
@@ -95,7 +139,9 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
                 DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -106,7 +152,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
@@ -135,7 +181,9 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
                 DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -146,33 +194,37 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new EmptyDataReader();
             }
             DbDataReader reader;
             Interceptor.NotifyBeforeExecute(ctx);
             var start = StopwatchHelper.GetTimestamp();
-            if (commandResult.NeedToReturn)
+            if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = commandResult.Command.ExecuteReader(b);
-
+                reader = r.Command.ExecuteReader(b);
             }
             else
             {
-                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
+                reader = r.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new InternalDataReader(reader, commandResult, Pool);
+            return new InternalDataReaderLight(reader, r, Connection);
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -194,11 +246,12 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new(new EmptyDataReader());
             }
@@ -209,22 +262,26 @@ internal partial class SqlExecutor : ISqlExecutor
             {
                 throw new LightOrmException("behavior 指定了 CommandBehavior.SingleResult, 不符合QueryMultiple的行为");
             }
-            if (commandResult.NeedToReturn)
+            if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = commandResult.Command.ExecuteReader(b);
+                reader = r.Command.ExecuteReader(b);
 
             }
             else
             {
-                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
+                reader = r.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new(new InternalDataReader(reader, commandResult, Pool));
+            return new(new InternalDataReaderLight(reader, r, Connection));
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -246,9 +303,9 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataSet();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
@@ -263,6 +320,7 @@ internal partial class SqlExecutor : ISqlExecutor
             adapter.Fill(ds);
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
+            return ds;
         }
         catch (Exception ex)
         {
@@ -277,9 +335,10 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
                 DisposeCommand(commandResult.Value);
+            }
         }
-        return ds;
     }
 
     public DataTable ExecuteDataTable<
@@ -289,9 +348,9 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text)
     {
         var ds = new DataTable();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
@@ -306,6 +365,7 @@ internal partial class SqlExecutor : ISqlExecutor
             adapter.Fill(ds);
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
+            return ds;
         }
         catch (Exception ex)
         {
@@ -320,9 +380,10 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
                 DisposeCommand(commandResult.Value);
+            }
         }
-        return ds;
     }
 
     public async Task<int> ExecuteNonQueryAsync<
@@ -332,7 +393,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.NonQuery, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -361,7 +422,13 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
                 DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
 
@@ -372,7 +439,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Scalar, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -401,7 +468,13 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
                 DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
     public async Task<DbDataReader> ExecuteReaderAsync<
@@ -411,7 +484,7 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -423,10 +496,10 @@ internal partial class SqlExecutor : ISqlExecutor
             DbDataReader reader;
             Interceptor.NotifyBeforeExecute(ctx);
             var start = StopwatchHelper.GetTimestamp();
-            if (r.NeedToReturn)
+            if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -434,10 +507,18 @@ internal partial class SqlExecutor : ISqlExecutor
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new InternalDataReader(reader, r, Pool);
+            return new InternalDataReaderLight(reader, r, Connection);
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -459,11 +540,12 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new(new EmptyDataReader());
             }
@@ -474,22 +556,30 @@ internal partial class SqlExecutor : ISqlExecutor
             {
                 throw new LightOrmException("behavior 指定了 CommandBehavior.SingleResult, 不符合QueryMultiple的行为");
             }
-            if (commandResult.NeedToReturn)
+            if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = await commandResult.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
 
             }
             else
             {
-                reader = await commandResult.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new(new InternalDataReader(reader, commandResult, Pool));
+            return new(new InternalDataReaderLight(reader, r, Connection));
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -511,9 +601,9 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataSet();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataSet, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -528,6 +618,7 @@ internal partial class SqlExecutor : ISqlExecutor
             adapter.Fill(ds);
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
+            return ds;
         }
         catch (Exception ex)
         {
@@ -542,9 +633,14 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
                 DisposeCommand(commandResult.Value);
+#endif
+            }
         }
-        return ds;
     }
 
     public async Task<DataTable> ExecuteDataTableAsync<
@@ -554,9 +650,9 @@ internal partial class SqlExecutor : ISqlExecutor
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
     {
         var ds = new DataTable();
-        using var adapter = Database.DbProviderFactory.CreateDataAdapter();
+        using var adapter = Provider.DbProviderFactory.CreateDataAdapter();
         var ctx = new SqlExecuteContext(ExecuteMethod.DataTable, commandText, dbParameters, typeof(TParameter), commandType);
-        CommandResult? commandResult = default;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -571,6 +667,7 @@ internal partial class SqlExecutor : ISqlExecutor
             adapter.Fill(ds);
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
+            return ds;
         }
         catch (Exception ex)
         {
@@ -585,10 +682,17 @@ internal partial class SqlExecutor : ISqlExecutor
         finally
         {
             if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
                 DisposeCommand(commandResult.Value);
+#endif
+            }
         }
-        return ds;
     }
+
+    #endregion
 
     internal static T? ChangeType<T>(object? value)
     {
@@ -625,90 +729,6 @@ internal partial class SqlExecutor : ISqlExecutor
         }
         return default;
     }
-
-    //    private readonly static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
-    //    internal static Action<DbCommand>? GetInit(DbCommand commandObject)
-    //    {
-    //        if (commandObject is null)
-    //        {
-    //            return null;
-    //        }
-
-    //        var commandType = commandObject.GetType();
-    //        if (!commandInitCache.TryGetValue(commandType, out var action))
-    //        {
-    //            MethodInfo? setBindName = GetBasicPropertySetter(commandType, "BindByName", typeof(bool));
-    //            MethodInfo? setInit = GetBasicPropertySetter(commandType, "InitialLONGFetchSize", typeof(int));
-    //            if (setBindName is null && setInit is null)
-    //            {
-    //                return null;
-    //            }
-    //            /*
-    //             * (DbCommand cmd) => {
-    //             *     (OracleCommand)cmd.set_BindByName(true);
-    //             *     (OracleCommand)cmd.set_InitialLONGFetchSize(-1);
-    //             * }
-    //             */
-    //            ParameterExpression cmdExp = Expression.Parameter(typeof(DbCommand), "cmd");
-    //            List<Expression> body = [];
-    //            if (setBindName != null)
-    //            {
-    //                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-    //                MethodCallExpression setter1Exp = Expression.Call(convertedCmdExp, setBindName, Expression.Constant(true, typeof(bool)));
-    //                body.Add(setter1Exp);
-    //            }
-    //            if (setInit != null)
-    //            {
-    //                UnaryExpression convertedCmdExp = Expression.Convert(cmdExp, commandType);
-    //                MethodCallExpression setter2Exp = Expression.Call(convertedCmdExp, setInit, Expression.Constant(-1, typeof(int)));
-    //                body.Add(setter2Exp);
-    //            }
-    //            var lambda = Expression.Lambda<Action<DbCommand>>(Expression.Block(body), cmdExp);
-    //            action = lambda.Compile();
-    //            commandInitCache.TryAdd(commandType, action);
-    //        }
-    //        return action;
-    //    }
-
-    //    internal static MethodInfo? GetBasicPropertySetter(
-    //#if NET8_0_OR_GREATER
-    //    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
-    //#endif
-    //        Type declaringType, string name, Type expectedType)
-    //    {
-    //        PropertyInfo? property = declaringType.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-    //        if (property != null && property.CanWrite && property.PropertyType == expectedType && property.GetIndexParameters().Length == 0)
-    //        {
-    //            return property.GetSetMethod();
-    //        }
-    //        return null;
-    //    }
-
-    public object Clone()
-    {
-        return new SqlExecutor(Database, Interceptor);
-    }
-
-    private bool disposedValue;
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                Debug.WriteLineIf(ShowSqlExecutorDebugInfo, "SqlExecutor disposing.........");
-                //DisposeTransactionContext(disposing);
-            }
-            disposedValue = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
 }
 
 internal class StopwatchHelper
@@ -718,7 +738,7 @@ internal class StopwatchHelper
     {
 #if NET8_0_OR_GREATER
         return Stopwatch.GetElapsedTime(startingTimestamp);
-#else   
+#else
         var end = Stopwatch.GetTimestamp();
         var tickFrequency = (double)(10000 * 1000 / Stopwatch.Frequency);
         var tick = (end - startingTimestamp) * tickFrequency;

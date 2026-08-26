@@ -1,68 +1,54 @@
-﻿using System.Threading;
-using static LightORM.SqlExecutor.SqlExecutor;
+﻿using System.Collections.Concurrent;
+using System.Threading;
 
 namespace LightORM.ExpressionSql;
 
-internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedExpressionContext
+internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : ExpressionCoreSqlBase(options), IScopedExpressionContext
 {
-    private readonly SqlExecutorProvider executorProvider;
-
     public string Id { get; } = $"{Guid.NewGuid():N}";
     private bool useTrans;
     private IsolationLevel isolationLevel = IsolationLevel.Unspecified;
-    public override ExpressionSqlOptions Options { get; }
-    private TransientExpressionCoreSql? current;
-    public override ISqlExecutor Ado
+    private readonly ConnectionFactory connectionFactory = new(options);
+    private readonly ConcurrentDictionary<string, DatabaseConnection> connections = [];
+    private TransientExpressionContext? current;
+    public override SqlAdo Ado
     {
         get
         {
-            var ado = current?.Ado ?? DefaultAdo;
-            if (useTrans)
+            if (current.HasValue)
             {
-                ado.InitTransaction(isolationLevel);
+                return current.Value.Ado;
             }
-            return ado;
+            return DefaultAdo;
         }
     }
 
-    public ISqlExecutor DefaultAdo
+    public SqlAdo DefaultAdo
     {
         get
         {
-            var ado = executorProvider.GetSqlExecutor(Options.DefaultDbKey);
+            var connection = connections.GetOrAdd(Options.DefaultDbKey, connectionFactory.GetDatabaseConnection);
             if (useTrans)
             {
-                ado.InitTransaction(isolationLevel);
+                connection.BeginTransaction();
             }
-            return ado;
+            return new(connection);
         }
     }
 
-
-    public ScopedExpressionCoreSql(ExpressionSqlOptions options)
-    {
-        this.executorProvider = new SqlExecutorProvider(options);
-        Options = options;
-        foreach (var item in options.DatabaseProviders.Values)
-        {
-            var ctx = AsyncLocalTransactionContexts.GetOrAdd(item, new AsyncLocal<TransactionContext?>());
-            ctx.Value ??= new TransactionContext();
-        }
-    }
-
-    private readonly Dictionary<string, TransientExpressionCoreSql> contextCaches = [];
-    ITransientExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
+    private readonly Dictionary<string, TransientExpressionContext> contextCaches = [];
+    TransientExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
     {
         if (contextCaches.TryGetValue(key, out var ctx))
         {
             return ctx;
         }
-        var ado = executorProvider.GetSqlExecutor(key);
+        var connection = connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection);
         if (useTrans)
         {
-            ado.InitTransaction(isolationLevel);
+            connection.BeginTransaction(isolationLevel);
         }
-        ctx = new(key, ado, Options);
+        ctx = new(this, connection, Options);
         contextCaches[key] = ctx;
         current = ctx;
         return ctx;
@@ -70,39 +56,85 @@ internal sealed class ScopedExpressionCoreSql : ExpressionCoreSqlBase, IScopedEx
 
     public void Dispose()
     {
-        executorProvider.Dispose();
+        foreach (var item in connections.Values)
+        {
+            item.Dispose();
+        }
     }
 
     public void BeginAllTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
     {
         useTrans = true;
         this.isolationLevel = isolationLevel;
-        executorProvider.Executors.ForEach(e => e.BeginTransaction(isolationLevel));
+        foreach (var item in connections.Values)
+        {
+            item.BeginTransaction(isolationLevel);
+        }
     }
+    public void CommitAllTransaction()
+    {
+        foreach (var item in connections.Values)
+        {
+            item.CommitTransaction();
+        }
+    }
+    public void RollbackAllTransaction()
+    {
+        foreach (var item in connections.Values)
+        {
+            item.RollbackTransaction();
+        }
+    }
+    public void BeginTransaction(string key = "MainDb", IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).BeginTransaction(isolationLevel);
 
-    public async Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+    public void CommitTransaction(string key = "MainDb")
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).CommitTransaction();
+
+    public void RollbackTransaction(string key = "MainDb")
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).RollbackTransaction();
+
+#if NET8_0_OR_GREATER
+    public async Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
     {
         useTrans = true;
         this.isolationLevel = isolationLevel;
-        await executorProvider.Executors.ForEachAsync(e => e.BeginTransactionAsync(isolationLevel));
+        foreach (var item in connections.Values)
+        {
+            await item.BeginTransactionAsync(isolationLevel, cancellationToken);
+        }
     }
-    public void CommitAllTransaction() => executorProvider.Executors.ForEach(e => e.CommitTransaction());
 
-    public async Task CommitAllTransactionAsync() => await executorProvider.Executors.ForEachAsync(e => e.CommitTransactionAsync());
+    public async Task CommitAllTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var item in connections.Values)
+        {
+            await item.CommitTransactionAsync(cancellationToken);
+        }
+    }
 
-    public void RollbackAllTransaction() => executorProvider.Executors.ForEach(e => e.RollbackTransaction());
 
-    public async Task RollbackAllTransactionAsync() => await executorProvider.Executors.ForEachAsync(e => e.RollbackTransactionAsync());
+    public async Task RollbackAllTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var item in connections.Values)
+        {
+            await item.RollbackTransactionAsync(cancellationToken);
+        }
+    }
 
-    public void BeginTransaction(string key = "MainDb", IsolationLevel isolationLevel = IsolationLevel.Unspecified) => executorProvider.GetSqlExecutor(key).BeginTransaction();
 
-    public Task BeginTransactionAsync(string key = "MainDb", IsolationLevel isolationLevel = IsolationLevel.Unspecified) => executorProvider.GetSqlExecutor(key).BeginTransactionAsync();
+    public Task BeginTransactionAsync(string key = "MainDb"
+        , IsolationLevel isolationLevel = IsolationLevel.Unspecified
+        , CancellationToken cancellationToken = default) 
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).BeginTransactionAsync(isolationLevel, cancellationToken);
 
-    public void CommitTransaction(string key = "MainDb") => executorProvider.GetSqlExecutor(key).CommitTransaction();
 
-    public Task CommitTransactionAsync(string key = "MainDb") => executorProvider.GetSqlExecutor(key).CommitTransactionAsync();
+    public Task CommitTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default) 
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).CommitTransactionAsync(cancellationToken);
 
-    public void RollbackTransaction(string key = "MainDb") => executorProvider.GetSqlExecutor(key).RollbackTransaction();
 
-    public Task RollbackTransactionAsync(string key = "MainDb") => executorProvider.GetSqlExecutor(key).RollbackTransactionAsync();
+    public Task RollbackTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default) 
+        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).RollbackTransactionAsync(cancellationToken);
+#endif
+
 }

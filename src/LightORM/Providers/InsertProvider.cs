@@ -6,20 +6,20 @@ namespace LightORM.Providers;
 
 internal sealed class InsertProvider<T> : IExpInsert<T>
 {
-    private readonly ISqlExecutor executor;
+    private readonly SqlAdo ado;
     private readonly InsertBuilder<T> sqlBuilder;
-    private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
-    public InsertProvider(ISqlExecutor executor, T? entity)
+    private IDatabaseAdapter Database => ado.Provider.DatabaseAdapter;
+    public InsertProvider(SqlAdo executor, T? entity)
     {
-        this.executor = executor;
+        this.ado = executor;
         sqlBuilder = new();
         sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
         sqlBuilder.TargetObject = entity;
     }
 
-    public InsertProvider(ISqlExecutor executor, T[] entities)
+    public InsertProvider(SqlAdo executor, T[] entities)
     {
-        this.executor = executor;
+        this.ado = executor;
         sqlBuilder = new();
         sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
         sqlBuilder.TargetObjects = entities;
@@ -146,24 +146,23 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         var sql = sqlBuilder.ToSqlString(Database);
         if (sqlBuilder.IsBatchInsert)
         {
-            var usingTransaction = executor.DbTransaction != null;
             try
             {
                 var effectRows = 0;
-                if (usingTransaction)
-                    executor.BeginTransaction();
+                if (ado.Connection.UnderTransaction)
+                    ado.Connection.BeginTransaction();
                 foreach (var item in sqlBuilder.BatchInfos!)
                 {
-                    effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
+                    effectRows += ado.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                 }
-                if (usingTransaction)
-                    executor.CommitTransaction();
+                if (ado.Connection.UnderTransaction)
+                    ado.Connection.CommitTransaction();
                 return effectRows;
             }
             catch
             {
-                if (usingTransaction)
-                    executor.RollbackTransaction();
+                if (ado.Connection.UnderTransaction)
+                    ado.Connection.RollbackTransaction();
                 throw;
             }
 
@@ -171,7 +170,7 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         else
         {
             var dbParameters = sqlBuilder.DbParameters;
-            return executor.ExecuteNonQuery(sql, dbParameters);
+            return ado.ExecuteNonQuery(sql, dbParameters);
         }
     }
 
@@ -180,31 +179,48 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
         var sql = sqlBuilder.ToSqlString(Database);
         if (sqlBuilder.IsBatchInsert)
         {
-            var usingTransaction = executor.DbTransaction != null;
             try
             {
                 var effectRows = 0;
-                if (usingTransaction)
-                    executor.BeginTransaction();
+                if (ado.Connection.UnderTransaction)
+                {
+#if NET8_0_OR_GREATER
+                    await ado.Connection.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+#else
+                    ado.Connection.BeginTransaction();
+#endif
+                }
                 foreach (var item in sqlBuilder.BatchInfos!)
                 {
-                    effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                    effectRows += await ado.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
-                if (usingTransaction)
-                    await executor.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+                if (ado.Connection.UnderTransaction)
+                {
+#if NET8_0_OR_GREATER
+                    await ado.Connection.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                    ado.Connection.CommitTransaction();
+#endif
+                }
                 return effectRows;
             }
             catch
             {
-                if (usingTransaction)
-                    await executor.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+                if (ado.Connection.UnderTransaction)
+                {
+#if NET8_0_OR_GREATER
+                    await ado.Connection.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                    ado.Connection.RollbackTransaction();
+#endif
+                }
                 throw;
             }
         }
         else
         {
             var parameters = sqlBuilder.DbParameters;
-            return await executor.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await ado.ExecuteNonQueryAsync(sql, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 

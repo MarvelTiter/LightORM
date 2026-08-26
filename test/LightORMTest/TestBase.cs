@@ -26,7 +26,7 @@ public class TestBase
         {
             Configura(option);
             option.UseInterceptor<LightOrmAop>();
-            //option.SetTableContext(TableContext);
+            option.SetTableContext(TableContext);
             option.ConfigJsonHandler<JsonHandler>();
 
         });

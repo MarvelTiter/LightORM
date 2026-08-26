@@ -15,7 +15,7 @@ public static class SelectResultExtensions
             TReturn>()
         {
             if (select.IsSubQuery) return [];
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).ToList<TReturn>();
         }
@@ -27,7 +27,7 @@ public static class SelectResultExtensions
             TReturn>()
         {
             if (select.IsSubQuery) return default;
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).Single<TReturn>();
         }
@@ -38,7 +38,7 @@ public static class SelectResultExtensions
 #endif
             TReturn>(CancellationToken cancellationToken = default)
         {
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).ToListAsync<TReturn>(cancellationToken);
         }
@@ -48,7 +48,7 @@ public static class SelectResultExtensions
    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
             TReturn>(CancellationToken cancellationToken = default)
         {
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).ToAsyncList<TReturn>(cancellationToken);
         }
@@ -60,21 +60,21 @@ public static class SelectResultExtensions
 #endif
             TReturn>(CancellationToken cancellationToken = default)
         {
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.Execute(sql, parameters).SingleAsync<TReturn>(cancellationToken);
         }
 
         public T? ExecuteScalar<T>()
         {
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return select.Executor.ExecuteScalar(sql, parameters).As<T>();
         }
 
         public async Task<T?> ExecuteScalarAsync<T>(CancellationToken cancellationToken = default)
         {
-            var sql = select.SqlBuilder.ToSqlString(select.Executor.Database.DatabaseAdapter);
+            var sql = select.SqlBuilder.ToSqlString(select.Executor.Provider.DatabaseAdapter);
             var parameters = select.SqlBuilder.DbParameters;
             return (await select.Executor.ExecuteScalarAsync(sql, parameters, cancellationToken: cancellationToken)).As<T>();
         }

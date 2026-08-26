@@ -4,10 +4,10 @@ namespace LightORM.Providers.Select
 {
     internal class SelectInsertProvider<T> : ISelectInsert<T>
     {
-        private readonly ISqlExecutor executor;
+        private readonly SqlAdo executor;
         private readonly SelectBuilder builder;
-        private IDatabaseAdapter Database => executor.Database.DatabaseAdapter;
-        public SelectInsertProvider(ISqlExecutor executor, SelectBuilder builder)
+        private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
+        public SelectInsertProvider(SqlAdo executor, SelectBuilder builder)
         {
             this.executor = executor;
             this.builder = builder;

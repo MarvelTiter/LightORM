@@ -11,7 +11,7 @@ public static partial class SqlExecutorExtensions
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(this ISqlExecutor self
+    T>(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -41,7 +41,7 @@ public static partial class SqlExecutorExtensions
         }
     }
     
-    public static IEnumerable<dynamic> Query(this ISqlExecutor self
+    public static IEnumerable<dynamic> Query(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -75,7 +75,7 @@ public static partial class SqlExecutorExtensions
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(this ISqlExecutor self
+    T>(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -111,7 +111,7 @@ public static partial class SqlExecutorExtensions
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(this ISqlExecutor self
+    T>(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -155,7 +155,7 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async Task<IList<dynamic>> QueryListAsync(this ISqlExecutor self
+    public static async Task<IList<dynamic>> QueryListAsync(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -202,7 +202,7 @@ public static partial class SqlExecutorExtensions
 #if NET8_0_OR_GREATER
     public static async IAsyncEnumerable<T> QueryAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
-    T>(this ISqlExecutor self
+    T>(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -241,7 +241,7 @@ public static partial class SqlExecutorExtensions
         }
     }
 
-    public static async IAsyncEnumerable<dynamic> QueryAsync(this ISqlExecutor self
+    public static async IAsyncEnumerable<dynamic> QueryAsync(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null
@@ -285,7 +285,7 @@ public static partial class SqlExecutorExtensions
 #if NET8_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(this ISqlExecutor self
+    T>(this SqlAdo self
         , string sql
         , object? param = null
         , DbTransaction? trans = null

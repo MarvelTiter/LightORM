@@ -2,13 +2,14 @@
 using LightORM.Providers;
 using LightORM.Repository;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LightORM;
 
 public static class ExpressionContextExtension
 {
     /// <param name="ado"></param>
-    extension(ISqlExecutor ado)
+    extension(SqlAdo ado)
     {
         /// <summary>
         /// 批量插入
@@ -54,7 +55,7 @@ public static class ExpressionContextExtension
                         if (value is bool b)
                         {
                             // bool类型特殊处理
-                            row[col.ColumnName] = ado.Database.DatabaseAdapter.HandleBooleanValueForBulkCopy(b);
+                            row[col.ColumnName] = ado.Provider.DatabaseAdapter.HandleBooleanValueForBulkCopy(b);
                             continue;
                         }
 
@@ -75,7 +76,7 @@ public static class ExpressionContextExtension
         /// <returns></returns>
         public int BulkCopy(DataTable dataTable)
         {
-            return ado.Database.BulkCopy(dataTable);
+            return ado.Provider.BulkCopy(dataTable);
         }
     }
 
@@ -85,7 +86,7 @@ public static class ExpressionContextExtension
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-            T>(string tableName)
+        T>(string tableName)
         {
             return new SelectProvider1<T>(tableName, context);
         }
@@ -151,13 +152,13 @@ public static class ExpressionContextExtension
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-            TEntity>()
+        TEntity>()
             where TEntity : class, new()
         {
             return new DefaultRepository<TEntity>(context);
         }
 
-        private ITransientExpressionContext SwitchDb<T>()
+        private TransientExpressionContext SwitchDb<T>()
         {
             var table = TableContext.GetTableInfo<T>();
             if (table.TargetDatabase is null)
@@ -172,7 +173,7 @@ public static class ExpressionContextExtension
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-            T>()
+        T>()
             => context.SwitchDb<T>().Select<T>();
 
         public IExpInsert<T> InsertWithAttr<T>(T entity)
@@ -263,7 +264,7 @@ public static class ScopedExpressionContextExtensions
 {
     extension(IScopedExpressionContext context)
     {
-        private ITransientExpressionContext SwitchDb<T>()
+        private TransientExpressionContext SwitchDb<T>()
         {
             var table = TableContext.GetTableInfo<T>();
             if (table.TargetDatabase is null)
@@ -277,7 +278,7 @@ public static class ScopedExpressionContextExtensions
 #if NET8_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-            T>()
+        T>()
             => context.SwitchDb<T>().Select<T>();
 
         public IExpInsert<T> InsertWithAttr<T>(T entity)
@@ -303,5 +304,24 @@ public static class ScopedExpressionContextExtensions
 
         public IExpDelete<T> DeleteWithAttr<T>(params T[] entities)
             => context.SwitchDb<T>().Delete(entities);
+
+        public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+        {
+            context.BeginTransaction(ConstString.Main, isolationLevel);
+        }
+#if NET8_0_OR_GREATER
+        public Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
+        {
+            return context.BeginTransactionAsync(ConstString.Main, isolationLevel, cancellationToken);
+        }
+        public Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return context.CommitTransactionAsync(ConstString.Main, cancellationToken);
+        }
+        public Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            return context.RollbackTransactionAsync(ConstString.Main, cancellationToken);
+        }
+#endif
     }
 }

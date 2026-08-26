@@ -1,8 +1,11 @@
-﻿using System.Data.Common;
+﻿using System.Collections.Concurrent;
+using System.Data.Common;
 using System.Diagnostics;
-namespace LightORM.SqlExecutor;
+namespace LightORM.Performances;
 internal class ConnectionPool(Func<DbConnection> func, int maxCapacity) : ObjectPool<DbConnection>(func,maxCapacity)
 {
+    internal static readonly ConcurrentDictionary<IDatabaseProvider, ConnectionPool> Pools = [];
+
     private readonly TimeSpan _connectionLifetime = TimeSpan.FromMinutes(15);
 
     protected override void HandleOverflowObject(DbConnection item)

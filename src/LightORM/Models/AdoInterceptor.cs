@@ -25,12 +25,7 @@ internal static class Ex
         interceptor.Interceptors.ForEach(t => t.OnException(context));
     }
 }
-internal readonly struct AdoInterceptor
+internal readonly struct AdoInterceptor(ICollection<IAdoInterceptor> interceptors)
 {
-    public ICollection<IAdoInterceptor> Interceptors { get; }
-
-    public AdoInterceptor(IEnumerable<IAdoInterceptor> interceptors)
-    {
-        Interceptors = [.. interceptors];
-    }
+    public ICollection<IAdoInterceptor> Interceptors { get; } = interceptors;
 }

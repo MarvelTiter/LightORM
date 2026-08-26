@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace LightORM.SqlExecutor;
 
-internal partial class SqlExecutor
+internal partial class OrignalSqlExecutor
 {
     private void DisposeCommand(CommandResult result)
     {
@@ -44,12 +44,12 @@ internal partial class SqlExecutor
             conn.Open();
         }
         var command = conn.CreateCommand();
-        Database.DatabaseAdapter.DbCommandInit(command);
+        Provider.DatabaseAdapter.DbCommandInit(command);
         if (context != null)
         {
             command.Transaction = context.Transaction;
         }
-        et.HandleDbParameter(Database.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
         return new(command, conn, needToReturn, false);
     }
 
@@ -83,7 +83,7 @@ internal partial class SqlExecutor
         }
 
         var command = conn.CreateCommand();
-        Database.DatabaseAdapter.DbCommandInit(command);
+        Provider.DatabaseAdapter.DbCommandInit(command);
 
         if (context != null)
         {
@@ -96,7 +96,7 @@ internal partial class SqlExecutor
         //    var action = DbParameterReader.GetDbParameterReader(Database.DatabaseAdapter.Prefix, commandText, dbParameters.GetType());
         //    action?.Invoke(command, dbParameters);
         //}
-        et.HandleDbParameter(Database.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
         return new(command, conn, needToReturn, false);
     }
 

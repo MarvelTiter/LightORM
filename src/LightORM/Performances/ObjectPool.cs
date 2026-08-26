@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-namespace LightORM.SqlExecutor;
+namespace LightORM.Performances;
 
 internal abstract class ObjectPool<T> : IDisposable
     where T : class, IDisposable

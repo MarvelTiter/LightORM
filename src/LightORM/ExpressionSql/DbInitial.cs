@@ -2,7 +2,7 @@
 
 namespace LightORM.ExpressionSql;
 
-public class DbInitial(ISqlExecutor executor, IDatabaseTableHandler handler) : IDbInitial
+public class DbInitial(SqlAdo executor, IDatabaseTableHandler handler) : IDbInitial
 {
     public IDbInitial CreateTable<T>(params T[]? datas)
     {

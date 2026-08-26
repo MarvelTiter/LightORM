@@ -9,9 +9,9 @@ namespace LightORM.Repository;
 internal class LightOrmQueryProvider : IQueryProvider
 {
     private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();
-    private readonly ISqlExecutor ado;
+    private readonly SqlAdo ado;
     private LambdaExpression? keySelector;
-    public LightOrmQueryProvider(ISqlExecutor ado, Type type)
+    public LightOrmQueryProvider(SqlAdo ado, Type type)
     {
         this.ado = ado;
         select.AddTableInfo(TableInfo.Create(type));
@@ -145,13 +145,13 @@ internal class LightOrmQueryProvider : IQueryProvider
 
     public object Execute(Expression expression)
     {
-        var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
+        var sql = select.ToSqlString(ado.Provider.DatabaseAdapter);
         return ado.ExecuteReader(sql, select.DbParameters);
     }
 
     public TResult Execute<TResult>(Expression expression)
     {
-        var sql = select.ToSqlString(ado.Database.DatabaseAdapter);
+        var sql = select.ToSqlString(ado.Provider.DatabaseAdapter);
         var def = ado.Execute(sql, select.DbParameters).ToList<TResult>().FirstOrDefault();
         if (def == null && expression is MethodCallExpression method && method.Arguments.Count > 1)
         {

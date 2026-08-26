@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using LightORM.Performances;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -8,7 +9,7 @@ public partial interface ISqlExecutor
 {
     internal ConnectionPool Pool { get; }
     internal AdoInterceptor Interceptor { get; }
-    internal IDatabaseProvider Database { get; }
+    internal IDatabaseProvider Provider { get; }
     internal void InitTransactionContext();
     internal void InitTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     /// <summary>
@@ -19,6 +20,7 @@ public partial interface ISqlExecutor
     /// <returns></returns>
     internal Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
 }
+[Obsolete("", true)]
 public partial interface ISqlExecutor : IDisposable, ICloneable
 {
     ///// <summary>
@@ -75,7 +77,7 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    TParameter>(string commandText, TParameter dbParameters , CommandType commandType = CommandType.Text);
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行标量
@@ -88,7 +90,7 @@ public partial interface ISqlExecutor : IDisposable, ICloneable
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    TParameter>(string commandText, TParameter dbParameters , CommandType commandType = CommandType.Text);
+    TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text);
 
     /// <summary>
     /// 执行阅读器
