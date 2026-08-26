@@ -3,43 +3,48 @@ using System.Threading;
 
 namespace LightORM.ExpressionSql;
 
-internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISingleScopedExpressionContext
+internal sealed class SingleScopedExpressionCoreSql(DatabaseConnection databaseConnection, ExpressionSqlOptions options) : ExpressionCoreSqlBase(options), ISingleScopedExpressionContext
 {
     public string Id { get; } = $"{Guid.NewGuid():N}";
-    public bool IsTransaction { get; set; }
+    public override SqlAdo Ado => new(databaseConnection);
 
-    public override ExpressionSqlOptions Options { get; }
+    public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+        => databaseConnection.BeginTransaction(isolationLevel);
+    public void CommitTransaction() => databaseConnection.CommitTransaction();
+    public void RollbackTransaction() => databaseConnection.RollbackTransaction();
 
-    private readonly DatabaseConnection databaseConnection;
+#if NET8_0_OR_GREATER
 
-    public SingleScopedExpressionCoreSql(ISqlExecutor sqlExecutor, ExpressionSqlOptions options)
-    {
-        Ado = sqlExecutor;
-        Options = options;
-        Ado.InitTransactionContext();
-    }
-    public override ISqlExecutor Ado { get; }
+    public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified
+        , CancellationToken cancellationToken = default)
+        => await databaseConnection.BeginTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
 
-    public SqlExecutor.SqlAdo Ado1 {  get; }
+    public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        => await databaseConnection.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-    public void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified) => Ado.BeginTransaction(isolationLevel);
+    public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+        => await databaseConnection.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
 
-    public async Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified) => await Ado.BeginTransactionAsync(isolationLevel).ConfigureAwait(false);
-
-    public void CommitTransaction() => Ado.CommitTransaction();
-
-    public async Task CommitTransactionAsync() => await Ado.CommitTransactionAsync().ConfigureAwait(false);
-
-    public void RollbackTransaction() => Ado.RollbackTransaction();
-
-    public async Task RollbackTransactionAsync() => await Ado.RollbackTransactionAsync().ConfigureAwait(false);
-
-
+#endif
 
 
     public void Dispose()
     {
-        Ado.Dispose();
+        if (databaseConnection.State == AdoState.Active && databaseConnection.UnderTransaction)
+        {
+            try
+            {
+                CommitTransaction();
+            }
+            catch (Exception)
+            {
+                RollbackTransaction();
+            }
+        }
+        else
+        {
+            databaseConnection.Dispose();
+        }
     }
     /// <summary>
     /// <para>
@@ -58,7 +63,7 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
     {
         if (Interlocked.CompareExchange(ref transactionState, 1, 0) == 0)
         {
-            Ado.BeginTransaction();
+            databaseConnection.BeginTransaction();
         }
     }
 
@@ -68,11 +73,11 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
         {
             try
             {
-                Ado.CommitTransaction();
+                databaseConnection.CommitTransaction();
             }
             catch (Exception)
             {
-                Ado.RollbackTransaction();
+                databaseConnection.RollbackTransaction();
                 throw;
             }
         }
@@ -82,7 +87,7 @@ internal sealed class SingleScopedExpressionCoreSql : ExpressionCoreSqlBase, ISi
     {
         if (Interlocked.CompareExchange(ref transactionState, 2, 1) == 1)
         {
-            Ado.RollbackTransaction();
+            databaseConnection.RollbackTransaction();
         }
     }
 

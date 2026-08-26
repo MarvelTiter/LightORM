@@ -4,12 +4,13 @@ namespace LightORM;
 
 public abstract class DbInitialContext
 {
-    //internal static MethodInfo InitializedMethod = typeof(ExpressionContext).GetMethod(nameof(ExpressionContext.Initialized))!;
     public abstract void Initialized(IDbInitial db);
     public virtual string DatabaseKey() => ConstString.Main;
     public DbInfo? Info { get; set; }
+
     internal void Check(ExpressionSqlOptions option)
     {
+        var factory = new ConnectionFactory(option);
         bool hasTable = true;
         bool update = false;
         var key = DatabaseKey();
@@ -17,7 +18,8 @@ public abstract class DbInitialContext
         {
             throw new LightOrmException($"{key} not register");
         }
-        using var executor = new SqlExecutor.OrignalSqlExecutor(db, new AdoInterceptor(option.Interceptors));
+        using var connection = factory.GetDatabaseConnection(key);
+        var executor = new SqlAdo(connection);
         option.DatabaseHandlers.TryGetValue(key, out var handler);
         if (handler is null)
         {

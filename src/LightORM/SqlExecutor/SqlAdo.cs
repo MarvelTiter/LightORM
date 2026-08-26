@@ -6,28 +6,48 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 namespace LightORM.SqlExecutor;
 
+internal readonly struct PrepareResult(DbCommand command, bool isBreak)
+{
+    public DbCommand Command { get; } = command;
+    public bool Break { get; } = isBreak;
+}
 public readonly struct SqlAdo
 {
-    internal SqlAdo(DatabaseConnection connection, IDatabaseProvider provider, AdoInterceptor interceptor)
+    internal SqlAdo(DatabaseConnection connection)
     {
         Connection = connection;
-        Provider = provider;
-        Interceptor = interceptor;
     }
     internal DatabaseConnection Connection { get; }
-    public IDatabaseProvider Provider { get; }
-    internal AdoInterceptor Interceptor { get; }
+    public IDatabaseProvider Provider => Connection.Provider;
+    internal AdoInterceptor Interceptor => Connection.Interceptor;
 
-    private readonly struct PrepareResult(DbCommand command, bool isBreak)
+    internal void UseExternalTransaction(DbTransaction transaction) => Connection.UseExternalTransaction(transaction);
+
+    internal void DisposeConnection()
     {
-        public DbCommand Command { get; } = command;
-        public bool Break { get; } = isBreak;
+        if (Connection.UnderTransaction)
+        {
+            return;
+        }
+        Connection.Dispose();
     }
 
-    internal void UseExternalTransaction(DbTransaction transaction)
+    private void DisposeCommand(PrepareResult result)
     {
-        throw new NotImplementedException();
+        DisposeConnection();
+        result.Command.Parameters.Clear();
+        result.Command.Dispose();
     }
+
+#if NET8_0_OR_GREATER
+
+    private ValueTask DisposeCommandAsync(PrepareResult result)
+    {
+        DisposeConnection();
+        result.Command.Parameters.Clear();
+        return result.Command.DisposeAsync();
+    }
+#endif
 
     #region prepare
     private PrepareResult PrepareCommand(CommandType commandType, SqlExecuteContext et)
@@ -118,7 +138,10 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -157,7 +180,10 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -168,11 +194,12 @@ public readonly struct SqlAdo
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        PrepareResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new EmptyDataReader();
             }
@@ -182,18 +209,22 @@ public readonly struct SqlAdo
             if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = commandResult.Command.ExecuteReader(b);
+                reader = r.Command.ExecuteReader(b);
             }
             else
             {
-                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
+                reader = r.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new InternalDataReaderLight(reader, Connection);
+            return new InternalDataReaderLight(reader, r, Connection);
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -215,11 +246,12 @@ public readonly struct SqlAdo
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        PrepareResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = PrepareCommand(commandType, ctx);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new(new EmptyDataReader());
             }
@@ -233,19 +265,23 @@ public readonly struct SqlAdo
             if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = commandResult.Command.ExecuteReader(b);
+                reader = r.Command.ExecuteReader(b);
 
             }
             else
             {
-                reader = commandResult.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
+                reader = r.Command.ExecuteReader(behavior ?? CommandBehavior.Default);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new(new InternalDataReaderLight(reader, Connection));
+            return new(new InternalDataReaderLight(reader, r, Connection));
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -298,7 +334,10 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -340,7 +379,10 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+                DisposeCommand(commandResult.Value);
+            }
         }
     }
 
@@ -379,7 +421,14 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
 
@@ -418,7 +467,14 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
     public async Task<DbDataReader> ExecuteReaderAsync<
@@ -428,7 +484,7 @@ public readonly struct SqlAdo
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        PrepareResult? commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
@@ -443,7 +499,7 @@ public readonly struct SqlAdo
             if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = await r.Command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -451,10 +507,18 @@ public readonly struct SqlAdo
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new InternalDataReaderLight(reader, Connection);
+            return new InternalDataReaderLight(reader, r, Connection);
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -476,11 +540,12 @@ public readonly struct SqlAdo
     TParameter>(string commandText, TParameter dbParameters, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
     {
         var ctx = new SqlExecuteContext(ExecuteMethod.Reader, commandText, dbParameters, typeof(TParameter), commandType);
-        PrepareResult commandResult;
+        PrepareResult? commandResult = default;
         try
         {
             commandResult = await PrepareCommandAsync(commandType, ctx, cancellationToken).ConfigureAwait(false);
-            if (commandResult.Break)
+            var r = commandResult.Value;
+            if (r.Break)
             {
                 return new(new EmptyDataReader());
             }
@@ -494,19 +559,27 @@ public readonly struct SqlAdo
             if (!Connection.UnderTransaction)
             {
                 var b = behavior.HasValue ? behavior.Value | CommandBehavior.CloseConnection : CommandBehavior.CloseConnection;
-                reader = await commandResult.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(b, cancellationToken).ConfigureAwait(false);
 
             }
             else
             {
-                reader = await commandResult.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
+                reader = await r.Command.ExecuteReaderAsync(behavior ?? CommandBehavior.Default, cancellationToken).ConfigureAwait(false);
             }
             ctx.Elapsed = StopwatchHelper.GetElapsedTime(start);
             Interceptor.NotifyAfterExecute(ctx);
-            return new(new InternalDataReaderLight(reader, Connection));
+            return new(new InternalDataReaderLight(reader, r, Connection));
         }
         catch (Exception ex)
         {
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
             var ectx = new SqlExecuteExceptionContext(ctx, ex);
             Interceptor.NotifyException(ectx);
             if (ectx.IsHandled)
@@ -559,7 +632,14 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
 
@@ -601,12 +681,54 @@ public readonly struct SqlAdo
         }
         finally
         {
-
+            if (commandResult.HasValue)
+            {
+#if NET8_0_OR_GREATER
+                await DisposeCommandAsync(commandResult.Value).ConfigureAwait(false);
+#else
+                DisposeCommand(commandResult.Value);
+#endif
+            }
         }
     }
 
     #endregion
 
+    internal static T? ChangeType<T>(object? value)
+    {
+        if (value is null || value is DBNull)
+        {
+            return default;
+        }
+        if (value is T typedValue)
+        {
+            return typedValue;
+        }
+        var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+        var result = targetType switch
+        {
+            _ when targetType == typeof(string) => value.ToString(),
+            _ when targetType == typeof(int) => Convert.ToInt32(value),
+            _ when targetType == typeof(long) => Convert.ToInt64(value),
+            _ when targetType == typeof(short) => Convert.ToInt16(value),
+            _ when targetType == typeof(byte) => Convert.ToByte(value),
+            _ when targetType == typeof(decimal) => Convert.ToDecimal(value),
+            _ when targetType == typeof(double) => Convert.ToDouble(value),
+            _ when targetType == typeof(float) => Convert.ToSingle(value),
+            _ when targetType == typeof(bool) => Convert.ToBoolean(value),
+            _ when targetType == typeof(DateTime) => Convert.ToDateTime(value),
+            _ when targetType == typeof(Guid) => Guid.Parse(value.ToString()!),
+            _ when targetType == typeof(char) => Convert.ToChar(value),
+            _ when targetType.IsEnum => Enum.Parse(targetType, value.ToString()!, ignoreCase: true),
+            // 兜底——理论上不会走到这里
+            _ => Convert.ChangeType(value, targetType)
+        };
+        if (result is T finalResult)
+        {
+            return finalResult;
+        }
+        return default;
+    }
 }
 
 internal class StopwatchHelper
@@ -616,7 +738,7 @@ internal class StopwatchHelper
     {
 #if NET8_0_OR_GREATER
         return Stopwatch.GetElapsedTime(startingTimestamp);
-#else   
+#else
         var end = Stopwatch.GetTimestamp();
         var tickFrequency = (double)(10000 * 1000 / Stopwatch.Frequency);
         var tick = (end - startingTimestamp) * tickFrequency;

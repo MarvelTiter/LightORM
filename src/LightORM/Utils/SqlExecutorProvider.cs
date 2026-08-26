@@ -3,25 +3,40 @@ using System.Collections.Concurrent;
 
 namespace LightORM.Utils;
 
-internal class ConnectionFactory(ExpressionSqlOptions option,string key)
+internal class ConnectionFactory(ExpressionSqlOptions option)
 {
-    public DatabaseConnection GetDatabaseConnection()
+    public DatabaseConnection GetDatabaseConnection(string key)
     {
-        var provider = GetDbInfo(key);
+        var provider = GetDbInfo(key, option);
         var pool = ConnectionPool.Pools.GetOrAdd(provider, p =>
         {
-            return new ConnectionPool(() => {
+            return new ConnectionPool(() =>
+            {
                 var conn = p.DbProviderFactory.CreateConnection()!;
                 conn.ConnectionString = p.MasterConnectionString;
                 return conn;
-            },
-            ExpressionSqlOptions.Instance.Value.PoolSize
-                );
+            }, option.PoolSize);
         });
         var conn = pool.Get();
-        return new DatabaseConnection(conn);
+        return new DatabaseConnection(conn, provider,new(option.Interceptors));
     }
-    public IDatabaseProvider GetDbInfo(string key)
+
+    public DatabaseConnection GetDatabaseConnection(IDatabaseProvider provider)
+    {
+        var pool = ConnectionPool.Pools.GetOrAdd(provider, p =>
+        {
+            return new ConnectionPool(() =>
+            {
+                var conn = p.DbProviderFactory.CreateConnection()!;
+                conn.ConnectionString = p.MasterConnectionString;
+                return conn;
+            }, option.PoolSize);
+        });
+        var conn = pool.Get();
+        return new DatabaseConnection(conn, provider, new(option.Interceptors));
+    }
+
+    public static IDatabaseProvider GetDbInfo(string key, ExpressionSqlOptions option)
     {
         return option.DatabaseProviders.TryGetValue(key, out var db) ? db : throw new ArgumentException($"{key} not register");
     }

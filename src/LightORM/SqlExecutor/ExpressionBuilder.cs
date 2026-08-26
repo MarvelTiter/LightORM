@@ -151,12 +151,7 @@ internal partial class ExpressionBuilder
                 foreach (var targetMember in props)
                 {
                     Expression TargetValueExpression;
-                    var ordinal = reader.GetOrdinal(targetMember.Name);
-                    if (ContainsJsonType(targetMember.PropertyType))
-                    {
-                        TargetValueExpression = GetTargetJsonExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
-                    }
-                    else if (targetMember.PropertyType.IsClassOrAnonymous())
+                    if (targetMember.PropertyType.IsClassOrAnonymous())
                     {
                         if (targetMember.PropertyType.IsAnonymous())
                         {
@@ -171,8 +166,14 @@ internal partial class ExpressionBuilder
                             TargetValueExpression = CreateCustomEntiry(targetMember.PropertyType);
                         }
                     }
+                    else if (ContainsJsonType(targetMember.PropertyType))
+                    {
+                        var ordinal = reader.GetOrdinal(targetMember.Name);
+                        TargetValueExpression = GetTargetJsonExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
+                    }
                     else
                     {
+                        var ordinal = reader.GetOrdinal(targetMember.Name);
                         TargetValueExpression = GetTargetValueExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
                     }
 

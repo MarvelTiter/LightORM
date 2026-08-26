@@ -9,9 +9,9 @@ namespace LightORM.Repository;
 internal class LightOrmQueryProvider : IQueryProvider
 {
     private readonly SelectBuilder select = SelectBuilder.GetSelectBuilder();
-    private readonly ISqlExecutor ado;
+    private readonly SqlAdo ado;
     private LambdaExpression? keySelector;
-    public LightOrmQueryProvider(ISqlExecutor ado, Type type)
+    public LightOrmQueryProvider(SqlAdo ado, Type type)
     {
         this.ado = ado;
         select.AddTableInfo(TableInfo.Create(type));

@@ -10,13 +10,14 @@ public static class ScalarValueExtension
             {
                 return default;
             }
-            return SqlExecutor.OrignalSqlExecutor.ChangeType<T>(scalarValue.Value);
+            return SqlExecutor.SqlAdo.ChangeType<T>(scalarValue.Value);
         }
     }
 }
 
-public readonly record struct ScalarValue(object? Value)
+public readonly struct ScalarValue(object? value)
 {
+    public object? Value { get; } = value;
     /// <summary>
     /// 是否为 DBNull 或 null
     /// </summary>
@@ -26,6 +27,7 @@ public readonly record struct ScalarValue(object? Value)
     /// 是否有值
     /// </summary>
     public bool HasValue => !IsNull;
+
 
     // string
     public static implicit operator string?(ScalarValue scalarValue) => scalarValue.As<string>();

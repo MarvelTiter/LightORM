@@ -6,16 +6,16 @@ namespace LightORM.ExpressionSql
     {
         public ISingleScopedExpressionContext Use(IDatabaseProvider db)
         {
-            // 确保Use之后，拿到的ISqlExecutor是对应的
-            var ado = new SqlExecutor.OrignalSqlExecutor(db, Options.PoolSize, new AdoInterceptor(Options.Interceptors));
-            return new SingleScopedExpressionCoreSql(ado, Options);
+
+            var connection = connectionFactory.GetDatabaseConnection(db);
+            return new SingleScopedExpressionCoreSql(connection, Options);
         }
 
         public ISingleScopedExpressionContext CreateScoped(string key)
         {
             Debug.WriteLine("CreateScoped");
-            var ado = (ISqlExecutor)executorProvider.GetSqlExecutor(key).Clone();
-            return new SingleScopedExpressionCoreSql(ado, Options);
+            var connection = connectionFactory.GetDatabaseConnection(key);
+            return new SingleScopedExpressionCoreSql(connection, Options);
         }
 
         public IScopedExpressionContext CreateScoped()

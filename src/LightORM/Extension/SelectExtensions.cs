@@ -82,7 +82,7 @@ public static partial class SelectExtensions
         var key = GetDbKey(typeof(T1), typeof(T2));
         if (key != null)
         {
-            return new SelectProvider2<T1, T2>(instance.SwitchDatabase(key));
+            return new SelectProvider2<T1, T2>(instance.CreateScoped(key));
         }
 
         return new SelectProvider2<T1, T2>(instance);

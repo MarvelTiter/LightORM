@@ -6,14 +6,14 @@ namespace LightORM.Providers
 {
     internal sealed class DeleteProvider<T> : IExpDelete<T>
     {
-        private readonly SqlAdo executor;
+        private readonly SqlAdo ado;
         private readonly DeleteBuilder<T> sqlBuilder;
-        private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
+        private IDatabaseAdapter Database => ado.Provider.DatabaseAdapter;
         //public bool ForceDelete { get => sqlBuilder.ForceDelete; set => sqlBuilder.ForceDelete = value; }
         //public bool Truncate { get => sqlBuilder.Truncate; set => sqlBuilder.Truncate = value; }
         public DeleteProvider(SqlAdo executor, T? entity)
         {
-            this.executor = executor;
+            this.ado = executor;
             sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
@@ -21,7 +21,7 @@ namespace LightORM.Providers
 
         public DeleteProvider(SqlAdo executor, T[] entities)
         {
-            this.executor = executor;
+            this.ado = executor;
             sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObjects = entities;
@@ -49,8 +49,34 @@ namespace LightORM.Providers
         public int Execute()
         {
             var sql = sqlBuilder.ToSqlString(Database);
-            var dbParameters = sqlBuilder.DbParameters;
-            return executor.ExecuteNonQuery(sql, dbParameters);
+            if (sqlBuilder.IsBatchDelete)
+            {
+                try
+                {
+                    var effectRows = 0;
+                    if (ado.Connection.UnderTransaction)
+                        ado.Connection.BeginTransaction();
+                    foreach (var item in sqlBuilder.BatchInfos!)
+                    {
+                        effectRows += ado.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
+                    }
+                    if (ado.Connection.UnderTransaction)
+                        ado.Connection.CommitTransaction();
+                    return effectRows;
+                }
+                catch
+                {
+                    if (ado.Connection.UnderTransaction)
+                        ado.Connection.RollbackTransaction();
+                    throw;
+                }
+
+            }
+            else
+            {
+                var dbParameters = sqlBuilder.DbParameters;
+                return ado.ExecuteNonQuery(sql, dbParameters);
+            }
         }
 
         public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -61,29 +87,40 @@ namespace LightORM.Providers
             var sql = sqlBuilder.ToSqlString(Database);
             if (sqlBuilder.IsBatchDelete)
             {
-                var usingTransaction = executor.DbTransaction == null;
                 try
                 {
                     var effectRows = 0;
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        executor.BeginTransaction();
+#if NET8_0_OR_GREATER
+                        await ado.Connection.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.BeginTransaction();
+#endif
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
-                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                        effectRows += await ado.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        await executor.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                        await ado.Connection.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.CommitTransaction();
+#endif
                     }
                     return effectRows;
                 }
                 catch
                 {
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        await executor.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                        await ado.Connection.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.RollbackTransaction();
+#endif
                     }
                     throw;
                 }
@@ -92,7 +129,7 @@ namespace LightORM.Providers
             else
             {
                 var dbParameters = sqlBuilder.DbParameters;
-                return await executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
+                return await ado.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
             }
 
         }

@@ -40,21 +40,21 @@ public class SwitchDatabaseTest
         Console.WriteLine(db1);
     }
 
-    [TestMethod]
-    public async Task TestSwitchDatabase()
-    {
-        var random = new Random();
-        await Parallel.ForAsync(0, 100, async (_, c) =>
-          {
-              for (int i = 0; i < 20; i++)
-              {
-                  var index = random.Next(1, 6);
-                  var wait = random.Next(1, 50);
-                  var dbKey = $"db{index}";
-                  Assert.IsTrue(Db.SwitchDatabase(dbKey).Key == dbKey);
-                  await Task.Delay(wait, c);
-              }
-          });
-    }
+    //[TestMethod]
+    //public async Task TestSwitchDatabase()
+    //{
+    //    var random = new Random();
+    //    await Parallel.ForAsync(0, 100, async (_, c) =>
+    //      {
+    //          for (int i = 0; i < 20; i++)
+    //          {
+    //              var index = random.Next(1, 6);
+    //              var wait = random.Next(1, 50);
+    //              var dbKey = $"db{index}";
+    //              Assert.IsTrue(Db.SwitchDatabase(dbKey).Key == dbKey);
+    //              await Task.Delay(wait, c);
+    //          }
+    //      });
+    //}
 
 }

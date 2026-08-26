@@ -2,9 +2,11 @@
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 namespace LightORM.SqlExecutor;
 
+[Obsolete]
 internal partial class OrignalSqlExecutor : ISqlExecutor
 {
     public string Id { get; set; }
@@ -587,41 +589,7 @@ internal partial class OrignalSqlExecutor : ISqlExecutor
         return ds;
     }
 
-    internal static T? ChangeType<T>(object? value)
-    {
-        if (value is null || value is DBNull)
-        {
-            return default;
-        }
-        if (value is T typedValue)
-        {
-            return typedValue;
-        }
-        var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
-        var result = targetType switch
-        {
-            _ when targetType == typeof(string) => value.ToString(),
-            _ when targetType == typeof(int) => Convert.ToInt32(value),
-            _ when targetType == typeof(long) => Convert.ToInt64(value),
-            _ when targetType == typeof(short) => Convert.ToInt16(value),
-            _ when targetType == typeof(byte) => Convert.ToByte(value),
-            _ when targetType == typeof(decimal) => Convert.ToDecimal(value),
-            _ when targetType == typeof(double) => Convert.ToDouble(value),
-            _ when targetType == typeof(float) => Convert.ToSingle(value),
-            _ when targetType == typeof(bool) => Convert.ToBoolean(value),
-            _ when targetType == typeof(DateTime) => Convert.ToDateTime(value),
-            _ when targetType == typeof(Guid) => Guid.Parse(value.ToString()!),
-            _ when targetType == typeof(char) => Convert.ToChar(value),
-            _ when targetType.IsEnum => Enum.Parse(targetType, value.ToString()!, ignoreCase: true),
-            // 兜底——理论上不会走到这里
-            _ => Convert.ChangeType(value, targetType)
-        };
-        if (result is T finalResult)
-        {
-            return finalResult;
-        }
-        return default;
-    }
+    
 
     //    private readonly static ConcurrentDictionary<Type, Action<DbCommand>?> commandInitCache = [];
     //    internal static Action<DbCommand>? GetInit(DbCommand commandObject)

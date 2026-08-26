@@ -1,11 +1,11 @@
 ﻿<Project>
 	<PropertyGroup>
-		<MainProjectVersion>2026.08.21.1</MainProjectVersion>
+		<MainProjectVersion>2026.08.26.1</MainProjectVersion>
 
 		<!-- Dependency -->
-		<DependencyVersion>2026.08.21.1</DependencyVersion>
+		<DependencyVersion>2026.08.26.1</DependencyVersion>
 		<!-- Dependency依赖版本 -->
-		<DependencyDepVersion>2026.08.21.1</DependencyDepVersion>
+		<DependencyDepVersion>2026.08.26.1</DependencyDepVersion>
 
 		<!-- 达梦 -->
 		<DamengVersion>2026.08.21.1</DamengVersion>

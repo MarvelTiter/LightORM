@@ -79,7 +79,7 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
     //IExpDelete<T> Delete<T>();
     //IExpDelete<T> Delete<T>(params T[] entities);
     ISingleScopedExpressionContext Use(IDatabaseProvider db);
-    ITransientExpressionContext SwitchDatabase(string key);
+    TransientExpressionContext SwitchDatabase(string key);
 
     /// <summary>
     /// 创建指定数据库的单元操作对象，支持事务
@@ -125,20 +125,22 @@ public interface IDefinedTableAction
 public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
     SqlAdo DefaultAdo { get; }
-    ITransientExpressionContext SwitchDatabase(string key);
+    TransientExpressionContext SwitchDatabase(string key);
     string Id { get; }
     void BeginTransaction(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
-    Task BeginTransactionAsync(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction(string key = ConstString.Main);
-    Task CommitTransactionAsync(string key = ConstString.Main);
     void RollbackTransaction(string key = ConstString.Main);
-    Task RollbackTransactionAsync(string key = ConstString.Main);
     void BeginAllTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
-    Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitAllTransaction();
-    Task CommitAllTransactionAsync();
     void RollbackAllTransaction();
-    Task RollbackAllTransactionAsync();
+#if NET8_0_OR_GREATER
+    Task BeginTransactionAsync(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
+    Task CommitTransactionAsync(string key = ConstString.Main, CancellationToken cancellationToken = default);
+    Task RollbackTransactionAsync(string key = ConstString.Main, CancellationToken cancellationToken = default);
+    Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
+    Task CommitAllTransactionAsync(CancellationToken cancellationToken = default);
+    Task RollbackAllTransactionAsync(CancellationToken cancellationToken = default);
+#endif
 }
 
 /// <summary>
@@ -148,11 +150,13 @@ public interface ISingleScopedExpressionContext : IDisposable, IDefinedTableActi
 {
     string Id { get; }
     void BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
-    Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction();
-    Task CommitTransactionAsync();
     void RollbackTransaction();
-    Task RollbackTransactionAsync();
+#if NET8_0_OR_GREATER
+    Task BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
+    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+    Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+#endif
     internal void TryBeginTransaction();
     internal void TryCommitTransaction();
     internal void TryRollbackTransaction();

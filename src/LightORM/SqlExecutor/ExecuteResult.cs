@@ -197,7 +197,6 @@ TParameter>(SqlAdo ado, string sql, TParameter? param, DbTransaction? trans, Com
             {
                 await reader.CloseAsync();
             }
-            reader?.Close();
         }
     }
 
@@ -227,7 +226,6 @@ TParameter>(SqlAdo ado, string sql, TParameter? param, DbTransaction? trans, Com
             {
                 await reader.CloseAsync();
             }
-            reader?.Close();
         }
     }
 #endif

@@ -1,21 +1,26 @@
-﻿using System.Threading;
+﻿using System.Collections.Concurrent;
+using System.Threading;
 using LightORM.DbStruct;
 
 namespace LightORM.ExpressionSql;
 
 internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : ExpressionCoreSqlBase(option), IExpressionContext
 {
-    internal readonly SqlExecutorProvider executorProvider = new(option);
+    //private readonly ConcurrentDictionary<string, DatabaseConnection> connections = [];
+    private readonly ConnectionFactory connectionFactory = new(option);
     public string Id { get; } = $"{Guid.NewGuid():N}";
-    public override SqlAdo Ado => executorProvider.GetSqlExecutor(Options.DefaultDbKey);
-
-    public ITransientExpressionContext SwitchDatabase(string key)
+    public override SqlAdo Ado => GetAdo(Options.DefaultDbKey);
+    public TransientExpressionContext SwitchDatabase(string key)
     {
-        var ado = executorProvider.GetSqlExecutor(key);
-        return TransientExpressionCoreSql.Create(key, ado, Options);
+        var connection = connectionFactory.GetDatabaseConnection(key);
+        return new(this, connection, Options);
     }
 
-    public SqlAdo GetAdo(string key) => executorProvider.GetSqlExecutor(key);
+    public SqlAdo GetAdo(string key)
+    {
+        var connection = connectionFactory.GetDatabaseConnection(key);
+        return new(connection);
+    }
 
     public IExpSelect Select(string tableName) => throw new NotImplementedException(); //new SelectProvider0(tableName, Ado);
 
@@ -28,7 +33,10 @@ internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : E
             if (disposing)
             {
                 System.Diagnostics.Debug.WriteLine($"释放ExpressionCoreSql：{DateTime.Now}");
-                executorProvider.Dispose();
+                //foreach (var item in connections.Values)
+                //{
+                //    item.Dispose();
+                //}
             }
 
             disposedValue = true;
@@ -43,25 +51,28 @@ internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : E
 
     public string? CreateTableSql<T>(IDatabaseProvider provider, Action<TableOptions>? action = null)
     {
-        using var ado = new SqlExecutor.OrignalSqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
-        return InternalCreateTableSql<T>(ado, Options, action);
+        return ExpressionCoreSqlContextMethodImpl.InternalCreateTableSql<T>(provider, action);
     }
 
     public async Task<bool> CreateTableAsync<T>(IDatabaseProvider provider, Action<TableOptions>? action = null, CancellationToken cancellationToken = default)
     {
-        using var ado = new SqlExecutor.OrignalSqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
-        return await InternalCreateTableAsync<T>(ado, Options, action, cancellationToken);
+        using var connection = connectionFactory.GetDatabaseConnection(provider);
+        var ado = new SqlAdo(connection);
+        var flag = await ExpressionCoreSqlContextMethodImpl.InternalCreateTableAsync<T>(ado, Options, action, cancellationToken);
+        return flag;
     }
 
     public async Task<IList<DbStruct.ReadedTable>> GetTablesAsync(IDatabaseProvider provider)
     {
-        using var ado = new SqlExecutor.OrignalSqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
-        return await InternalGetTablesAsync(ado, Options);
+        using var connection = connectionFactory.GetDatabaseConnection(provider);
+        var ado = new SqlAdo(connection);
+        return await ExpressionCoreSqlContextMethodImpl.InternalGetTablesAsync(ado, Options);
     }
 
     public async Task<ReadedTable> GetTableStructAsync(IDatabaseProvider provider, DbStruct.ReadedTable table)
     {
-        using var ado = new SqlExecutor.OrignalSqlExecutor(provider, Options.PoolSize, new(Options.Interceptors));
-        return await InternalTableStructAsync(table, ado, Options);
+        using var connection = connectionFactory.GetDatabaseConnection(provider);
+        var ado = new SqlAdo(connection);
+        return await ExpressionCoreSqlContextMethodImpl.InternalTableStructAsync(table, ado, Options);
     }
 }

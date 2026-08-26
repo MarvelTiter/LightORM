@@ -6,12 +6,12 @@ namespace LightORM.Providers
 {
     internal class UpdateProvider<T> : IExpUpdate<T>
     {
-        private readonly SqlAdo executor;
+        private readonly SqlAdo ado;
         private readonly UpdateBuilder<T> sqlBuilder;
-        private IDatabaseAdapter Database => executor.Provider.DatabaseAdapter;
+        private IDatabaseAdapter Database => ado.Provider.DatabaseAdapter;
         public UpdateProvider(SqlAdo executor, T? entity)
         {
-            this.executor = executor;
+            this.ado = executor;
             sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
@@ -19,7 +19,7 @@ namespace LightORM.Providers
 
         public UpdateProvider(SqlAdo executor, T[] entities)
         {
-            this.executor = executor;
+            this.ado = executor;
             sqlBuilder = new();
             sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
             sqlBuilder.IsBatchUpdate = true;
@@ -48,29 +48,28 @@ namespace LightORM.Providers
             var sql = sqlBuilder.ToSqlString(Database);
             if (sqlBuilder.IsBatchUpdate)
             {
-                var usingTransaction = executor.DbTransaction != null;
                 try
                 {
                     var effectRows = 0;
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        executor.BeginTransaction();
+                        ado.Connection.BeginTransaction();
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
-                        effectRows += executor.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
+                        effectRows += ado.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                     }
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        executor.CommitTransaction();
+                        ado.Connection.CommitTransaction();
                     }
                     return effectRows;
                 }
                 catch
                 {
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        executor.RollbackTransaction();
+                        ado.Connection.RollbackTransaction();
                     }
                     throw;
                 }
@@ -79,7 +78,7 @@ namespace LightORM.Providers
             else
             {
                 var dbParameters = sqlBuilder.DbParameters;
-                return executor.ExecuteNonQuery(sql, dbParameters);
+                return ado.ExecuteNonQuery(sql, dbParameters);
             }
         }
 
@@ -88,29 +87,40 @@ namespace LightORM.Providers
             var sql = sqlBuilder.ToSqlString(Database);
             if (sqlBuilder.IsBatchUpdate)
             {
-                var usingTransaction = executor.DbTransaction == null;
                 try
                 {
                     var effectRows = 0;
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        executor.BeginTransaction();
+#if NET8_0_OR_GREATER
+                        await ado.Connection.BeginTransactionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.BeginTransaction();
+#endif
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
-                        effectRows += await executor.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+                        effectRows += await ado.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        await executor.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                        await ado.Connection.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.CommitTransaction();
+#endif
                     }
                     return effectRows;
                 }
                 catch
                 {
-                    if (usingTransaction)
+                    if (ado.Connection.UnderTransaction)
                     {
-                        await executor.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+                        await ado.Connection.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        ado.Connection.RollbackTransaction();
+#endif
                     }
                     throw;
                 }
@@ -119,7 +129,7 @@ namespace LightORM.Providers
             else
             {
                 var dbParameters = sqlBuilder.DbParameters;
-                return await executor.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
+                return await ado.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
             }
         }
         public IExpUpdate<T> SetNullIf<TNull>(bool condition, Expression<Func<T, TNull>> exp)
