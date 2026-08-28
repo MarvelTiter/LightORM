@@ -138,7 +138,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         throw new NotImplementedException();
     }
 
-    public virtual void HandleBatchInsert(BatchActionContext context)
+    public virtual void HandleBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context)
     {
         var batchs = context.Batchs;
         var builder = context.Builder;
@@ -147,10 +147,11 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         foreach (var item in batchs)
         {
             using var _ = StringBuilderPool.Get(out var sb);
+            builder.WriteTags(sb);
             PreHandleInsertBuilder(sb);
-            for (int i = 0; i < item.Parameters.Count; i++)
+            for (int i = 0; i < item.RowParameters.Count; i++)
             {
-                List<SimpleColumn>? dic = item.Parameters[i];
+                List<SimpleColumn>? dic = item.RowParameters[i];
                 if (i > 0)
                 {
                     sb.Append(',');
@@ -159,7 +160,10 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                 sb.Append('(');
                 foreach (var c in dic)
                 {
-                    sb.Append(this.GetValueExpression(c));
+                    if (c.IsNewVersion)
+                        continue;
+                    //sb.Append(database.GetValueExpression(c));
+                    sb.AppendSimpleColumnValueExpression(c, database);
                     sb.Append(',');
                 }
                 sb.RemoveLast(1);
@@ -188,7 +192,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         }
     }
 
-    public virtual void HandleBatchUpdate(BatchActionContext context)
+    public virtual void HandleBatchUpdate<T>(BatchActionContext<UpdateBuilder<T>> context)
     {
         var batchs = context.Batchs;
         var builder = context.Builder;
@@ -199,6 +203,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
             // 每一个BatchSqInfo就是每批次更新的数据量
             //StringBuilder sb = new("UPDATE ");
             using var _ = StringBuilderPool.Get(out var sb);
+            builder.WriteTags(sb);
             sb.Append("UPDATE ");
             //sb.Append(GetTableName(database, MainTable, false));
             sb.AppendTableName(database, builder.MainTable, false);
@@ -211,29 +216,32 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                 sb.AppendEmphasis(col.ColumnName, database);
                 sb.AppendLine(" = CASE");
                 // 每一条记录的参数数量
-                for (var rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
+                for (var rowIndex = 0; rowIndex < batch.RowParameters.Count; rowIndex++)
                 {
-                    var rowDatas = batch.Parameters[rowIndex];
-                    var currentCol = rowDatas.First(r => r.PropName == col.PropertyName);
-                    if (currentCol.IsVersion)
-                    {
-                        var newVersion = SqlBuilder.VersionPlus(currentCol.Value);
-                        var newCol = currentCol with { ParameterName = $"{currentCol.ParameterName}_n", Value = newVersion, IsVersion = false };
-                        rowDatas.Add(newCol);
-                        currentCol = newCol;
-                    }
+                    var rowDatas = batch.RowParameters[rowIndex];
                     bool first = true;
                     sb.Append("  WHEN ");
-                    foreach (var item in rowDatas.Where(r => r.IsPrimaryKey || r.IsVersion))
+                    foreach (var item in rowDatas.Where(r => r.IsPrimaryKey || (r.IsVersion && !r.IsNewVersion)))
                     {
                         if (!first) sb.Append(" AND ");
                         first = false;
                         sb.AppendEmphasis(item.ColumnName, database);
                         sb.Append(" = ");
-                        sb.WithPrefix(item.ParameterName, database);
+                        //sb.WithPrefix(item.ParameterName, database);
+                        sb.AppendSimpleColumnParameter(item, database);
                     }
                     sb.Append(" THEN ");
-                    sb.AppendLine(database.GetValueExpression(currentCol));
+                    var currentCol = rowDatas.First(r =>
+                    {
+                        if (r.IsVersion)
+                        {
+                            return r.IsNewVersion && r.PropName == col.PropertyName;
+                        }
+                        return r.PropName == col.PropertyName;
+                    });
+                    //sb.AppendLine(database.GetValueExpression(currentCol));
+                    sb.AppendSimpleColumnValueExpression(currentCol, database);
+                    sb.AppendLine();
                 }
 
                 sb.Append("END, ");
@@ -241,7 +249,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
             sb.RemoveLast(2);
 
-            var pValues = batch.Parameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey | r.IsVersion)).GroupBy(c => c.ColumnName).ToList();
+            var pValues = batch.RowParameters.SelectMany(rowDatas => rowDatas.Where(r => r.IsPrimaryKey | (r.IsVersion && !r.IsNewVersion))).GroupBy(c => c.ColumnName).ToList();
             if (pValues.Count == 0 && builder.Where.Count == 0)
             {
                 throw new LightOrmException($"类型{builder.MainTable.Type}, 没有主键并且缺失Where条件");
@@ -261,7 +269,8 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                 sb.Append(" IN (");
                 foreach (var i in item)
                 {
-                    sb.WithPrefix(i.ParameterName, database);
+                    sb.AppendSimpleColumnParameter(i, database);
+                    
                     sb.Append(',');
                 }
                 sb.RemoveLast(1);
@@ -295,6 +304,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         foreach (var batch in batchs)
         {
             using var _ = StringBuilderPool.Get(out var sb);
+            builder.WriteTags(sb);
             sb.Append("DELETE FROM ");
             //sb.AppendLine(GetTableName(database, MainTable, false));
             sb.AppendTableName(database, builder.MainTable, false).AppendLine();
@@ -306,9 +316,9 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                 break;
             }
             sb.Append('(');
-            for (int rowIndex = 0; rowIndex < batch.Parameters.Count; rowIndex++)
+            for (int rowIndex = 0; rowIndex < batch.RowParameters.Count; rowIndex++)
             {
-                List<SimpleColumn>? row = batch.Parameters[rowIndex];
+                List<SimpleColumn>? row = batch.RowParameters[rowIndex];
                 if (keyColumns.Length > 1)
                 {
                     sb.Append('(');
@@ -320,10 +330,11 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                         }
                         sb.AppendEmphasis(row[i].ColumnName, database);
                         sb.Append(" = ");
-                        sb.WithPrefix(row[i].ParameterName, database);
+                        //sb.WithPrefix(row[i].ParameterName, database);
+                        sb.AppendSimpleColumnParameter(row[i], database);
                     }
                     sb.Append(')');
-                    if (rowIndex < batch.Parameters.Count - 1)
+                    if (rowIndex < batch.RowParameters.Count - 1)
                         sb.Append(" OR ");
                 }
                 else
@@ -335,8 +346,9 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                         sb.Append(" IN (");
 
                     }
-                    sb.WithPrefix(row[0].ParameterName, database);
-                    if (rowIndex < batch.Parameters.Count - 1)
+                    //sb.WithPrefix(row[0].ParameterName, database);
+                    sb.AppendSimpleColumnParameter(row[0], database);
+                    if (rowIndex < batch.RowParameters.Count - 1)
                         sb.Append(',');
                     else
                         sb.Append(')');

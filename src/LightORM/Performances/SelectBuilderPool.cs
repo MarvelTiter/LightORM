@@ -29,9 +29,9 @@ internal class SelectBuilderPool
     private static void ResetBuilder(SelectBuilder builder)
     {
         // 清空列表但保留容量
+        builder.ClearJoins();
         builder.SelectedTables.Clear();
         builder.Where.Clear();
-        builder.Joins.Clear();
         builder.OrderBy.Clear();
         builder.Having.Clear();
         builder.Includes?.Clear();
@@ -71,7 +71,6 @@ internal class SelectBuilderPool
         // 如果列表容量过大，重建以释放内存
         ShrinkListIfLarge(builder.Where);
         ShrinkListIfLarge(builder.OrderBy);
-        ShrinkListIfLarge(builder.Joins);
         // ... 其他列表
     }
 

@@ -47,8 +47,15 @@
                         {
                             isStatic = true;
                         }
-                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val, isStatic)
+
+                        dbParameters.Add(new SimpleColumn(col, $"{col.PropertyName}_{rowIndex}", rowIndex, false, val, isStatic)
                         );
+
+                        if (col.IsVersionColumn)
+                        {
+                            var newVersionValue = SqlBuilder.VersionPlus(val);
+                            dbParameters.Add(new SimpleColumn(col, $"{col.PropertyName}_{rowIndex}_n", rowIndex, true, newVersionValue, isStatic));
+                        }
                     }
                     rowIndex++;
                     pList.Add(dbParameters);

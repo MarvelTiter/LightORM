@@ -44,6 +44,8 @@ internal abstract partial class SqlBuilder : ISqlBuilder
     protected ResolveContext? ResolveCtx { get; set; }
     public bool? QuoteIdentifiers { get; set; }
 
+    protected List<TagInfo>? Tags { get; set; }
+
     internal void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
     {
         //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
@@ -110,7 +112,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
             HandleResult(database, item, result);
-            if (result.ResolvedValues != null)
+            if (result.ResolvedValues != null && !result.UseNavigate)
                 ResolvedValues.AddRange(result.ResolvedValues);
             item.IsCompleted = true;
         }
@@ -178,5 +180,41 @@ internal abstract partial class SqlBuilder : ISqlBuilder
             return value;
         }
         throw new NotSupportedException("不支持的Version列类型");
+    }
+
+    public void AddTag(TagInfo tag)
+    {
+        Tags ??= [];
+        Tags.Add(tag);
+    }
+
+    internal virtual void WriteTags(StringBuilder sql, string ident = "")
+    {
+        if (Tags is not { Count: > 0 })
+        {
+            return;
+        }
+        foreach (var tag in Tags)
+        {
+            sql.Append(ident).Append("-- ");
+            if (tag.WithCallSite)
+            {
+                var fileName = tag.FilePath != null
+               ? Path.GetFileNameWithoutExtension(tag.FilePath)
+               : "Unknown";
+                sql.Append(fileName)
+                    .Append('.')
+                    .Append(tag.CallMember ?? "Unknown")
+                    .Append(':')
+                    .Append(tag.LineNumber?.ToString() ?? "?")
+                    .Append(" - ")
+                    .Append(tag.Message);
+            }
+            else
+            {
+                sql.Append(tag.Message);
+            }
+            sql.AppendLine();
+        }
     }
 }

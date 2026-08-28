@@ -189,14 +189,14 @@ public partial class SelectSql : TestBase
         var sql = Db.Select<User>()
             // 两种写法都可以
             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
-            .Where(u => u.City.Name.StartsWith("D"))
+            .Where(u => u.Profile.Address.StartsWith("D"))
             .ToSql();
         Console.WriteLine(sql);
 
         var sql2 = Db.Select<User>()
             // 两种写法都可以
             //.Where(u => u.UserRoles.Where(r => r.RoleId.Contains("admin")).Any())
-            .Where(u => u.City.Name.StartsWith("D"))
+            .Where(u => u.Profile.Address.StartsWith("D"))
             .ToSql();
         Console.WriteLine(sql2);
     }
@@ -650,7 +650,7 @@ public partial class SelectSql : TestBase
         var sql = Db.Select<User>()
             .ToSql(u => new
             {
-                RowNo = WinFn.RowNumber().PartitionBy(u.City.Name).OrderBy(u.Id).Value(),
+                RowNo = WinFn.RowNumber().PartitionBy(u.Profile.Phone).OrderBy(u.Id).Value(),
                 u.UserId,
                 u.UserName,
                 u.Password

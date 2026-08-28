@@ -96,14 +96,14 @@ namespace LightORM.Extension
             {
                 var mapTable = TableInfo.Create(include.NavigateInfo!.MappingType, selectSql.NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(mainNav.SubName!);
-                selectSql.Joins.Add(new JoinInfo(mapTable)
+                selectSql.AddJoin(new JoinInfo(mapTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {selectSql.MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
                 });
                 subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
-                selectSql.Joins.Add(new JoinInfo(parentTable)
+                selectSql.AddJoin(new JoinInfo(parentTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
@@ -113,7 +113,7 @@ namespace LightORM.Extension
             {
                 var subCol = parentTable.GetColumnInfo(include.NavigateInfo!.SubName!);
                 parentTable.Index = selectSql.NextTableIndex;
-                selectSql.Joins.Add(new JoinInfo(parentTable)
+                selectSql.AddJoin(new JoinInfo(parentTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {parentTable.Alias}.{database.AttachEmphasis(include.ParentWhereColumn!.ColumnName)} = {selectSql.MainTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"

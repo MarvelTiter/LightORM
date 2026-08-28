@@ -1,9 +1,7 @@
-﻿using LightORM.Providers.Oracle.Extensions;
-
-namespace LightORMTest.PostgreSQL.SqlGenerate;
+﻿namespace LightORMTest.PostgreSQL.SqlGenerate;
 
 [TestClass]
-public class SelectSql : LightORMTest.SqlGenerate.SelectSql
+public class InsertOrUpdateTest : LightORMTest.SqlGenerate.InsertOrUpdateTest
 {
     public override DbBaseType DbType => DbBaseType.PostgreSQL;
 

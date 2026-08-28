@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Runtime.CompilerServices;
+using System.Threading;
 namespace LightORM.Interfaces.ExpSql;
 
 public interface ISql
@@ -12,6 +13,13 @@ public interface ISql<TPart, T> : ISql
 
     TPart NoQuoteIdentifiers();
     TPart QuoteIdentifiers();
+
+    #endregion
+
+    #region 日志输出辅助
+
+    TPart TagWith(string tag);
+    TPart TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null);
 
     #endregion
 

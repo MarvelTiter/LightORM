@@ -1,6 +1,6 @@
 ﻿namespace LightORM.Models;
 
-public class TableInfo
+public record TableInfo
 {
     private const string ALIAS = "abcdefghijklmnopqrstuvwyz";
     private int index;

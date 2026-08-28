@@ -79,7 +79,7 @@ internal partial class CustomPostgreSQL
                     sb.Append("    WHERE ");
                     sb.AppendTableName(database, context.Builder.MainTable, false)
                         .Append('.')
-                        .Append(kv.Value.Column).Append(" = ").Append(kv.Value.Value).Append(' ');
+                        .Append(kv.Value.Column).Append(" = ").Append("EXCLUDED.").Append(kv.Value.Column).Append(' ');
                 }
             }
         }

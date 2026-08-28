@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -39,6 +40,21 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
     public IExpInsert<T> QuoteIdentifiers()
     {
         sqlBuilder.QuoteIdentifiers = true;
+        return this;
+    }
+
+    #endregion
+
+    #region 日志输出辅助
+
+    public IExpInsert<T> TagWith(string tag)
+    {
+        sqlBuilder.AddTag(new(tag, null, null, null, false));
+        return this;
+    }
+    public IExpInsert<T> TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null)
+    {
+        sqlBuilder.AddTag(new(tag, filePath, callMember, lineNum, true));
         return this;
     }
 
@@ -249,13 +265,13 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
             foreach (var batch in sqlBuilder.BatchInfos ?? [])
             {
                 sb.AppendLine($"批量插入，批次：{batch.Index}");
-                foreach (var item in batch.Parameters)
+                foreach (var item in batch.RowParameters)
                 {
                     sb.AppendLine("----行数据");
                     item.ForEach(row =>
                     {
                         if (row.IsStaticValue) return;
-                        sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                        sb.AppendLine($"--------{row.ValueName} - {row.Value}");
                     });
                 }
             }

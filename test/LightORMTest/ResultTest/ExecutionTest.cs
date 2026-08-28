@@ -263,7 +263,11 @@ public partial class ExecutionTest : TestBase
         Assert.AreEqual(1, dc);
 
         dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync(TestContext.CancellationToken);
+        Assert.AreEqual(2, dc);
+        var p = "13800138006";
+        dc = await Db.Delete<User>().Where(u => u.Profile.Phone == p).ExecuteAsync(TestContext.CancellationToken);
         Assert.AreEqual(1, dc);
+
     }
 
     [TestMethod]
@@ -326,6 +330,54 @@ public partial class ExecutionTest : TestBase
             Assert.AreEqual(2, e4);
         else
             Assert.AreEqual(1, e4);
+    }
+
+    [TestMethod]
+    public async Task InsertOrUpdateBatchTest()
+    {
+        var nr1 = new Role()
+        {
+            RoleId = "Admin",
+            RoleName = "管理员22"
+        };
+        var nr2 = new Role()
+        {
+            RoleId = "SuperAdmin",
+            RoleName = "超级管理员22"
+        };
+        //await Db.Insert(nr).ExecuteAsync(TestContext.CancellationToken);
+        var e1 = await Db.Insert(nr1, nr2).IgnoreIfExits().ExecuteAsync(TestContext.CancellationToken);
+        var e2 = await Db.Insert(nr1, nr2).OrUpdate().ExecuteAsync(TestContext.CancellationToken);
+        Assert.AreEqual(0, e1);
+        if (DbType == DbBaseType.MySql)
+            Assert.AreEqual(2, e2);
+        else
+            Assert.AreEqual(2, e2);
+        var nu1 = new Sales()
+        {
+            Region = "华东",
+            Province = "上海",
+            Product = "笔记本电脑2",
+            Amount = 111,
+            Version = 1,
+        };
+
+        var nu2 = new Sales()
+        {
+            Region = "华东",
+            Province = "江苏",
+            Product = "笔记本电脑2",
+            Amount = 222,
+            Version = 1,
+        };
+
+        var e3 = await Db.Insert(nu1, nu2).IgnoreIfExits().ExecuteAsync(TestContext.CancellationToken);
+        var e4 = await Db.Insert(nu1, nu2).OrUpdate().ExecuteAsync(TestContext.CancellationToken);
+        Assert.AreEqual(0, e3);
+        if (DbType == DbBaseType.MySql)
+            Assert.AreEqual(2, e4);
+        else
+            Assert.AreEqual(2, e4);
     }
 
     [NotNull]

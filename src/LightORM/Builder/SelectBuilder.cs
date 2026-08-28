@@ -54,7 +54,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public bool IsCube { get; set; }
     public string SelectValue { get; set; } = "*";
     public int Depth { get; set; }
-    public List<JoinInfo> Joins { get; set; } = [];
+    private readonly List<JoinInfo> joins = [];
     public List<string> Having { get; set; } = [];
     public SortedSet<IncludeInfo> Includes { get; set; } = [];
 
@@ -63,15 +63,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public List<string> OrderBy { get; set; } = [];
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
-    public int NextTableIndex => SelectedTables.Count + Joins.Count + TableIndexFix;
-
-    private List<TagInfo>? Tags { get; set; }
-
-    public void AddTag(TagInfo tag)
-    {
-        Tags ??= [];
-        Tags.Add(tag);
-    }
+    public int NextTableIndex => SelectedTables.Count + joins.Count + TableIndexFix;
 
     //protected override Lazy<TableInfo[]> GetAllTables()
     //{
@@ -84,18 +76,66 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         SelectedTables.Add(tableInfo);
     }
 
+    public void AddJoin(JoinInfo joinInfo)
+    {
+        joinInfo.EntityInfo.Depth = Depth;
+        joins.Add(joinInfo);
+    }
+
+    public JoinInfo? GetJoin(Func<JoinInfo, bool> predicate)
+    {
+        return joins.FirstOrDefault(predicate);
+    }
+    public List<JoinInfo> GetJoins() => joins;
+
+    public void ClearJoins() => joins.Clear();
+
     public override IEnumerable<TableInfo> AllTables()
     {
         foreach (var item in SelectedTables)
         {
             yield return item;
         }
-        foreach (var item in Joins)
+        foreach (var item in joins)
         {
             yield return item.EntityInfo!;
         }
     }
 
+    internal override void WriteTags(StringBuilder sql, string ident)
+    {
+        if (Tags is not { Count: > 0 })
+        {
+            return;
+        }
+        foreach (var tag in Tags)
+        {
+            if (IsTemp)
+                sql.Append("-- ");
+            else
+                sql.Append(ident).Append("-- ");
+            if (tag.WithCallSite)
+            {
+                var fileName = tag.FilePath != null
+               ? Path.GetFileNameWithoutExtension(tag.FilePath)
+               : "Unknown";
+                sql.Append(fileName)
+                    .Append('.')
+                    .Append(tag.CallMember ?? "Unknown")
+                    .Append(':')
+                    .Append(tag.LineNumber?.ToString() ?? "?")
+                    .Append(" - ")
+                    .Append(tag.Message);
+            }
+            else
+            {
+                sql.Append(tag.Message);
+            }
+            sql.AppendLine();
+        }
+        // 注释和sql隔开一行
+        //sql.AppendLine();
+    }
 
     protected override void BeforeResolveExpressions(ResolveContext context)
     {
@@ -124,7 +164,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 ScanNavigate(database, result, MainTable);
                 IsDistinct = true;
                 if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
-                    && l!.Parameters[0].Type == Joins.LastOrDefault()?.EntityInfo?.Type)
+                    && l!.Parameters[0].Type == joins.LastOrDefault()?.EntityInfo?.Type)
                 {
                     List<ParameterExpression> ps = [.. AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
                     ps.RemoveAt(ps.Count - 1);
@@ -142,7 +182,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Join)
         {
-            var joinInfo = Joins.FirstOrDefault(j => j.ExpressionId == expInfo.Id);
+            var joinInfo = joins.FirstOrDefault(j => j.ExpressionId == expInfo.Id);
             joinInfo?.Where = result.SqlString!;
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.Select)
@@ -208,7 +248,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                 var mapTable = TableInfo.Create(navInfo.MappingType, NextTableIndex);
                 var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
                 //TryJoin(mapTable);
-                Joins.Add(new JoinInfo(mapTable)
+                joins.Add(new JoinInfo(mapTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
@@ -216,7 +256,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
 
                 subCol = mapTable.GetColumnInfo(targetNav.SubName!);
                 targetTable.Index += 1;
-                Joins.Add(new JoinInfo(targetTable)
+                joins.Add(new JoinInfo(targetTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
@@ -226,7 +266,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             {
                 var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
                 //TryJoin(targetTable);
-                Joins.Add(new JoinInfo(targetTable)
+                joins.Add(new JoinInfo(targetTable)
                 {
                     JoinType = TableLinkType.InnerJoin,
                     Where = $"( {mainTableInfo.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
@@ -276,40 +316,6 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         sql.AppendLine();
     }
 
-    private void WriteTags(StringBuilder sql, ref string ident)
-    {
-        if (Tags is not { Count: > 0 })
-        {
-            return;
-        }
-        foreach (var tag in Tags)
-        {
-            if (IsTemp)
-                sql.Append("-- ");
-            else
-                sql.Append(ident).Append("-- ");
-            if (tag.WithCallSite)
-            {
-                var fileName = tag.FilePath != null
-               ? Path.GetFileNameWithoutExtension(tag.FilePath)
-               : "Unknown";
-                sql.Append(fileName)
-                    .Append('.')
-                    .Append(tag.CallMember ?? "Unknown")
-                    .Append(':')
-                    .Append(tag.LineNumber?.ToString() ?? "?")
-                    .Append(" - ")
-                    .Append(tag.Message);
-            }
-            else
-            {
-                sql.Append(tag.Message);
-            }
-            sql.AppendLine();
-        }
-        // 注释和sql隔开一行
-        //sql.AppendLine();
-    }
     public override string ToSqlString(IDatabaseAdapter database)
     {
         //SubQuery?.ResolveExpressions();
@@ -332,7 +338,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         Depth = currentLevel;
         ResolveExpressions(database);
         var ident = new string(' ', 4 * currentLevel);
-        WriteTags(sql, ref ident);
+        WriteTags(sql, ident);
         if (InsertInfo.HasValue)
         {
             //sb.AppendLine($"INSERT INTO {database.AttachEmphasis(InsertInfo.Value.TableName)}");
@@ -411,7 +417,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
             ResolvedValues.UnionWith(SubQuery.ResolvedValues);
         }
 
-        foreach (var item in Joins)
+        foreach (var item in joins)
         {
             if (item.IsSubQuery && item.SubQuery is not null)
             {
@@ -552,9 +558,9 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
 
         // JOINs
-        for (int i = 0; i < Joins.Count; i++)
+        for (int i = 0; i < joins.Count; i++)
         {
-            var join = Joins[i];
+            var join = joins[i];
             total += indent + 10; // "INNER JOIN "
             if (join.IsSubQuery && join.SubQuery != null)
             {

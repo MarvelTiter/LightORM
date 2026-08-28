@@ -40,9 +40,9 @@ namespace LightORM.Interfaces
 
         internal void HandleInsertOrUpdate(UpsertContext context);
 
-        internal void HandleBatchInsert(BatchActionContext context);
+        internal void HandleBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context);
 
-        internal void HandleBatchUpdate(BatchActionContext context);
+        internal void HandleBatchUpdate<T>(BatchActionContext<UpdateBuilder<T>> context);
 
         internal void HandleBatchDelete<T>(BatchActionContext<DeleteBuilder<T>> context);
     }

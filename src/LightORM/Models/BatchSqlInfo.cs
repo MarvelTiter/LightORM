@@ -1,33 +1,23 @@
 ﻿namespace LightORM.Models
 {
-    //internal class SimpleColumn
-    //{
-    //    public SimpleColumn(bool isPrimaryKey, string columnName, string parameterName, string propName, object? val)
-    //    {
-    //        IsPrimaryKey = isPrimaryKey;
-    //        ColumnName = columnName;
-    //        ParameterName = parameterName;
-    //        PropName = propName;
-    //        Value = val;
-    //    }
-    //    public bool IsPrimaryKey { get; set; }
-    //    public bool IsVersion { get; set; }
-    //    public string ColumnName { get; set; }
-    //    public string ParameterName { get; set; }
-    //    public string PropName { get; set; }
-    //    public object? Value { get; set; }
-    //}
-    internal record SimpleColumn(bool IsPrimaryKey, bool IsVersion, string ColumnName, string ParameterName, string PropName, object? Value, bool IsStaticValue);
-    internal record BatchParameters(ITableColumnInfo Column, List<SimpleColumn> Parameters);
-    internal class BatchSqlInfo
+    internal readonly record struct SimpleColumn(ITableColumnInfo Column
+        , string ValueName
+        , int RowIndex
+        , bool IsNewVersion
+        , object? Value
+        , bool IsStaticValue)
     {
-        public BatchSqlInfo(List<List<SimpleColumn>> parameters, int index)
-        {
-            Parameters = parameters;
-            Index = index;
-        }
-        public int Index { get; set; }
+        public bool IsPrimaryKey => Column.IsPrimaryKey;
+        public bool IsVersion => Column.IsVersionColumn;
+        public string PropName => Column.PropertyName;
+        public string ColumnName => Column.ColumnName;
+
+    }
+    //internal record BatchParameters(ITableColumnInfo Column, List<SimpleColumn> Parameters);
+    internal class BatchSqlInfo(List<List<SimpleColumn>> parameters, int index)
+    {
+        public int Index { get; set; } = index;
         public string? Sql { get; set; }
-        public List<List<SimpleColumn>> Parameters { get; set; }
+        public List<List<SimpleColumn>> RowParameters { get; set; } = parameters;
     }
 }

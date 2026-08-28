@@ -44,15 +44,17 @@ public class User
     [LightNavigate(ManyToMany = typeof(UserRole), MainName = nameof(UserId), SubName = nameof(UserRole.UserId))]
     public IEnumerable<Role> UserRoles { get; set; }
 
-    [LightNavigate(nameof(Id), nameof(City.Uid))]
-    public City City { get; set; }
-
+    [LightNavigate(nameof(UserId), nameof(UserProfile.UserId))]
+    public UserProfile Profile { get; set; }
 }
 
-[LightTable]
-public class City
+[LightTable(Name = "USER_PROFILE")]
+public class UserProfile
 {
-    public int Uid { get; set; }
-    public string Id { get; set; }
-    public string Name { get; set; }
+    [LightColumn(Name = "USER_ID")]
+    public string UserId { get; set; }
+    [LightColumn(Name = "PHONE")]
+    public string Phone { get; set; }
+    [LightColumn(Name = "ADDRESS")]
+    public string Address { get; set; }
 }

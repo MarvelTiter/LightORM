@@ -35,7 +35,7 @@ public class StringBuilderPoolTest
         var db = ExpSqlFactory.GetContext();
         var select = db.Select<Job>();
         var builder = select.SqlBuilder;
-        var database = select.Executor.Provider.DatabaseAdapter;
+        var database = select.Ado.Provider.DatabaseAdapter;
         return builder.ToSqlString(database);
     }
 
@@ -45,7 +45,7 @@ public class StringBuilderPoolTest
         var db = ExpSqlFactory.GetContext();
         var select = db.Select<Job>();
         var builder = select.SqlBuilder;
-        var database = select.Executor.Provider.DatabaseAdapter;
+        var database = select.Ado.Provider.DatabaseAdapter;
         return builder.ToSqlString(database);
     }
 
@@ -117,7 +117,7 @@ public class StringBuilderPoolTest
                 t
             });
         var builder = select.SqlBuilder;
-        var database = select.Executor.Provider.DatabaseAdapter;
+        var database = select.Ado.Provider.DatabaseAdapter;
         return builder.ToSqlString(database);
     }
 
@@ -189,7 +189,7 @@ public class StringBuilderPoolTest
                 t
             });
         var builder = select.SqlBuilder;
-        var database = select.Executor.Provider.DatabaseAdapter;
+        var database = select.Ado.Provider.DatabaseAdapter;
         return builder.ToSqlString(database);
     }
 

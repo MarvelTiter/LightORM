@@ -2,11 +2,10 @@
 using LightORM.Extension;
 using LightORM.Models;
 using LightORM.Utils;
-using System.Text;
 
-namespace LightORM.Providers.Oracle;
+namespace LightORM.Providers.Dameng;
 
-internal partial class CustomOracleAdapter
+internal partial class CustomDamengAdapter
 {
     public override void HandleBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context)
     {
@@ -16,9 +15,8 @@ internal partial class CustomOracleAdapter
         }
         else
         {
-            NormalBatchInsert(context);
+            base.HandleBatchInsert(context);
         }
-
     }
 
     private static void UpsertBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context)
@@ -103,7 +101,7 @@ internal partial class CustomOracleAdapter
                     if (!kv.IsVersionColumn)
                         continue;
                     sb.Append("    WHERE ");
-                    sb.AppendEmphasis(kv.ColumnName, database).Append(" = ").Append("s.").AppendEmphasis(kv.ColumnName, database).Append(' ');
+                    sb.Append("t.").AppendEmphasis(kv.ColumnName, database).Append(" = ").Append("s.").AppendEmphasis(kv.ColumnName, database).Append(' ');
                 }
                 sb.AppendLine();
             }
@@ -114,55 +112,6 @@ internal partial class CustomOracleAdapter
                 .AppendEntryColumns(columns, database, "s.")
                 .Append(')');
             batch.Sql = sb.ToString();
-        }
-    }
-
-    private static void NormalBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context)
-    {
-        var batchs = context.Batchs;
-        var builder = context.Builder;
-        var insertColumns = context.TargetColumns;
-        var database = context.ScopedAdapter;
-        foreach (var item in batchs)
-        {
-            //StringBuilder sb = new("INSERT ALL");
-            using var _ = StringBuilderPool.Get(out var sb);
-            builder.WriteTags(sb);
-            sb.AppendLine("INSERT ALL");
-            for (int i = 0; i < item.RowParameters.Count; i++)
-            {
-                AttachInserts(sb);
-                List<SimpleColumn>? dic = item.RowParameters[i];
-                sb.Append('(');
-                foreach (var c in dic)
-                {
-                    if (c.IsNewVersion)
-                        continue;
-                    sb.AppendSimpleColumnValueExpression(c, database);
-                    sb.Append(',');
-                }
-                sb.RemoveLast(1);
-                sb.AppendLine(")");
-            }
-            sb.Append("SELECT 1 FROM DUAL");
-            builder.HandleSqlParameters(sb, database);
-            item.Sql = sb.ToString();
-        }
-
-
-        void AttachInserts(StringBuilder sb)
-        {
-            sb.Append("    INTO ");
-            sb.AppendTableName(database, builder.MainTable, false);
-            sb.Append(" (");
-            foreach (var item in insertColumns)
-            {
-                sb.AppendEmphasis(item.ColumnName, database);
-                sb.Append(',');
-            }
-            sb.RemoveLast(1);
-            sb.Append(')');
-            sb.Append(" VALUES ");
         }
     }
 }

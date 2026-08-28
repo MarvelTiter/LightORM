@@ -206,8 +206,8 @@ internal class UpdateBuilder<T> : SqlBuilder
 
         BatchInfos = columns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count, DbParameters);
 
-        database.HandleBatchUpdate(new(this, columns, BatchInfos, database));
-        
+        database.HandleBatchUpdate<T>(new(this, columns, BatchInfos, DbParameters, database));
+
         batchDone = true;
 
     }
@@ -278,6 +278,7 @@ internal class UpdateBuilder<T> : SqlBuilder
         var setNullCol = MainTable.TableEntityInfo.Columns.Where(c => SetNullMembers.Count > 0 && SetNullMembers.Contains(c.PropertyName)).ToList();
         using var _ = StringBuilderPool.Get(out var sb);
         //StringBuilder sb = new("UPDATE ");
+        WriteTags(sb);
         sb.Append("UPDATE ");
         sb.AppendTableName(database, MainTable, false);
         sb.AppendLine(" SET   ");
