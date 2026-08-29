@@ -62,7 +62,7 @@ public partial class ExecutionTest
             {
                 UserId = "test05",
                 UserName = "Test5",
-                Age = 22,
+                Age = 21,
                 IsLock = true,
                 Password = "helloworld",
                 Sign = SignType.Svip
@@ -71,7 +71,7 @@ public partial class ExecutionTest
             {
                 UserId = "test06",
                 UserName = "Test6",
-                Age = 18,
+                Age = 17,
                 IsLock = false,
                 Password = "helloworld",
                 Sign = SignType.Svip

@@ -404,7 +404,7 @@ public partial class TableContextGenerator : IIncrementalGenerator
                 }
                 else
                 {
-                    v = $"{v}";
+                    v = $"{val}";
                 }
             }
 

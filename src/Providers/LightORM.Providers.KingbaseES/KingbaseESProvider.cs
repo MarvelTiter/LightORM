@@ -28,7 +28,7 @@ public class KingbaseESProvider : BaseDatabaseProvider
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomKingbaseESAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
         DbProviderFactory = option.NewFactory ?? Kdbndp.KdbndpFactory.Instance;
     }
     public override DbBaseType DbBaseType => KingbaseEs;

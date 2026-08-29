@@ -16,7 +16,7 @@ namespace LightORM.Providers
         {
             this.ado = executor;
             sqlBuilder = new();
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.AddTableInfo(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
 
@@ -24,7 +24,7 @@ namespace LightORM.Providers
         {
             this.ado = executor;
             sqlBuilder = new();
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.AddTableInfo(TableInfo.Create<T>());
             sqlBuilder.TargetObjects = entities;
             sqlBuilder.IsBatchDelete = true;
         }

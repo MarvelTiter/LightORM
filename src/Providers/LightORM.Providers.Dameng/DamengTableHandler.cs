@@ -1,12 +1,11 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
 using System.Text;
-using LightORM.Providers.Dameng.TableStructure;
 
 namespace LightORM.Providers.Dameng;
 
-public sealed class DamengTableHandler(DamengTableOptions tableOptions)
-    : BaseDatabaseHandler<DamengTableWriter, DamengTableOptions>
+public sealed partial class DamengTableHandler(DamengTableOptions tableOptions)
+    : BaseDatabaseHandler<DamengTableOptions>
 
 {
     public override DamengTableOptions Options => tableOptions;

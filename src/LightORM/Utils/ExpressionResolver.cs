@@ -381,7 +381,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var alias = Context.GetTable(exp).Alias;
             //Sql.Append($"{alias}.*");
-            Sql.Append(alias);
+            Sql.AppendAlias(alias, Database);
             Sql.Append(".*");
             UseAs = false;
         }
@@ -407,7 +407,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 if (Options.RequiredTableAlias)
                 {
                     //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
-                    Sql.Append(table.Alias).Append('.').AppendEmphasis(col.ColumnName, Database);
+                    Sql.AppendAlias(table.Alias, Database).Append('.').AppendEmphasis(col.ColumnName, Database);
                 }
                 else
                 {
@@ -496,7 +496,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                         var right = CurrentBinary?.Right;
                         if (right is not null)
                         {
-                           var body = Expression.Equal(propAccess, right);
+                            var body = Expression.Equal(propAccess, right);
                             NavigateWhereExpression = [Expression.Lambda(body, p)];
                         }
                     }
@@ -537,7 +537,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
             if (Options.RequiredTableAlias)
             {
-                Sql.Append(table.Alias);
+                Sql.AppendAlias(table.Alias, Database);
                 Sql.Append('.');
                 //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
             }

@@ -111,7 +111,19 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
     {
-        return string.Join(";", sqls);
+        using var _ = StringBuilderPool.Get(out var sb);
+        for (int i = 0; i < sqls.Length; i++)
+        {
+            string? item = sqls[i];
+            if (string.IsNullOrWhiteSpace(item))
+                continue;
+            if (i > 0)
+            {
+                sb.AppendLine(";");
+            }
+            sb.Append(item);
+        }
+        return sb.ToString();
     }
 
     public virtual string RewriteParameterReferences(string sql, string prefix)

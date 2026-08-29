@@ -5,12 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LightORM.Providers.MySql.TableStructure;
 
 namespace LightORM.Providers.MySql;
 
-public sealed class MySqlTableHandler(string database, MySqlTableOptions tableOptions)
-    : BaseDatabaseHandler<MySqlTableWriter, MySqlTableOptions>
+public sealed partial class MySqlTableHandler(string database, MySqlTableOptions tableOptions)
+    : BaseDatabaseHandler<MySqlTableOptions>
 {
     public override MySqlTableOptions Options => tableOptions;
     public override string GetTablesSql()

@@ -1,13 +1,14 @@
-﻿using LightORM.DbStruct;
+﻿using LightORM;
+using LightORM.DbStruct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.Providers.SqlServer.TableStructure;
+namespace LightORM.Providers.SqlServer;
 
-public class SqlServerTableWriter : LightORM.Implements.WriteTableFromType<SqlServerTableOptions>
+partial class SqlServerTableHandler
 {
     public override IEnumerable<string> BuildTableSql(SqlServerTableOptions option, DbTable table)
     {

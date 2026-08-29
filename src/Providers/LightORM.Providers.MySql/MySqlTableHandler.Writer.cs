@@ -1,13 +1,14 @@
-﻿using LightORM.DbStruct;
+﻿using LightORM;
+using LightORM.DbStruct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.Providers.MySql.TableStructure;
+namespace LightORM.Providers.MySql;
 
-public class MySqlTableWriter : LightORM.Implements.WriteTableFromType<MySqlTableOptions>
+partial class MySqlTableHandler
 {
     public override IEnumerable<string> BuildTableSql(MySqlTableOptions option, DbTable table)
     {

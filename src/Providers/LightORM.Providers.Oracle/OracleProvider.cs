@@ -27,7 +27,7 @@ public sealed class OracleProvider : BaseDatabaseProvider
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomOracleAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
         DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
     }
     public override DbBaseType DbBaseType => DbBaseType.Oracle;

@@ -29,7 +29,7 @@ public sealed class SqliteProvider : BaseDatabaseProvider
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomSqliteAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
         DbProviderFactory = option.NewFactory ?? SQLiteFactory.Instance;
     }
 

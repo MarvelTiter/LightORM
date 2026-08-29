@@ -38,90 +38,84 @@ public class JsonTest : TestBase
             JsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(jsonString)!
         };
     }
-    protected static async Task PrepareJsonDataAsync(IExpressionContext db, Func<Task> action)
+    [TestInitialize]
+    public async Task PrepareJsonDataAsync()
     {
-        db.Delete<JsonTestModel>().FullDelete().Execute();
-        await db.Insert(CreateJsonModel(1)).ExecuteAsync();
-        await db.Insert(CreateJsonModel(2)).ExecuteAsync();
-        await db.Insert(CreateJsonModel(3)).ExecuteAsync();
-        await db.Insert(CreateJsonModel(4)).ExecuteAsync();
-        await db.Insert(CreateJsonModel(5)).ExecuteAsync();
-        await action();
-        //db.Delete<JsonTestModel>().FullDelete().Execute();
-    }
+        try
+        {
+            await Db.CreateMainDbScoped().CreateTableAsync<JsonTestModel>(cancellationToken: TestContext.CancellationToken);
+        }
+        catch (Exception)
+        {
 
-    [TestMethod]
-    public async Task CreateTable()
-    {
-        await Db.CreateMainDbScoped().CreateTableAsync<JsonTestModel>(cancellationToken: TestContext.CancellationToken);
+        }
+        await Db.Delete<JsonTestModel>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert(CreateJsonModel(1)).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert(CreateJsonModel(2)).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert(CreateJsonModel(3)).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert(CreateJsonModel(4)).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert(CreateJsonModel(5)).ExecuteAsync(TestContext.CancellationToken);
+        //db.Delete<JsonTestModel>().FullDelete().Execute();
     }
 
     [TestMethod]
     public async Task TestJsonSelectAsync()
     {
-        await PrepareJsonDataAsync(Db, async () =>
+        var model = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(TestContext.CancellationToken);
+        Assert.HasCount(1, model);
+        Assert.IsNotNull(model[0].Json);
+        Assert.AreEqual("World2", model[0].Json!.Name);
+
+        var list = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(j => new
         {
-            var model = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(TestContext.CancellationToken);
-            Assert.HasCount(1, model);
-            Assert.IsNotNull(model[0].Json);
-            Assert.AreEqual("World2", model[0].Json!.Name);
+            j.Id,
+            j.Json,
+        }, TestContext.CancellationToken);
+        Assert.HasCount(1, list);
+        Assert.IsNotNull(list[0].Json);
+        Assert.AreEqual("World2", list[0].Json!.Name);
 
-            var list = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(j => new
-            {
-                j.Id,
-                j.Json,
-            }, TestContext.CancellationToken);
-            Assert.HasCount(1, list);
-            Assert.IsNotNull(list[0].Json);
-            Assert.AreEqual("World2", list[0].Json!.Name);
+        var dto = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(j => new JsonTestModelDto()
+        {
+            Id = j.Id,
+            Json = j.Json,
+        }, TestContext.CancellationToken);
+        Assert.HasCount(1, dto);
+        Assert.IsNotNull(dto[0].Json);
+        Assert.AreEqual("World2", dto[0].Json!.Name);
 
-            var dto = await Db.Select<JsonTestModel>().Where(j => j.Json!.Value == 22).ToListAsync(j => new JsonTestModelDto()
-            {
-                Id = j.Id,
-                Json = j.Json,
-            }, TestContext.CancellationToken);
-            Assert.HasCount(1, dto);
-            Assert.IsNotNull(dto[0].Json);
-            Assert.AreEqual("World2", dto[0].Json!.Name);
+        var jsonObject = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["City"]!["Name"]!.GetValue<string>() == "Dongguan3").FirstAsync(TestContext.CancellationToken);
+        Assert.IsNotNull(jsonObject);
+        Assert.AreEqual(21, jsonObject.JsonObject["Age"]!.GetValue<int>());
 
-            var jsonObject = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["City"]!["Name"]!.GetValue<string>() == "Dongguan3").FirstAsync(TestContext.CancellationToken);
-            Assert.IsNotNull(jsonObject);
-            Assert.AreEqual(21, jsonObject.JsonObject["Age"]!.GetValue<int>());
+        var jsonObjectArr = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["Values"]![1]!.GetValue<int>() == 8).FirstAsync(TestContext.CancellationToken);
+        Assert.IsNotNull(jsonObjectArr);
+        Assert.AreEqual(22, jsonObjectArr.JsonObject["Age"]!.GetValue<int>());
 
-            var jsonObjectArr = await Db.Select<JsonTestModel>().Where(j => j.JsonObject["Values"]![1]!.GetValue<int>() == 8).FirstAsync(TestContext.CancellationToken);
-            Assert.IsNotNull(jsonObjectArr);
-            Assert.AreEqual(22, jsonObjectArr.JsonObject["Age"]!.GetValue<int>());
+        var nestJsonName = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
 
-            var nestJsonName = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
-
-            Assert.HasCount(1, nestJsonName);
-            Assert.AreEqual("Nest Object5", nestJsonName[0]);
-
-        });
+        Assert.HasCount(1, nestJsonName);
+        Assert.AreEqual("Nest Object5", nestJsonName[0]);
     }
 
     [TestMethod]
     public virtual async Task TestJsonUpdateAsync()
     {
-        await PrepareJsonDataAsync(Db, async () =>
-        {
-            await Db.Update<JsonTestModel>().Set(j => SqlFn.JsonSet(j.JsonObject, "$.City.Name", "NewName"))
+        await Db.Update<JsonTestModel>().Set(j => SqlFn.JsonSet(j.JsonObject, "$.City.Name", "NewName"))
             .Where(j => j.Id == 1).ExecuteAsync(TestContext.CancellationToken);
 
-            var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync(TestContext.CancellationToken);
-            Assert.IsNotNull(updated);
-            Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
+        var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync(TestContext.CancellationToken);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
 
-            await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, "NewName")
-            .Where(j => j.Id == 5).ExecuteAsync(TestContext.CancellationToken);
+        await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, "NewName")
+        .Where(j => j.Id == 5).ExecuteAsync(TestContext.CancellationToken);
 
-            var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
+        var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
 
-            Assert.HasCount(1, nestJsonNameNew);
-            Assert.AreEqual("NewName", nestJsonNameNew[0]);
-
-        });
+        Assert.HasCount(1, nestJsonNameNew);
+        Assert.AreEqual("NewName", nestJsonNameNew[0]);
     }
 
-    public TestContext TestContext { get; set; }
+    public required TestContext TestContext { get; set; }
 }

@@ -1,15 +1,16 @@
-﻿using LightORM.DbStruct;
+﻿using LightORM;
+using LightORM.DbStruct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightORM.Providers.Dameng.TableStructure;
+namespace LightORM.Providers.Oracle;
 
-public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTableOptions>
+partial class OracleTableHandler
 {
-    public override IEnumerable<string> BuildTableSql(DamengTableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(OracleTableOptions option, DbTable table)
     {
         var tableSpace = option.TableSpace != null ? $"TABLESPACE {option.TableSpace}" : "";
 
@@ -42,15 +43,6 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
 
         {
             var pks = table.Columns.Where(c => c.PrimaryKey);
-            var it = pks.Count() > 1 ? IndexType.Normal : IndexType.Unique;
-            foreach (var p in pks)
-            {
-                if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
-                table.Indexs = table.Indexs.Concat(
-                [
-                    new() { Columns = [p.Name], DbIndexType = it}
-                ]);
-            }
             //if (pks.Count() == 1)
             //{
             //    var pkColumn = pks.First();
@@ -66,6 +58,15 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
             //    ]);
             //    }
             //}
+            var it = pks.Count() > 1 ? IndexType.Normal : IndexType.Unique;
+            foreach (var p in pks)
+            {
+                if (table.Indexs.Any(ind => ind.Columns.Any(s => s == p.Name) || ind.IsUnique)) continue;
+                table.Indexs = table.Indexs.Concat(
+                [
+                    new() { Columns = [p.Name], DbIndexType = it }
+                ]);
+            }
         }
 
         int i = 1;
@@ -77,11 +78,11 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
             {
                 type = "UNIQUE ";
             }
+            else if (index.DbIndexType == IndexType.Bitmap)
+            {
+                type = "BITMAP ";
+            }
 
-            //else if (index.DbIndexType == IndexType.Bitmap)
-            //{
-            //    type = "BITMAP ";
-            //}
             string reverse = index.DbIndexType == IndexType.Reverse ? "REVERSE" : "";
             yield return $"CREATE {type}INDEX {DbEmphasis(option, CheckIdxLength(table, index, i))} ON {DbEmphasis(option, table.Name)}({columnNames}){reverse}";
             i++;
@@ -105,9 +106,35 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
         }
 
         #endregion
+
+        if (!option.OverVersion)
+        {
+            // 序列 + 触发器自增
+            var increments = table.Columns.Where(col => col.AutoIncrement);
+            foreach (var col in increments)
+            {
+                var triName = AttachUserId(option, $"TRI_{table.Name}_{col.Name}").ToUpper();
+                var seqName = $"SEQ_{table.Name}_{col.Name}".ToUpper();
+                yield return $"""
+                              CREATE SEQUENCE {AttachUserId(option, seqName)} START WITH 1 INCREMENT BY 1MINVALUE 1 MAXVALUE 999999999999999 ORDER
+                              """;
+                yield return $"""
+                              CREATE OR REPLACE TRIGGER {triName}
+                                  BEFORE INSERT ON {DbEmphasis(option, table.Name.ToUpper())}
+                                  FOR EACH ROW
+                              BEGIN
+                                  IF :NEW.{DbEmphasis(option, col.Name.ToUpper())} IS NULL THEN
+                                      SELECT {DbEmphasis(option, seqName)}.NEXTVAL INTO :NEW.{DbEmphasis(option, col.Name.ToUpper())} FROM DUAL;
+                                  END IF;
+                              END;
+                              """;
+
+                yield return $"ALTER TRIGGER {triName} ENABLE";
+            }
+        }
     }
 
-    protected override string BuildColumn(DamengTableOptions option, DbColumn column)
+    protected override string BuildColumn(OracleTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
         if (dataType.Contains("VARCHAR"))
@@ -116,12 +143,12 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
         }
 
         string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement ? $"IDENTITY(1, 1)" : "";
+        string identity = column.AutoIncrement && option.OverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
         string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
         return $"{DbEmphasis(option, column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
     }
 
-    protected override string ConvertToDbType(DamengTableOptions option, DbColumn type)
+    protected override string ConvertToDbType(OracleTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -133,9 +160,8 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
             {
                 return "CLOB";
             }
-            return option.JSONBackend == Models.JSONBackend.Binary ? "JSONB" : "JSON";
+            return "JSON";
         }
-
         string? typeFullName;
         if (type.DataType.IsEnum)
         {
@@ -145,26 +171,26 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
         {
             typeFullName = (Nullable.GetUnderlyingType(type.DataType) ?? type.DataType).FullName;
         }
+
         return typeFullName switch
         {
             "System.Boolean" => "CHAR(1)",
-            "System.Byte" => "TINYINT",
-            "System.Int16" => "SMALLINT",
-            "System.Int32" => "INT",
-            "System.Int64" => "BIGINT",
-            "System.Single" => "FLOAT",
-            "System.Double" => "DOUBLE",
+            "System.Byte" => "NUMBER(3)",
+            "System.Int16" => "NUMBER(5)",
+            "System.Int32" => "NUMBER(10)",
+            "System.Int64" => "NUMBER(19)",
+            "System.Single" => "NUMBER(7,3)",
+            "System.Double" => "NUMBER(15,5)",
             "System.Decimal" => "DECIMAL(33,3)",
             "System.DateTime" => "DATE",
             //"System.DateTimeOffset" => "DateTimeOffset",
-            "System.Guid" => "CHAR(36)",
+            "System.Guid" => "RAW(16)",
             "System.Byte[]" => "BLOB",
             //"System.Object" => "Variant",
             _ => option.UseUnicodeString ? "NVARCHAR2" : "VARCHAR2",
         };
     }
 
-    protected override string DbEmphasis(DamengTableOptions option, string name) => $"\"{name.ToUpper()}\"";
 
     private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
     {
@@ -194,11 +220,6 @@ public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTa
         return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
-    private string AttachUserId(DamengTableOptions option, string name)
-    {
-        if (option.UserId != null)
-            return $"\"{option.UserId}\".\"{name.ToUpper()}\"";
-        else
-            return DbEmphasis(option, name);
-    }
+    
+
 }

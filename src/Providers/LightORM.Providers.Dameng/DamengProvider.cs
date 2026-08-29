@@ -29,7 +29,7 @@ public sealed class DamengProvider : BaseDatabaseProvider
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomDamengAdapter(sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
         DbProviderFactory = option.NewFactory ?? DmClientFactory.Instance;
     }
     

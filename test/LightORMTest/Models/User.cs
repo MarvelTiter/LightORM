@@ -19,8 +19,12 @@ public class User
     public int Id { get; set; }
     [LightColumn(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
     public string UserId { get; set; }
-    [LightColumn(Name = "USER_NAME", Comment = "名称")]
-    public string UserName { get; set; }
+    [LightColumn(Name = "USER_NAME", Comment = "名称", Length = 128)]
+    public string UserName
+    {
+        get;
+        set;
+    }
     [LightColumn(Name = "PASSWORD", Comment = "密码")]
     public string Password { get; set; }
     [LightColumn(Name = "AGE", Comment = "年龄")]

@@ -1,12 +1,11 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
 using System.Text;
-using LightORM.Providers.Sqlite.TableStructure;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteTableHandler(SqliteTableOptions generateOption) 
-    : BaseDatabaseHandler<SqliteTableWriter, SqliteTableOptions>
+public sealed partial class SqliteTableHandler(SqliteTableOptions generateOption)
+    : BaseDatabaseHandler<SqliteTableOptions>
 {
     public override SqliteTableOptions Options => generateOption;
 

@@ -18,7 +18,7 @@ public class TestBase
     [NotNull] public virtual DbBaseType? DbType { get; }
 
     private readonly Dictionary<string, string> sqlResults = [];
-
+    protected IDatabaseProvider CurrentDefaultProvider => Db.Options.DatabaseProviders.First().Value;
     protected TestBase()
     {
         IServiceCollection services = new ServiceCollection();

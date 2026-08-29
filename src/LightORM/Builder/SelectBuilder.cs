@@ -65,17 +65,6 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public object? AdditionalValue { get; set; }
     public int NextTableIndex => SelectedTables.Count + joins.Count + TableIndexFix;
 
-    //protected override Lazy<TableInfo[]> GetAllTables()
-    //{
-    //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
-    //}
-
-    public void AddTableInfo(TableInfo tableInfo)
-    {
-        //tableInfo.Deep = Level;
-        SelectedTables.Add(tableInfo);
-    }
-
     public void AddJoin(JoinInfo joinInfo)
     {
         joinInfo.EntityInfo.Depth = Depth;

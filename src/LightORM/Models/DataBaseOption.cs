@@ -11,7 +11,7 @@ public sealed class DataBaseOption<T> : IDbOption
     public DbProviderFactory? NewFactory { get; set; }
     public T GenerateOption { get; set; } = new();
     public HashSet<string> Keyworks { get; set; } = [];
-    public bool IsUseIdentifierQuote { get; set; } = true;
+    public bool? IsUseIdentifierQuote { get; private set; }
     public Action<ISqlMethodResolver>? SqlMethodConfiguration { get; set; }
 
     public IDbOption ConfigurationMethodResolver(Action<ISqlMethodResolver> action)

@@ -19,6 +19,15 @@ internal static class CustomDatabaseExtensions
             return name;
         }
 
+        public string SafeAttach(string name)
+        {
+            if (database.IsKeyWord(name))
+            {
+                return database.Emphasis.Insert(1, name);
+            }
+            return name;
+        }
+
         public void HandleBooleanValue(StringBuilder sql, bool value)
         {
             sql.Append(database.FormatBooleanValue(value));
@@ -31,6 +40,25 @@ internal static class CustomDatabaseExtensions
         {
             sql.Append(database.Prefix);
             sql.Append(name);
+            return sql;
+        }
+
+        public StringBuilder AppendAlias(string name, IDatabaseAdapter database)
+        {
+            if (database.Emphasis.Length != 2)
+            {
+                throw new LightOrmException("Emphasis must be exactly 2 characters, e.g., \"[]\" or \"``\".");
+            }
+            if (database.IsKeyWord(name))
+            {
+                sql.Append(database.Emphasis[0]);
+                sql.Append(name);
+                sql.Append(database.Emphasis[1]);
+            }
+            else
+            {
+                sql.Append(name);
+            }
             return sql;
         }
 

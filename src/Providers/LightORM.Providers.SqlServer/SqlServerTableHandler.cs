@@ -1,7 +1,6 @@
 ﻿using LightORM;
 using LightORM.DbStruct;
 using LightORM.Implements;
-using LightORM.Providers.SqlServer.TableStructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerTableHandler(SqlServerTableOptions tableOptions)
-    : BaseDatabaseHandler<SqlServerTableWriter, SqlServerTableOptions>
+public sealed partial class SqlServerTableHandler(SqlServerTableOptions tableOptions)
+    : BaseDatabaseHandler< SqlServerTableOptions>
 {
     public override SqlServerTableOptions Options => tableOptions;
     public override string GetTablesSql()
