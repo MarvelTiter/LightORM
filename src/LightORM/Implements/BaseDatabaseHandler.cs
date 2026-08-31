@@ -3,18 +3,16 @@ using LightORM.Extension;
 
 namespace LightORM.Implements;
 
-public abstract class BaseDatabaseHandler<TWriter,TOption> : IDatabaseTableHandler
-    where TWriter : WriteTableFromType<TOption>, new()
+public abstract partial class BaseDatabaseHandler<TOption> : IDatabaseTableHandler
     where TOption : TableOptions
 {
-    protected TWriter Writer { get; } = new();
     public abstract TOption Options { get; }
     public IEnumerable<string> GenerateDbTable<T>()
     {
         try
         {
             var info = typeof(T).CollectDbTableInfo();
-            return Writer.BuildTableSql(Options, info);
+            return BuildTableSql(Options, info);
         }
         catch (Exception)
         {
@@ -26,9 +24,29 @@ public abstract class BaseDatabaseHandler<TWriter,TOption> : IDatabaseTableHandl
 
     public abstract string GetTableStructSql(string table);
     public abstract bool ParseDataType(ReadedTableColumn column, out string type);
-    public virtual string GetDropTableSql(string tableName)
+    public virtual IEnumerable<string> GetDropTableSql(DbTable table)
     {
-        return $"DROP TABLE {Writer.DbEmphasisInternal(Options, tableName)}";
+        yield return $"DROP TABLE {DbEmphasisInternal(Options, table.Name)}";
+    }
+}
+
+partial class BaseDatabaseHandler<TOption>
+{
+    protected abstract string ConvertToDbType(TOption option, DbColumn type);
+    protected abstract string BuildColumn(TOption option, DbColumn column);
+    protected abstract string DbEmphasis(TOption option, string name);
+    // TODO 待优化
+    internal string DbEmphasisInternal(TOption option, string name) => DbEmphasis(option, name);
+    public abstract IEnumerable<string> BuildTableSql(TOption option, DbTable table);
+
+    protected static string GetIndexName(DbTable info, DbIndex index, int i)
+    {
+        return index.Name ?? $"IDX_{info.Name}_{string.Join("_", index.Columns)}_{i}";
+    }
+
+    protected static string GetPrimaryKeyName(string name, IEnumerable<DbColumn> pks)
+    {
+        return $"PK_{name}_{string.Join("_", pks.Select(c => c.Name))}";
     }
 }
 

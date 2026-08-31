@@ -1,13 +1,10 @@
-﻿using LightORM.DbStruct;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using LightORM;
+using LightORM.DbStruct;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace LightORM.Providers.Sqlite.TableStructure;
+namespace LightORM.Providers.Sqlite;
 
-public class SqliteTableWriter : LightORM.Implements.WriteTableFromType<SqliteTableOptions>
+partial class SqliteTableHandler
 {
     private readonly ThreadLocal<bool> useAutoIncrement = new ThreadLocal<bool>(() => false);
 

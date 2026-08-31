@@ -1,6 +1,4 @@
-﻿using LightORM.DbStruct;
-using LightORM.Providers;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.ExpressionSql;
@@ -75,8 +73,7 @@ internal abstract class ExpressionCoreSqlBase(ExpressionSqlOptions options) : IC
     public async Task<bool> DropTableAsync<T>(CancellationToken cancellationToken = default)
     {
         var ado = Ado;
-        var t = TableContext.GetTableInfo<T>();
-        return await ExpressionCoreSqlContextMethodImpl.InternalDropTableAsync(ado, t.TableName, cancellationToken);
+        return await ExpressionCoreSqlContextMethodImpl.InternalDropTableAsync<T>(ado, cancellationToken);
     }
 
     #endregion

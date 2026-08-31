@@ -60,7 +60,7 @@ internal static class SelectHandleExtensions
                 joinInfo.IsSubQuery = true;
                 joinInfo.SubQuery = subQuery.SqlBuilder;
             }
-            select.SqlBuilder.Joins.Add(joinInfo);
+            select.SqlBuilder.AddJoin(joinInfo);
         }
 
         internal void JoinHandle(Type type, Expression? exp, TableLinkType joinType)
@@ -75,7 +75,7 @@ internal static class SelectHandleExtensions
                 JoinType = joinType,
             };
             //joinInfo.EntityInfo.Deep = select.SqlBuilder.Level;
-            select.SqlBuilder.Joins.Add(joinInfo);
+            select.SqlBuilder.AddJoin(joinInfo);
         }
 
         internal void JoinHandle<TJoin>(Expression? exp, TableLinkType joinType, IExpTemp tempQuery)
@@ -90,7 +90,7 @@ internal static class SelectHandleExtensions
                 JoinType = joinType,
             };
             select.SqlBuilder.HandleTempsRecursion(tempQuery.SqlBuilder);
-            select.SqlBuilder.Joins.Add(joinInfo);
+            select.SqlBuilder.AddJoin(joinInfo);
         }
 
         internal void HandleResult(Expression? exp, string? template)
@@ -146,7 +146,7 @@ internal static class SelectHandleExtensions
                 joinInfo.IsSubQuery = true;
                 joinInfo.SubQuery = subQuery.SqlBuilder;
             }
-            builder.Joins.Add(joinInfo);
+            builder.AddJoin(joinInfo);
         }
     }
 }

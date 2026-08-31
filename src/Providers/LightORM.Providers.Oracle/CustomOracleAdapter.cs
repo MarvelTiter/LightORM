@@ -1,8 +1,8 @@
-﻿using LightORM.Builder;
-using LightORM.Extension;
+﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
+using LightORM.Utils;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Data.Common;
@@ -45,14 +45,17 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
     
     public override string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
     {
-        var sb = new StringBuilder();
+        using var _ = StringBuilderPool.Get(out var sb);
         sb.AppendLine("BEGIN");
 
         for (int i = 0; i < sqls.Length; i++)
         {
+            var sql = sqls[i];
+            if (string.IsNullOrWhiteSpace(sql))
+                continue;
             string cursorName = $"cur{i}";
             // 追加游标打开语句，注意 SQL 中的参数已经重写过，直接嵌入即可
-            sb.AppendLine($"    OPEN :{cursorName} FOR {sqls[i]};");
+            sb.AppendLine($"    OPEN :{cursorName} FOR {sql};");
             // 创建输出游标参数
             var cursorParam = new OracleParameter(cursorName, OracleDbType.RefCursor, ParameterDirection.Output);
             // 添加到 parameters 字典

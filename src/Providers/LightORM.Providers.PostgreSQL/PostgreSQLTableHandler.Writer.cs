@@ -1,12 +1,14 @@
-﻿using LightORM.DbStruct;
-using LightORM.Providers.KingbaseES.Utils;
+﻿using LightORM;
+using LightORM.DbStruct;
+using LightORM.Extension;
+using LightORM.Providers.PostgreSQL.Utils;
 using System.Text;
 
-namespace LightORM.Providers.KingbaseES.TableStructure;
+namespace LightORM.Providers.PostgreSQL;
 
-public class KingbaseESTableWriter : LightORM.Implements.WriteTableFromType<KingbaseESTableOptions>
+partial class PostgreSQLTableHandler
 {
-    public override IEnumerable<string> BuildTableSql(KingbaseESTableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(PostgreSQLTableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -94,14 +96,18 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(KingbaseESTableOptions option, DbColumn column)
+    protected override string BuildColumn(PostgreSQLTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
 
         // 处理长度限制
-        if (dataType.Contains("CHAR") || dataType == "NUMERIC")
+        if (dataType == "NUMERIC")
         {
-            dataType = column.Length != null ? $"{dataType}({column.Length})" : dataType;
+            dataType = column.Length.HasValue ? $"{dataType}({column.Length})" : dataType;
+        }
+        if (dataType == "TEXT" && column.Length.HasValue)
+        {
+            dataType = $"VARCHAR({column.Length})";
         }
 
         string notNull = column.NotNull || column.PrimaryKey ? " NOT NULL" : " NULL";
@@ -111,7 +117,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return $"{DbEmphasis(option, column.Name)} {dataType}{identity}{defaultValue}{notNull}";
     }
 
-    protected override string ConvertToDbType(KingbaseESTableOptions option, DbColumn type)
+    protected override string ConvertToDbType(PostgreSQLTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -124,7 +130,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return type.DataType.TransformType();
     }
 
-    protected override string DbEmphasis(KingbaseESTableOptions option, string name) => $"\"{name}\"";
+    protected override string DbEmphasis(PostgreSQLTableOptions option, string name) => adapter.SafeAttach(name);
 
     private static string FormatDefaultValue(object value, string dataType)
     {

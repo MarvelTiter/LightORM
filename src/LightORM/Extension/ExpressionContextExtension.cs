@@ -158,7 +158,7 @@ public static class ExpressionContextExtension
             return new DefaultRepository<TEntity>(context);
         }
 
-        private TransientExpressionContext SwitchDb<T>()
+        private ITransientContext SwitchDb<T>()
         {
             var table = TableContext.GetTableInfo<T>();
             if (table.TargetDatabase is null)
@@ -264,7 +264,7 @@ public static class ScopedExpressionContextExtensions
 {
     extension(IScopedExpressionContext context)
     {
-        private TransientExpressionContext SwitchDb<T>()
+        private ITransientContext SwitchDb<T>()
         {
             var table = TableContext.GetTableInfo<T>();
             if (table.TargetDatabase is null)

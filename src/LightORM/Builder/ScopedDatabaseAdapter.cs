@@ -81,9 +81,9 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
 
     public string RewriteParameterReferences(string sql, string prefix) => inner.RewriteParameterReferences(sql, prefix);
 
-    void IDatabaseAdapter.HandleBatchInsert(BatchActionContext context) => inner.HandleBatchInsert(context);
+    void IDatabaseAdapter.HandleBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context) => inner.HandleBatchInsert(context);
 
-    void IDatabaseAdapter.HandleBatchUpdate(BatchActionContext context) => inner.HandleBatchUpdate(context);
+    void IDatabaseAdapter.HandleBatchUpdate<T>(BatchActionContext<UpdateBuilder<T>> context) => inner.HandleBatchUpdate(context);
 
     void IDatabaseAdapter.HandleInsertOrUpdate(UpsertContext context) => inner.HandleInsertOrUpdate(context);
 

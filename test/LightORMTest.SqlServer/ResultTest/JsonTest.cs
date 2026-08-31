@@ -1,7 +1,4 @@
-﻿
-using LightORMTest.Models;
-
-namespace LightORMTest.SqlServer.ResultTest;
+﻿namespace LightORMTest.SqlServer.ResultTest;
 
 [TestClass]
 public class JsonTest : LightORMTest.ResultTest.JsonTest

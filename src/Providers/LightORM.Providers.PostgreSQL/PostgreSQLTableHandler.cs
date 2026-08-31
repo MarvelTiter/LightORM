@@ -1,16 +1,11 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LightORM.Providers.PostgreSQL.TableStructure;
+using LightORM.Interfaces;
 
 namespace LightORM.Providers.PostgreSQL;
 
-public sealed class PostgreSQLTableHandler(PostgreSQLTableOptions tableOptions)
-    : BaseDatabaseHandler<PostgreSQLTableWriter, PostgreSQLTableOptions>
+public sealed partial class PostgreSQLTableHandler(PostgreSQLTableOptions tableOptions, IDatabaseAdapter adapter)
+    : BaseDatabaseHandler<PostgreSQLTableOptions>
 {
     public override PostgreSQLTableOptions Options => tableOptions;
 

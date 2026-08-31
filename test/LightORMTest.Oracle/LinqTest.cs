@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORMTest.Oracle;
+﻿namespace LightORMTest.Oracle;
 
 [TestClass]
 public class LinqTest : LightORMTest.LinqTest

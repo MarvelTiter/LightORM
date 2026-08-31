@@ -4,8 +4,6 @@ using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace LightORMTest;
 
@@ -18,7 +16,7 @@ public class TestBase
     [NotNull] public virtual DbBaseType? DbType { get; }
 
     private readonly Dictionary<string, string> sqlResults = [];
-
+    protected IDatabaseProvider CurrentDefaultProvider => Db.Options.DatabaseProviders.First().Value;
     protected TestBase()
     {
         IServiceCollection services = new ServiceCollection();
@@ -60,8 +58,8 @@ public class LightOrmAop : AdoInterceptorBase
 {
     public override void AfterExecute(SqlExecuteContext context)
     {
-        //if (context.Sql?.Contains("-- ") == false)
-        //    return;
+        if (context.Sql?.Contains("初始化数据") == true)
+            return;
 
         Debug.WriteLine($"""
 
@@ -76,14 +74,16 @@ public class LightOrmAop : AdoInterceptorBase
 
             """);
 
-        IEnumerable<string> DisplayParameter(object? p)
+
+    }
+
+    private static IEnumerable<string> DisplayParameter(object? p)
+    {
+        if (p is Dictionary<string, object> dic)
         {
-            if (p is Dictionary<string, object> dic)
+            foreach (var item in dic)
             {
-                foreach (var item in dic)
-                {
-                    yield return $"{item.Key} - {item.Value}";
-                }
+                yield return $"{item.Key} - {item.Value}";
             }
         }
     }
@@ -98,6 +98,11 @@ public class LightOrmAop : AdoInterceptorBase
         Debug.WriteLine($"{context.TraceId}:{context.Exception.Message}");
         Debug.WriteLine(context.Sql);
         Debug.WriteLine("=====================================");
+        Debug.WriteLine("参数:");
+        foreach (var item in DisplayParameter(context.Parameter))
+        {
+            Debug.WriteLine(item);
+        }
     }
 
     public override void OnPrepareCommand(SqlExecuteContext context)
@@ -108,7 +113,7 @@ public class LightOrmAop : AdoInterceptorBase
 
 public class JsonHandler : ILightJsonHelper
 {
-    public object? Deserialize(string json,Type type)
+    public object? Deserialize(string json, Type type)
     {
         return System.Text.Json.JsonSerializer.Deserialize(json, type);
     }

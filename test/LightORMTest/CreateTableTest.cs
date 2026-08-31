@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace LightORMTest;
 
@@ -33,6 +29,7 @@ public class CreateTableTest : TestBase
     {
         using var db = this.Db.CreateMainDbScoped();
         await db.DropTableAsync<User>(TestContext.CancellationToken);
+        await db.DropTableAsync<UserProfile>(TestContext.CancellationToken);
         await db.DropTableAsync<UserRole>(TestContext.CancellationToken);
         await db.DropTableAsync<Role>(TestContext.CancellationToken);
         await db.DropTableAsync<RolePermission>(TestContext.CancellationToken);
@@ -41,6 +38,7 @@ public class CreateTableTest : TestBase
         await db.DropTableAsync<Product>(TestContext.CancellationToken);
         await db.DropTableAsync<Sales>(TestContext.CancellationToken);
         await db.CreateTableAsync<User>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserProfile>(cancellationToken: TestContext.CancellationToken);
         await db.CreateTableAsync<UserRole>(cancellationToken: TestContext.CancellationToken);
         await db.CreateTableAsync<Role>(cancellationToken: TestContext.CancellationToken);
         await db.CreateTableAsync<RolePermission>(cancellationToken: TestContext.CancellationToken);

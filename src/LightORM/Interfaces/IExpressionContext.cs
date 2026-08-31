@@ -24,9 +24,9 @@ public interface IContext
 /// <summary>
 /// <see cref="IExpressionContext.SwitchDatabase(string)"/>后的数据库操作对象
 /// </summary>
-public interface ITransientExpressionContext : IDefinedTableAction, IContext
+public interface ITransientContext : IDefinedTableAction, IContext
 {
-    internal string Key { get; }
+    //internal string Key { get; }
 
 }
 
@@ -79,7 +79,7 @@ public interface IExpressionContext : IDisposable, ITableAction, IContext
     //IExpDelete<T> Delete<T>();
     //IExpDelete<T> Delete<T>(params T[] entities);
     ISingleScopedExpressionContext Use(IDatabaseProvider db);
-    TransientExpressionContext SwitchDatabase(string key);
+    ITransientContext SwitchDatabase(string key);
 
     /// <summary>
     /// 创建指定数据库的单元操作对象，支持事务
@@ -125,7 +125,7 @@ public interface IDefinedTableAction
 public interface IScopedExpressionContext : IDisposable, IDefinedTableAction, IContext
 {
     SqlAdo DefaultAdo { get; }
-    TransientExpressionContext SwitchDatabase(string key);
+    ITransientContext SwitchDatabase(string key);
     string Id { get; }
     void BeginTransaction(string key = ConstString.Main, IsolationLevel isolationLevel = IsolationLevel.Unspecified);
     void CommitTransaction(string key = ConstString.Main);

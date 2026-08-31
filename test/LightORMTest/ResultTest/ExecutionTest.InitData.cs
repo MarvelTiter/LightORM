@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace LightORMTest.ResultTest;
 
@@ -7,12 +7,20 @@ public partial class ExecutionTest
     [TestInitialize]
     public async Task InitDatas()
     {
-        await Db.Delete<User>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Delete<UserRole>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Delete<Role>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Delete<RolePermission>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Delete<Permission>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
-        await Db.Delete<Sales>().FullDelete().ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<User>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<UserProfile>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<UserRole>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<Role>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<RolePermission>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<Permission>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<Sales>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new User()
             {
@@ -49,8 +57,66 @@ public partial class ExecutionTest
                 IsLock = true,
                 Password = "helloworld",
                 Sign = SignType.Svip
+            },
+            new User()
+            {
+                UserId = "test05",
+                UserName = "Test5",
+                Age = 21,
+                IsLock = true,
+                Password = "helloworld",
+                Sign = SignType.Svip
+            },
+            new User()
+            {
+                UserId = "test06",
+                UserName = "Test6",
+                Age = 17,
+                IsLock = false,
+                Password = "helloworld",
+                Sign = SignType.Svip
             }
-        ]).ExecuteAsync(TestContext.CancellationToken);
+        ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Insert([
+                new UserProfile()
+                {
+                    UserId = "test01",           // 对应 User 的 UserId
+                    Phone = "13800138001",
+                    Address = "北京市朝阳区建国路1号"
+                },
+                new UserProfile()
+                {
+                    UserId = "test02",
+                    Phone = "13800138002",
+                    Address = "上海市浦东新区陆家嘴环路2号"
+                },
+                new UserProfile()
+                {
+                    UserId = "test03",
+                    Phone = "13800138003",
+                    Address = "广州市天河区天河路3号"
+                },
+                new UserProfile()
+                {
+                    UserId = "test04",
+                    Phone = "13800138004",
+                    Address = "深圳市南山区科技园路4号"
+                },
+                new UserProfile()
+                {
+                    UserId = "test05",
+                    Phone = "13800138005",
+                    Address = "东莞市桥头镇科技园路7号"
+                },
+                new UserProfile()
+                {
+                    UserId = "test06",
+                    Phone = "13800138006",
+                    Address = "佛山市禅城区育才路8号"
+                }
+            ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new UserRole()
             {
@@ -71,8 +137,24 @@ public partial class ExecutionTest
             {
                 UserId = "test03",
                 RoleId = "SuperAdmin"
+            },
+            new UserRole()
+            {
+                UserId = "test04",
+                RoleId = "Normal"
+            },
+            new UserRole()
+            {
+                UserId = "test05",
+                RoleId = "Normal"
+            },
+            new UserRole()
+            {
+                UserId = "test06",
+                RoleId = "Normal"
             }
-        ]).ExecuteAsync(TestContext.CancellationToken);
+        ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new Role()
             {
@@ -83,8 +165,14 @@ public partial class ExecutionTest
             {
                 RoleId = "SuperAdmin",
                 RoleName = "超级管理员"
+            },
+            new Role()
+            {
+                RoleId = "Normal",
+                RoleName = "普通用户"
             }
-        ]).ExecuteAsync(TestContext.CancellationToken);
+        ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new Permission()
             {
@@ -218,7 +306,8 @@ public partial class ExecutionTest
                 Path = "",
                 Sort = 4
             }
-        ]).ExecuteAsync(TestContext.CancellationToken);
+        ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new RolePermission()
             {
@@ -320,7 +409,8 @@ public partial class ExecutionTest
                 RoleId = "SuperAdmin",
                 PermissionId = "P010"
             }
-        ]).ExecuteAsync(TestContext.CancellationToken);
+        ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
                 new Sales { Region = "华东", Province = "上海", Product = "笔记本电脑", Amount = 1500, Version = 1 },
                 new Sales { Region = "华东", Province = "江苏", Product = "笔记本电脑", Amount = 2200, Version = 1 },
@@ -350,6 +440,7 @@ public partial class ExecutionTest
                 new Sales { Region = "西北", Province = "青海", Product = "键盘鼠标", Amount = 100, Version = 1 },
                 new Sales { Region = "西北", Province = "宁夏", Product = "键盘鼠标", Amount = 80, Version = 1 },
                 new Sales { Region = "西北", Province = "新疆", Product = "键盘鼠标", Amount = 150, Version = 1 }
-            ]).ExecuteAsync(TestContext.CancellationToken);
+            ])
+            .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
     }
 }

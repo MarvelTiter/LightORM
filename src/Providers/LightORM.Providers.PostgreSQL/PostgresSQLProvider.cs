@@ -1,11 +1,6 @@
 ﻿using LightORM.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LightORM.Implements;
 using LightORM.Models;
 
@@ -30,12 +25,12 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
 
     private PostgreSQLProvider(DataBaseOption<PostgreSQLTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
-        DbHandler = new PostgreSQLTableHandler(option.GenerateOption);
         var sqlMethodResolver = new PostgreSQLMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomPostgreSQL(sqlMethodResolver, option.GenerateOption);
+        DbHandler = new PostgreSQLTableHandler(option.GenerateOption, DatabaseAdapter);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? false;
         DbProviderFactory = option.NewFactory ?? Npgsql.NpgsqlFactory.Instance;
     }
 

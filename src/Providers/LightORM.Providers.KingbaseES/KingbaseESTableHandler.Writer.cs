@@ -1,16 +1,13 @@
-﻿using LightORM.DbStruct;
-using LightORM.Providers.PostgreSQL.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using LightORM;
+using LightORM.DbStruct;
+using LightORM.Providers.KingbaseES.Utils;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace LightORM.Providers.PostgreSQL.TableStructure;
+namespace LightORM.Providers.KingbaseES;
 
-public class PostgreSQLTableWriter : LightORM.Implements.WriteTableFromType<PostgreSQLTableOptions>
+partial class KingbaseESTableHandler
 {
-    public override IEnumerable<string> BuildTableSql(PostgreSQLTableOptions option, DbTable table)
+    public override IEnumerable<string> BuildTableSql(KingbaseESTableOptions option, DbTable table)
     {
         StringBuilder sql = new StringBuilder();
 
@@ -98,7 +95,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         yield return sql.ToString();
     }
 
-    protected override string BuildColumn(PostgreSQLTableOptions option, DbColumn column)
+    protected override string BuildColumn(KingbaseESTableOptions option, DbColumn column)
     {
         string dataType = ConvertToDbType(option, column);
 
@@ -115,7 +112,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return $"{DbEmphasis(option, column.Name)} {dataType}{identity}{defaultValue}{notNull}";
     }
 
-    protected override string ConvertToDbType(PostgreSQLTableOptions option, DbColumn type)
+    protected override string ConvertToDbType(KingbaseESTableOptions option, DbColumn type)
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
@@ -128,7 +125,7 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         return type.DataType.TransformType();
     }
 
-    protected override string DbEmphasis(PostgreSQLTableOptions option, string name) => $"\"{name}\"";
+    protected override string DbEmphasis(KingbaseESTableOptions option, string name) => $"\"{name}\"";
 
     private static string FormatDefaultValue(object value, string dataType)
     {

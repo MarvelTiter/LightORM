@@ -1,7 +1,6 @@
 ﻿using LightORM.Implements;
 using LightORM.Providers.Oracle.Extensions;
 using LightORM.Providers.Sqlite.Extensions;
-using System.Data.SQLite;
 using System.Linq.Expressions;
 
 namespace TestProject1;

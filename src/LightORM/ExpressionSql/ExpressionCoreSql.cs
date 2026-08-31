@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Threading;
 using LightORM.DbStruct;
 
 namespace LightORM.ExpressionSql;
@@ -10,10 +9,10 @@ internal sealed partial class ExpressionCoreSql(ExpressionSqlOptions option) : E
     private readonly ConnectionFactory connectionFactory = new(option);
     public string Id { get; } = $"{Guid.NewGuid():N}";
     public override SqlAdo Ado => GetAdo(Options.DefaultDbKey);
-    public TransientExpressionContext SwitchDatabase(string key)
+    public ITransientContext SwitchDatabase(string key)
     {
         var connection = connectionFactory.GetDatabaseConnection(key);
-        return new(this, connection, Options);
+        return new TransientContext(connection, Options);
     }
 
     public SqlAdo GetAdo(string key)

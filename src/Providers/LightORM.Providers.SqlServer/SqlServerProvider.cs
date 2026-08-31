@@ -41,7 +41,7 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
         DatabaseAdapter = new CustomSqlServerAdapter(version, sqlMethodResolver, option.GenerateOption);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
-        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote;
+        DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
         DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;
 
     }

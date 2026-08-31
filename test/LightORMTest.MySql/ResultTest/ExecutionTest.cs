@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.MySql.ResultTest;
+﻿namespace LightORMTest.MySql.ResultTest;
 
 [TestClass]
 public class ExecutionTest : LightORMTest.ResultTest.ExecutionTest

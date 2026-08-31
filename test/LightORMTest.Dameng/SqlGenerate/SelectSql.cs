@@ -1,6 +1,4 @@
-﻿using LightORMTest.Dameng;
-
-namespace LightORMTest.Dameng.SqlGenerate;
+﻿namespace LightORMTest.Dameng.SqlGenerate;
 
 [TestClass]
 public class SelectSql : LightORMTest.SqlGenerate.SelectSql

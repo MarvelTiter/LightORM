@@ -8,6 +8,6 @@ public interface IDatabaseTableHandler
     string GetTablesSql();
     string GetTableStructSql(string table);
     bool ParseDataType(ReadedTableColumn column, out string type);
-    string GetDropTableSql(string tableName);
+    IEnumerable<string> GetDropTableSql(DbTable table);
 
 }

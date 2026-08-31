@@ -1,6 +1,5 @@
 ﻿using LightORM.Extension;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace LightORM.Builder;
 //#if NET8_0_OR_GREATER
@@ -16,8 +15,16 @@ internal class DeleteBuilder<T> : SqlBuilder
     public bool Truncate { get; set; }
     HashSet<string> Members { get; set; } = [];
     public List<BatchSqlInfo>? BatchInfos { get; set; }
+
+    public override void AddTableInfo(TableInfo tableInfo)
+    {
+        tableInfo.FullAlias = true;
+        base.AddTableInfo(tableInfo);
+    }
+
 #if NET8_0_OR_GREATER
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "根据已知类型构建导航条件")]
+    [UnconditionalSuppressMessage("AOT", "IL2026", Justification = "根据已知类型构建导航条件")]
 #endif
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
     {
@@ -32,80 +39,78 @@ internal class DeleteBuilder<T> : SqlBuilder
                     {
                         continue;
                     }
-                    var navSqlBuilder = SelectBuilder.GetSelectBuilder();
-                    navSqlBuilder.IsSubQuery = true;
-                    navSqlBuilder.Depth = 1;
-                    navSqlBuilder.AddTableInfo(MainTable);
                     var navInfo = navColumn.NavigateInfo!;
                     var mainCol = MainTable.GetColumnInfo(navInfo.MainName!);
                     var targetType = navInfo.NavigateType;
-                    var targetTable = TableInfo.Create(targetType, navSqlBuilder.NextTableIndex);
-
-                    navSqlBuilder.SelectValue = $"{MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)}";
+                    var targetTable = TableInfo.Create(targetType);
+                    targetTable.Depth++;
+                    //navSqlBuilder.SelectValue = $"{selectMain.Alias}.{database.AttachEmphasis(mainCol.ColumnName)}";
+                    var mainParameter = MainTable.Parameter!;
+                    var tarParameter = Expression.Parameter(targetType);
+                    var mainMember = Expression.Property(mainParameter, navInfo.MainName!);
+                    var navSqlBuilder = SelectBuilder.GetSelectBuilder();
+                    navSqlBuilder.IsSubQuery = true;
+                    navSqlBuilder.Depth = 1;
+                    navSqlBuilder.SetResolveParentContext(ResolveCtx!);
                     if (navInfo.MappingType != null)
                     {
+                        var mappingParameter = Expression.Parameter(navInfo.MappingType);
+                        var mappingTable = TableInfo.Create(navInfo.MappingType);
+                        navSqlBuilder.AddTableInfo(mappingTable);
                         var targetNav = targetTable.GetNavigateColumns(c => c.NavigateInfo?.MappingType == navInfo.MappingType).First().NavigateInfo!;
                         var targetCol = targetTable.GetColumnInfo(targetNav.MainName!);
-                        var mapTable = TableInfo.Create(navInfo.MappingType, 1);
-                        var subCol = mapTable.GetColumnInfo(navInfo.SubName!);
-                        //TryJoin(mapTable);
-                        navSqlBuilder.Joins.Add(new JoinInfo(mapTable)
-                        {
-                            JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
-                        });
 
-                        subCol = mapTable.GetColumnInfo(targetNav.SubName!);
-                        targetTable.Index += 1;
-                        navSqlBuilder.Joins.Add(new JoinInfo(targetTable)
-                        {
-                            JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} = {mapTable.Alias}.{database.AttachEmphasis(subCol.ColumnName)} )"
-                        });
-                        if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
-                        && l!.Parameters[0].Type == navSqlBuilder.Joins.LastOrDefault()?.EntityInfo?.Type)
-                        {
-                            List<ParameterExpression> ps = [.. navSqlBuilder.AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
-                            ps.RemoveAt(ps.Count - 1);
-                            var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
-                            //var ee = new ExpressionInfo(SqlResolveOptions.Where, newWhereExpression);
-                            var eeResult = newWhereExpression.Resolve(SqlResolveOptions.Where, ResolveCtx!);
-                            navSqlBuilder.Where.Add(eeResult.SqlString!);
-                            if (eeResult.ResolvedValues?.Count > 0)
-                                ResolvedValues.AddRange(eeResult.ResolvedValues);
-                        }
+                        //var subMember = Expression.Property(mappingParameter, navInfo.SubName!);
+                        //var body = Expression.Equal(mainMember, subMember);
+                        //var joinWhere = Expression.Lambda(body, mainParameter, mappingParameter);
+                        //navSqlBuilder.JoinHandle(navInfo.MappingType, joinWhere, TableLinkType.InnerJoin);
+
+                        var tarMainMember = Expression.Property(tarParameter, targetNav.MainName!);
+                        var tarSubMember = Expression.Property(mappingParameter, targetNav.SubName!);
+                        var tarBody = Expression.Equal(tarMainMember, tarSubMember);
+                        var joinTarWhere = Expression.Lambda(tarBody, mappingParameter, tarParameter);
+                        navSqlBuilder.JoinHandle(navInfo.NavigateType, joinTarWhere, TableLinkType.InnerJoin);
+
+                        var mapMainMember = Expression.Property(mappingParameter, navInfo.SubName!);
+                        var mainWhere = Expression.Equal(mapMainMember, mainMember);
+                        var innerLambda = Expression.Lambda(mainWhere, mappingParameter);
+                        var outerLambda = Expression.Lambda(innerLambda, mainParameter);
+                        navSqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, outerLambda.Body));
                     }
                     else
                     {
-                        var targetCol = targetTable.GetColumnInfo(navInfo.SubName!);
-                        //TryJoin(targetTable);
-                        navSqlBuilder.Joins.Add(new JoinInfo(targetTable)
-                        {
-                            JoinType = TableLinkType.InnerJoin,
-                            Where = $"( {MainTable.Alias}.{database.AttachEmphasis(mainCol.ColumnName)} = {targetTable.Alias}.{database.AttachEmphasis(targetCol.ColumnName)} )"
-                        });
-                        var n = result.MemberOfNavigateMember;
-                        if (n is not null)
-                        {
-                            var c = targetTable.GetColumn(n);
-                            if (c is not null)
-                            {
-                                string mainColWhere;
-                                var indexOfLeft = result.SqlString?.IndexOf('(');
-                                if (indexOfLeft > -1)
-                                {
-                                    mainColWhere = result.SqlString!.Insert(indexOfLeft.Value + 1, $"{targetTable.Alias}.{database.AttachEmphasis(c.ColumnName)}");
-                                }
-                                else
-                                {
-                                    mainColWhere = $"{targetTable.Alias}.{database.AttachEmphasis(c.ColumnName)}{result.SqlString}";
-                                }
-                                navSqlBuilder.Where.Add(mainColWhere);
-                            }
-                        }
+                        navSqlBuilder.AddTableInfo(targetTable);
+                        //var tarMainMember = Expression.Property(mainParameter, navInfo.MainName!);
+                        //var tarSubMember = Expression.Property(tarParameter, navInfo.SubName!);
+                        //var tarBody = Expression.Equal(tarMainMember, tarSubMember);
+                        //var joinTarWhere = Expression.Lambda(tarBody, mainParameter, tarParameter);
+                        //navSqlBuilder.JoinHandle(navInfo.NavigateType, joinTarWhere, TableLinkType.InnerJoin);
+
+                        var mapMainMember = Expression.Property(tarParameter, navInfo.SubName!);
+                        var mainWhere = Expression.Equal(mapMainMember, mainMember);
+                        var innerLambda = Expression.Lambda(mainWhere, tarParameter);
+                        var outerLambda = Expression.Lambda(innerLambda, mainParameter);
+                        navSqlBuilder.Expressions.Add(new ExpressionInfo(SqlResolveOptions.Where, outerLambda.Body));
                     }
 
-                    Where.Add($"{database.AttachEmphasis(mainCol.ColumnName)} IN ({N}{navSqlBuilder.ToSqlString(database)})");
+
+                    if (result.NavigateWhereExpression.TryGetLambdaExpression(out var l)
+                        && l!.Parameters[0].Type == navSqlBuilder.AllTables().LastOrDefault()?.Type)
+                    {
+
+                        List<ParameterExpression> ps = [.. navSqlBuilder.AllTables().Select(t => Expression.Parameter(t.TableEntityInfo.Type!))];
+                        ps.RemoveAt(ps.Count - 1);
+                        var newWhereExpression = Expression.Lambda(l.Body, [.. ps, l.Parameters[0]]);
+                        var ee = new ExpressionInfo(SqlResolveOptions.Where, newWhereExpression);
+                        navSqlBuilder.Expressions.Add(ee);
+                    }
+
+                    //navSqlBuilder.Expressions.Add(new(SqlResolveOptions.Select, Expression.Lambda(mainMember, mainParameter)));
+                    navSqlBuilder.SelectValue = "1";
+                    using var _ = StringBuilderPool.Get(out var sb);
+                    navSqlBuilder.Build(sb, database, navSqlBuilder.Depth);
+                    Where.Add($"EXISTS ({N}{sb})");
+                    ResolvedValues.AddRange(navSqlBuilder.ResolvedValues);
                 }
             }
             else
@@ -130,7 +135,7 @@ internal class DeleteBuilder<T> : SqlBuilder
         }
         BatchInfos = columns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
         //var delete = $"DELETE FROM {GetTableName(database, MainTable, false)}";
-        database.HandleBatchDelete<T>(new(this, columns, BatchInfos, database));
+        database.HandleBatchDelete<T>(new(this, columns, BatchInfos, DbParameters, database));
 
         batchDone = true;
     }
@@ -149,25 +154,28 @@ internal class DeleteBuilder<T> : SqlBuilder
         }
 
         ResolveExpressions(database);
-
+        using var _ = StringBuilderPool.Get(out var sql);
+        WriteTags(sql);
         if (FullDelete)
         {
             if (Truncate)
             {
-                return $"TRUNCATE TABLE {GetTableName(database, MainTable, false)}";
+                sql.Append("TRUNCATE TABLE ");
+                sql.Append(GetTableName(database, MainTable, false));
             }
             else
             {
-                return $"DELETE FROM {GetTableName(database, MainTable, false)}";
+                sql.Append("DELETE FROM ");
+                sql.Append(GetTableName(database, MainTable, false));
             }
+            return sql.ToString();
         }
 
         if (Where.Count == 0 && TargetObject is null)
         {
             throw new LightOrmException("Where Condition is null and not provider a entity value");
         }
-        using var _ = StringBuilderPool.Get(out var sql);
-        sql = new("DELETE FROM ");
+        sql.Append("DELETE FROM ");
         //sql.AppendLine(GetTableName(database, MainTable, false));
         sql.AppendTableName(database, MainTable, false).AppendLine();
         // 没有设置Where条件, 且提供实体值, 则使用主键作为Where条件

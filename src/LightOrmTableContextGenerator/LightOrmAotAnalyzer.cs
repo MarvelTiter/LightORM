@@ -1,7 +1,6 @@
 ﻿using Generators.Shared;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 

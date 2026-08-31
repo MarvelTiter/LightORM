@@ -38,7 +38,7 @@ public static class StringBuilderHelper
             if (stringBuilder == null)
                 throw new ArgumentNullException(nameof(stringBuilder));
 #else
-        ArgumentNullException.ThrowIfNull(stringBuilder);
+            ArgumentNullException.ThrowIfNull(stringBuilder);
 #endif
             if (stringBuilder.Length == 0)
                 return string.Empty;
@@ -78,7 +78,7 @@ public static class StringBuilderHelper
             )
         {
 #if NET8_0_OR_GREATER
-        return content.IsEmpty;
+            return content.IsEmpty;
 #else
             return string.IsNullOrEmpty(content);
 #endif
@@ -161,6 +161,20 @@ public static class StringBuilderHelper
             {
                 stringBuilder.Replace(placeholder, "NULL");
             }
+        }
+
+        public bool ReplaceWithBoundaryCheck(string placeholder, string newValue)
+        {
+            if (string.IsNullOrWhiteSpace(placeholder))
+                return false;
+            var parameterIndex = stringBuilder.IndexOf(placeholder);
+            var preChar = stringBuilder[parameterIndex - 1];
+            if (preChar == ' ' || (preChar == '('))
+            {
+                stringBuilder.Replace(placeholder, newValue);
+                return true;
+            }
+            return false;
         }
     }
 }

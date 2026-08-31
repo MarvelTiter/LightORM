@@ -1,5 +1,4 @@
 ﻿using LightORM.Extension;
-using System.Text;
 
 namespace LightORM.Builder;
 
@@ -93,7 +92,7 @@ internal class InsertBuilder<T> : SqlBuilder
         // TODO 批量插入对JSON列处理
         BatchInfos = insertColumns.GenBatchInfos(TargetObjects, database, 2000 - DbParameters.Count);
 
-        database.HandleBatchInsert(new(this, insertColumns, BatchInfos, database));
+        database.HandleBatchInsert<T>(new(this, insertColumns, BatchInfos, DbParameters, database));
 
         batchDone = true;
 
@@ -185,6 +184,7 @@ internal class InsertBuilder<T> : SqlBuilder
         //columns.RemoveLast(1);
         //values.RemoveLast(1);
         using var _ = StringBuilderPool.Get(out var sb);
+        WriteTags(sb);
         if ((UpdateOnConflict || IgnoreOnConflict) && insertColumns.Any(i => i.IsPrimaryKey))
         {
             database.HandleInsertOrUpdate(new(this, sb, columnValueMap, DbParameters, IgnoreOnConflict, database));

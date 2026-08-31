@@ -1,13 +1,9 @@
-﻿using LightORM.DbStruct;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using LightORM;
+using LightORM.DbStruct;
 
-namespace LightORM.Providers.Oracle.TableStructure;
+namespace LightORM.Providers.Oracle;
 
-public class OracleTableWriter : LightORM.Implements.WriteTableFromType<OracleTableOptions>
+partial class OracleTableHandler
 {
     public override IEnumerable<string> BuildTableSql(OracleTableOptions option, DbTable table)
     {
@@ -190,7 +186,6 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType<OracleTa
         };
     }
 
-    protected override string DbEmphasis(OracleTableOptions option, string name) => $"\"{name.ToUpper()}\"";
 
     private static string CheckPkLength(string name, IEnumerable<DbColumn> pks)
     {
@@ -220,11 +215,6 @@ public class OracleTableWriter : LightORM.Implements.WriteTableFromType<OracleTa
         return $"IDX_{info.Name?.Substring(splitCount)}_{string.Join("_", index.Columns.Select(c => c.Substring(splitCount)))}_{i}";
     }
 
-    private string AttachUserId(OracleTableOptions option, string name)
-    {
-        if (option.UserId != null)
-            return $"\"{option.UserId}\".\"{name.ToUpper()}\"";
-        else
-            return DbEmphasis(option, name);
-    }
+    
+
 }

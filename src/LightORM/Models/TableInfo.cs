@@ -1,6 +1,6 @@
 ﻿namespace LightORM.Models;
 
-public class TableInfo
+public record TableInfo
 {
     private const string ALIAS = "abcdefghijklmnopqrstuvwyz";
     private int index;
@@ -30,8 +30,10 @@ public class TableInfo
 
     public string? Schema => TableEntityInfo.Schema;
 
-    public int Depth { get; set; }
+    public ParameterExpression? Parameter { get; set; }
 
+    public int Depth { get; set; }
+    public bool FullAlias { get; set; }
     /// <summary>
     /// 表类型
     /// </summary>
@@ -47,6 +49,10 @@ public class TableInfo
     {
         get
         {
+            if (FullAlias || index == -1)
+            {
+                return TableName;
+            }
             return $"{alias}{Depth}";
         }
         set => alias = value;
@@ -61,7 +67,7 @@ public class TableInfo
         {
             if (value == -1)
             {
-                Alias = TableEntityInfo.TableName;
+                Alias = TableName;
             }
             else
             {

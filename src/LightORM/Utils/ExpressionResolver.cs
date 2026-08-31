@@ -10,7 +10,7 @@ namespace LightORM;
 
 internal static class ExpressionExtensions
 {
-    private readonly record struct CacheKey(SqlAction SqlAction, ulong hash);
+    private readonly record struct CacheKey(SqlAction SqlAction, ulong Hash);
     private static readonly ConcurrentDictionary<CacheKey, ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
@@ -24,7 +24,7 @@ internal static class ExpressionExtensions
             hash = ExpressionHasher.Default.ComputeHash64(expression);
             Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {hash}");
         }
-        CacheKey key = new (options.SqlAction, hash);
+        CacheKey key = new(options.SqlAction, hash);
         if (enableCache && expressionResolvedResultCache.TryGetValue(key, out var result))
         {
             //result.DbParameters
@@ -364,7 +364,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         else if (exp.NodeType == ExpressionType.Convert)
         {
             IsVisitConvert = true;
-            Visit(exp.Operand); 
+            Visit(exp.Operand);
             IsVisitConvert = false;
         }
         else
@@ -381,7 +381,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var alias = Context.GetTable(exp).Alias;
             //Sql.Append($"{alias}.*");
-            Sql.Append(alias);
+            Sql.AppendAlias(alias, Database);
             Sql.Append(".*");
             UseAs = false;
         }
@@ -407,7 +407,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 if (Options.RequiredTableAlias)
                 {
                     //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
-                    Sql.Append(table.Alias).Append('.').AppendEmphasis(col.ColumnName, Database);
+                    Sql.AppendAlias(table.Alias, Database).Append('.').AppendEmphasis(col.ColumnName, Database);
                 }
                 else
                 {
@@ -463,6 +463,10 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         return null;
     }
 
+#if NET8_0_OR_GREATER
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "根据已知类型构建导航条件")]
+    [UnconditionalSuppressMessage("AOT", "IL2026", Justification = "根据已知类型构建导航条件")]
+#endif
     Expression? VisitMember(MemberExpression exp)
     {
         Debug.WriteLineIf(ShowExpressionResolveDebugInfo, $"{Options.SqlAction} {Options.SqlType}: MemberExpression: {exp}");
@@ -487,6 +491,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                     if (Members.Count > 0)
                     {
                         MemberOfNavigateMember = Members.Pop().Member.Name;
+                        var p = Expression.Parameter(col.NavigateInfo!.NavigateType);
+                        var propAccess = Expression.Property(p, MemberOfNavigateMember);
+                        var right = CurrentBinary?.Right;
+                        if (right is not null)
+                        {
+                            var body = Expression.Equal(propAccess, right);
+                            NavigateWhereExpression = [Expression.Lambda(body, p)];
+                        }
                     }
                     Members.Clear();
                 }
@@ -525,7 +537,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
 
             if (Options.RequiredTableAlias)
             {
-                Sql.Append(table.Alias);
+                Sql.AppendAlias(table.Alias, Database);
                 Sql.Append('.');
                 //Sql.Append($"{table.Alias}.{Database.AttachEmphasis(col.ColumnName)}");
             }

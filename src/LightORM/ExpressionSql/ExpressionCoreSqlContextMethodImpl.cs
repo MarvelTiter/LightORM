@@ -1,4 +1,5 @@
 ﻿using LightORM.DbStruct;
+using LightORM.Extension;
 using LightORM.Providers;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -231,14 +232,18 @@ internal static class ExpressionCoreSqlContextMethodImpl
         return table with { Columns = columns };
     }
 
-    public static async Task<bool> InternalDropTableAsync(SqlAdo ado, string tableName, CancellationToken cancellationToken)
+    public static async Task<bool> InternalDropTableAsync<T>(SqlAdo ado, CancellationToken cancellationToken)
     {
         try
         {
             if (ado.Provider.DbHandler is null)
                 throw new NotSupportedException();
-            var sql = ado.Provider.DbHandler.GetDropTableSql(tableName);
-            await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
+            var table = typeof(T).CollectDbTableInfo();
+            var sqls = ado.Provider.DbHandler.GetDropTableSql(table);
+            foreach (var sql in sqls)
+            {
+                await ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
+            }
             return true;
         }
         catch

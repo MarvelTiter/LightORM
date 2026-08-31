@@ -1,9 +1,4 @@
-﻿using LightORM.SqlExecutor;
-using LightORMTest;
-using Microsoft.Extensions.Primitives;
-using System.Threading.Tasks;
-
-namespace LightORMTest.SqlGenerate;
+﻿namespace LightORMTest.SqlGenerate;
 
 public class UpdateSql : TestBase
 {
@@ -158,12 +153,12 @@ public class UpdateSql : TestBase
         {
             return new List<UserFlat>
             {
-                new() ,
-                new() ,
-                new() ,
-                new() ,
-                new() ,
-                new() ,
+                new() { UserId = "01", UserName = "p1"},
+                new() { UserId = "02", UserName = "p2"} ,
+                new() { UserId = "03", UserName = "p3"},
+                new() { UserId = "04", UserName = "p4"},
+                new() { UserId = "05", UserName = "p5"},
+                new() { UserId = "06", UserName = "p6"},
             };
         }
     }

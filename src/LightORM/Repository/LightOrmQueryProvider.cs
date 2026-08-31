@@ -62,7 +62,7 @@ internal class LightOrmQueryProvider : IQueryProvider
         var exp = new ExpressionInfo(SqlResolveOptions.Join, joinCondition);
         select.Expressions.Add(exp);
         var ei = TableInfo.Create(joinType, select.NextTableIndex);
-        select.Joins.Add(new JoinInfo(ei)
+        select.AddJoin(new JoinInfo(ei)
         {
             ExpressionId = exp.Id,
             JoinType = TableLinkType.InnerJoin,

@@ -1,11 +1,10 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
-using LightORM.Providers.KingbaseES.TableStructure;
 
 namespace LightORM.Providers.KingbaseES;
 
-public sealed class KingbaseESTableHandler(KingbaseESTableOptions tableOptions)
-    : BaseDatabaseHandler<KingbaseESTableWriter, KingbaseESTableOptions>
+public sealed partial class KingbaseESTableHandler(KingbaseESTableOptions tableOptions)
+    : BaseDatabaseHandler<KingbaseESTableOptions>
 {
     public override KingbaseESTableOptions Options => tableOptions;
 

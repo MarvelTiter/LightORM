@@ -10,18 +10,8 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
     private IsolationLevel isolationLevel = IsolationLevel.Unspecified;
     private readonly ConnectionFactory connectionFactory = new(options);
     private readonly ConcurrentDictionary<string, DatabaseConnection> connections = [];
-    private TransientExpressionContext? current;
-    public override SqlAdo Ado
-    {
-        get
-        {
-            if (current.HasValue)
-            {
-                return current.Value.Ado;
-            }
-            return DefaultAdo;
-        }
-    }
+    private TransientContext? current;
+    public override SqlAdo Ado => current?.Ado ?? DefaultAdo;
 
     public SqlAdo DefaultAdo
     {
@@ -36,8 +26,8 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
         }
     }
 
-    private readonly Dictionary<string, TransientExpressionContext> contextCaches = [];
-    TransientExpressionContext IScopedExpressionContext.SwitchDatabase(string key)
+    private readonly Dictionary<string, TransientContext> contextCaches = [];
+    ITransientContext IScopedExpressionContext.SwitchDatabase(string key)
     {
         if (contextCaches.TryGetValue(key, out var ctx))
         {
@@ -48,7 +38,7 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
         {
             connection.BeginTransaction(isolationLevel);
         }
-        ctx = new(this, connection, Options);
+        ctx = new(connection, Options);
         contextCaches[key] = ctx;
         current = ctx;
         return ctx;
@@ -125,15 +115,15 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
 
     public Task BeginTransactionAsync(string key = "MainDb"
         , IsolationLevel isolationLevel = IsolationLevel.Unspecified
-        , CancellationToken cancellationToken = default) 
+        , CancellationToken cancellationToken = default)
         => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).BeginTransactionAsync(isolationLevel, cancellationToken);
 
 
-    public Task CommitTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default) 
+    public Task CommitTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default)
         => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).CommitTransactionAsync(cancellationToken);
 
 
-    public Task RollbackTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default) 
+    public Task RollbackTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default)
         => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).RollbackTransactionAsync(cancellationToken);
 #endif
 

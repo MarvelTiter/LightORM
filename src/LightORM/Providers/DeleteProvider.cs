@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -15,7 +16,7 @@ namespace LightORM.Providers
         {
             this.ado = executor;
             sqlBuilder = new();
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.AddTableInfo(TableInfo.Create<T>());
             sqlBuilder.TargetObject = entity;
         }
 
@@ -23,7 +24,7 @@ namespace LightORM.Providers
         {
             this.ado = executor;
             sqlBuilder = new();
-            sqlBuilder.SelectedTables.Add(TableInfo.Create<T>());
+            sqlBuilder.AddTableInfo(TableInfo.Create<T>());
             sqlBuilder.TargetObjects = entities;
             sqlBuilder.IsBatchDelete = true;
         }
@@ -41,6 +42,21 @@ namespace LightORM.Providers
         public IExpDelete<T> QuoteIdentifiers()
         {
             sqlBuilder.QuoteIdentifiers = true;
+            return this;
+        }
+
+        #endregion
+
+        #region 日志输出辅助
+
+        public IExpDelete<T> TagWith(string tag)
+        {
+            sqlBuilder.AddTag(new(tag, null, null, null, false));
+            return this;
+        }
+        public IExpDelete<T> TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null)
+        {
+            sqlBuilder.AddTag(new(tag, filePath, callMember, lineNum, true));
             return this;
         }
 
@@ -158,13 +174,13 @@ namespace LightORM.Providers
                 foreach (var batch in sqlBuilder.BatchInfos ?? [])
                 {
                     sb.AppendLine($"批量删除，批次：{batch.Index}");
-                    foreach (var item in batch.Parameters)
+                    foreach (var item in batch.RowParameters)
                     {
                         sb.AppendLine("----行数据");
                         item.ForEach(row =>
                         {
                             if (row.IsStaticValue) return;
-                            sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                            sb.AppendLine($"--------{row.ValueName} - {row.Value}");
                         });
                     }
                 }

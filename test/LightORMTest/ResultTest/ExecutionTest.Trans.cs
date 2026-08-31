@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Data;
-using System.Text;
 
 namespace LightORMTest.ResultTest;
 
@@ -250,7 +247,7 @@ public partial class ExecutionTest
             try
             {
                 using var scope = Db.CreateScoped();
-                await scope.BeginTransactionAsync(IsolationLevel.RepeatableRead, TestContext.CancellationToken);
+                await scope.BeginTransactionAsync(IsolationLevel.ReadCommitted, TestContext.CancellationToken);
 
                 // 读取当前值
                 var currentUser = await scope.Select<User>()

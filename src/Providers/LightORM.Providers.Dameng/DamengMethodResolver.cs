@@ -1,12 +1,7 @@
 ﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.Dameng;
 

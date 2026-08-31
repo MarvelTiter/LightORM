@@ -1,11 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
 using LightORM.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.Dameng;
 
@@ -18,9 +13,20 @@ internal partial class CustomDamengAdapter
         var sb = context.Sql;
         sb.Append("MERGE INTO ").AppendTableName(database, context.Builder.MainTable, false).AppendLine(" t");
         sb.Append("USING (SELECT ");
-        foreach (var e in columnValueMaps.Values)
+        foreach (var kv in columnValueMaps)
         {
+            var e = kv.Value;
+            var c = kv.Key;
             sb.Append(e.Value).Append(" AS ").Append(e.Column).Append(',');
+            if (c.IsVersionColumn)
+            {
+                var oldVersion = context.Parameters[c.PropertyName];
+                var newVersion = SqlBuilder.VersionPlus(oldVersion);
+                var verionName = $"{c.PropertyName}_n";
+                context.Parameters[verionName] = newVersion;
+                sb.Append(' ');
+                sb.WithPrefix(verionName, database).Append(" AS ").Append(verionName).Append(',');
+            }
         }
         sb.RemoveLast(1);
         sb.AppendLine(" FROM DUAL ) s");
@@ -44,12 +50,9 @@ internal partial class CustomDamengAdapter
                     continue;
                 if (kv.Key.IsVersionColumn)
                 {
-                    var oldVersion = context.Parameters[kv.Key.PropertyName];
-                    var newVersion = SqlBuilder.VersionPlus(oldVersion);
                     var verionName = $"{kv.Key.PropertyName}_n";
-                    context.Parameters[verionName] = newVersion;
                     sb.Append(' ');
-                    sb.Append(kv.Value.Column).Append(" = ").WithPrefix(verionName, database).Append(',');
+                    sb.Append(kv.Value.Column).Append(" = ").Append("s.").Append(verionName).Append(',');
                 }
                 else
                 {
@@ -64,7 +67,7 @@ internal partial class CustomDamengAdapter
                 if (!kv.Key.IsVersionColumn)
                     continue;
                 sb.Append("    WHERE ");
-                sb.Append(kv.Value.Column).Append(" = ").Append(kv.Value.Value).Append(' ');
+                sb.Append("t.").Append(kv.Value.Column).Append(" = ").Append("s.").Append(kv.Value.Column).Append(' ');
             }
             sb.AppendLine();
         }
@@ -72,7 +75,7 @@ internal partial class CustomDamengAdapter
         sb.Append("    INSERT (")
             .AppendEntryColumns(columnValueMaps.Values)
             .Append(") VALUES (")
-            .AppendEntryValues(columnValueMaps.Values)
+            .AppendEntryColumns(columnValueMaps.Values, "s.")
             .Append(')');
     }
 

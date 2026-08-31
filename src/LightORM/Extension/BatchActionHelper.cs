@@ -39,7 +39,7 @@
                 var pList = new List<List<SimpleColumn>>();
                 foreach (var obj in batchList)
                 {
-                    var dbParameters = new List<SimpleColumn>();
+                    var row = new List<SimpleColumn>();
                     foreach (var col in columns)
                     {
                         var isStatic = GetValue(col, obj!, additionalParameters, out var val);
@@ -47,11 +47,18 @@
                         {
                             isStatic = true;
                         }
-                        dbParameters.Add(new SimpleColumn(col.IsPrimaryKey, col.IsVersionColumn, col.ColumnName, $"{col.PropertyName}_{rowIndex}", col.PropertyName, val, isStatic)
+
+                        row.Add(new SimpleColumn(col, $"{col.PropertyName}_{rowIndex}", rowIndex, false, val, isStatic)
                         );
+
+                        if (col.IsVersionColumn)
+                        {
+                            var newVersionValue = SqlBuilder.VersionPlus(val);
+                            row.Add(new SimpleColumn(col, $"{col.PropertyName}_{rowIndex}_n", rowIndex, true, newVersionValue, isStatic));
+                        }
                     }
                     rowIndex++;
-                    pList.Add(dbParameters);
+                    pList.Add(row);
                 }
 
                 list.Add(new BatchSqlInfo(pList, i + 1));

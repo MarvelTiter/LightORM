@@ -1,6 +1,5 @@
 ﻿using LightORM.Interfaces;
 using LightORM.Models;
-using System.Data.SQLite;
 
 namespace LightORM.Providers.Sqlite.Extensions;
 

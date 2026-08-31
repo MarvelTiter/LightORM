@@ -161,6 +161,11 @@ internal partial class ExpressionBuilder
                             }
                             TargetValueExpression = CreateAnonymous(targetMember.PropertyType);
                         }
+                        else if (ContainsJsonType(targetMember.PropertyType))
+                        {
+                            var ordinal = reader.GetOrdinal(targetMember.Name);
+                            TargetValueExpression = GetTargetJsonExpression(reader, Culture, recordInstanceExp, SchemaTable, ordinal, targetMember.PropertyType);
+                        }
                         else
                         {
                             TargetValueExpression = CreateCustomEntiry(targetMember.PropertyType);
@@ -206,30 +211,6 @@ internal partial class ExpressionBuilder
 
                     FindMatchValueExpression(Bindings, col, targetMember, false);
 
-                    //void work()
-                    //{
-                    //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                    //    {
-                    //        //Check if the RecordFieldName matches the TargetMember
-                    //        if (MemberMatchesName(col, reader.GetName(Ordinal)))
-                    //        {
-                    //            Expression TargetValueExpression = GetTargetValueExpression(
-                    //                reader,
-                    //                Culture,
-                    //                recordInstanceExp,
-                    //                SchemaTable,
-                    //                Ordinal,
-                    //                targetMember.PropertyType);
-
-                    //            //Create a binding to the target member
-                    //            MemberAssignment BindExpression = Expression.Bind(targetMember, TargetValueExpression);
-                    //            Bindings.Add(BindExpression);
-                    //            return;
-                    //        }
-                    //    }
-                    //}
-
-                    //work();
                 }
 
                 // 处理Json列
@@ -244,30 +225,6 @@ internal partial class ExpressionBuilder
 
                     FindMatchValueExpression(Bindings, col, targetMember, true);
 
-                    //void work()
-                    //{
-                    //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                    //    {
-                    //        //Check if the RecordFieldName matches the TargetMember
-                    //        if (MemberMatchesName(col, reader.GetName(Ordinal)))
-                    //        {
-                    //            Expression TargetValueExpression = GetTargetJsonExpression(
-                    //                reader,
-                    //                Culture,
-                    //                recordInstanceExp,
-                    //                SchemaTable,
-                    //                Ordinal,
-                    //                targetMember.PropertyType);
-
-                    //            //Create a binding to the target member
-                    //            MemberAssignment BindExpression = Expression.Bind(targetMember, TargetValueExpression);
-                    //            Bindings.Add(BindExpression);
-                    //            return;
-                    //        }
-                    //    }
-                    //}
-
-                    //work();
                 }
 
                 // 处理聚合的属性
@@ -286,30 +243,6 @@ internal partial class ExpressionBuilder
 
                         var flatTargetMember = flatType.GetProperty(flatCol.PropertyName)!;
                         FindMatchValueExpression(flatBindings, flatCol, flatTargetMember, false);
-                        //void work()
-                        //{
-                        //    for (int Ordinal = 0; Ordinal < reader.FieldCount; Ordinal++)
-                        //    {
-                        //        //Check if the RecordFieldName matches the TargetMember
-                        //        if (MemberMatchesName(flatCol, reader.GetName(Ordinal)))
-                        //        {
-                        //            Expression TargetValueExpression = GetTargetValueExpression(
-                        //                reader,
-                        //                Culture,
-                        //                recordInstanceExp,
-                        //                SchemaTable,
-                        //                Ordinal,
-                        //                flatTargetMember.PropertyType);
-
-                        //            //Create a binding to the target member
-                        //            MemberAssignment BindExpression = Expression.Bind(flatTargetMember, TargetValueExpression);
-                        //            bindings.Add(BindExpression);
-                        //            return;
-                        //        }
-                        //    }
-                        //}
-
-                        //work();
                     }
 
                     var memberInit = Expression.MemberInit(Expression.New(flatType), flatBindings);
@@ -367,7 +300,7 @@ internal partial class ExpressionBuilder
     {
         Type RecordFieldType = reader.GetFieldType(Ordinal);
         bool AllowDBNull = IsColumnNullable(SchemaTable, Ordinal);
-        Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
+        Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, TargetMemberType, RecordFieldType);
         Expression ConvertedRecordFieldExpression = GetConversionExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
         MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
 
@@ -408,7 +341,7 @@ internal partial class ExpressionBuilder
     {
         Type RecordFieldType = reader.GetFieldType(Ordinal);
         bool AllowDBNull = IsColumnNullable(SchemaTable, Ordinal);
-        Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, RecordFieldType);
+        Expression RecordFieldExpression = GetRecordFieldExpression(recordInstanceExp, Ordinal, TargetMemberType, RecordFieldType);
         Expression objectExp = GetJsonDeserializeExpression(RecordFieldType, RecordFieldExpression, TargetMemberType, Culture);
         Expression ConvertedRecordFieldExpression = Expression.Convert(objectExp, TargetMemberType);
         MethodCallExpression NullCheckExpression = GetNullCheckExpression(recordInstanceExp, Ordinal);
@@ -440,29 +373,30 @@ internal partial class ExpressionBuilder
         }
     }
 
-    private static Expression GetRecordFieldExpression(ParameterExpression recordInstanceExp, int Ordinal, Type RecordFieldType)
+    private static Expression GetRecordFieldExpression(ParameterExpression recordInstanceExp, int ordinal, Type entityPropType, Type recordFieldType)
     {
         //MethodInfo GetValueMethod = default(MethodInfo);
-        typeMapMethod.TryGetValue(RecordFieldType, out var GetValueMethod);
+        var safeType = GetSafeIntermediateType(recordFieldType, entityPropType);
+        typeMapMethod.TryGetValue(safeType, out var GetValueMethod);
         if (GetValueMethod == null)
             GetValueMethod = DataRecord_GetValue;
 
         Expression RecordFieldExpression;
-        var ordinal = Expression.Constant(Ordinal, typeof(int));
-        if (ReferenceEquals(RecordFieldType, typeof(byte[])))
+        var ordinalExp = Expression.Constant(ordinal, typeof(int));
+        if (ReferenceEquals(recordFieldType, typeof(byte[])))
         {
-            RecordFieldExpression = Expression.Call(GetValueMethod, [recordInstanceExp, ordinal]);
+            RecordFieldExpression = Expression.Call(GetValueMethod, [recordInstanceExp, ordinalExp]);
         }
-        else if (IsUnsignType(RecordFieldType))
+        else if (IsUnsignType(recordFieldType))
         {
             RecordFieldExpression = Expression.Call(
                 GetValueMethod,
-                [recordInstanceExp, ordinal]
+                [recordInstanceExp, ordinalExp]
             );
         }
         else
         {
-            RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, ordinal);
+            RecordFieldExpression = Expression.Call(recordInstanceExp, GetValueMethod, ordinalExp);
         }
 
         return RecordFieldExpression;

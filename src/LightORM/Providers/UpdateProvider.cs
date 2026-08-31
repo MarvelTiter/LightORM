@@ -1,4 +1,5 @@
 ﻿using LightORM.Extension;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -43,6 +44,22 @@ namespace LightORM.Providers
         }
 
         #endregion
+
+        #region 日志输出辅助
+
+        public IExpUpdate<T> TagWith(string tag)
+        {
+            sqlBuilder.AddTag(new(tag, null, null, null, false));
+            return this;
+        }
+        public IExpUpdate<T> TagWithCallSite(string tag, [CallerFilePath] string? filePath = null, [CallerMemberName] string? callMember = null, [CallerLineNumber] int? lineNum = null)
+        {
+            sqlBuilder.AddTag(new(tag, filePath, callMember, lineNum, true));
+            return this;
+        }
+
+        #endregion
+
         public int Execute()
         {
             var sql = sqlBuilder.ToSqlString(Database);
@@ -282,13 +299,13 @@ namespace LightORM.Providers
                 foreach (var batch in sqlBuilder.BatchInfos ?? [])
                 {
                     sb.AppendLine($"批量更新，批次：{batch.Index}");
-                    foreach (var item in batch.Parameters)
+                    foreach (var item in batch.RowParameters)
                     {
                         sb.AppendLine("----行数据");
                         item.ForEach(row =>
                         {
                             if (row.IsStaticValue) return;
-                            sb.AppendLine($"--------{row.ParameterName} - {row.Value}");
+                            sb.AppendLine($"--------{row.ValueName} - {row.Value}");
                         });
                     }
                 }

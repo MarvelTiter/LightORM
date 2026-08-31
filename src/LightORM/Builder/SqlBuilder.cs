@@ -44,10 +44,10 @@ internal abstract partial class SqlBuilder : ISqlBuilder
     protected ResolveContext? ResolveCtx { get; set; }
     public bool? QuoteIdentifiers { get; set; }
 
+    protected List<TagInfo>? Tags { get; set; }
+
     internal void HandleSqlParameters(StringBuilder sql, IDatabaseAdapter database)
     {
-        //var useParameterized = IsParameterized ?? ExpressionSqlOptions.Instance.Value.UseParameterized;
-        //var uniqueParameters = ResolvedValues.RemoveProperty();
         foreach (var item in ResolvedValues)
         {
             if (item.Type == ExpValueType.Null || item.Value is null)
@@ -57,11 +57,11 @@ internal abstract partial class SqlBuilder : ISqlBuilder
             }
             if (item.Type == ExpValueType.Boolean)
             {
-                sql.Replace(item.Name, database.FormatBooleanValue((bool)item.Value));
+                sql.ReplaceWithBoundaryCheck(item.Name, database.FormatBooleanValue((bool)item.Value));
             }
             else if (item.Type == ExpValueType.BooleanReverse)
             {
-                sql.Replace(item.Name, database.FormatBooleanValue(!(bool)item.Value));
+                sql.ReplaceWithBoundaryCheck(item.Name, database.FormatBooleanValue(!(bool)item.Value));
             }
             else if (item.Type == ExpValueType.Collection)
             {
@@ -76,13 +76,14 @@ internal abstract partial class SqlBuilder : ISqlBuilder
                         values.Add(database.AttachPrefix(pn));
                         arrIndex++;
                     }
-                    sql.Replace(item.Name, string.Join(", ", values));
+                    sql.ReplaceWithBoundaryCheck(item.Name, string.Join(", ", values));
                 }
             }
             else
             {
-                sql.Replace(item.Name, database.AttachPrefix(item.Name));
-                DbParameters[item.Name] = item.Value;
+                var succ = sql.ReplaceWithBoundaryCheck(item.Name, database.AttachPrefix(item.Name));
+                if (succ)
+                    DbParameters[item.Name] = item.Value;
             }
         }
     }
@@ -98,7 +99,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
         {
             return;
         }
-        ResolveCtx ??= new ResolveContext(database);
+        ResolveCtx ??= new ResolveContext(database, [..AllTables()]);
         BeforeResolveExpressions(ResolveCtx);
         foreach (var item in Expressions.ExpressionInfos.Values)
         {
@@ -178,5 +179,51 @@ internal abstract partial class SqlBuilder : ISqlBuilder
             return value;
         }
         throw new NotSupportedException("不支持的Version列类型");
+    }
+
+    public void AddTag(TagInfo tag)
+    {
+        Tags ??= [];
+        Tags.Add(tag);
+    }
+
+    internal virtual void WriteTags(StringBuilder sql, string ident = "")
+    {
+        if (Tags is not { Count: > 0 })
+        {
+            return;
+        }
+        foreach (var tag in Tags)
+        {
+            sql.Append(ident).Append("-- ");
+            if (tag.WithCallSite)
+            {
+                var fileName = tag.FilePath != null
+               ? Path.GetFileNameWithoutExtension(tag.FilePath)
+               : "Unknown";
+                sql.Append(fileName)
+                    .Append('.')
+                    .Append(tag.CallMember ?? "Unknown")
+                    .Append(':')
+                    .Append(tag.LineNumber?.ToString() ?? "?")
+                    .Append(" - ")
+                    .Append(tag.Message);
+            }
+            else
+            {
+                sql.Append(tag.Message);
+            }
+            sql.AppendLine();
+        }
+    }
+
+    //protected override Lazy<TableInfo[]> GetAllTables()
+    //{
+    //    return new(() => [.. SelectedTables, .. Joins.Select(j => j.EntityInfo)]);
+    //}
+
+    public virtual void AddTableInfo(TableInfo tableInfo)
+    {
+        SelectedTables.Add(tableInfo);
     }
 }

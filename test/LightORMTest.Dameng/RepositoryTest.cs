@@ -1,11 +1,4 @@
-﻿using LightORMTest.Dameng;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORMTest.Dameng;
+﻿namespace LightORMTest.Dameng;
 
 [TestClass]
 public class RepositoryTest : LightORMTest.RepositoryTest

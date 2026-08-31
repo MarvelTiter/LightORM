@@ -1,13 +1,9 @@
-﻿using LightORM.DbStruct;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using LightORM;
+using LightORM.DbStruct;
 
-namespace LightORM.Providers.Dameng.TableStructure;
+namespace LightORM.Providers.Dameng;
 
-public class DamengTableWriter : LightORM.Implements.WriteTableFromType<DamengTableOptions>
+partial class DamengTableHandler
 {
     public override IEnumerable<string> BuildTableSql(DamengTableOptions option, DbTable table)
     {

@@ -1,11 +1,6 @@
 ﻿using LightORM.Builder;
 using LightORM.Extension;
 using LightORM.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.PostgreSQL;
 
@@ -79,7 +74,7 @@ internal partial class CustomPostgreSQL
                     sb.Append("    WHERE ");
                     sb.AppendTableName(database, context.Builder.MainTable, false)
                         .Append('.')
-                        .Append(kv.Value.Column).Append(" = ").Append(kv.Value.Value).Append(' ');
+                        .Append(kv.Value.Column).Append(" = ").Append("EXCLUDED.").Append(kv.Value.Column).Append(' ');
                 }
             }
         }

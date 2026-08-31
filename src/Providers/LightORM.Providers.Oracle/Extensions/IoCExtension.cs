@@ -1,7 +1,5 @@
 ﻿using LightORM.Interfaces;
 using LightORM.Models;
-using Oracle.ManagedDataAccess.Client;
-using LightORM.Providers.Oracle;
 namespace LightORM.Providers.Oracle.Extensions;
 
 public static class IoCExtension

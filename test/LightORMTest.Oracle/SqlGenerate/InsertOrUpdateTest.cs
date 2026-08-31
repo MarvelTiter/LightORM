@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.Oracle.SqlGenerate;
+﻿namespace LightORMTest.Oracle.SqlGenerate;
 
 [TestClass]
 public class InsertOrUpdateTest : LightORMTest.SqlGenerate.InsertOrUpdateTest

@@ -4,26 +4,28 @@ namespace LightORM;
 
 public class ResolveContext
 {
-    readonly record struct ParameterKey(Type Type, string? Name);
-
+    public readonly record struct ParameterKey(Type Type, string? Name);
     private readonly Dictionary<ParameterKey, TableInfo> lambdaParameterInfos = [];
     private string? parameterPrefix;
     public string? ParameterPrefix => parameterPrefix;
     public IDatabaseAdapter Database { get; }
 
     private readonly ResolveContext? parent;
+    private readonly List<TableInfo> selectedTables;
 
     public int Depth { get; set; }
-    
-    public ResolveContext(IDatabaseAdapter database)
+
+    public ResolveContext(IDatabaseAdapter database, params List<TableInfo> selectedTables)
     {
         Database = database;
+        this.selectedTables = selectedTables;
     }
 
-    public ResolveContext(ResolveContext upperContext)
+    public ResolveContext(ResolveContext upperContext, params List<TableInfo> selectedTables)
     {
         Database = upperContext.Database;
         Depth = upperContext.Depth + 1;
+        this.selectedTables = selectedTables;
         parent = upperContext;
     }
 
@@ -42,11 +44,26 @@ public class ResolveContext
         var key = new ParameterKey(pExp.Type, pExp.Name);
         if (!lambdaParameterInfos.TryGetValue(key, out var p))
         {
-            p = TableInfo.Create(pExp.Type, index);
+            p = selectedTables.FirstOrDefault(t => t.Type == pExp.Type && t.Index == index) ?? TableInfo.Create(pExp.Type, index);
+            p.Parameter = pExp;
             p.Name = pExp.Name;
             lambdaParameterInfos.Add(key, p);
         }
         p.Depth = Depth;
+    }
+
+    public TableInfo GetTable(Func<ParameterKey, bool> predicate)
+    {
+        foreach (var item in lambdaParameterInfos)
+        {
+            if (predicate.Invoke(item.Key))
+                return item.Value;
+        }
+        if (parent is not null)
+        {
+            return parent.GetTable(predicate);
+        }
+        throw new LightOrmException("解析ParameterExpression出错");
     }
 
     public TableInfo GetTable(ParameterExpression pExp)

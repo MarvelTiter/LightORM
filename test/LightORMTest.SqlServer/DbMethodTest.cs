@@ -1,7 +1,4 @@
-﻿using LightORMTest.Models;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
-
-namespace LightORMTest.SqlServer;
+﻿namespace LightORMTest.SqlServer;
 
 [TestClass]
 public class DbMethodTest : LightORMTest.DbMethodTest

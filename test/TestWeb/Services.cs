@@ -1,5 +1,4 @@
-﻿using LightORM;
-using TestWeb.Models;
+﻿using TestWeb.Models;
 
 namespace TestWeb
 {

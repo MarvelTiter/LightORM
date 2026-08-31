@@ -2,10 +2,7 @@
 using LightORM.Interfaces.ExpSql;
 using LightORM.Providers.Sqlite.Extensions;
 using LightORM.Utils.Vistors;
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace LightORMTest.ExpressionTest;
 

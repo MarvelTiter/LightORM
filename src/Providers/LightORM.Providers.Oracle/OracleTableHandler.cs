@@ -1,21 +1,36 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LightORM.Providers.Oracle.TableStructure;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed class OracleTableHandler(OracleTableOptions tableOptions)
-    : BaseDatabaseHandler<OracleTableWriter, OracleTableOptions>
+public sealed partial class OracleTableHandler(OracleTableOptions tableOptions)
+    : BaseDatabaseHandler<OracleTableOptions>
 {
     public override OracleTableOptions Options => tableOptions;
     public override string GetTablesSql()
     {
         return "select table_name TableName from user_tab_columns group by table_name order by table_name";
+    }
+
+    public override IEnumerable<string> GetDropTableSql(DbTable table)
+    {
+        var dt = base.GetDropTableSql(table);
+        foreach (var item in dt)
+        {
+            yield return item;
+        }
+        if (!tableOptions.OverVersion)
+        {
+            // 序列 + 触发器自增
+            var increments = table.Columns.Where(col => col.AutoIncrement);
+            foreach (var col in increments)
+            {
+                var seqName = $"SEQ_{table.Name}_{col.Name}".ToUpper();
+                yield return $"""
+                              DROP SEQUENCE {AttachUserId(tableOptions, seqName)}
+                              """;
+            }
+        }
     }
 
     public override string GetTableStructSql(string table)
@@ -171,4 +186,14 @@ public sealed class OracleTableHandler(OracleTableOptions tableOptions)
 
         return true;
     }
+
+
+    private string AttachUserId(OracleTableOptions option, string name)
+    {
+        if (option.UserId != null)
+            return $"\"{option.UserId}\".\"{name.ToUpper()}\"";
+        else
+            return DbEmphasis(option, name);
+    }
+    protected override string DbEmphasis(OracleTableOptions option, string name) => $"\"{name.ToUpper()}\"";
 }

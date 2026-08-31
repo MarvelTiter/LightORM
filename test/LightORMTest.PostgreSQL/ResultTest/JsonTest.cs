@@ -17,23 +17,20 @@ public class JsonTest : LightORMTest.ResultTest.JsonTest
     [TestMethod]
     public override async Task TestJsonUpdateAsync()
     {
-        await PrepareJsonDataAsync(Db, async () =>
-        {
-            await Db.Update<JsonTestModel>().Set(j => SqlFn.JsonSet(j.JsonObject, "{City,Name}", "\"NewName\"")).Where(j => j.Id == 1).ExecuteAsync();
+        await Db.Update<JsonTestModel>().Set(j => SqlFn.JsonSet(j.JsonObject, "{City,Name}", "\"NewName\"")).Where(j => j.Id == 1).ExecuteAsync(TestContext.CancellationToken);
 
-            var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync();
-            Assert.IsNotNull(updated);
-            Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
+        var updated = await Db.Select<JsonTestModel>().Where(j => j.Id == 1).FirstAsync(TestContext.CancellationToken);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual("NewName", updated.JsonObject["City"]!["Name"]!.GetValue<string>());
 
-            var name = "NewName";
+        var name = "NewName";
 
-            await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, name).Where(j => j.Id == 5).ExecuteAsync();
+        await Db.Update<JsonTestModel>().Set(j => j.Json!.NestJson!.Name, name).Where(j => j.Id == 5).ExecuteAsync(TestContext.CancellationToken);
 
-            var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name);
+        var nestJsonNameNew = await Db.Select<JsonTestModel>().Where(j => j.Id == 5).ToListAsync(j => j.Json!.NestJson!.Name, TestContext.CancellationToken);
 
-            Assert.HasCount(1, nestJsonNameNew);
-            Assert.AreEqual("NewName", nestJsonNameNew[0]);
-
-        });
+        Assert.HasCount(1, nestJsonNameNew);
+        Assert.AreEqual("NewName", nestJsonNameNew[0]);
     }
+
 }
