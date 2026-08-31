@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORMTest.Sqlite.SqlGenerate;
+﻿namespace LightORMTest.Sqlite.SqlGenerate;
 
 [TestClass]
 public class InsertSql : LightORMTest.SqlGenerate.InsertSql

@@ -1,6 +1,4 @@
-﻿using LightORM.Performances;
-using System.Collections.Concurrent;
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;

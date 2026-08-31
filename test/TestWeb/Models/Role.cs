@@ -1,6 +1,4 @@
-﻿using TestWeb.Models;
-
-namespace TestWeb.Models;
+﻿namespace TestWeb.Models;
 
 [LightTable(Name = "ROLE")]
 public class Role

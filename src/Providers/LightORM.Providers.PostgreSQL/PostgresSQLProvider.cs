@@ -1,11 +1,6 @@
 ﻿using LightORM.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LightORM.Implements;
 using LightORM.Models;
 

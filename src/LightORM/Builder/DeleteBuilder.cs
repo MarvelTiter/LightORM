@@ -1,6 +1,5 @@
 ﻿using LightORM.Extension;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace LightORM.Builder;
 //#if NET8_0_OR_GREATER

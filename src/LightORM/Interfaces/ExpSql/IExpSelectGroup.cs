@@ -144,6 +144,14 @@ public interface IExpSelectGrouping<TGroup, TTables>
     /// <param name="column"></param>
     /// <returns></returns>
     double Average<TColumn>(bool exp, TColumn column);
+    /// <summary>
+    /// <see cref="SqlFn.Round{T}(T, int)"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="value"></param>
+    /// <param name="length"></param>
+    /// <returns></returns>
+    T Round<T>(T value, int length);
     TColumn Max<TColumn>(TColumn column);
     TColumn Max<TColumn>(bool exp, TColumn column);
     TColumn Min<TColumn>(TColumn column);

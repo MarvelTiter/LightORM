@@ -1,11 +1,5 @@
-﻿using LightORM;
-using LightORM.DbStruct;
+﻿using LightORM.DbStruct;
 using LightORM.Implements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.SqlServer;
 

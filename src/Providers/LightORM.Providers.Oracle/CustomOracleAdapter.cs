@@ -1,5 +1,4 @@
-﻿using LightORM.Builder;
-using LightORM.Extension;
+﻿using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;

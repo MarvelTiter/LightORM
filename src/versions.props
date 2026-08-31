@@ -1,46 +1,46 @@
 ﻿<Project>
 	<PropertyGroup>
-		<MainProjectVersion>2026.08.26.1</MainProjectVersion>
+		<MainProjectVersion>2026.08.31.1</MainProjectVersion>
 
 		<!-- Dependency -->
-		<DependencyVersion>2026.08.26.1</DependencyVersion>
+		<DependencyVersion>2026.08.31.1</DependencyVersion>
 		<!-- Dependency依赖版本 -->
-		<DependencyDepVersion>2026.08.26.1</DependencyDepVersion>
+		<DependencyDepVersion>2026.08.31.1</DependencyDepVersion>
 
 		<!-- 达梦 -->
-		<DamengVersion>2026.08.21.1</DamengVersion>
+		<DamengVersion>2026.08.31.1</DamengVersion>
 		<!-- 达梦依赖版本 -->
-		<DamengDepVersion>2026.08.21.1</DamengDepVersion>
+		<DamengDepVersion>2026.08.31.1</DamengDepVersion>
 
 		<!-- KingbaseES -->
-		<KingbaseESVersion>2026.08.21.1</KingbaseESVersion>
+		<KingbaseESVersion>2026.08.31.1</KingbaseESVersion>
 		<!-- KingbaseES依赖版本 -->
-		<KingbaseESDepVersion>2026.08.21.1</KingbaseESDepVersion>
+		<KingbaseESDepVersion>2026.08.31.1</KingbaseESDepVersion>
 
 		<!-- MySql -->
-		<MySqlVersion>2026.08.21.1</MySqlVersion>
+		<MySqlVersion>2026.08.31.1</MySqlVersion>
 		<!-- MySql依赖版本 -->
-		<MySqlDepVersion>2026.08.21.1</MySqlDepVersion>
+		<MySqlDepVersion>2026.08.31.1</MySqlDepVersion>
 
 		<!-- Oracle -->
-		<OracleVersion>2026.08.21.1</OracleVersion>
+		<OracleVersion>2026.08.31.1</OracleVersion>
 		<!-- Oracle依赖版本 -->
-		<OracleDepVersion>2026.08.21.1</OracleDepVersion>
+		<OracleDepVersion>2026.08.31.1</OracleDepVersion>
 
 		<!-- PgSql -->
-		<PgSqlVersion>2026.08.21.1</PgSqlVersion>
+		<PgSqlVersion>2026.08.31.1</PgSqlVersion>
 		<!-- PgSql依赖版本 -->
-		<PgSqlDepVersion>2026.08.21.1</PgSqlDepVersion>
+		<PgSqlDepVersion>2026.08.31.1</PgSqlDepVersion>
 
 		<!-- Sqlite -->
-		<SqliteVersion>2026.08.21.1</SqliteVersion>
+		<SqliteVersion>2026.08.31.1</SqliteVersion>
 		<!-- Sqlite依赖版本 -->
-		<SqliteDepVersion>2026.08.21.1</SqliteDepVersion>
+		<SqliteDepVersion>2026.08.31.1</SqliteDepVersion>
 
 		<!-- SqlServer -->
-		<SqlServerVersion>2026.08.21.1</SqlServerVersion>
+		<SqlServerVersion>2026.08.31.1</SqlServerVersion>
 		<!-- SqlServer依赖版本 -->
-		<SqlServerDepVersion>2026.08.21.1</SqlServerDepVersion>
+		<SqlServerDepVersion>2026.08.31.1</SqlServerDepVersion>
 
 	</PropertyGroup>
 </Project>

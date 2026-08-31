@@ -1,6 +1,4 @@
-﻿using LightORM.DbStruct;
-using LightORM.Providers;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace LightORM.ExpressionSql;

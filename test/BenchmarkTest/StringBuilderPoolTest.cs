@@ -2,9 +2,6 @@
 using BenchmarkDotNet.Jobs;
 using LightORM;
 using LightORM.Providers.Sqlite.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BenchmarkTest;
 

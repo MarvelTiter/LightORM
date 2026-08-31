@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.PostgreSQL;
+﻿namespace LightORMTest.PostgreSQL;
 
 [TestClass]
 public class SelectResult : LightORMTest.ResultTest.ExecutionTest

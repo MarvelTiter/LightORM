@@ -1,7 +1,4 @@
-﻿using LightORM.Interfaces;
-using LightORM.Models;
-
-namespace LightORMTest.Models;
+﻿namespace LightORMTest.Models;
 
 /// <summary>
 /// 产品

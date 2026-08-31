@@ -1,12 +1,5 @@
-﻿using LightORM.Providers.MySql;
-using LightORM.Providers.Oracle;
-using LightORM.Providers.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using LightORM.Providers.Sqlite;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TestProject1.SqlFunctionTest;
 

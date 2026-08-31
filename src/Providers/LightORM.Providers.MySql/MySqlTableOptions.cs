@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Providers.MySql;
+﻿namespace LightORM.Providers.MySql;
 
 public record MySqlTableOptions : TableOptions
 {

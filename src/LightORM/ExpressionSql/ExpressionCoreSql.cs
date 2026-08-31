@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Threading;
+﻿using System.Threading;
 using LightORM.DbStruct;
 
 namespace LightORM.ExpressionSql;

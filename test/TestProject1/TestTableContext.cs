@@ -1,12 +1,4 @@
-﻿using LightORM.Cache;
-using LightORM.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TestProject1;
+﻿namespace TestProject1;
 
 [LightORMTableContext]
 internal partial class TestTableContext

@@ -1,11 +1,4 @@
-﻿using LightORMTest.Dameng;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORMTest.Dameng.SqlGenerate;
+﻿namespace LightORMTest.Dameng.SqlGenerate;
 
 [TestClass]
 public class DeleteSql:LightORMTest.SqlGenerate.DeleteSql

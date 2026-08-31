@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("InjectTest")]
 [assembly: InternalsVisibleTo("TestProject1")]
 [assembly: InternalsVisibleTo("LightORMTest")]
+[assembly: InternalsVisibleTo("LightORMTest.Sqlite")]
 [assembly: InternalsVisibleTo("LightORMTest.PostgreSQL")]
 [assembly: InternalsVisibleTo("BenchmarkTest")]
 

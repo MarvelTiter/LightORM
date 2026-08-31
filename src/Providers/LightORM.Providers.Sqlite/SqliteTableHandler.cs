@@ -1,6 +1,5 @@
 ﻿using LightORM.DbStruct;
 using LightORM.Implements;
-using System.Text;
 
 namespace LightORM.Providers.Sqlite;
 

@@ -1,9 +1,4 @@
-﻿using LightORM.SqlExecutor;
-using LightORMTest;
-using Microsoft.Extensions.Primitives;
-using System.Threading.Tasks;
-
-namespace LightORMTest.SqlGenerate;
+﻿namespace LightORMTest.SqlGenerate;
 
 public class UpdateSql : TestBase
 {

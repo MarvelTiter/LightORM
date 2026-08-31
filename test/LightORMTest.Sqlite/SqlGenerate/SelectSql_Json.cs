@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.Sqlite.SqlGenerate;
+﻿namespace LightORMTest.Sqlite.SqlGenerate;
 
 [TestClass]
 public class SelectSql_Json : LightORMTest.SqlGenerate.SelectSql_Json

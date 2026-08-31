@@ -5,27 +5,14 @@ namespace LightORM.SqlExecutor;
 
 internal partial class ExpressionBuilder
 {
-    private readonly record struct NumberRange(double Min, double Max);
-    private static readonly Dictionary<Type, NumberRange> numericRanges = new()
-    {
-        { typeof(byte), new(byte.MinValue, byte.MaxValue) },
-        { typeof(sbyte), new(sbyte.MinValue, sbyte.MaxValue) },
-        { typeof(short),new (short.MinValue, short.MaxValue) },
-        { typeof(ushort), new(ushort.MinValue, ushort.MaxValue) },
-        { typeof(int), new(int.MinValue, int.MaxValue) },
-        { typeof(uint),new (uint.MinValue, uint.MaxValue) },
-        { typeof(long),new (long.MinValue, long.MaxValue) },
-        { typeof(ulong),new (ulong.MinValue, ulong.MaxValue) },
-        { typeof(float),new (float.MinValue, float.MaxValue) },
-        { typeof(double),new (double.MinValue, double.MaxValue) },
-    };
-
     static Type GetSafeIntermediateType(Type sourceType, Type targetType)
     {
         if (!sourceType.IsNumber() || !targetType.IsNumber())
         {
             return sourceType;
         }
+        sourceType = GetUnderlyingType(sourceType).Type;
+        targetType = GetUnderlyingType(targetType).Type;
 
         // 特殊处理 decimal
         if (sourceType == typeof(decimal) || targetType == typeof(decimal))
@@ -33,12 +20,7 @@ internal partial class ExpressionBuilder
             return HandleDecimalConversion(sourceType, targetType);
         }
 
-        if (IsSafeNumericConversion(sourceType, targetType))
-        {
-            return targetType;
-        }
-
-        return GetTypeWithLargerRange(sourceType, targetType);
+        return sourceType;
 
         static Type HandleDecimalConversion(Type sourceType, Type targetType)
         {
@@ -89,30 +71,6 @@ internal partial class ExpressionBuilder
             }
 
             return typeof(decimal);
-        }
-
-        static bool IsSafeNumericConversion(Type sourceType, Type targetType)
-        {
-
-            if (!numericRanges.TryGetValue(sourceType, out var sourceRange) ||
-                !numericRanges.TryGetValue(targetType, out var targetRange))
-                return false;
-
-            // 源类型的范围必须在目标类型范围内
-            return sourceRange.Min >= targetRange.Min && sourceRange.Max <= targetRange.Max;
-        }
-
-        static Type GetTypeWithLargerRange(Type type1, Type type2)
-        {
-            if (!numericRanges.TryGetValue(type1, out var range1) ||
-                !numericRanges.TryGetValue(type2, out var range2))
-                return type1;
-
-            // 比较范围大小
-            double size1 = range1.Max - range1.Min;
-            double size2 = range2.Max - range2.Min;
-
-            return size1 >= size2 ? type1 : type2;
         }
     }
 

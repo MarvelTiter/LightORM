@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORM.Utils;
+﻿namespace LightORM.Utils;
 
 internal class TableColumnInfoEqual : IEqualityComparer<ITableColumnInfo>
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.Oracle.ScopedTest;
+﻿namespace LightORMTest.Oracle.ScopedTest;
 
 [TestClass]
 public class TransactionTest: LightORMTest.ScopedTest.TransactionTest

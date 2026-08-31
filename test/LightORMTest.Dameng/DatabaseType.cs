@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.Dameng
+﻿namespace LightORMTest.Dameng
 {
     internal class DatabaseType
     {

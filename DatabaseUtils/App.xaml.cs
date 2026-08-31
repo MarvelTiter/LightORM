@@ -1,7 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.IO;
-using System.Windows;
+﻿using System.Windows;
 
 namespace DatabaseUtils
 {

@@ -1,6 +1,4 @@
 ﻿#nullable disable
-using System.Diagnostics.CodeAnalysis;
-
 namespace TestWeb.Models;
 
 

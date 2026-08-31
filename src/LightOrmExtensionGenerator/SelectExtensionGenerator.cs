@@ -1,6 +1,5 @@
 ﻿using Generators.Shared;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Linq;
 
 namespace LightOrmExtensionGenerator

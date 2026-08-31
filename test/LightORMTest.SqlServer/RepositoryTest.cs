@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LightORMTest.SqlServer;
+﻿namespace LightORMTest.SqlServer;
 
 [TestClass]
 public class RepositoryTest : LightORMTest.RepositoryTest

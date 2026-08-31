@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace LightORMTest;
+﻿namespace LightORMTest;
 
 public class AdoTest : TestBase
 {
@@ -20,4 +18,5 @@ public class AdoTest : TestBase
         Console.WriteLine($"任务{i} -> 结果:{r.Count}");
         await scope.CommitAllTransactionAsync();
     }
+
 }

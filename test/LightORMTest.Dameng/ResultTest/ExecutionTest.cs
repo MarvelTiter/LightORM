@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LightORMTest.Dameng.ResultTest;
+﻿namespace LightORMTest.Dameng.ResultTest;
 
 [TestClass]
 public class ExecutionTest : LightORMTest.ResultTest.ExecutionTest

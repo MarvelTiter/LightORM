@@ -2,19 +2,11 @@
 using LightORM.Extension;
 using LightORM.Models;
 using LightORM.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LightORM.Providers.PostgreSQL;
 
 partial class CustomPostgreSQL
 {
-    const string NEW_VERSION_COLUMN = "NewVersionValue";
-
     public override void HandleBatchInsert<T>(BatchActionContext<InsertBuilder<T>> context)
     {
         if (context.Builder.UpdateOnConflict || context.Builder.IgnoreOnConflict)
