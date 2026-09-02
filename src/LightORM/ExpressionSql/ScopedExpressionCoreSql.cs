@@ -48,7 +48,21 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
     {
         foreach (var item in connections.Values)
         {
-            item.Dispose();
+            if (item.State == AdoState.Active && item.UnderTransaction)
+            {
+                try
+                {
+                    item.CommitTransaction();
+                }
+                catch (Exception)
+                {
+                    item.RollbackTransaction();
+                }
+            }
+            else
+            {
+                item.Dispose();
+            }
         }
     }
 

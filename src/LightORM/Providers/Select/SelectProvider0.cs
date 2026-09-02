@@ -1,6 +1,4 @@
-﻿
-
-using LightORM.Implements;
+﻿using LightORM.Implements;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -91,7 +89,18 @@ T1> : IExpSelect0<TSelect, T1> where TSelect : class, IExpSelect
     }
     public TSelect WhereIf<TTable>(bool condition, Expression<Func<TTable, bool>> exp)
     {
-        if (condition) this.WhereHandle(exp);
+        if (condition)
+        {
+            if (typeof(TTable).Name.StartsWith("TypeSet`"))
+            {
+                var flatExp = FlatTypeSet.Default.Flat(exp);
+                this.WhereHandle(flatExp);
+            }
+            else
+            {
+                this.WhereHandle(exp);
+            }
+        }
         return (this as TSelect)!;
     }
 
