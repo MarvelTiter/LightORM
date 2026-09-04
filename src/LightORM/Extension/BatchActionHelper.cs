@@ -61,7 +61,10 @@
                     pList.Add(row);
                 }
 
-                list.Add(new BatchSqlInfo(pList, i + 1));
+                list.Add(new BatchSqlInfo(pList, i + 1)
+                {
+                    SetCount = columns.Length
+                });
             }
             return list;
 

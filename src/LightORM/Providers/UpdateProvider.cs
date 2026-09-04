@@ -74,6 +74,10 @@ namespace LightORM.Providers
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
+                        if (item.SetCount == 0)
+                        {
+                            continue;
+                        }
                         effectRows += ado.ExecuteNonQuery(item.Sql!, item.ToDictionaryParameters());
                     }
                     if (ado.Connection.UnderTransaction)
@@ -94,6 +98,10 @@ namespace LightORM.Providers
             }
             else
             {
+                if (sqlBuilder.SetCount == 0)
+                {
+                    return 0;
+                }
                 var dbParameters = sqlBuilder.DbParameters;
                 return ado.ExecuteNonQuery(sql, dbParameters);
             }
@@ -117,6 +125,10 @@ namespace LightORM.Providers
                     }
                     foreach (var item in sqlBuilder.BatchInfos!)
                     {
+                        if (item.SetCount == 0)
+                        {
+                            continue;
+                        }
                         effectRows += await ado.ExecuteNonQueryAsync(item.Sql!, item.ToDictionaryParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
                     }
                     if (ado.Connection.UnderTransaction)
@@ -145,6 +157,10 @@ namespace LightORM.Providers
             }
             else
             {
+                if (sqlBuilder.SetCount == 0)
+                {
+                    return 0;
+                }
                 var dbParameters = sqlBuilder.DbParameters;
                 return await ado.ExecuteNonQueryAsync(sql, dbParameters, cancellationToken: cancellationToken);
             }

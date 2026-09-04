@@ -40,6 +40,7 @@ internal class UpdateBuilder<T> : SqlBuilder
     public bool IsBatchUpdate { get; internal set; }
     public VersionInfo VersionInfo { get; set; }
     public bool UseVersionColumn { get; private set; }
+    public int SetCount => Members.Count + SetNullMembers.Count;
     public void AddMember(string member, object? value)
     {
         Members.Add(member);
