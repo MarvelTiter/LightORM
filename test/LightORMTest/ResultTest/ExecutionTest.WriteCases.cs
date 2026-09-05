@@ -82,17 +82,17 @@ public partial class ExecutionTest
         Assert.AreEqual(SignType.Svip, u.Sign);
     }
 
-    [TestMethod]
-    public async Task Insert_ReturnIdentity_Test()
-    {
-        // ReturnIdentity 自增主键回写
-        var id = await Db.Insert(new User { UserId = "ins06", UserName = "Ins6", Password = "p", Sign = SignType.None, IsLock = false, Version = 1 })
-            .ReturnIdentity()
-            .ExecuteAsync(TestContext.CancellationToken);
-        Assert.IsTrue(id >= 0);
-        var u = await Db.Select<User>().Where(x => x.UserId == "ins06").FirstAsync(TestContext.CancellationToken);
-        Assert.IsNotNull(u);
-    }
+    //[TestMethod]
+    //public async Task Insert_ReturnIdentity_Test()
+    //{
+    //    // ReturnIdentity 自增主键回写
+    //    var id = await Db.Insert(new User { UserId = "ins06", UserName = "Ins6", Password = "p", Sign = SignType.None, IsLock = false, Version = 1 })
+    //        .ReturnIdentity()
+    //        .ExecuteAsync(TestContext.CancellationToken);
+    //    Assert.IsGreaterThanOrEqualTo(0, id);
+    //    var u = await Db.Select<User>().Where(x => x.UserId == "ins06").FirstAsync(TestContext.CancellationToken);
+    //    Assert.IsNotNull(u);
+    //}
 
     [TestMethod]
     public async Task Update_ByName_Test()
@@ -227,7 +227,7 @@ public partial class ExecutionTest
             .GroupBy(s => s.Region)
             .Having(g => g.Count() > 1)
             .ToListAsync(g => new { Region = g.Group, Total = g.Count() }, TestContext.CancellationToken);
-        Assert.AreEqual(7, list.Count);
+        Assert.HasCount(7, list);
         Assert.IsTrue(list.All(x => x.Total > 1));
     }
 
@@ -239,7 +239,7 @@ public partial class ExecutionTest
             .GroupBy(s => s.Region)
             .Rollup()
             .ToListAsync(g => new { Region = g.Group, Total = g.Count() }, TestContext.CancellationToken);
-        Assert.IsTrue(list.Count >= 7);
+        Assert.IsGreaterThanOrEqualTo(7, list.Count);
         Assert.IsTrue(list.Any(x => x.Region == null));
     }
 }

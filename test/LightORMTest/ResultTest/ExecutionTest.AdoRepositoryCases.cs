@@ -60,7 +60,7 @@ public partial class ExecutionTest
         // 一条命令多结果集（注意：部分方言需开启多语句支持）
         var userTable = CurrentDefaultProvider.DatabaseAdapter.AttachEmphasis("USER");
         var roleTable = CurrentDefaultProvider.DatabaseAdapter.AttachEmphasis("ROLE");
-        using var multi = Db.Ado.QueryMultiple($"select * from {userTable}; select * from {roleTable};", new { });
+        using var multi = Db.Ado.QueryMultiple([$"select * from {userTable}", $"select * from {roleTable}"]);
         var users = await multi.ReadListAsync<User>();
         var roles = await multi.ReadListAsync<Role>();
         Assert.HasCount(6, users);
@@ -81,7 +81,7 @@ public partial class ExecutionTest
 
         // Insert + SaveChanges
         var inserted = repo.Insert(new User { UserId = "repo01", UserName = "Repo1", Password = "p", IsLock = false, Sign = SignType.None });
-        Assert.IsTrue(inserted > 0);
+        Assert.IsGreaterThan(0, inserted);
         Assert.IsTrue(repo.SaveChanges());
 
         // InsertRange + SaveChanges
@@ -94,7 +94,7 @@ public partial class ExecutionTest
         // Update + SaveChanges
         var toUpdate = await Db.Select<User>().Where(x => x.UserId == "repo02").FirstAsync(TestContext.CancellationToken);
         toUpdate!.UserName = "Repo2_Updated";
-        Assert.IsTrue(repo.Update(toUpdate) > 0);
+        Assert.IsGreaterThan(0, repo.Update(toUpdate));
         Assert.IsTrue(repo.SaveChanges());
         var updated = await Db.Select<User>().Where(x => x.UserId == "repo02").FirstAsync(TestContext.CancellationToken);
         Assert.AreEqual("Repo2_Updated", updated!.UserName);
@@ -110,7 +110,7 @@ public partial class ExecutionTest
 
         // 异步 InsertAsync / DeleteAsync
         var insAsync = await repo.InsertAsync(new User { UserId = "repo04", UserName = "Repo4", Password = "p", IsLock = false, Sign = SignType.None }, TestContext.CancellationToken);
-        Assert.IsTrue(insAsync > 0);
+        Assert.IsGreaterThan(0, insAsync);
         Assert.AreEqual(1, await repo.DeleteAsync("repo04", cancellationToken: TestContext.CancellationToken));
         Assert.IsTrue(repo.SaveChanges());
     }

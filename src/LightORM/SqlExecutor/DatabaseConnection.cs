@@ -13,7 +13,7 @@ internal enum AdoState
 }
 public class DatabaseConnection : IDisposable
 {
-    private bool disposed;
+    //private bool disposed;
     public bool IsOccurException => State == AdoState.OccurException;
     internal AdoState State { get; private set; }
     public IDatabaseProvider Provider { get; }
@@ -50,7 +50,7 @@ public class DatabaseConnection : IDisposable
     {
         try
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            //ObjectDisposedException.ThrowIf(disposed, this);
             if (Transaction is null)
             {
                 if (Connection.State != ConnectionState.Open)
@@ -185,7 +185,7 @@ public class DatabaseConnection : IDisposable
     {
         try
         {
-            ObjectDisposedException.ThrowIf(disposed, this);
+            //ObjectDisposedException.ThrowIf(disposed, this);
             if (Transaction is null)
             {
                 if (Connection.State != ConnectionState.Open)
@@ -316,8 +316,8 @@ public class DatabaseConnection : IDisposable
 
     public void Dispose()
     {
-        if (disposed)
-            return;
+        //if (disposed)
+        //    return;
         // 内部事务创建的事务上下文
         if (!IsExternal)
         {
@@ -333,7 +333,7 @@ public class DatabaseConnection : IDisposable
             Transaction?.Dispose();
             Transaction = null;
         }
-        disposed = true;
+        //disposed = true;
         GC.SuppressFinalize(this);
     }
 }

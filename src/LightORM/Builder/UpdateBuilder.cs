@@ -309,18 +309,26 @@ internal class UpdateBuilder<T> : SqlBuilder
             }
             sb.AppendEmphasis(c.ColumnName, database);
             sb.Append(" = ");
-            sb.WithPrefix(c.PropertyName, database);
-            if (c.IsJsonColumn)
+            if (value is bool b)
             {
-                // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-                var jsonString = jsonHandler.Serialize(value);
-                DbParameters[c.PropertyName] = jsonString;
+                sb.Append(database.FormatBooleanValue(b));
+                DbParameters.Remove(c.PropertyName);
             }
-            if (!valueFounded)
+            else
             {
-                DbParameters.Add(c.PropertyName, value!);
+                sb.WithPrefix(c.PropertyName, database);
+                if (c.IsJsonColumn)
+                {
+                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
+                    database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+                    var jsonString = jsonHandler.Serialize(value);
+                    DbParameters[c.PropertyName] = jsonString;
+                }
+                if (!valueFounded)
+                {
+                    DbParameters.Add(c.PropertyName, value!);
+                }
             }
 
             sb.AppendLine(",");

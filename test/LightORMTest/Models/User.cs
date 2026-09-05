@@ -9,7 +9,7 @@ public enum SignType
     Svip = 2
 }
 
-[LightTable(Name = "USER", DatabaseKey = "Test")]
+[LightTable(Name = "USER")]
 public class User
 {
     /// <summary>

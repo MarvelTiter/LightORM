@@ -85,7 +85,14 @@ internal class InternalDataReaderLight(DbDataReader dataReader, PrepareResult pr
 
     public override int GetOrdinal(string name) => dataReader.GetOrdinal(name);
 
-    public override string GetString(int ordinal) => dataReader.GetString(ordinal);
+    public override string GetString(int ordinal)
+    {
+        if (dataReader.IsDBNull(ordinal))
+        {
+            return null!;
+        }
+        return dataReader.GetString(ordinal);
+    }
 
     public override object GetValue(int ordinal) => dataReader.GetValue(ordinal);
 

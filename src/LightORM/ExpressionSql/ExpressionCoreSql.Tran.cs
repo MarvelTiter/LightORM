@@ -15,6 +15,7 @@ namespace LightORM.ExpressionSql
         {
             Debug.WriteLine("CreateScoped");
             var connection = connectionFactory.GetDatabaseConnection(key);
+            Debug.WriteLine($"Scoped 连接ID: {connection.Id}");
             return new SingleScopedExpressionCoreSql(connection, Options);
         }
 

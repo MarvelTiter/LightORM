@@ -32,8 +32,12 @@ public static partial class SqlExecutorExtensions
         public DbDataReader ExecuteReader(string commandText, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
              => executor.ExecuteReader(commandText, NullDbParameter.Instance, commandType, behavior);
 
-        public MultipleResult QueryMultiple(string sql, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
-            => executor.QueryMultiple(sql, NullDbParameter.Instance, commandType, behavior);
+        public MultipleResult QueryMultiple(string[] sqls, Dictionary<string, object>? parameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null)
+        {
+            parameters ??= [];
+            var sql = executor.Provider.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
+            return executor.QueryMultiple(sql, parameters, commandType, behavior);
+        }
 
         public DataSet ExecuteDataSet(string commandText, CommandType commandType = CommandType.Text)
             => executor.ExecuteDataSet(commandText, NullDbParameter.Instance, commandType);
