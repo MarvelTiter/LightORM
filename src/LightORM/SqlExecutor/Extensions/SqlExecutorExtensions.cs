@@ -237,7 +237,6 @@ public static partial class SqlExecutorExtensions
             {
                 await reader.CloseAsync();
             }
-            reader?.Close();
         }
     }
 
@@ -276,7 +275,6 @@ public static partial class SqlExecutorExtensions
             {
                 await reader.CloseAsync();
             }
-            reader?.Close();
         }
     }
 #endif

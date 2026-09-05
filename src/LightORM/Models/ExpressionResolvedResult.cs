@@ -8,6 +8,7 @@ internal record ExpressionResolvedResult
     {
         SqlString = ReplaceConstantValue(resolve);
         Members = [.. resolve.ResolvedMembers];
+        SelectedMembers = [.. resolve.SelectedMember];
         MemberOfNavigateMember = resolve.MemberOfNavigateMember;
         UseNavigate = resolve.UseNavigate;
         NavigateDeep = resolve.NavigateDeep;
@@ -40,7 +41,9 @@ internal record ExpressionResolvedResult
     /// <summary>
     /// 解析到的成员
     /// </summary>
-    public IReadOnlyList<string>? Members { get; }
+    public IReadOnlyList<string> Members { get; }
+    public IReadOnlyList<SelectMap> SelectedMembers { get; }
+
     /// <summary>
     /// 是否使用了导航属性
     /// </summary>

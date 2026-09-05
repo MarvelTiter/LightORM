@@ -18,6 +18,7 @@
     {
         public int Index { get; set; } = index;
         public string? Sql { get; set; }
+        public int SetCount { get; set; }
         public List<List<SimpleColumn>> RowParameters { get; set; } = parameters;
     }
 }

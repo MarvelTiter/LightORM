@@ -30,6 +30,11 @@ public enum ActionType
 
 public readonly record struct MapEntry(string Column, string Value);
 
+internal readonly record struct SelectContext(SelectBuilder Builder
+    , StringBuilder Sql
+    , IDatabaseAdapter ScopedAdapter
+    , string Ident);
+
 internal readonly record struct UpsertContext(SqlBuilder Builder, StringBuilder Sql, Dictionary<ITableColumnInfo, MapEntry> ColumnValueMap, Dictionary<string, object> Parameters, bool IgnoreWhenMap, IDatabaseAdapter ScopedAdapter);
 
 internal readonly record struct BatchActionContext(SqlBuilder Builder

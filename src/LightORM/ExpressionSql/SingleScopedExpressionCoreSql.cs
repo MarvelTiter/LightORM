@@ -30,6 +30,7 @@ internal sealed class SingleScopedExpressionCoreSql(DatabaseConnection databaseC
 
     public void Dispose()
     {
+        databaseConnection.KeepAlive = false;
         if (databaseConnection.State == AdoState.Active && databaseConnection.UnderTransaction)
         {
             try

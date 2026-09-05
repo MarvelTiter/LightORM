@@ -1,4 +1,5 @@
-﻿using LightORM.Extension;
+﻿using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
@@ -15,6 +16,39 @@ internal sealed partial class CustomMySqlAdapter(ISqlMethodResolver methodResolv
     public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
     {
         sql.AppendLine($"LIMIT {builder.Skip}, {builder.Take}");
+    }
+
+    public override void HandleSelectGroupBySegment(SelectContext context)
+    {
+        var over8 = tableOptions.Version > new Version(8, 0);
+        if (over8)
+        {
+            base.HandleSelectGroupBySegment(context);
+        }
+        else
+        {
+            var sql = context.Sql;
+            var builder = context.Builder;
+            var ident = context.Ident;
+            if (builder.IsRollup)
+            {
+                // $"{ident}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})"
+                sql.Append(ident).Append("GROUP BY (").Append(builder.GroupBy).AppendLine(") WITH ROLLUP");
+            }
+            else if (builder.IsCube)
+            {
+                throw new NotSupportedException("MySQL 8.0 以下版本不支持 CUBE 分组");
+            }
+            else if (builder.GroupingSets.Count > 0)
+            {
+                throw new NotSupportedException("MySQL 8.0 以下版本不支持 GROUPING SETS 分组");
+            }
+            else
+            {
+                // $"{ident}GROUP BY {string.Join(", ", GroupBy)}"
+                sql.Append(ident).Append("GROUP BY ").Append(builder.GroupBy).AppendLine();
+            }
+        }
     }
     public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
 

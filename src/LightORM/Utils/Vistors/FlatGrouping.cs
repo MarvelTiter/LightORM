@@ -150,7 +150,11 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
             {
                 if (keySelector?.Body is MemberExpression m)
                 {
-                    return m;
+                    var np = parameters.FirstOrDefault(p => p.Type == m.Expression?.Type);
+                    if (np is not null)
+                    {
+                        return SafeCreateProperty(np, m.Member.Name);
+                    }
                 }
                 else
                 {
@@ -170,6 +174,7 @@ internal class FlatGrouping : ExpressionVisitor, IResetable
 
         return base.VisitMember(node);
     }
+
 
 #if NET8_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL3050", Justification = "TypeSet或IExpSelectGrouping 的泛型参数和成员由用户显式编写，AOT 安全")]

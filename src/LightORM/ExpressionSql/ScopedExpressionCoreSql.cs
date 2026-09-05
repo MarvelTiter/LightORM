@@ -12,12 +12,17 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
     private readonly ConcurrentDictionary<string, DatabaseConnection> connections = [];
     private TransientContext? current;
     public override SqlAdo Ado => current?.Ado ?? DefaultAdo;
-
+    private DatabaseConnection GetConnection(string key)
+    {
+        var conn = connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection);
+        conn.KeepAlive = true;
+        return conn;
+    }
     public SqlAdo DefaultAdo
     {
         get
         {
-            var connection = connections.GetOrAdd(Options.DefaultDbKey, connectionFactory.GetDatabaseConnection);
+            var connection = GetConnection(Options.DefaultDbKey);
             if (useTrans)
             {
                 connection.BeginTransaction();
@@ -33,7 +38,7 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
         {
             return ctx;
         }
-        var connection = connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection);
+        var connection = GetConnection(key);
         if (useTrans)
         {
             connection.BeginTransaction(isolationLevel);
@@ -48,6 +53,7 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
     {
         foreach (var item in connections.Values)
         {
+            item.KeepAlive = false;
             if (item.State == AdoState.Active && item.UnderTransaction)
             {
                 try
@@ -90,13 +96,13 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
         }
     }
     public void BeginTransaction(string key = "MainDb", IsolationLevel isolationLevel = IsolationLevel.Unspecified)
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).BeginTransaction(isolationLevel);
+        => GetConnection(key).BeginTransaction(isolationLevel);
 
     public void CommitTransaction(string key = "MainDb")
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).CommitTransaction();
+        => GetConnection(key).CommitTransaction();
 
     public void RollbackTransaction(string key = "MainDb")
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).RollbackTransaction();
+        => GetConnection(key).RollbackTransaction();
 
 #if NET8_0_OR_GREATER
     public async Task BeginAllTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
@@ -130,15 +136,15 @@ internal sealed class ScopedExpressionCoreSql(ExpressionSqlOptions options) : Ex
     public Task BeginTransactionAsync(string key = "MainDb"
         , IsolationLevel isolationLevel = IsolationLevel.Unspecified
         , CancellationToken cancellationToken = default)
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).BeginTransactionAsync(isolationLevel, cancellationToken);
+        => GetConnection(key).BeginTransactionAsync(isolationLevel, cancellationToken);
 
 
     public Task CommitTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default)
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).CommitTransactionAsync(cancellationToken);
+        => GetConnection(key).CommitTransactionAsync(cancellationToken);
 
 
     public Task RollbackTransactionAsync(string key = "MainDb", CancellationToken cancellationToken = default)
-        => connections.GetOrAdd(key, connectionFactory.GetDatabaseConnection).RollbackTransactionAsync(cancellationToken);
+        => GetConnection(key).RollbackTransactionAsync(cancellationToken);
 #endif
 
 }

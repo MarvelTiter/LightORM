@@ -394,6 +394,11 @@ namespace LightORM.Implements
                 resolver.Visit(methodCall.Arguments[i]);
                 resolver.Sql.Append(',');
             }
+            var type = fallbackValue.Type;
+            if (type == typeof(string))
+            {
+                resolver.Sql.Append('N');
+            }
             resolver.Visit(fallbackValue);
             resolver.Sql.Append(')');
         }

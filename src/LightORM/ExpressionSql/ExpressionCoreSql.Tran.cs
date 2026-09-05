@@ -8,6 +8,7 @@ namespace LightORM.ExpressionSql
         {
 
             var connection = connectionFactory.GetDatabaseConnection(db);
+            connection.KeepAlive = true;
             return new SingleScopedExpressionCoreSql(connection, Options);
         }
 
@@ -15,6 +16,7 @@ namespace LightORM.ExpressionSql
         {
             Debug.WriteLine("CreateScoped");
             var connection = connectionFactory.GetDatabaseConnection(key);
+            connection.KeepAlive = true;
             return new SingleScopedExpressionCoreSql(connection, Options);
         }
 

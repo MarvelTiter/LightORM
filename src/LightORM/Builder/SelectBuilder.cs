@@ -42,6 +42,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public List<SelectBuilder> TempViews { get; } = [];
     public SelectBuilder? SubQuery { get; set; }
     public List<UnionItem> Unions { get; } = [];
+    public HashSet<SelectMap> SelectedMembers { get; set; } = [];
     public bool IsSubQuery { get; set; }
     public bool IsTemp { get; set; }
     public bool IsUnion { get; set; }
@@ -54,6 +55,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public bool IsCube { get; set; }
     public string SelectValue { get; set; } = "*";
     public int Depth { get; set; }
+
     private readonly List<JoinInfo> joins = [];
     public List<string> Having { get; set; } = [];
     public SortedSet<IncludeInfo> Includes { get; set; } = [];
@@ -61,6 +63,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
     public string? GroupBy { get; set; }
     public List<string> GroupingSets { get; set; } = [];
     public List<string> OrderBy { get; set; } = [];
+    public HashSet<string> OrderByMembers { get; set; } = [];
     public int TableIndexFix { get; set; }
     public object? AdditionalValue { get; set; }
     public int NextTableIndex => SelectedTables.Count + joins.Count + TableIndexFix;
@@ -191,6 +194,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
                     }
                 }
             }
+            SelectedMembers.AddRange(result.SelectedMembers);
             if (!string.IsNullOrWhiteSpace(result.SqlString))
             {
                 SelectValue = result.SqlString!;
@@ -209,6 +213,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.OrderBy)
         {
+            OrderByMembers.AddRange(result.Members);
             OrderBy.Add(result.SqlString!);
             AdditionalValue = expInfo.AdditionalParameter;
         }
@@ -321,7 +326,6 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         return sqlString;
     }
 
-    private const string UNIT_IDENT = "    ";
     public void Build(StringBuilder sql, IDatabaseAdapter database, int currentLevel)
     {
         Depth = currentLevel;
@@ -436,33 +440,7 @@ internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
         }
         if (GroupBy is { })
         {
-            if (IsRollup)
-            {
-                // $"{ident}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})"
-                sql.Append(ident).Append("GROUP BY ROLLUP (").Append(GroupBy).AppendLine(")");
-            }
-            else if (IsCube)
-            {
-                // $"{ident}GROUP BY CUBE ({string.Join(", ", GroupBy)})"
-                sql.Append(ident).Append("GROUP BY CUBE (").Append(GroupBy).AppendLine(")");
-            }
-            else if (GroupingSets.Count > 0)
-            {
-                sql.Append(ident).AppendLine("GROUP BY GROUPING SETS (");
-                foreach (var set in GroupingSets)
-                {
-                    sql.Append(ident).Append(UNIT_IDENT)
-                        .Append('(').Append(set).Append(')').AppendLine(",");
-                }
-                sql.RemoveLast(N.Length + 1);
-                sql.AppendLine();
-                sql.Append(ident).AppendLine(")");
-            }
-            else
-            {
-                // $"{ident}GROUP BY {string.Join(", ", GroupBy)}"
-                sql.Append(ident).Append("GROUP BY ").Append(GroupBy).AppendLine();
-            }
+            database.HandleSelectGroupBySegment(new(this, sql, database, ident));
         }
         if (Having.Count > 0)
         {

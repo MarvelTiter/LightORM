@@ -375,10 +375,11 @@ public partial class ExecutionTest
             Console.WriteLine($"捕获异常: {ex.Message}");
             // 注意：这里没有调用 Rollback 或 Commit
             // 依赖 scope 的 Dispose 自动处理
+            scope.RollbackTransaction();
         }
         finally
         {
-            // 手动释放（会触发自动回滚）
+            // 手动释放（会触发自动提交）
             scope.Dispose();
         }
 

@@ -145,6 +145,40 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
 
     public virtual void DbCommandInit(DbCommand dbCommand) { }
 
+    public virtual void HandleSelectGroupBySegment(SelectContext context)
+    {
+        var sql = context.Sql;
+        var builder = context.Builder;
+        var ident = context.Ident;
+        if (builder.IsRollup)
+        {
+            // $"{ident}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})"
+            sql.Append(ident).Append("GROUP BY ROLLUP (").Append(builder.GroupBy).AppendLine(")");
+        }
+        else if (builder.IsCube)
+        {
+            // $"{ident}GROUP BY CUBE ({string.Join(", ", GroupBy)})"
+            sql.Append(ident).Append("GROUP BY CUBE (").Append(builder.GroupBy).AppendLine(")");
+        }
+        else if (builder.GroupingSets.Count > 0)
+        {
+            sql.Append(ident).AppendLine("GROUP BY GROUPING SETS (");
+            foreach (var set in builder.GroupingSets)
+            {
+                sql.Append(ident).Append(SqlBuilder.UNIT_IDENT)
+                    .Append('(').Append(set).Append(')').AppendLine(",");
+            }
+            sql.RemoveLast(SqlBuilder.N.Length + 1);
+            sql.AppendLine();
+            sql.Append(ident).AppendLine(")");
+        }
+        else
+        {
+            // $"{ident}GROUP BY {string.Join(", ", GroupBy)}"
+            sql.Append(ident).Append("GROUP BY ").Append(builder.GroupBy).AppendLine();
+        }
+    }
+
     public virtual void HandleInsertOrUpdate(UpsertContext context)
     {
         throw new NotImplementedException();
@@ -220,9 +254,11 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
             //sb.Append(GetTableName(database, MainTable, false));
             sb.AppendTableName(database, builder.MainTable, false);
             sb.Append(" SET ");
-            for (int i = 0; i < updateColumns.Length; i++)
+            var currentBatchColumns = FilterAllNullColumns(batch, updateColumns);
+            //for (int i = 0; i < currentBatchColumns.Length; i++)
+            foreach(var col in currentBatchColumns)
             {
-                ITableColumnInfo? col = updateColumns[i];
+                //ITableColumnInfo? col = currentBatchColumns[i];
                 if (col.IsPrimaryKey) continue;
                 //sb.Append($"\n{database.AttachEmphasis(col.ColumnName)} = CASE ");
                 sb.AppendEmphasis(col.ColumnName, database);
@@ -282,7 +318,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                 foreach (var i in item)
                 {
                     sb.AppendSimpleColumnParameter(i, database);
-                    
+
                     sb.Append(',');
                 }
                 sb.RemoveLast(1);
@@ -303,6 +339,30 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
             }
             builder.HandleSqlParameters(sb, database);
             batch.Sql = sb.ToString();
+        }
+ 
+        static IEnumerable<ITableColumnInfo> FilterAllNullColumns(BatchSqlInfo batch, ITableColumnInfo[] columns)
+        {
+            foreach (var item in columns)
+            {
+               var allNull = batch.RowParameters.All(row =>
+                {
+                    SimpleColumn c = row.First(r =>
+                    {
+                        if (r.IsVersion)
+                        {
+                            return r.IsNewVersion && r.PropName == item.PropertyName;
+                        }
+                        return r.PropName == item.PropertyName;
+                    });
+                    return c.Value is null;
+                });
+                if (allNull)
+                {
+                    continue;
+                }
+                yield return item;
+            }
         }
     }
 
@@ -336,15 +396,22 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
                     sb.Append('(');
                     for (var i = 0; i < row.Count; i++)
                     {
-                        if (i > 0)
+                        //if (i > 0)
+                        //{
+                        //    sb.Append(" AND ");
+                        //}
+                        var cell = row[i];
+                        if (cell.IsNewVersion)
                         {
-                            sb.Append(" AND ");
+                            continue;
                         }
-                        sb.AppendEmphasis(row[i].ColumnName, database);
+                        sb.AppendEmphasis(cell.ColumnName, database);
                         sb.Append(" = ");
-                        //sb.WithPrefix(row[i].ParameterName, database);
-                        sb.AppendSimpleColumnParameter(row[i], database);
+                        //sb.WithPrefix(cell.ParameterName, database);
+                        sb.AppendSimpleColumnParameter(cell, database);
+                        sb.Append(" AND ");
                     }
+                    sb.RemoveLast(5);
                     sb.Append(')');
                     if (rowIndex < batch.RowParameters.Count - 1)
                         sb.Append(" OR ");

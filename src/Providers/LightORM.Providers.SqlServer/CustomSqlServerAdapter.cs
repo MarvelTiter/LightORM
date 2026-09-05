@@ -23,17 +23,31 @@ internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, I
         else
         {
             var orderByString = "";
-            var orderByType = "";
-            if (builder.OrderBy.Count == 0)
+            var orderByType = (builder.AdditionalValue == null ? " ASC" : $" {builder.AdditionalValue}");
+            if (builder.SelectedMembers.Count == 0)
             {
-                var col = builder.MainTable.TableEntityInfo.Columns.First(c => c.IsPrimaryKey);
-                orderByString = $"Sub.{col.ColumnName}";
-                orderByType = " ASC";
+                if (builder.OrderByMembers.Count > 0)
+                {
+                    orderByString = string.Join(", ", builder.MainTable.TableEntityInfo.Columns.Where(c => builder.OrderByMembers.Contains(c.PropertyName)).Select(c => $"Sub.{this.AttachEmphasis(c.ColumnName)}"));
+                }
+                else
+                {
+                    var col = builder.MainTable.TableEntityInfo.Columns.First(c => c.IsPrimaryKey);
+                    orderByString = $"Sub.{col.ColumnName}";
+                }
             }
             else
             {
-                orderByString = string.Join(",", builder.OrderBy.Select(s => s.Split('.')[1]));
-                orderByType = (builder.AdditionalValue == null ? "" : $" {builder.AdditionalValue}");
+                if (builder.OrderByMembers.Count > 0)
+                {
+                    var outerOrderColumns = builder.SelectedMembers.Where(s => s.Source is not null && builder.OrderByMembers.Contains(s.Source)).Select(s => s.Column);
+                    orderByString = string.Join(", ", outerOrderColumns.Select(c => $"Sub.{this.AttachEmphasis(c)}"));
+                }
+                else
+                {
+                    var c = builder.SelectedMembers.First().Column;
+                    orderByString = $"Sub.{this.AttachEmphasis(c)}";
+                }
             }
             sql.Insert(6, " TOP (100) PERCENT");
             sql.Insert(0, $"SELECT ROW_NUMBER() OVER(ORDER BY {orderByString}{orderByType}) ROWNO, Sub.* FROM (\n");

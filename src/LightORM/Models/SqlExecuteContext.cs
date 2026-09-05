@@ -15,7 +15,7 @@ public enum ExecuteMethod
 }
 public class SqlExecuteContext
 {
-
+    public int? ConnectionId { get; set; }
     public string TraceId { get; }
     public ExecuteMethod ExecuteType { get; }
     public string? Sql { get; }
@@ -29,6 +29,7 @@ public class SqlExecuteContext
 
     public SqlExecuteContext(SqlExecuteContext other)
     {
+        ConnectionId = other.ConnectionId;
         TraceId = other.TraceId;
         ExecuteType = other.ExecuteType;
         Sql = other.Sql;

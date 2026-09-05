@@ -177,8 +177,8 @@ TEntity> : ILightOrmRepository<TEntity>
         {
             if (disposing)
             {
+                context?.TryCommitTransaction();
                 context?.Dispose();
-                context?.TryRollbackTransaction();
             }
 
             disposedValue = true;

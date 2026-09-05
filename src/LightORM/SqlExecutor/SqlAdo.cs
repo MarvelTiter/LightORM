@@ -54,6 +54,7 @@ public readonly struct SqlAdo
         {
             return new(null!, true);
         }
+        et.ConnectionId = Connection.Id;
         //DbLog?.Invoke(commandText, dbParameters);
         Interceptor.NotifyPrepareCommand(et);
         DbConnection conn = Connection.GetCurrentConnection();
@@ -79,6 +80,7 @@ public readonly struct SqlAdo
             return new(null!, true);
         }
         //DbLog?.Invoke(commandText, dbParameters);
+        et.ConnectionId = Connection.Id;
         Interceptor.NotifyPrepareCommand(et);
         DbConnection conn = Connection.GetCurrentConnection();
         if (conn.State != ConnectionState.Open)

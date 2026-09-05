@@ -1,11 +1,11 @@
 ﻿<Project>
 	<PropertyGroup>
-		<MainProjectVersion>2026.09.02.1</MainProjectVersion>
+		<MainProjectVersion>2026.09.05.1</MainProjectVersion>
 
 		<!-- Dependency -->
-		<DependencyVersion>2026.09.02.1</DependencyVersion>
+		<DependencyVersion>2026.09.05.1</DependencyVersion>
 		<!-- Dependency依赖版本 -->
-		<DependencyDepVersion>2026.09.02.1</DependencyDepVersion>
+		<DependencyDepVersion>2026.09.05.1</DependencyDepVersion>
 
 		<!-- 达梦 -->
 		<DamengVersion>2026.08.31.1</DamengVersion>
@@ -18,9 +18,9 @@
 		<KingbaseESDepVersion>2026.08.31.1</KingbaseESDepVersion>
 
 		<!-- MySql -->
-		<MySqlVersion>2026.08.31.1</MySqlVersion>
+		<MySqlVersion>2026.09.05.1</MySqlVersion>
 		<!-- MySql依赖版本 -->
-		<MySqlDepVersion>2026.08.31.1</MySqlDepVersion>
+		<MySqlDepVersion>2026.09.05.1</MySqlDepVersion>
 
 		<!-- Oracle -->
 		<OracleVersion>2026.08.31.1</OracleVersion>
@@ -38,9 +38,9 @@
 		<SqliteDepVersion>2026.08.31.1</SqliteDepVersion>
 
 		<!-- SqlServer -->
-		<SqlServerVersion>2026.08.31.1</SqlServerVersion>
+		<SqlServerVersion>2026.09.05.1</SqlServerVersion>
 		<!-- SqlServer依赖版本 -->
-		<SqlServerDepVersion>2026.08.31.1</SqlServerDepVersion>
+		<SqlServerDepVersion>2026.09.05.1</SqlServerDepVersion>
 
 	</PropertyGroup>
 </Project>

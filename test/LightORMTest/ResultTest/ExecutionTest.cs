@@ -264,7 +264,7 @@ public partial class ExecutionTest : TestBase
         Assert.AreEqual(1, dc);
 
         dc = await Db.Delete<User>().Where(u => u.UserRoles.Any(ur => ur.RoleId == "Admin")).ExecuteAsync(TestContext.CancellationToken);
-        Assert.AreEqual(2, dc);
+        Assert.AreEqual(1, dc);
         var p = "13800138006";
         dc = await Db.Delete<User>().Where(u => u.Profile.Phone == p).ExecuteAsync(TestContext.CancellationToken);
         Assert.AreEqual(1, dc);

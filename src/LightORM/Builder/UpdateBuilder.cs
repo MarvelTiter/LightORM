@@ -40,6 +40,7 @@ internal class UpdateBuilder<T> : SqlBuilder
     public bool IsBatchUpdate { get; internal set; }
     public VersionInfo VersionInfo { get; set; }
     public bool UseVersionColumn { get; private set; }
+    public int SetCount => Members.Count + SetNullMembers.Count;
     public void AddMember(string member, object? value)
     {
         Members.Add(member);
@@ -184,13 +185,6 @@ internal class UpdateBuilder<T> : SqlBuilder
                        if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(col.PropertyName))
                            return false;
 
-                       // 如果 Members 为空，且当前列不是被强制保留的类型，则需进一步判断
-                       if (Members.Count == 0)
-                       {
-                           // 当 Members 为空时，只要没被 Ignore 就保留
-                           return true;
-                       }
-
                        // Members 非空：只保留显式指定的成员，主键、版本号等始终保留
                        if (col.IsPrimaryKey || col.IsVersionColumn)
                            return true;
@@ -198,6 +192,13 @@ internal class UpdateBuilder<T> : SqlBuilder
                        // 自增列、未映射、导航属性、聚合属性、禁止更新的列，始终不更新
                        if (col.AutoIncrement || col.IsNotMapped || col.IsNavigate || col.IsAggregated || col.IsIgnoreUpdate)
                            return false;
+
+                       // 如果 Members 为空，且当前列不是被强制保留的类型，则需进一步判断
+                       if (Members.Count == 0)
+                       {
+                           // 当 Members 为空时，只要没被 Ignore 就保留
+                           return true;
+                       }
 
                        // 最终：是否在 Members 中
                        return Members.Contains(col.PropertyName);
@@ -308,18 +309,26 @@ internal class UpdateBuilder<T> : SqlBuilder
             }
             sb.AppendEmphasis(c.ColumnName, database);
             sb.Append(" = ");
-            sb.WithPrefix(c.PropertyName, database);
-            if (c.IsJsonColumn)
+            if (value is bool b)
             {
-                // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-                var jsonString = jsonHandler.Serialize(value);
-                DbParameters[c.PropertyName] = jsonString;
+                sb.Append(database.FormatBooleanValue(b));
+                DbParameters.Remove(c.PropertyName);
             }
-            if (!valueFounded)
+            else
             {
-                DbParameters.Add(c.PropertyName, value!);
+                sb.WithPrefix(c.PropertyName, database);
+                if (c.IsJsonColumn)
+                {
+                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
+                    database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
+                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
+                    var jsonString = jsonHandler.Serialize(value);
+                    DbParameters[c.PropertyName] = jsonString;
+                }
+                if (!valueFounded)
+                {
+                    DbParameters.Add(c.PropertyName, value!);
+                }
             }
 
             sb.AppendLine(",");
