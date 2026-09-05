@@ -118,13 +118,13 @@ public partial class ExecutionTest
     }
 
     [TestMethod]
-    public void Select_Union_Test()
+    public void Select_UnionAll_Test()
     {
         // Union 去重
         var list = Db.Select<User>().Where(u => u.Age > 10)
-            .Union(Db.Select<User>().Where(u => u.Age > 15))
+            .UnionAll(Db.Select<User>().Where(u => u.Age > 15))
             .ToList();
-        Assert.HasCount(4, list);
+        Assert.HasCount(6, list);
 
         // UnionAll 不去重
         var list2 = Db.Select<User>().Where(u => u.UserId == "test01")
@@ -133,7 +133,7 @@ public partial class ExecutionTest
         Assert.HasCount(2, list2);
 
         // IExpressionContext.Union 多查询嵌套
-        var list3 = Db.Union(
+        var list3 = Db.UnionAll(
             Db.Select<User>().Where(u => u.UserId == "test01"),
             Db.Select<User>().Where(u => u.UserId == "test02"),
             Db.Select<User>().Where(u => u.UserId == "test03")).ToList();
@@ -159,11 +159,11 @@ public partial class ExecutionTest
         // AsTable 投影为匿名表 + AsSubQuery 后继续 Where
         var list = await Db.Select<User>()
             .Where(u => u.Age > 10)
-            .AsTable(u => new { u.UserId, Age = u.Age ?? 0 })
+            .AsTable(u => new { u.UserId, u.Age })
             .AsSubQuery()
             .Where(d => d.Age < 20)
             .ToListAsync(TestContext.CancellationToken);
-        Assert.HasCount(2, list);
+        Assert.HasCount(3, list);
         Assert.IsTrue(list.All(d => d.Age < 20));
     }
 

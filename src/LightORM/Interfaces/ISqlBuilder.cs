@@ -39,7 +39,7 @@ namespace LightORM.Interfaces
         string ToSqlString(IDatabaseAdapter database);
     }
 
-    public interface ISelectSqlBuilder : ISqlBuilder
+    internal interface ISelectSqlBuilder : ISqlBuilder
     {
         //int PageIndex { get; set; }
         //int PageSize { get; set; }
@@ -48,5 +48,7 @@ namespace LightORM.Interfaces
         object? AdditionalValue { get; set; }
         string? GroupBy { get; set; }
         List<string> OrderBy { get; set; }
+        HashSet<string> OrderByMembers { get; set; }
+        HashSet<SelectMap> SelectedMembers { get; set; }
     }
 }

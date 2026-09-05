@@ -63,7 +63,7 @@ public class LightOrmAop : AdoInterceptorBase
 
         Debug.WriteLine($"""
 
-            {context.TraceId}
+            {context.TraceId}[{context.ConnectionId}]: 
             SQL: 
             {context.Sql}
             ===============
@@ -95,7 +95,7 @@ public class LightOrmAop : AdoInterceptorBase
 
     public override void OnException(SqlExecuteExceptionContext context)
     {
-        Debug.WriteLine($"{context.TraceId}:{context.Exception.Message}");
+        Debug.WriteLine($"{context.TraceId}[{context.ConnectionId}]:{context.Exception.Message}");
         Debug.WriteLine(context.Sql);
         Debug.WriteLine("=====================================");
         Debug.WriteLine("参数:");

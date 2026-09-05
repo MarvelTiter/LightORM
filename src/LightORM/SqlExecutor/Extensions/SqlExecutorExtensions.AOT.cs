@@ -54,8 +54,12 @@ public static partial class SqlExecutorExtensions
         public Task<DbDataReader> ExecuteReaderAsync(string commandText, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
             => executor.ExecuteReaderAsync(commandText, NullDbParameter.Instance, commandType, behavior, cancellationToken);
 
-        public Task<MultipleResult> QueryMultipleAsync(string commandText, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
-            => executor.QueryMultipleAsync(commandText, NullDbParameter.Instance, commandType, behavior, cancellationToken);
+        public Task<MultipleResult> QueryMultipleAsync(string[] sqls, Dictionary<string, object>? parameters = null, CommandType commandType = CommandType.Text, CommandBehavior? behavior = null, CancellationToken cancellationToken = default)
+        {
+            parameters ??= [];
+            var sql = executor.Provider.DatabaseAdapter.HandleMultipleQuerySql(sqls, parameters);
+            return executor.QueryMultipleAsync(sql, parameters, commandType, behavior, cancellationToken);
+        }
 
         public Task<DataSet> ExecuteDataSetAsync(string commandText, CommandType commandType = CommandType.Text, CancellationToken cancellationToken = default)
             => executor.ExecuteDataSetAsync(commandText, NullDbParameter.Instance, commandType, cancellationToken);

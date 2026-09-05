@@ -9,6 +9,8 @@ namespace LightORM.Builder;
 //internal readonly struct 
 internal abstract partial class SqlBuilder : ISqlBuilder
 {
+
+    public const string UNIT_IDENT = "    ";
     public static string N { get; } = Environment.NewLine;
     public ExpressionInfoProvider Expressions { get; } = new ExpressionInfoProvider();
     public TableInfo MainTable => SelectedTables[0];
@@ -108,6 +110,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
             var result = item.Expression.Resolve(item.ResolveOptions, ResolveCtx);
             if (!string.IsNullOrEmpty(item.Template))
             {
+                result = result with { };
                 result.SqlString = string.Format(item.Template, result.SqlString);
             }
             HandleResult(database, item, result);

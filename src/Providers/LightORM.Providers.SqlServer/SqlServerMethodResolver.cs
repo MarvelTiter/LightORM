@@ -230,7 +230,12 @@ public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlM
         resolver.Sql.Append("ISNULL(");
         resolver.Visit(methodCall.Arguments[0]);
         resolver.Sql.Append(',');
-        resolver.Visit(methodCall.Arguments[1]);
+        var fallbackValue = methodCall.Arguments[1];
+        if (fallbackValue.Type == typeof(string))
+        {
+            resolver.Sql.Append('N');
+        }
+        resolver.Visit(fallbackValue);
         resolver.Sql.Append(')');
     }
 

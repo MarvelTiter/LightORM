@@ -110,12 +110,12 @@ internal class InsertBuilder<T> : SqlBuilder
             // ToSqlString由内部或者测试项目调用，批量情况下查看SQL使用BatchInfos属性
             return string.Empty;
         }
+        ResolveExpressions(database);
 
         if (TargetObject == null && DbParameters.Count == 0)
         {
             throw new LightOrmException("插入的实体为空或者没有需要插入的值");
         }
-        ResolveExpressions(database);
 
         var insertColumns = GetInsertColumns();
 

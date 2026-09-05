@@ -22,7 +22,7 @@ namespace LightORM.Interfaces
         ///// 获取删除语句的模板，将提供两个参数，{0} 表示表名，{1} 表示别名
         ///// </summary>
         //string DeleteTemplate { get; }
-        void Paging(ISelectSqlBuilder builder, StringBuilder sql);
+        internal void Paging(ISelectSqlBuilder builder, StringBuilder sql);
         void ReturnIdentitySql(StringBuilder sql);
         //void HandleBooleanValue(StringBuilder sql, bool value);
         string FormatBooleanValue(bool value);
@@ -37,6 +37,8 @@ namespace LightORM.Interfaces
         string RewriteParameterReferences(string sql, string prefix);
         void HandleJsonColumn(JsonColumnContext context);
         void HandleJsonParameter(JsonColumnParameterContext context);
+
+        internal void HandleSelectGroupBySegment(SelectContext context);
 
         internal void HandleInsertOrUpdate(UpsertContext context);
 

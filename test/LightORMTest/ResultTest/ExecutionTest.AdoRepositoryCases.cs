@@ -1,4 +1,4 @@
-using LightORM.Extension;
+﻿using LightORM.Extension;
 using LightORM.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -101,8 +101,8 @@ public partial class ExecutionTest
 
         // Delete(entity) + DeleteRange + SaveChanges
         var toDelete = await Db.Select<User>().Where(x => x.UserId == "repo01").FirstAsync(TestContext.CancellationToken);
-        Assert.AreEqual(1, repo.Delete(toDelete!));
         var toDeleteRange = await Db.Select<User>().Where(x => x.UserId == "repo02" || x.UserId == "repo03").ToListAsync(TestContext.CancellationToken);
+        Assert.AreEqual(1, repo.Delete(toDelete!));
         Assert.AreEqual(2, repo.DeleteRange(toDeleteRange));
         Assert.IsTrue(repo.SaveChanges());
         var remain = await Db.Select<User>().Where(x => x.UserId == "repo01" || x.UserId == "repo02" || x.UserId == "repo03").CountAsync(TestContext.CancellationToken);

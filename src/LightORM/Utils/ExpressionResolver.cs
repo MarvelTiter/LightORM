@@ -8,23 +8,22 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 namespace LightORM;
 
+internal readonly record struct SelectMap(string Column, string? Source);
+
 internal static class ExpressionExtensions
 {
-    private readonly record struct CacheKey(SqlAction SqlAction, ulong Hash);
+    private readonly record struct CacheKey(SqlAction SqlAction, ulong Hash,  int NestedLevel);
     private static readonly ConcurrentDictionary<CacheKey, ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
-        //resolve.Visit(expression);
-        //return new ExpressionResolvedResult(resolve);
-        //var resolve = new ExpressionResolver(options, context);
         bool enableCache = ExpressionSqlOptions.Instance.Value.EnableExpressionCache;
         ulong hash = 0;
         if (enableCache)
         {
             hash = ExpressionHasher.Default.ComputeHash64(expression);
-            Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"hashcocde: {hash}");
+            Debug.WriteLineIf(ShowExpressionHashCodeDebugInfo, $"{expression} hashcocde: {hash}");
         }
-        CacheKey key = new(options.SqlAction, hash);
+        CacheKey key = new(options.SqlAction, hash, context.Depth);
         if (enableCache && expressionResolvedResultCache.TryGetValue(key, out var result))
         {
             //result.DbParameters
@@ -111,6 +110,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
     public StringBuilder Sql { get; set; } = new StringBuilder(128);
     public Stack<MemberPathInfo> Members { get; set; } = [];
     public List<string> ResolvedMembers { get; set; } = [];
+    public List<SelectMap> SelectedMember { get; set; } = [];
     public List<WindowFnSpecification>? WindowFnPartials { get; set; }
     public bool UseNavigate { get; set; }
     public int NavigateDeep { get; set; }
@@ -147,6 +147,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             MemberInitExpression => Visit(VisitMemberInit((MemberInitExpression)expression)),
             MemberExpression => Visit(VisitMember((MemberExpression)expression)),
             ConstantExpression => Visit(VisitConstant((ConstantExpression)expression)),
+            
             _ => null
         };
     }
@@ -332,9 +333,15 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
         {
             var member = exp.Members![i];
             var arg = exp.Arguments[i];
-
+            var curCount = ResolvedMembers.Count;
+            
             //ResolvedMembers.Add(exp.Members[i].Name);
             Visit(arg);
+            if (Options.SqlType == SqlPartial.Select)
+            {
+                var source = ResolvedMembers.Count > curCount ? ResolvedMembers.LastOrDefault() : null;
+                SelectedMember.Add(new SelectMap(member.Name, source));
+            }
             if (Options.SqlType == SqlPartial.Select)
             {
                 if (UseAs)
@@ -446,9 +453,13 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             {
                 continue;
             }
-
+            var curCount = ResolvedMembers.Count;
             Visit(memberAssign.Expression);
-
+            if (Options.SqlType == SqlPartial.Select)
+            {
+                var source = ResolvedMembers.Count > curCount ? ResolvedMembers.LastOrDefault() : null;
+                SelectedMember.Add(new SelectMap(memberAssign.Member.Name, source));
+            }
             if (UseAs)
             {
                 Sql.Append(AS_LITERAL);

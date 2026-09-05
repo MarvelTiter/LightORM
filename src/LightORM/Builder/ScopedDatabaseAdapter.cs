@@ -88,4 +88,6 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
     void IDatabaseAdapter.HandleInsertOrUpdate(UpsertContext context) => inner.HandleInsertOrUpdate(context);
 
     void IDatabaseAdapter.HandleBatchDelete<T>(BatchActionContext<DeleteBuilder<T>> context) => inner.HandleBatchDelete(context);
+
+    void IDatabaseAdapter.HandleSelectGroupBySegment(SelectContext context) => inner.HandleSelectGroupBySegment(context);
 }

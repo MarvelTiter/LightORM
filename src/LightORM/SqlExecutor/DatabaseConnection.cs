@@ -25,7 +25,7 @@ public class DatabaseConnection : IDisposable
     public int TransactionNestLevel { get; set; }
     public int Id => Connection.GetHashCode();
     public bool IsExternal { get; set; }
-
+    public bool KeepAlive { get; set; }
     internal DatabaseConnection(DbConnection connection
     , IDatabaseProvider provider
     , AdoInterceptor adoInterceptor
@@ -71,6 +71,7 @@ public class DatabaseConnection : IDisposable
                 }
 #endif
             }
+            State = AdoState.Active;
         }
         catch (Exception ex)
         {
@@ -205,6 +206,7 @@ public class DatabaseConnection : IDisposable
                     Transaction.Save($"savePoint{TransactionNestLevel}");
                 }
             }
+            State = AdoState.Active;
         }
         catch (Exception ex)
         {
@@ -300,7 +302,7 @@ public class DatabaseConnection : IDisposable
             State = AdoState.Rollback;
             Debug.WriteLineIf(ShowSqlExecutorDebugInfo, $"RollbackTranAsync： {Id} -> finished");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             var ctx = new SqlExecuteExceptionContext(new SqlExecuteContext(ExecuteMethod.RollbackTransaction, null, null, typeof(object)), ex);
             Interceptor.NotifyException(ctx);
@@ -327,8 +329,11 @@ public class DatabaseConnection : IDisposable
                 {
                     Connection.Close();
                 }
-                var pool = ConnectionPool.Pools[Provider];
-                pool.Return(Connection);
+                if (!KeepAlive)
+                {
+                    var pool = ConnectionPool.Pools[Provider];
+                    pool.Return(Connection);
+                }
             }
             Transaction?.Dispose();
             Transaction = null;
