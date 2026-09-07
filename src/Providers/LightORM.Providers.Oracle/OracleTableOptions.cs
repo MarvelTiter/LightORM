@@ -9,4 +9,5 @@ public record OracleTableOptions : TableOptions
     public bool OverVersion { get; set; }
     public string? TableSpace { get; set; }
     public string? UserId { get; set; }
+    public int? InitialLONGFetchSize { get; set; }
 }

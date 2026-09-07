@@ -23,9 +23,9 @@
 		<MySqlDepVersion>2026.09.05.1</MySqlDepVersion>
 
 		<!-- Oracle -->
-		<OracleVersion>2026.08.31.1</OracleVersion>
+		<OracleVersion>2026.09.07.1</OracleVersion>
 		<!-- Oracle依赖版本 -->
-		<OracleDepVersion>2026.08.31.1</OracleDepVersion>
+		<OracleDepVersion>2026.09.05.1</OracleDepVersion>
 
 		<!-- PgSql -->
 		<PgSqlVersion>2026.08.31.1</PgSqlVersion>

@@ -22,7 +22,8 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
         if (dbCommand is OracleCommand oracleCommand)
         {
             oracleCommand.BindByName = true;
-            oracleCommand.InitialLONGFetchSize = -1;
+            if (tableOptions.InitialLONGFetchSize.HasValue)
+                oracleCommand.InitialLONGFetchSize = tableOptions.InitialLONGFetchSize.Value;
             //oracleCommand.InitialLOBFetchSize = -1;
         }
     }
@@ -42,7 +43,7 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
         sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
-    
+
     public override string HandleMultipleQuerySql(string[] sqls, Dictionary<string, object> parameters)
     {
         using var _ = StringBuilderPool.Get(out var sb);

@@ -8,6 +8,35 @@ using System.Linq;
 
 namespace LightOrmTableContextGenerator;
 
+//[Generator(LanguageNames.CSharp)]
+//public class TableEntityInfoGenerator : IIncrementalGenerator
+//{
+//    public const string LightTableAttributeFullName = "LightORM.LightTableAttribute";
+//    public void Initialize(IncrementalGeneratorInitializationContext context)
+//    {
+//        var ti = context.SyntaxProvider.ForAttributeWithMetadataName(
+//            LightTableAttributeFullName
+//            , static (node, _) => node is ClassDeclarationSyntax
+//            , static (ctx, _) => ctx);
+//        context.RegisterSourceOutput(ti, static (context, source) =>
+//        {
+//            var symbol = (INamedTypeSymbol)source.TargetSymbol;
+//            var c = TableContextGenerator.GenerateTypeContextClass(symbol, "", []);
+//            if (c != null)
+//            {
+//                //var tt = c.ToString();
+//                var firstClass = (ClassBuilder)c.Members.First(n => n.Type == NodeType.Class);
+//                var initMethod = MethodBuilder.Default.MethodName("EntityTypeInit")
+//                .Attribute("global::System.Runtime.CompilerServices.ModuleInitializer")
+//                .Modifiers("public static")
+//                .Lambda($"global::LightORM.Utils.LightOrmTableContextBase.AddTable(typeof({symbol.ToDisplayString()}), new {firstClass.Name}())");
+//                firstClass.AddMembers(initMethod);
+//                context.AddSource(c);
+//            }
+//        });
+//    }
+//}
+
 [Generator(LanguageNames.CSharp)]
 public partial class TableContextGenerator : IIncrementalGenerator
 {
@@ -61,7 +90,7 @@ public partial class TableContextGenerator : IIncrementalGenerator
         });
     }
 
-    private static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, string staticUsing, List<INamedTypeSymbol> flatTypes)
+    internal static CodeFile? GenerateTypeContextClass(INamedTypeSymbol target, string staticUsing, List<INamedTypeSymbol> flatTypes)
     {
         _ = target.GetAttribute(LightTableAttributeFullName, out var lightTable);
         _ = target.GetAttribute("System.ComponentModel.DataAnnotations.Schema.TableAttribute", out var componentTable);

@@ -42,5 +42,9 @@
     <Project Path="test/TestProject1/TestProject1.csproj" />
     <Project Path="test/TestWeb/TestWeb.csproj" />
   </Folder>
+  <Folder Name="/test/AotTest/">
+    <Project Path="test/AotTest/AotOracleTest/AotOracleTest.csproj" />
+  </Folder>
+  <Project Path="DatabaseUtils.Avalonia/DatabaseUtils.Avalonia.csproj" Id="52626063-4f66-48af-ba7f-0adc9d41b814" />
   <Project Path="DatabaseUtils/DatabaseUtils.csproj" />
 </Solution>

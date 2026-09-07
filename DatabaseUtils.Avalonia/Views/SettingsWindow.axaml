@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DatabaseUtils.Avalonia.ViewModels"
+        x:Class="DatabaseUtils.Avalonia.Views.SettingsWindow"
+        x:DataType="vm:MainViewModel"
+        Title="设置" Width="460" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+  <StackPanel Margin="16" Spacing="10">
+    <TextBlock Text="生成设置" FontWeight="Medium" />
+    <Grid ColumnDefinitions="80,*" RowDefinitions="Auto,Auto,Auto,Auto">
+      <TextBlock Text="前缀" VerticalAlignment="Center" />
+      <TextBox Grid.Column="1" Text="{Binding Config.Prefix}" />
+      <TextBlock Grid.Row="1" Text="分隔符" VerticalAlignment="Center" Margin="0,8,0,0" />
+      <TextBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="{Binding Config.Separator}" />
+      <TextBlock Grid.Row="2" Text="命名空间" VerticalAlignment="Center" Margin="0,8,0,0" />
+      <TextBox Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="{Binding Config.Namespace}" />
+      <TextBlock Grid.Row="3" Text="保存路径" VerticalAlignment="Center" Margin="0,8,0,0" />
+      <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+        <TextBox Text="{Binding Config.SavedPath}" IsReadOnly="True" />
+        <Button Grid.Column="1" Content="选择" Margin="8,0,0,0" Command="{Binding SelectPathCommand}" />
+      </Grid>
+    </Grid>
+    <Button Content="关闭" HorizontalAlignment="Right" MinWidth="80" Click="OnClose" />
+  </StackPanel>
+</Window>

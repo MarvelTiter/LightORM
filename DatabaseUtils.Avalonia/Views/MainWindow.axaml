@@ -1,0 +1,73 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DatabaseUtils.Avalonia.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="720"
+        x:Class="DatabaseUtils.Avalonia.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="DatabaseUtils"
+        Width="1000" Height="720">
+
+    <DockPanel Margin="8">
+        <!-- 顶部工具栏：对应原版 header 的 Flex -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8">
+            <ComboBox Width="150" PlaceholderText="选择数据库"
+                      ItemsSource="{Binding SupportedDbNames}"
+                      SelectedItem="{Binding LastSelectedDb}" />
+            <TextBox Width="430" PlaceholderText="连接字符串" Text="{Binding Connectstring}" />
+            <Button Content="连接" Command="{Binding ConnectCommand}" />
+            <Button Content="生成" Command="{Binding BuildCommand}" />
+            <Button Content="设置" Command="{Binding ShowSettingsCommand}" />
+            <Button Content="保存为CS" Command="{Binding SaveToLocalCommand}" />
+        </StackPanel>
+
+        <Grid ColumnDefinitions="240,*">
+
+            <!-- 左侧：数据库表列表 -->
+            <DockPanel Grid.Column="0" Margin="0,8,8,0">
+                <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="数据库列表" VerticalAlignment="Center" FontWeight="Medium" />
+                        <CheckBox Grid.Column="1" Content="全选" IsChecked="{Binding SelectAll}" />
+                    </Grid>
+                    <TextBox PlaceholderText="DatabaseKey" Text="{Binding DbKey}" />
+                    <Button Content="配置属性Attribute" Command="{Binding ShowAttributesCommand}" />
+                </StackPanel>
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Tables}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TableItemViewModel">
+                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding TableName}" Margin="0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+
+            <!-- 右侧：生成结果，对应原版 Collapse -->
+            <ScrollViewer Grid.Column="1" Margin="8,8,0,0">
+                <ItemsControl ItemsSource="{Binding GeneratedTables}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:GeneratedTableItem">
+                            <Expander Margin="0,4" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding TableName}" VerticalAlignment="Center" />
+                                        <Button Content="复制"
+                                                Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CopyCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </StackPanel>
+                                </Expander.Header>
+                                <ScrollViewer MaxHeight="420" HorizontalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding GeneratedResult}" FontFamily="Consolas" TextWrapping="Wrap" />
+                                </ScrollViewer>
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+        </Grid>
+    </DockPanel>
+</Window>

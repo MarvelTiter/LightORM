@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <OutputType>Library</OutputType>
+    <AssemblyName>AotPreviewVerify</AssemblyName>
+    <RootNamespace>AotPreviewVerify</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS0169;CS0414;CS8632;CS0168;CS0219;CS1591</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Stubs.cs" />
+    <Compile Include="Models/**/*.cs" />
+    <Compile Include="../00-Runtime.DataReaderSupport.cs" />
+    <Compile Include="../01-Product.Deserializer.Fast.g.cs" />
+    <Compile Include="../02-Product.Deserializer.Compact.g.cs" />
+    <Compile Include="../03-UserFlat.Deserializer.g.cs" />
+    <Compile Include="../04-JsonTestModel.Deserializer.g.cs" />
+  </ItemGroup>
+
+</Project>
