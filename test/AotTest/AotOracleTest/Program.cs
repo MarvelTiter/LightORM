@@ -1,8 +1,21 @@
+﻿using AotOracleTest;
+using LightORM;
+using LightORM.Providers.Oracle.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Oracle.ManagedDataAccess.Client;
+using System.Text.Json;
 
-var cmd = new OracleCommand();
-cmd.BindByName = true;
-Console.WriteLine("[1/2] BindByName = true  OK");
-cmd.InitialLONGFetchSize = -1;
-Console.WriteLine("[2/2] InitialLONGFetchSize = -1  OK");
-Console.WriteLine("ALL_PASSED");
+var serviceCollection = new ServiceCollection();
+serviceCollection.AddLightOrm(option =>
+{
+    option.UseOracle("User Id=lightorm_test;Password=lightorm_test;Data Source=localhost:1521/XE;");
+    option.SetTableContext<TableContext>();
+    option.UseInterceptor<SqlTrace>();
+});
+var services = serviceCollection.BuildServiceProvider();
+var context = services.GetRequiredService<IExpressionContext>();
+
+var users = await context.Select<User>().Include(u => u.Profile).ToListAsync();
+var json = JsonSerializer.Serialize(users, JsonContext.Default.IListUser);
+Console.WriteLine(json);
+Console.ReadKey();

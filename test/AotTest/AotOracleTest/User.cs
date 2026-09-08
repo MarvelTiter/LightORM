@@ -1,0 +1,63 @@
+﻿#nullable disable
+
+using LightORM;
+
+namespace AotOracleTest;
+
+public enum SignType
+{
+    None = 0,
+    Vip = 1,
+    Svip = 2
+}
+
+[LightTable(Name = "USER")]
+public class User
+{
+    /// <summary>
+    /// 自增ID
+    /// </summary>
+    [LightColumn(Name = "ID", PrimaryKey = true, Comment = "自增ID", AutoIncrement = true)]
+    public int Id { get; set; }
+    [LightColumn(Name = "USER_ID", PrimaryKey = true, Comment = "用户ID")]
+    public string UserId { get; set; }
+    [LightColumn(Name = "USER_NAME", Comment = "名称", Length = 128)]
+    public string UserName
+    {
+        get;
+        set;
+    }
+    [LightColumn(Name = "PASSWORD", Comment = "密码")]
+    public string Password { get; set; }
+    [LightColumn(Name = "AGE", Comment = "年龄")]
+    public int? Age { get; set; }
+    [LightColumn(Name = "SIGN", Comment = "签名")]
+    public SignType Sign { get; set; }
+    [LightColumn(Name = "LAST_LOGIN", Comment = "最后登录时间")]
+    public DateTime? LastLogin { get; set; }
+    [LightColumn(Name = "MODIFY_DATE", Comment = "修改时间")]
+    public DateTime? ModifyTime { get; set; }
+
+    [LightColumn(Name = "IS_LOCK", Comment = "是否锁定")]
+    public bool? IsLock { get; set; }
+
+    [LightColumn(Name = "VERSION", Version = true)]
+    public int Version { get; set; }
+
+    [LightColumn(Name = "AVATOR", Comment = "头像")]
+    public byte[] Avator { get; set; }
+
+    [LightNavigate(nameof(UserId), nameof(UserProfile.UserId))]
+    public UserProfile Profile { get; set; }
+}
+
+[LightTable(Name = "USER_PROFILE")]
+public class UserProfile
+{
+    [LightColumn(Name = "USER_ID")]
+    public string UserId { get; set; }
+    [LightColumn(Name = "PHONE")]
+    public string Phone { get; set; }
+    [LightColumn(Name = "ADDRESS")]
+    public string Address { get; set; }
+}
