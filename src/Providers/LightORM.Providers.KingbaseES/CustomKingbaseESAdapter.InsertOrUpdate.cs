@@ -51,10 +51,10 @@ internal partial class CustomKingbaseESAdapter
                         continue;
                     if (kv.Key.IsVersionColumn)
                     {
-                        var oldVersion = context.Parameters[kv.Key.PropertyName];
-                        var newVersion = SqlBuilder.VersionPlus(oldVersion);
-                        var verionName = $"{kv.Key.PropertyName}_n";
-                        context.Parameters[verionName] = newVersion;
+                    var oldVersion = context.Parameters[kv.Key.PropertyName].Value;
+                    var newVersion = SqlBuilder.VersionPlus(oldVersion);
+                    var verionName = $"{kv.Key.PropertyName}_n";
+                    context.Parameters[verionName] = new DbParameterValue(kv.Key, newVersion);
                         sb.Append(' ');
                         sb.Append(kv.Value.Column).Append(" = ").WithPrefix(verionName, database).Append(',');
                     }
