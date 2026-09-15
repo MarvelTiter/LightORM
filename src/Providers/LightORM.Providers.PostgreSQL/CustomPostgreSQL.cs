@@ -1,8 +1,13 @@
-﻿using LightORM.Extension;
+﻿using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
 using LightORM.Providers.PostgreSQL.Utils;
+using LightORM.Utils;
+using Npgsql;
+using NpgsqlTypes;
+using System.Data;
 using System.Reflection;
 using System.Text;
 
@@ -16,7 +21,7 @@ internal sealed partial class CustomPostgreSQL(ISqlMethodResolver methodResolver
     public override string Prefix => "@";
 
     public override string Emphasis => "\"\"";
-    public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
+    public override void Paging(SelectBuilder builder, StringBuilder sql)
     {
         // PostgreSQL 使用 LIMIT 和 OFFSET 进行分页
         sql.AppendLine();
@@ -38,83 +43,98 @@ internal sealed partial class CustomPostgreSQL(ISqlMethodResolver methodResolver
         sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
-    public override void HandleJsonParameter(JsonColumnParameterContext context)
+    /// <summary>
+    /// 方言参数绑定: 参数携带列元数据时按列语义做类型化。
+    /// json 列: 参数值保持原始 CLR 值(框架不再预先序列化), 在此序列化为 JSON 文本并声明为 jsonb,
+    /// 使 INSERT/UPDATE 无需依赖驱动对 TEXT 的推断(Npgsql 直接按 jsonb 解析, 不会双重编码)。
+    /// 未接管(返回 false)时由框架按 CLR 类型默认推断。
+    /// </summary>
+    public override bool BindParameter(IDataParameter parameter, ITableColumnInfo? column, object? value)
     {
-        if (context.ActionType == ActionType.Parameterized)
+        if (column?.IsJsonColumn == true && parameter is NpgsqlParameter np)
         {
-            context.UpdateMapEntry(e =>
-            {
-                return e with { Value = $"{e.Value}::JSON" };
-            });
+            np.NpgsqlDbType = NpgsqlDbType.Jsonb;
+            np.Value = value is null ? null : JsonParameterHelper.Serialize(value);
+            return true;
         }
-        else if (context.ActionType == ActionType.ParameterValue && context.Parameters is not null && context.Column is not null)
+
+        // CLR DateTime 在 LightORM 中默认映射为 PostgreSQL 的 timestamp without time zone(见 Utils.FormatType.TransformType)。
+        // 若交由框架按 DbType.DateTime 兜底绑定, Npgsql 会把参数推断为 timestamp with time zone,
+        // 从而拒绝 Kind=Local 的 DateTime(仅支持 UTC)。此处按 Kind 显式类型化(Kind 感知):
+        //   · Utc 值 → timestamptz(带时区): Npgsql 原生接受 UTC, 保留服务端时区语义(历史行为);
+        //   · Local/Unspecified 值 → 无时区 timestamp: 按墙上时间字面写入, 与自建 no-tz 列一致。
+        // 避免"一律无时区"令 Kind=Utc 触发反向抛错(Cannot write DateTime with Kind=UTC to timestamp without time zone)。
+        if (value is DateTime dateTime && parameter is NpgsqlParameter npTime)
         {
-            if (!context.Parameters.TryGetValue(context.Column.PropertyName, out var value))
-            {
-                value = context.Value;
-            }
-            if (value is null) return;
-            if (context.JsonHelper is not null)
-            {
-                var json = context.JsonHelper.Serialize(value);
-                context.Parameters[context.Column.PropertyName] = json;
-            }
-            else
-            {
-                context.Parameters[context.Column.PropertyName] = $"\"{value}\"";
-            }
+            npTime.NpgsqlDbType = dateTime.Kind == DateTimeKind.Utc ? NpgsqlDbType.TimestampTz : NpgsqlDbType.Timestamp;
+            npTime.Value = dateTime;
+            return true;
         }
+
+        return false;
     }
 
     public override void HandleJsonColumn(JsonColumnContext context)
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
-            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
-            context.Sql.Append(" = ");
-            context.Sql.Append("JSONB_SET");
-            context.Sql.Append('(');
-            if (context.Options.RequiredTableAlias)
+            if (context.HasIndexInfo())
             {
-                context.Sql.Append(context.Table.Alias);
-                context.Sql.Append('.');
-            }
-            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
-            context.Sql.Append("::JSONB");
-            context.Sql.Append(",'{");
-            while (context.Members.Count > 0)
-            {
-                var current = context.Members.Pop();
-                if (current.Member is not null)
+                context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+                context.Sql.Append(" = ");
+                context.Sql.Append("JSONB_SET");
+                context.Sql.Append('(');
+                if (context.Options.RequiredTableAlias)
                 {
-                    context.Sql.Append(current.Member.Name);
+                    context.Sql.Append(context.Table.Alias);
+                    context.Sql.Append('.');
                 }
-                if (current.IndexValue.HasValue)
+                context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+                context.Sql.Append("::JSONB");
+                context.Sql.Append(",'{");
+                while (context.Members.Count > 0)
                 {
-                    current.IndexValue.Format(i =>
+                    var current = context.Members.Pop();
+                    if (current.Member is not null)
                     {
-                        if (i.IsIntValue)
+                        context.Sql.Append(current.Member.Name);
+                    }
+                    if (current.IndexValue.HasValue)
+                    {
+                        current.IndexValue.Format(i =>
                         {
-                            context.Sql.Append(i.IntValue);
-                        }
-                        else if (i.IsStringValue)
-                        {
-                            context.Sql.Append(i.StringValue);
-                        }
+                            if (i.IsIntValue)
+                            {
+                                context.Sql.Append(i.IntValue);
+                            }
+                            else if (i.IsStringValue)
+                            {
+                                context.Sql.Append(i.StringValue);
+                            }
+                            context.Sql.Append(',');
+                        });
+                        context.Sql.RemoveLast(1);
+                    }
+                    if (context.Members.Count > 0)
+                    {
                         context.Sql.Append(',');
-                    });
-                    context.Sql.RemoveLast(1);
+                    }
                 }
-                if (context.Members.Count > 0)
-                {
-                    context.Sql.Append(',');
-                }
+                context.Sql.Append("}',");
+                context.Sql.Append(Prefix);
+                context.Sql.Append(context.Column.PropertyName);
+                context.Sql.Append("::JSONB");
+                context.Sql.Append(')');
             }
-            context.Sql.Append("}',");
-            context.Sql.Append(Prefix);
-            context.Sql.Append(context.Column.PropertyName);
-            context.Sql.Append("::JSONB");
-            context.Sql.Append(')');
+            else
+            {
+                // 整列更新: "col" = @Prop::JSONB (参数按列元数据绑定为 jsonb)
+                context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+                context.Sql.Append(" = ");
+                context.Sql.Append(Prefix);
+                context.Sql.Append(context.Column.PropertyName);
+                context.Sql.Append("::JSONB");
+            }
         }
         else
         {
