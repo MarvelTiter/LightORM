@@ -3,6 +3,12 @@
 public static partial class SqlFn
 {
     /// <summary>
+    /// 生成 N'content'
+    /// </summary>
+    /// <param name="content"></param>
+    /// <returns></returns>
+    public static string N(this string? content) => content ?? string.Empty;
+    /// <summary>
     /// Column IN ('value1', 'value2', 'value3' ...)
     /// </summary>
     /// <typeparam name="T"></typeparam>
