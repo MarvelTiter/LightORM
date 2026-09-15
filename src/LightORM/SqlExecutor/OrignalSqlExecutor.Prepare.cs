@@ -44,12 +44,15 @@ internal partial class OrignalSqlExecutor
             conn.Open();
         }
         var command = conn.CreateCommand();
-        Provider.DatabaseAdapter.DbCommandInit(command);
+        if (Provider.DatabaseAdapter is IDbCommandInitializer initializer)
+        {
+            initializer.DbCommandInit(command);
+        }
         if (context != null)
         {
             command.Transaction = context.Transaction;
         }
-        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter, command);
         return new(command, conn, needToReturn, false);
     }
 
@@ -83,7 +86,10 @@ internal partial class OrignalSqlExecutor
         }
 
         var command = conn.CreateCommand();
-        Provider.DatabaseAdapter.DbCommandInit(command);
+        if (Provider.DatabaseAdapter is IDbCommandInitializer asyncInitializer)
+        {
+            asyncInitializer.DbCommandInit(command);
+        }
 
         if (context != null)
         {
@@ -96,7 +102,7 @@ internal partial class OrignalSqlExecutor
         //    var action = DbParameterReader.GetDbParameterReader(Database.DatabaseAdapter.Prefix, commandText, dbParameters.GetType());
         //    action?.Invoke(command, dbParameters);
         //}
-        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter, command);
         return new(command, conn, needToReturn, false);
     }
 

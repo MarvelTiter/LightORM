@@ -64,12 +64,15 @@ public readonly struct SqlAdo
         }
         var command = conn.CreateCommand();
         command.CommandType = commandType;
-        Provider.DatabaseAdapter.DbCommandInit(command);
+        if (Provider.DatabaseAdapter is IDbCommandInitializer initializer)
+        {
+            initializer.DbCommandInit(command);
+        }
         if (Connection.Transaction is not null)
         {
             command.Transaction = Connection.Transaction;
         }
-        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter, command);
         return new(command, false);
     }
 
@@ -90,13 +93,16 @@ public readonly struct SqlAdo
 
         var command = conn.CreateCommand();
         command.CommandType = commandType;
-        Provider.DatabaseAdapter.DbCommandInit(command);
+        if (Provider.DatabaseAdapter is IDbCommandInitializer initializer2)
+        {
+            initializer2.DbCommandInit(command);
+        }
 
         if (Connection.Transaction is not null)
         {
             command.Transaction = Connection.Transaction;
         }
-        et.HandleDbParameter(Provider.DatabaseAdapter.Prefix, command);
+        et.HandleDbParameter(Provider.DatabaseAdapter, command);
         return new(command, false);
     }
     #endregion

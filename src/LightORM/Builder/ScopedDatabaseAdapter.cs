@@ -5,6 +5,9 @@ namespace LightORM.Builder;
 
 internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IDatabaseAdapter
 {
+    /// <summary>被装饰的真实适配器，供能力接口(type-cast)探测钻取时使用。</summary>
+    internal IDatabaseAdapter Inner => inner;
+
     public string Prefix => inner.Prefix;
 
     public string Emphasis => inner.Emphasis;
@@ -17,11 +20,6 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
     public void AddKeyWord(IEnumerable<string> keyworks)
     {
         inner.AddKeyWord(keyworks);
-    }
-
-    public void DbCommandInit(DbCommand dbCommand)
-    {
-        inner.DbCommandInit(dbCommand);
     }
 
     public string FormatBooleanValue(bool value)
@@ -54,6 +52,7 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
         inner.HandleJsonColumn(context);
     }
 
+    [Obsolete("已由 IDatabaseParameterBinder 取代, 仅为实现 IDatabaseAdapter 接口而保留转发.")]
     public void HandleJsonParameter(JsonColumnParameterContext context)
     {
         inner.HandleJsonParameter(context);
@@ -69,14 +68,9 @@ internal class ScopedDatabaseAdapter(IDatabaseAdapter inner, bool quote) : IData
         return inner.IsKeyWord(keyWork);
     }
 
-    public void Paging(ISelectSqlBuilder builder, StringBuilder sql)
+    public void Paging(SelectBuilder builder, StringBuilder sql)
     {
         inner.Paging(builder, sql);
-    }
-
-    public void ReturnIdentitySql(StringBuilder sql)
-    {
-        inner.ReturnIdentitySql(sql);
     }
 
     public string RewriteParameterReferences(string sql, string prefix) => inner.RewriteParameterReferences(sql, prefix);
