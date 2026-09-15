@@ -19,7 +19,7 @@ internal struct SelectInsert(string tableName, string columns)
 
 internal readonly record struct TagInfo(string Message, string? FilePath, string? CallMember, int? LineNumber, bool WithCallSite);
 
-internal partial class SelectBuilder : SqlBuilder, ISelectSqlBuilder
+internal partial class SelectBuilder : SqlBuilder
 {
     //public SelectBuilder()
     //{
