@@ -20,10 +20,10 @@ internal partial class CustomDamengAdapter
             sb.Append(e.Value).Append(" AS ").Append(e.Column).Append(',');
             if (c.IsVersionColumn)
             {
-                var oldVersion = context.Parameters[c.PropertyName];
+                var oldVersion = context.Parameters[c.PropertyName].Value;
                 var newVersion = SqlBuilder.VersionPlus(oldVersion);
                 var verionName = $"{c.PropertyName}_n";
-                context.Parameters[verionName] = newVersion;
+                context.Parameters[verionName] = new DbParameterValue(c, newVersion);
                 sb.Append(' ');
                 sb.WithPrefix(verionName, database).Append(" AS ").Append(verionName).Append(',');
             }
