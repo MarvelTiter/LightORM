@@ -1,22 +1,27 @@
-﻿using LightORM.Extension;
+﻿using Kdbndp;
+using KdbndpTypes;
+using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
 using LightORM.Providers.KingbaseES.Utils;
+using LightORM.Utils;
+using System.Data;
 using System.Reflection;
 using System.Text;
 
 namespace LightORM.Providers.KingbaseES;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, KingbaseESTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodResolver, KingbaseESTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IDatabaseParameterBinder
 {
     internal readonly static CustomKingbaseESAdapter Instance = new(new KingbaseESMethodResolver(), new());
 
     public override string Prefix => "@";
 
     public override string Emphasis => "\"\"";
-    public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
+    public override void Paging(SelectBuilder builder, StringBuilder sql)
     {
         // PostgreSQL 使用 LIMIT 和 OFFSET 进行分页
         sql.AppendLine();
@@ -38,33 +43,33 @@ internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodR
         sql.Append("', 'YYYY-MM-DD HH24:MI:SS')");
     }
 
-    public override void HandleJsonParameter(JsonColumnParameterContext context)
+    /// <summary>
+    /// 方言参数绑定: 与 PostgreSQL 同源, 参数携带列元数据时按列语义做类型化。
+    /// json 列: 参数值保持原始 CLR 值(框架不再预先序列化), 在此序列化为 JSON 文本并声明为 jsonb。
+    /// 未接管(返回 false)时由框架按 CLR 类型默认推断。
+    /// </summary>
+    public override bool BindParameter(IDataParameter parameter, ITableColumnInfo? column, object? value)
     {
-        if (context.ActionType == ActionType.Parameterized)
+        if (column?.IsJsonColumn == true && parameter is KdbndpParameter kp)
         {
-            //context.Sql.Append("::JSON");
-            context.UpdateMapEntry(e =>
-            {
-                return e with { Value = $"{e.Value}::JSON" };
-            });
+            kp.KdbndpDbType = KdbndpDbType.Jsonb;
+            kp.Value = value is null ? null : JsonParameterHelper.Serialize(value);
+            return true;
         }
-        else if (context.ActionType == ActionType.ParameterValue && context.Parameters is not null && context.Column is not null)
+
+        // 与 PostgreSQL 同源(Kdbndp 为 Npgsql 分支): CLR DateTime 在 LightORM 中默认映射为
+        // 无时区 timestamp(见 Utils.FormatType)。若交由框架按 DbType.DateTime 兜底, Kdbndp 会把参数
+        // 推断为 timestamp with time zone 并拒绝 Kind=Local 的 DateTime。此处按 Kind 显式类型化(Kind 感知):
+        //   · Utc 值 → timestamptz(带时区): 驱动原生接受 UTC, 保留服务端时区语义(历史行为);
+        //   · Local/Unspecified 值 → 无时区 timestamp: 按墙上时间字面写入, 与自建 no-tz 列一致。
+        if (value is DateTime dateTime && parameter is KdbndpParameter kpTime)
         {
-            if (!context.Parameters.TryGetValue(context.Column.PropertyName, out var value))
-            {
-                value = context.Value;
-            }
-            if (value is null) return;
-            if (context.JsonHelper is not null)
-            {
-                var json = context.JsonHelper.Serialize(value);
-                context.Parameters[context.Column.PropertyName] = json;
-            }
-            else
-            {
-                context.Parameters[context.Column.PropertyName] = $"\"{value}\"";
-            }
+            kpTime.KdbndpDbType = dateTime.Kind == DateTimeKind.Utc ? KdbndpDbType.TimestampTz : KdbndpDbType.Timestamp;
+            kpTime.Value = dateTime;
+            return true;
         }
+
+        return false;
     }
 
     public override void HandleJsonColumn(JsonColumnContext context)
