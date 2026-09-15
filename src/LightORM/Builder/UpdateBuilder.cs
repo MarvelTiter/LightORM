@@ -46,7 +46,7 @@ internal class UpdateBuilder<T> : SqlBuilder
         Members.Add(member);
         if (value is not null)
         {
-            DbParameters.TryAdd(member, value);
+            DbParameters.TryAdd(member, new DbParameterValue(null, value));
         }
     }
     protected override void HandleResult(IDatabaseAdapter database, ExpressionInfo expInfo, ExpressionResolvedResult result)
@@ -63,9 +63,11 @@ internal class UpdateBuilder<T> : SqlBuilder
              * IExpUpdate<T> SetNull<TNull>(Expression<Func<T, TNull>> exp) => 指定设置为Null的字段，可单个，可多个
              * IExpUpdate<T> Set<TField>(Expression<Func<T, TField>> exp, TField value) => 使用value设置指定单个字段的值
              * 
+             * AdditionalParameter为UpdateColumnsFlags的情况
+             * IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns) => 指定更新的字段，可单个，可多个
+             * 
              * AdditionalParameter为Null的情况
              * IExpUpdate<T> Set(Expression<Func<T, bool>> exp) => 使用BinaryExpression设置单个字段的值
-             * IExpUpdate<T> UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns) => 指定更新的字段，可单个，可多个
              */
             if (result.Members?.Count > 0)
             {
@@ -87,9 +89,19 @@ internal class UpdateBuilder<T> : SqlBuilder
                         {
                             UpdateSpecific.Add(col.PropertyName, $"{result.SqlString} = {database.AttachPrefix(col.PropertyName)}");
                         }
-                        DbParameters.Add(col.PropertyName, v.Value);
+                        DbParameters.Add(col.PropertyName, new DbParameterValue(col, v.Value));
                         Members.Add(col.PropertyName);
                     }
+                }
+                else if (expInfo.AdditionalParameter is UpdateColumnsFlags)
+                {
+                    /*
+                     * UpdateColumns<TUpdate>(Expression<Func<T, TUpdate>> columns)
+                     * 只声明要更新的列, 值取自更新实体(TargetObject), 主流程会为每列统一生成 "col = @col"。
+                     * 这里只需登记成员; 解析阶段为 json 列生成的整列赋值(如 "DATA"=@Data::JSONB)不作为 SET 片段使用,
+                     * 否则多列会被合并进同一条赋值 SQL。json 列的值在主流程序列化后由方言绑定为对应类型。
+                     */
+                    Members.AddRange(result.Members);
                 }
                 else
                 {
@@ -105,46 +117,6 @@ internal class UpdateBuilder<T> : SqlBuilder
             {
                 throw new LightOrmException("未解析到属性");
             }
-            //if (expInfo.AdditionalParameter is null)
-            //{
-            //    // 从UpdateProvider的代码来看，使用SqlFn.JsonSet或者调用SetNull，一定是进入这个分支
-            //    if (result.Members?.Count == 1 && result.SqlString is not null)
-            //    {
-            //        // TODO 需要优化
-            //        var col = GetColumn(MainTable, result.Members[0]);
-            //        if (col.IsJsonColumn)
-            //        {
-            //            UpdateSpecific.Add(result.Members[0], result.SqlString);
-            //            DbParameters.Add(result.Members[0], BadValue.Instance);
-            //        }
-            //    }
-            //    Members.AddRange(result.Members);
-            //}
-            //else if (expInfo.AdditionalParameter is SpecificValue v)
-            //{
-            //    if (v.Value is null)
-            //    {
-            //        SetNullMembers.AddRange(result.Members);
-            //    }
-            //    else
-            //    {
-            //        if (result.Members?.Count > 1)
-            //        {
-            //            var last = result.Members[result.Members.Count - 1];
-            //            var col = MainTable.GetColumnInfo(last);
-            //            if (col.IsJsonColumn)
-            //            {
-            //                UpdateSpecific.Add(col.PropertyName, result.SqlString);
-            //                DbParameters.Add(col.PropertyName, v.Value);
-            //                Members.Add(last);
-            //                return;
-            //            }
-            //        }
-            //        var member = result.Members![0];
-            //        Members.Add(member);
-            //        DbParameters.Add(member, v.Value);
-            //    }
-            //}
         }
         else if (expInfo.ResolveOptions.SqlType == SqlPartial.UpdateVersionColumn)
         {
@@ -172,15 +144,12 @@ internal class UpdateBuilder<T> : SqlBuilder
             return;
         }
 
-        // TODO 批量更新对JSON列处理
-
+        // 批量更新的列集合。json 列同样纳入: 批量场景下没有 json 路径表达式(Values/Set 都只提供整列值),
+        // 因此 json 列与普通列一致按 "col = CASE WHEN 主键 = @p THEN @val ... END" 整列赋值,
+        // 参数值在 ToDictionaryParameters 中序列化为 JSON 文本后由方言 binder 类型化(如 pg 的 jsonb)。
         var columns = MainTable.TableEntityInfo.Columns
                    .Where(col =>
                    {
-                       if (col.IsJsonColumn)
-                       {
-                           return false;
-                       }
                        // 如果 IgnoreMembers 非空，排除被忽略的列
                        if (IgnoreMembers.Count > 0 && IgnoreMembers.Contains(col.PropertyName))
                            return false;
@@ -240,7 +209,7 @@ internal class UpdateBuilder<T> : SqlBuilder
             {
                 var val = item.GetValue(TargetObject!);
                 if (val == null) continue;
-                DbParameters.Add(item.PropertyName, val);
+                DbParameters.Add(item.PropertyName, new DbParameterValue(item, val));
                 Where.Add($"({database.AttachEmphasis(item.ColumnName)} = {database.AttachPrefix(item.PropertyName)})");
                 //WhereMembers.Add(item.PropertyName);
             }
@@ -268,7 +237,7 @@ internal class UpdateBuilder<T> : SqlBuilder
                 {
                     var val = item.GetValue(TargetObject);
                     if (val == null) continue;
-                    DbParameters.Add(item.PropertyName, val);
+                    DbParameters.Add(item.PropertyName, new DbParameterValue(item, val));
                     Members.Add(item.PropertyName);
                 }
             }
@@ -289,15 +258,14 @@ internal class UpdateBuilder<T> : SqlBuilder
             if (UpdateSpecific.TryGetValue(c.PropertyName, out var fieldSql))
             {
                 sb.Append(fieldSql);
-                if (c.IsJsonColumn)
-                {
-                    database.HandleJsonParameter(new(ActionType.ParameterValue, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                }
+                // 表达式更新路径(JSONB_SET 等): 参数值在 HandleResult 阶段已以原始 CLR 值登记,
+                // 序列化与驱动类型化交由方言的 IDatabaseParameterBinder 处理。
                 sb.AppendLine(",");
                 continue;
             }
             // 处理一般列
-            valueFounded = DbParameters.TryGetValue(c.PropertyName, out var value);
+            valueFounded = DbParameters.TryGetValue(c.PropertyName, out var valueEntry);
+            object? value = valueFounded ? valueEntry.Value : null;
             if (!valueFounded)
             {
                 if (TargetObject is not null)
@@ -317,17 +285,10 @@ internal class UpdateBuilder<T> : SqlBuilder
             else
             {
                 sb.WithPrefix(c.PropertyName, database);
-                if (c.IsJsonColumn)
-                {
-                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    database.HandleJsonParameter(new(ActionType.Parameterized, c, sb, null, DbParameters, ExpressionSqlOptions.Instance.Value.GetJsonHandler()));
-                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-                    var jsonString = jsonHandler.Serialize(value);
-                    DbParameters[c.PropertyName] = jsonString;
-                }
                 if (!valueFounded)
                 {
-                    DbParameters.Add(c.PropertyName, value!);
+                    // 参数值保持原始 CLR 值; json 列的序列化与驱动类型化交由方言的 IDatabaseParameterBinder。
+                    DbParameters.Add(c.PropertyName, new DbParameterValue(c, value));
                 }
             }
 
@@ -379,8 +340,8 @@ internal class UpdateBuilder<T> : SqlBuilder
         }
         var oldVersion = GetOldVersionValue();
         var newVersion = VersionPlus(oldVersion);
-        DbParameters.Add($"{versionColumn.PropertyName}_n", newVersion);
-        DbParameters.TryAdd(versionColumn.PropertyName, oldVersion);
+        DbParameters.Add($"{versionColumn.PropertyName}_n", new DbParameterValue(versionColumn, newVersion));
+        DbParameters.TryAdd(versionColumn.PropertyName, new DbParameterValue(versionColumn, oldVersion));
 
         // 处理版本列
         sb.AppendEmphasis(versionColumn.ColumnName, database);
