@@ -1,4 +1,5 @@
-﻿using LightORM.Extension;
+﻿using LightORM.Builder;
+using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
@@ -6,19 +7,19 @@ using System.Text;
 
 namespace LightORM.Providers.Dameng;
 
-internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResolver, DamengTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver)
+internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResolver, DamengTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
 {
     internal static readonly CustomDamengAdapter TestInstance = new CustomDamengAdapter(new DamengMethodResolver(new()), new());
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
-    public override void Paging(ISelectSqlBuilder builder, StringBuilder sql)
+    public override void Paging(SelectBuilder builder, StringBuilder sql)
     {
         sql.Insert(0, $"SELECT ROWNUM as ROWNO, SubMax.* FROM (\n");
         sql.AppendLine($") SubMax WHERE ROWNUM <= {builder.Skip + builder.Take}");
         sql.Insert(0, "SELECT * FROM (\n");
         sql.AppendLine($") SubMin WHERE SubMin.ROWNO > {builder.Skip}");
     }
-    public override void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
+    public void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
 
     string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_VALUE" : "JSON_VALUE";
     string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
@@ -26,6 +27,14 @@ internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResol
     {
         if (context.Options.SqlType == SqlPartial.Update)
         {
+            if (!context.HasIndexInfo())
+            {
+                context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+                context.Sql.Append(" = ");
+                context.Sql.Append(Prefix);
+                context.Sql.Append(context.Column.PropertyName);
+                return;
+            }
             context.Sql.AppendEmphasis(context.Column.ColumnName, this);
             context.Sql.Append(" = ");
             context.Sql.Append(Set);
@@ -75,10 +84,14 @@ internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResol
         context.Sql.Append('\'');
         if (context.Options.SqlType == SqlPartial.Update)
         {
-            // 更新还有第三个参数
-            context.Sql.Append(',');
+            // 达梦按 SQL 参数类型的规则把 JSON_SET 的第三参数转成 JSON 值:
+            //   varchar -> JSON 字符串(原样, 不解析), number -> JSON 数字, 故 varchar 会被当字面量
+            // 框架下发的是序列化后的 JSON 文本(string -> "string"), 必须显式 CAST 成 JSON 才会按 JSON 值解析。
+            // 实测 CAST(:p AS JSON) 对 字符串/对象/数组/数字/布尔/null 均正确, 无需按标量/复合分流。
+            context.Sql.Append(",CAST(");
             context.Sql.Append(Prefix);
             context.Sql.Append(context.Column.PropertyName);
+            context.Sql.Append(" AS JSON)");
         }
         // 结束
         context.Sql.Append(')');
