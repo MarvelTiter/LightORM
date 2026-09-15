@@ -114,7 +114,9 @@ internal static class CustomDatabaseExtensions
                 sql.Append("NULL");
                 return;
             }
-            if (col.IsStaticValue)
+            // json 列无法渲染为 SQL 字面量(FormatStaticValue 不支持 json 类型), 统一以参数下发;
+            // 参数值在 ToDictionaryParameters 中序列化, 再由方言 binder 类型化。
+            if (col.IsStaticValue && !col.IsJsonColumn)
             {
                 var v = FormatStaticValue(database, col.Value!);
                 sql.Append(v);

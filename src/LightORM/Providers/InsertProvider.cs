@@ -271,7 +271,13 @@ internal sealed class InsertProvider<T> : IExpInsert<T>
                     item.ForEach(row =>
                     {
                         if (row.IsStaticValue) return;
-                        sb.AppendLine($"--------{row.ValueName} - {row.Value}");
+                        // json 列在参数下发前会被序列化为 JSON 文本, 这里按实际绑定值显示, 便于核对
+                        var value = row.Value;
+                        if (row.IsJsonColumn && value is not null)
+                        {
+                            value = JsonParameterHelper.Serialize(value);
+                        }
+                        sb.AppendLine($"--------{row.ValueName} - {value}");
                     });
                 }
             }

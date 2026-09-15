@@ -27,7 +27,7 @@ internal static class BatchActionHelper
         , T[] datas
         , IDatabaseAdapter database
         , int limit = 2000
-        , Dictionary<string, object>? additionalParameters = null)
+        , Dictionary<string, DbParameterValue>? additionalParameters = null)
     {
         var list = new List<BatchSqlInfo>();
         var verions = columns.Count(c => c.IsVersionColumn);
@@ -68,10 +68,11 @@ internal static class BatchActionHelper
         }
         return list;
 
-        static bool GetValue(ITableColumnInfo col, object target, Dictionary<string, object>? additionalParameters, out object? value)
+        static bool GetValue(ITableColumnInfo col, object target, Dictionary<string, DbParameterValue>? additionalParameters, out object? value)
         {
-            if (additionalParameters != null && additionalParameters.TryGetValue(col.PropertyName, out value))
+            if (additionalParameters != null && additionalParameters.TryGetValue(col.PropertyName, out var parameterValue))
             {
+                value = parameterValue.Value;
                 return true;
             }
             value = col.GetValue(target);

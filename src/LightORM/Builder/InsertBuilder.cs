@@ -18,7 +18,7 @@ internal class InsertBuilder<T> : SqlBuilder
         Members.Add(member);
         if (value is not null)
         {
-            DbParameters.TryAdd(member, value);
+            DbParameters.TryAdd(member, new DbParameterValue(null, value));
         }
     }
 
@@ -36,7 +36,7 @@ internal class InsertBuilder<T> : SqlBuilder
                 {
                     var member = result.Members![0];
                     Members.Add(member);
-                    DbParameters.Add(member, v.Value);
+                    DbParameters.Add(member, new DbParameterValue(null, v.Value));
                 }
             }
         }
@@ -129,7 +129,8 @@ internal class InsertBuilder<T> : SqlBuilder
         for (int i = 0; i < insertColumns.Length; i++)
         {
             ITableColumnInfo? item = insertColumns[i];
-            if (!DbParameters.TryGetValue(item.PropertyName, out object? val))
+            object? val;
+            if (!DbParameters.TryGetValue(item.PropertyName, out var paramEntry))
             {
                 if (TargetObject is null)
                 {
@@ -148,7 +149,11 @@ internal class InsertBuilder<T> : SqlBuilder
                     if (val is null)
                         continue;
                 }
-                DbParameters.Add(item.PropertyName, val);
+                DbParameters.Add(item.PropertyName, new DbParameterValue(item, val));
+            }
+            else
+            {
+                val = paramEntry.Value;
             }
             //columns.AppendEmphasis(item.ColumnName, database);
             //columns.Append(',');
@@ -162,22 +167,11 @@ internal class InsertBuilder<T> : SqlBuilder
             }
             else
             {
-                // 处理JSON列的插入
-                if (item.IsJsonColumn)
-                {
-                    var jsonHandler = ExpressionSqlOptions.Instance.Value.GetJsonHandler();
-                    var jsonString = jsonHandler.Serialize(val);
-                    DbParameters[item.PropertyName] = jsonString;
-                    //values.WithPrefix(item.PropertyName, database);
-                    // TODO 暂时做法，兼容postgresql，在后面追加::JSONB
-                    columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.AttachPrefix(item.PropertyName)));
-                    database.HandleJsonParameter(new(ActionType.Parameterized, item, null, columnValueMap, DbParameters));
-                }
-                else
-                {
-                    //values.WithPrefix(item.PropertyName, database);
-                    columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.AttachPrefix(item.PropertyName)));
-                }
+                // json 列与普通列一致, 以 "列 = @参数" 插入; 参数值保持原始 CLR 值,
+                // 由方言的 IDatabaseParameterBinder 在绑定阶段序列化并按驱动类型化(如 PostgreSQL 的 jsonb),
+                // 框架不再在此预先序列化为 JSON 文本。
+                //values.WithPrefix(item.PropertyName, database);
+                columnValueMap.Add(item, new(database.AttachEmphasis(item.ColumnName), database.AttachPrefix(item.PropertyName)));
             }
             //values.Append(',');
         }
@@ -205,8 +199,17 @@ internal class InsertBuilder<T> : SqlBuilder
             if (IsReturnIdentity)
             {
                 sb.Append(';');
-                //sb.Append(database.ReturnIdentitySql());
-                database.ReturnIdentitySql(sb);
+                // 自增主键回读属可选能力: 仅 SqlServer/MySql/Sqlite/Dameng 支持;
+                // 其余方言(Oracle/PG/KingbaseES)能力探测失败时在此明确报"不支持", 而非 base 空桩。
+                if (AdapterCapability.TryGet<IReturnIdentity>(database, out var identity))
+                {
+                    identity!.ReturnIdentitySql(sb);
+                }
+                else
+                {
+                    throw new NotSupportedException(
+                        $"数据库适配器 {database.GetType().Name} 不支持 ReturnIdentity(自增主键回读)。支持方: SqlServer / MySql / Sqlite / Dameng。");
+                }
             }
         }
 

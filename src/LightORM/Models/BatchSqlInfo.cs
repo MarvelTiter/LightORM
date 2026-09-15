@@ -11,6 +11,7 @@
         public bool IsVersion => Column.IsVersionColumn;
         public string PropName => Column.PropertyName;
         public string ColumnName => Column.ColumnName;
+        public bool IsJsonColumn => Column.IsJsonColumn;
 
     }
     //internal record BatchParameters(ITableColumnInfo Column, List<SimpleColumn> Parameters);
