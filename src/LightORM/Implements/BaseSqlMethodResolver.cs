@@ -59,6 +59,12 @@ namespace LightORM.Implements
             action.Invoke(resolver, expression);
         }
 
+        public virtual void N(IExpressionResolver resolver, MethodCallExpression expression)
+        {
+            resolver.Sql.Append('N');
+            resolver.Visit(expression.Arguments[0]);
+        }
+
         public virtual void Format(IExpressionResolver resolver, MethodCallExpression expression)
         {
             if (expression.Arguments.Count == 0)
@@ -393,11 +399,6 @@ namespace LightORM.Implements
             {
                 resolver.Visit(methodCall.Arguments[i]);
                 resolver.Sql.Append(',');
-            }
-            var type = fallbackValue.Type;
-            if (type == typeof(string))
-            {
-                resolver.Sql.Append('N');
             }
             resolver.Visit(fallbackValue);
             resolver.Sql.Append(')');
