@@ -16,7 +16,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
     public TableInfo MainTable => SelectedTables[0];
     public List<TableInfo> SelectedTables { get; set; } = [];
     public int SelectedTableCount => SelectedTables.Count;
-    public Dictionary<string, object> DbParameters { get; } = [];
+    public Dictionary<string, DbParameterValue> DbParameters { get; } = [];
     public List<string> Where { get; set; } = [];
     public object? TargetObject { get; set; }
     public HashSet<ResolvedValueInfo> ResolvedValues { get; set; } = [];
@@ -32,7 +32,11 @@ internal abstract partial class SqlBuilder : ISqlBuilder
         if (value is null) return;
         if (value is Dictionary<string, object> dic)
         {
-            DbParameters.TryAddDictionary(dic);
+            // 用户裸参数字典: 无列元数据, 绑定阶段按 CLR 默认推断
+            foreach (var item in dic)
+            {
+                DbParameters[item.Key] = new DbParameterValue(null, item.Value);
+            }
         }
         else
         {
@@ -74,7 +78,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
                     foreach (var e in ema)
                     {
                         var pn = $"{item.Name}_{arrIndex}";
-                        DbParameters[pn] = e;
+                        DbParameters[pn] = new DbParameterValue(null, e);
                         values.Add(database.AttachPrefix(pn));
                         arrIndex++;
                     }
@@ -85,7 +89,7 @@ internal abstract partial class SqlBuilder : ISqlBuilder
             {
                 var succ = sql.ReplaceWithBoundaryCheck(item.Name, database.AttachPrefix(item.Name));
                 if (succ)
-                    DbParameters[item.Name] = item.Value;
+                    DbParameters[item.Name] = new DbParameterValue(null, item.Value);
             }
         }
     }
