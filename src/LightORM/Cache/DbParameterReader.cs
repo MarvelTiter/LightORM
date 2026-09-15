@@ -13,9 +13,9 @@ internal static class DbParameterReader
     private readonly record struct DbTypeInfo(object? FinalValue, DbType Type);
     private readonly record struct UnderlyingTypeInfo(bool IsNullable, bool IsEnum);
 
-    private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object>> cacheReaders = [];
-    private static readonly ConcurrentDictionary<Certificate, Action<object, Dictionary<string, object>>> readObjectToDicCache = [];
-    public static void HandleDbParameter(this SqlExecuteContext context, string prefix, DbCommand command)
+    private static readonly ConcurrentDictionary<Certificate, Action<IDbCommand, object, IDatabaseAdapter>> cacheReaders = [];
+    private static readonly ConcurrentDictionary<Certificate, Action<object, Dictionary<string, DbParameterValue>>> readObjectToDicCache = [];
+    public static void HandleDbParameter(this SqlExecuteContext context, IDatabaseAdapter adapter, DbCommand command)
     {
         if (string.IsNullOrWhiteSpace(context.Sql)) return;
         command.CommandText = context.Sql;
@@ -23,21 +23,31 @@ internal static class DbParameterReader
         var dbParameters = context.Parameter;
         if (dbParameters is not null && dbParameters is not NullDbParameter)
         {
-            var action = GetDbParameterReader(context.Sql!, prefix, context.ParameterType);
-            action?.Invoke(command, dbParameters);
+            switch (dbParameters)
+            {
+                case Dictionary<string, DbParameterValue> valueDic:
+                    // 结构化参数: 携带列元数据, 供数据库方言做类型化
+                    BindDictionary(command, adapter, valueDic);
+                    break;
+                case Dictionary<string, object> objDic:
+                    // 裸参数字典(无列信息): 按 CLR 默认推断
+                    BindDictionary(command, adapter, objDic);
+                    break;
+                default:
+                    // 对象/实体参数路径
+                    var action = GetDbParameterReader(context.Sql!, adapter.Prefix, context.ParameterType);
+                    action?.Invoke(command, dbParameters, adapter);
+                    break;
+            }
         }
     }
 
-    public static Action<IDbCommand, object> GetDbParameterReader(string commandText, string prefix,
+    public static Action<IDbCommand, object, IDatabaseAdapter> GetDbParameterReader(string commandText, string prefix,
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         Type paramaterType)
     {
-        if (paramaterType == typeof(Dictionary<string, object>))
-        {
-            return ReadDictionary;
-        }
         Certificate cer = new(commandText, prefix, paramaterType);
         return cacheReaders.GetOrAdd(cer, key => CreateReader(key.DbPrefix, key.Sql, key.ParameterType));
     }
@@ -46,7 +56,7 @@ internal static class DbParameterReader
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
-    T>(string prefix, string sql, T? value, Dictionary<string, object> dic)
+    T>(string prefix, string sql, T? value, Dictionary<string, DbParameterValue> dic)
     {
         if (value is null)
         {
@@ -54,7 +64,14 @@ internal static class DbParameterReader
         }
         if (value is Dictionary<string, object> d)
         {
-            dic.TryAddDictionary(d);
+            foreach (var item in d)
+            {
+                if (dic.ContainsKey(item.Key))
+                {
+                    throw new LightOrmException($"查询参数：{item.Key} 重复");
+                }
+                dic.Add(item.Key, new DbParameterValue(null, item.Value));
+            }
             return;
         }
         var cer = new Certificate(sql, prefix, typeof(T));
@@ -62,66 +79,108 @@ internal static class DbParameterReader
         func.Invoke(value, dic);
     }
 
-    private static void ReadDictionary(IDbCommand cmd, object obj)
+    private static void BindDictionary(IDbCommand cmd, IDatabaseAdapter adapter, Dictionary<string, DbParameterValue> dic)
     {
-        var dic = (Dictionary<string, object>)obj;
         foreach (var item in dic)
         {
-            if (item.Value is IDbDataParameter exitingParameter)
-            {
-                cmd.Parameters.Add(exitingParameter);
-                continue;
-            }
-            var p = cmd.CreateParameter(item.Key);
-            var value = item.Value;
-            var (finalValue, dbType) = GetDbTypeAndValue(value);
-            p.DbType = dbType;
-            p.Value = finalValue;
-            cmd.Parameters.Add(p);
-        }
-
-        static DbTypeInfo GetDbTypeAndValue(object? value)
-        {
-            if (value == null)
-            {
-                return new(null, DbType.Object);
-            }
-            var t = value.GetType();
-            var underlying = Nullable.GetUnderlyingType(t) ?? t;
-            if (t.IsEnum)
-            {
-                var enumType = Enum.GetUnderlyingType(underlying);
-                var converted = Convert.ChangeType(value, enumType);
-                if (!typeMapDbType.TryGetValue(enumType, out var dbType))
-                {
-                    dbType = DbType.Object;
-                }
-                return new(converted, dbType);
-            }
-            else
-            {
-                if (!typeMapDbType.TryGetValue(underlying, out var dbType))
-                {
-                    dbType = DbType.Object;
-                }
-                return new(value, dbType);
-            }
+            var p = CreateParameterValue(cmd, adapter, item.Key, item.Value.Column, item.Value.Value);
+            AddParameterOnce(cmd, p);
         }
     }
-    static readonly MethodInfo createParameterMethodInfo = typeof(IDbCommand).GetMethod("CreateParameter")!;
+
+    private static void BindDictionary(IDbCommand cmd, IDatabaseAdapter adapter, Dictionary<string, object> dic)
+    {
+        foreach (var item in dic)
+        {
+            var p = CreateParameterValue(cmd, adapter, item.Key, null, item.Value);
+            AddParameterOnce(cmd, p);
+        }
+    }
+
+    /// <summary>
+    /// 将参数加入命令集合; 同名参数已存在时不再重复添加。
+    /// </summary>
+    private static void AddParameterOnce(IDbCommand cmd, IDbDataParameter parameter)
+    {
+        if (string.IsNullOrEmpty(parameter.ParameterName))
+        {
+            cmd.Parameters.Add(parameter);
+            return;
+        }
+        if (!cmd.Parameters.Contains(parameter.ParameterName))
+        {
+            cmd.Parameters.Add(parameter);
+        }
+    }
+
+    /// <summary>
+    /// 统一的建参入口: 字典路径与对象(CreateReader)路径都经由本方法。
+    /// 只负责创建/返回参数(不负责加入集合), 加入集合由调用方统一完成。
+    /// 先交给数据库方言(<see cref="IDatabaseParameterBinder"/>)处理; 方言未接管时回退到 CLR 默认推断(原逻辑兜底)。
+    /// </summary>
+    private static IDbDataParameter CreateParameterValue(IDbCommand cmd, IDatabaseAdapter adapter, string name, ITableColumnInfo? column, object? value)
+    {
+        if (value is IDbDataParameter exitingParameter)
+        {
+            if (string.IsNullOrEmpty(exitingParameter.ParameterName))
+            {
+                exitingParameter.ParameterName = name;
+            }
+            return exitingParameter;
+        }
+        var p = cmd.CreateParameter();
+        p.ParameterName = name;
+        if (adapter is IDatabaseParameterBinder binder && binder.BindParameter(p, column, value))
+        {
+            return p;
+        }
+        var (finalValue, dbType) = GetDbTypeAndValue(value);
+        p.DbType = dbType;
+        p.Value = finalValue;
+        return p;
+    }
+
+    static DbTypeInfo GetDbTypeAndValue(object? value)
+    {
+        if (value == null)
+        {
+            return new(null, DbType.Object);
+        }
+        var t = value.GetType();
+        var underlying = Nullable.GetUnderlyingType(t) ?? t;
+        if (t.IsEnum)
+        {
+            var enumType = Enum.GetUnderlyingType(underlying);
+            var converted = Convert.ChangeType(value, enumType);
+            if (!typeMapDbType.TryGetValue(enumType, out var dbType))
+            {
+                dbType = DbType.Object;
+            }
+            return new(converted, dbType);
+        }
+        else
+        {
+            if (!typeMapDbType.TryGetValue(underlying, out var dbType))
+            {
+                dbType = DbType.Object;
+            }
+            return new(value, dbType);
+        }
+    }
     static readonly MethodInfo listAddMethodInfo = typeof(IList).GetMethod("Add")!;
+    static readonly MethodInfo createParameterValueMethod = typeof(DbParameterReader).GetMethod(nameof(CreateParameterValue), BindingFlags.NonPublic | BindingFlags.Static)!;
     static readonly MethodInfo dictionaryAdd = typeof(DbParameterReader).GetMethod(nameof(TryAdd), BindingFlags.NonPublic | BindingFlags.Static)!;
 
-    static void TryAdd(Dictionary<string, object> dic, string key, object value)
+    static void TryAdd(Dictionary<string, DbParameterValue> dic, string key, object value)
     {
-        dic.TryAdd(key, value);
+        dic.TryAdd(key, new DbParameterValue(null, value));
     }
 
 #if NET8_0_OR_GREATER
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(IDataParameter))]
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "已通过DynamicDependency配置")]
 #endif
-    public static Action<IDbCommand, object> CreateReader(string prefix, string commandText,
+    public static Action<IDbCommand, object, IDatabaseAdapter> CreateReader(string prefix, string commandText,
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
@@ -135,11 +194,12 @@ internal static class DbParameterReader
          *    cmd.Parameters.Add(p);
          * }
          */
-        // (cmd, obj) => 
+        // (cmd, obj, adapter) => 
         PropertyInfo parameterCollection = typeof(IDbCommand).GetProperty("Parameters")!;
 
         ParameterExpression cmdExp = Expression.Parameter(typeof(IDbCommand), "cmd");
         ParameterExpression objExp = Expression.Parameter(typeof(object), "obj");
+        ParameterExpression adapterExp = Expression.Parameter(typeof(IDatabaseAdapter), "adapter");
         var objType = parameterType;
         //TODO 优化
         var props = ExtractParameter(prefix, commandText, objType.GetProperties());
@@ -154,17 +214,8 @@ internal static class DbParameterReader
         ];
         foreach (PropertyInfo prop in props)
         {
-            // cmd.CreateParameter()
+            // temp = DbParameterReader.CreateParameterValue(cmd, adapter, "propName", null, (object)value)
             var (IsNullable, IsEnum) = GetUnderlyingType(prop.PropertyType, out var realType);
-
-            // temp = cmd.CreateParameter()                
-            var pAssign = Expression.Assign(
-                tempExp,
-                Expression.Call(cmdExp, createParameterMethodInfo));
-            // temp.ParameterName = prop.Name
-            var nameAssignExp = Expression.Assign(
-                Expression.Property(tempExp, nameof(IDbDataParameter.ParameterName)),
-                Expression.Constant(prop.Name, typeof(string)));
 
             var propAccess = Expression.Property(paramExp, prop);
             Expression finalValueExp;
@@ -174,7 +225,6 @@ internal static class DbParameterReader
                 var isNull = Expression.Equal(propAccess, Expression.Constant(null, prop.PropertyType));
                 finalValueExp = Expression.Condition(
                     isNull,
-                    //Expression.Convert(Expression.Default(prop.PropertyType), typeof(object)),
                     Expression.Constant(null, typeof(object)),
                     Expression.Convert(Expression.Convert(propAccess, realType), typeof(object))
                 );
@@ -189,32 +239,24 @@ internal static class DbParameterReader
                 finalValueExp = Expression.Convert(propAccess, typeof(object));
             }
 
-            var valueExp = Expression.Property(tempExp, nameof(IDbDataParameter.Value));
+            var callHelper = Expression.Convert(
+                Expression.Call(createParameterValueMethod,
+                    cmdExp,
+                    adapterExp,
+                    Expression.Constant(prop.Name, typeof(string)),
+                    Expression.Constant(null, typeof(ITableColumnInfo)),
+                    finalValueExp),
+                typeof(IDataParameter));
+            var pAssign = Expression.Assign(tempExp, callHelper);
 
-            // temp.Value = p.PropertyValue
-            var valueAssignExp = Expression.Assign(
-                Expression.Property(tempExp, nameof(IDbDataParameter.Value)),
-                finalValueExp);
-            if (!typeMapDbType.TryGetValue(realType, out var dbType))
-            {
-                dbType = DbType.Object;
-            }
-
-            //temp.DbType = dbType;
-            var dbTypeAssignExp = Expression.Assign(
-                Expression.Property(tempExp, nameof(IDbDataParameter.DbType)),
-                Expression.Constant(dbType, typeof(DbType)));
             // cmd.Parameters.Add(temp)
             var addToList = Expression.Call(Expression.Property(cmdExp, parameterCollection), listAddMethodInfo, tempExp);
 
             body.Add(pAssign);
-            body.Add(nameAssignExp);
-            body.Add(valueAssignExp);
-            body.Add(dbTypeAssignExp);
             body.Add(addToList);
         }
         var block = Expression.Block([tempExp, p1], body);
-        var lambda = Expression.Lambda<Action<IDbCommand, object>>(block, cmdExp, objExp);
+        var lambda = Expression.Lambda<Action<IDbCommand, object, IDatabaseAdapter>>(block, cmdExp, objExp, adapterExp);
         return lambda.Compile();
 
 
@@ -238,14 +280,14 @@ internal static class DbParameterReader
         }
     }
 
-    public static Action<object, Dictionary<string, object>> CreateObjectToDictionary(string prefix, string commandText,
+    public static Action<object, Dictionary<string, DbParameterValue>> CreateObjectToDictionary(string prefix, string commandText,
 #if NET8_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         Type type)
     {
         var pExp = Expression.Parameter(typeof(object), "p");
-        var dicExp = Expression.Parameter(typeof(Dictionary<string, object>), "dic");
+        var dicExp = Expression.Parameter(typeof(Dictionary<string, DbParameterValue>), "dic");
         var realParam = Expression.Variable(type, "value");
         var assign = Expression.Assign(realParam, Expression.Convert(pExp, type));
         List<Expression> blockBody = [
@@ -261,7 +303,7 @@ internal static class DbParameterReader
             blockBody.Add(add);
         }
         var block = Expression.Block([realParam], blockBody);
-        var lambda = Expression.Lambda<Action<object, Dictionary<string, object>>>(block, pExp, dicExp);
+        var lambda = Expression.Lambda<Action<object, Dictionary<string, DbParameterValue>>>(block, pExp, dicExp);
         return lambda.Compile();
     }
 
@@ -274,18 +316,6 @@ internal static class DbParameterReader
             {
                 yield return parameter;
             }
-        }
-    }
-
-    private static IDbDataParameter CreateParameter(this IDbCommand cmd, string parameterName)
-    {
-        if (cmd.Parameters.Contains(parameterName))
-            return (IDbDataParameter)cmd.Parameters[parameterName];
-        else
-        {
-            var p = cmd.CreateParameter();
-            p.ParameterName = parameterName;
-            return p;
         }
     }
 
