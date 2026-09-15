@@ -200,7 +200,7 @@ internal class DeleteBuilder<T> : SqlBuilder
                 {
                     continue;
                 }
-                DbParameters.Add(col.PropertyName, col.GetValue(TargetObject)!);
+                DbParameters.Add(col.PropertyName, new DbParameterValue(col, col.GetValue(TargetObject)!));
                 if (!first)
                 {
                     sql.Append(" AND ");

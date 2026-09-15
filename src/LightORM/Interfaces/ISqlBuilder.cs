@@ -1,54 +1,54 @@
 ﻿using LightORM.Implements;
+using LightORM.Models;
 
-namespace LightORM.Interfaces
+namespace LightORM.Interfaces;
+
+public interface ISqlBuilder
 {
-    public interface ISqlBuilder
-    {
-        ///// <summary>
-        ///// 数据库类型
-        ///// </summary>
-        //DbBaseType DbType { get; set; }
-        /// <summary>
-        /// 表达式
-        /// </summary>
-        internal ExpressionInfoProvider Expressions { get; }
-        /// <summary>
-        /// SELECT 或者 JOIN 的表
-        /// </summary>
-        List<TableInfo> SelectedTables { get; set; }
-        /// <summary>
-        /// 实体信息
-        /// </summary>
-        TableInfo MainTable { get; }
-        //List<ITableEntityInfo> OtherTables { get; }
-        //ITableEntityInfo[] AllTables { get; }
-        /// <summary>
-        /// 参数信息
-        /// </summary>
-        Dictionary<string, object> DbParameters { get; }
-        /// <summary>
-        /// 是否参数化
-        /// </summary>
-        internal bool? IsParameterized { get; set; }
-        bool? QuoteIdentifiers { get; set; }
+    ///// <summary>
+    ///// 数据库类型
+    ///// </summary>
+    //DbBaseType DbType { get; set; }
+    /// <summary>
+    /// 表达式
+    /// </summary>
+    internal ExpressionInfoProvider Expressions { get; }
+    /// <summary>
+    /// SELECT 或者 JOIN 的表
+    /// </summary>
+    List<TableInfo> SelectedTables { get; set; }
+    /// <summary>
+    /// 实体信息
+    /// </summary>
+    TableInfo MainTable { get; }
+    //List<ITableEntityInfo> OtherTables { get; }
+    //ITableEntityInfo[] AllTables { get; }
+    /// <summary>
+    /// 参数信息(值为携带列元数据的 <see cref="DbParameterValue"/>, 无列参数其 Column 为 null)
+    /// </summary>
+    Dictionary<string, DbParameterValue> DbParameters { get; }
+    /// <summary>
+    /// 是否参数化
+    /// </summary>
+    internal bool? IsParameterized { get; set; }
+    bool? QuoteIdentifiers { get; set; }
 
-        /// <summary>
-        /// 到Sql字符串
-        /// </summary>
-        /// <returns></returns>
-        string ToSqlString(IDatabaseAdapter database);
-    }
-
-    internal interface ISelectSqlBuilder : ISqlBuilder
-    {
-        //int PageIndex { get; set; }
-        //int PageSize { get; set; }
-        int Skip {  get; set; }
-        int Take { get; set; }
-        object? AdditionalValue { get; set; }
-        string? GroupBy { get; set; }
-        List<string> OrderBy { get; set; }
-        HashSet<string> OrderByMembers { get; set; }
-        HashSet<SelectMap> SelectedMembers { get; set; }
-    }
+    /// <summary>
+    /// 到Sql字符串
+    /// </summary>
+    /// <returns></returns>
+    string ToSqlString(IDatabaseAdapter database);
 }
+
+//internal interface ISelectSqlBuilder : ISqlBuilder
+//{
+//    //int PageIndex { get; set; }
+//    //int PageSize { get; set; }
+//    int Skip {  get; set; }
+//    int Take { get; set; }
+//    object? AdditionalValue { get; set; }
+//    string? GroupBy { get; set; }
+//    List<string> OrderBy { get; set; }
+//    HashSet<string> OrderByMembers { get; set; }
+//    HashSet<SelectMap> SelectedMembers { get; set; }
+//}
