@@ -44,10 +44,10 @@ partial class CustomSqliteAdapter
                     continue;
                 if (kv.Key.IsVersionColumn)
                 {
-                    var oldVersion = context.Parameters[kv.Key.PropertyName];
+                    var oldVersion = context.Parameters[kv.Key.PropertyName].Value;
                     var newVersion = SqlBuilder.VersionPlus(oldVersion);
                     var verionName = $"{kv.Key.PropertyName}_n";
-                    context.Parameters[verionName] = newVersion;
+                    context.Parameters[verionName] = new DbParameterValue(kv.Key, newVersion);
                     sb.Append(' ');
                     sb.Append(kv.Value.Column).Append(" = ").WithPrefix(verionName, database).Append(',');
                 }
