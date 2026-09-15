@@ -12,7 +12,7 @@ internal readonly record struct SelectMap(string Column, string? Source);
 
 internal static class ExpressionExtensions
 {
-    private readonly record struct CacheKey(SqlAction SqlAction, ulong Hash,  int NestedLevel);
+    private readonly record struct CacheKey(SqlAction SqlAction, ulong Hash, int NestedLevel);
     private static readonly ConcurrentDictionary<CacheKey, ExpressionResolvedResult> expressionResolvedResultCache = new();
     public static ExpressionResolvedResult Resolve(this Expression? expression, SqlResolveOptions options, ResolveContext context)
     {
@@ -147,7 +147,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             MemberInitExpression => Visit(VisitMemberInit((MemberInitExpression)expression)),
             MemberExpression => Visit(VisitMember((MemberExpression)expression)),
             ConstantExpression => Visit(VisitConstant((ConstantExpression)expression)),
-            
+
             _ => null
         };
     }
@@ -304,12 +304,20 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 return exp.Arguments[0];
             }
             Members.Clear();
-            if (exp.Method.Name == "JsonQuery")
+            // JsonQuery / JsonSet 的列实参必须保持"裸列名"：它们自身会拼接完整的
+            // 查询/赋值表达式(如 json_col ->> path、col = JSONB_SET(col, ...))。
+            // 若不加此标记，VisitMember 会在 Update 场景把该列实参误包装成整列赋值。
+            var isSpecificJson = exp.Method.Name == nameof(SqlFn.JsonQuery)
+                || exp.Method.Name == nameof(SqlFn.JsonSet);
+            if (isSpecificJson)
             {
                 specificHandleJson = true;
             }
             MethodResolver.Resolve(this, exp);
-            specificHandleJson = false;
+            if (isSpecificJson)
+            {
+                specificHandleJson = false;
+            }
         }
         return null;
     }
@@ -334,7 +342,7 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
             var member = exp.Members![i];
             var arg = exp.Arguments[i];
             var curCount = ResolvedMembers.Count;
-            
+
             //ResolvedMembers.Add(exp.Members[i].Name);
             Visit(arg);
             if (Options.SqlType == SqlPartial.Select)
@@ -522,12 +530,14 @@ internal class ExpressionResolver(SqlResolveOptions options, ResolveContext cont
                 // 处理Json属性
                 var index = GetResolvedIndex();
                 ResolvedMembers.Add(col.PropertyName);
-                if (index.HasValue)
+                // Update 场景下, 即使没有索引/成员路径(即整列引用, 如 Set(j => j.Data, obj) 或
+                // UpdateColumns(j => j.Data)), 也必须交给方言生成整列赋值表达式(col = @p::jsonb),
+                // 否则会退化成裸列名, 使生成的 UPDATE 缺少 " = @p"。
+                // 仅限 Update: Select/Where/Insert 中裸引用 json 列仍需保持列/参数名语义。
+                if (index.HasValue || Members.Count > 0 || Options.SqlType == SqlPartial.Update)
                 {
-                    Members.Push(new(null!) { IndexValue = index });
-                }
-                if (Members.Count > 0)
-                {
+                    if (index.HasValue)
+                        Members.Push(new(null!) { IndexValue = index });
                     Context.Database.HandleJsonColumn(new(col, this, Members, table));
                     Members.Clear();
                     return null;
