@@ -4,6 +4,7 @@ using System.Diagnostics;
 using LightORM.Implements;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
+using System.Collections;
 
 namespace LightORMTest;
 
@@ -60,7 +61,16 @@ public class LightOrmAop : AdoInterceptorBase
     {
         if (context.Sql?.Contains("初始化数据") == true)
             return;
-
+        if (context.Sql?.StartsWith("DROP") == true)
+            return;
+        if (context.Sql?.StartsWith("CREATE") == true)
+            return;
+        if (context.Sql?.StartsWith("SET") == true)
+            return;
+        if (context.Sql?.StartsWith("COMMENT") == true)
+            return;
+        if (context.Sql?.StartsWith("ALTER") == true)
+            return;
         Debug.WriteLine($"""
 
             {context.TraceId}[{context.ConnectionId}]: 
@@ -68,7 +78,7 @@ public class LightOrmAop : AdoInterceptorBase
             {context.Sql}
             ===============
             参数:
-            {string.Join($"  {Environment.NewLine}", DisplayParameter(context.Parameter))}
+            {DisplayParameter(context.Parameter)}
 
             耗时:{context.Elapsed}
 
@@ -77,14 +87,17 @@ public class LightOrmAop : AdoInterceptorBase
 
     }
 
-    private static IEnumerable<string> DisplayParameter(object? p)
+    private static string DisplayParameter(object? p)
     {
-        if (p is Dictionary<string, object> dic)
+        try
         {
-            foreach (var item in dic)
-            {
-                yield return $"{item.Key} - {item.Value}";
-            }
+            return System.Text.Json.JsonSerializer.Serialize(p);
+        }
+        catch (Exception ex)
+        {
+            // 参数对象可能含 Type 等不可序列化成员(如 Column.TableType), 此处必须兜底:
+            // 否则序列化异常会覆盖原始的 SQL 异常, 让排错看不到真正的报错。
+            return $"[参数序列化失败: {ex.Message}] {p?.GetType().Name}";
         }
     }
 
@@ -99,10 +112,7 @@ public class LightOrmAop : AdoInterceptorBase
         Debug.WriteLine(context.Sql);
         Debug.WriteLine("=====================================");
         Debug.WriteLine("参数:");
-        foreach (var item in DisplayParameter(context.Parameter))
-        {
-            Debug.WriteLine(item);
-        }
+        Debug.WriteLine(DisplayParameter(context.Parameter));
     }
 
     public override void OnPrepareCommand(SqlExecuteContext context)

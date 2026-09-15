@@ -7,7 +7,14 @@ public class CreateTableTest : LightORMTest.CreateTableTest
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseOracle(ConnectString.Value);
+        option.UseOracle(option =>
+        {
+            option.MasterConnectionString = ConnectString.Value;
+            option.ConfigureOracle(o =>
+            {
+                o.UseUnicodeString = false;
+            });
+        });
         option.UseInterceptor<LightOrmAop>();
     }
 }

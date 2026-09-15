@@ -4,9 +4,35 @@ namespace LightORMTest.ResultTest;
 
 public partial class ExecutionTest
 {
+    private async Task CreateTableAsync()
+    {
+        using var db = this.Db.CreateMainDbScoped();
+        await db.DropTableAsync<User>(TestContext.CancellationToken);
+        await db.DropTableAsync<UserProfile>(TestContext.CancellationToken);
+        await db.DropTableAsync<UserRole>(TestContext.CancellationToken);
+        await db.DropTableAsync<Role>(TestContext.CancellationToken);
+        await db.DropTableAsync<RolePermission>(TestContext.CancellationToken);
+        await db.DropTableAsync<Permission>(TestContext.CancellationToken);
+        await db.DropTableAsync<UserFlat>(TestContext.CancellationToken);
+        await db.DropTableAsync<Product>(TestContext.CancellationToken);
+        await db.DropTableAsync<Sales>(TestContext.CancellationToken);
+        await db.DropTableAsync<JsonExecTestModel>(TestContext.CancellationToken);
+        await db.CreateTableAsync<User>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserProfile>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserRole>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Role>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<RolePermission>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Permission>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<UserFlat>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Product>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<Sales>(cancellationToken: TestContext.CancellationToken);
+        await db.CreateTableAsync<JsonExecTestModel>(cancellationToken: TestContext.CancellationToken);
+
+    }
     [TestInitialize]
     public async Task InitDatas()
     {
+        await CreateTableAsync();
         await Db.Delete<User>()
             .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Delete<UserProfile>()
@@ -20,6 +46,8 @@ public partial class ExecutionTest
         await Db.Delete<Permission>()
             .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Delete<Sales>()
+            .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await Db.Delete<JsonExecTestModel>()
             .FullDelete().TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
         await Db.Insert([
             new User()
@@ -442,5 +470,6 @@ public partial class ExecutionTest
                 new Sales { Region = "西北", Province = "新疆", Product = "键盘鼠标", Amount = 150, Version = 1 }
             ])
             .TagWith("初始化数据").ExecuteAsync(TestContext.CancellationToken);
+        await InitJsonDataAsync();
     }
 }

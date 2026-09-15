@@ -43,7 +43,7 @@ public partial class ExecutionTest
         var list = await Db.Select<Sales>()
             .GroupBy(s => s.Region)
             .ToListAsync(g => new { Region = g.Group, Products = g.CountDistinct(g.Tables.Product) }, TestContext.CancellationToken);
-        Assert.AreEqual(7, list.Count);
+        Assert.HasCount(7, list);
         Assert.IsTrue(list.All(x => x.Products == 1));
     }
 
@@ -60,7 +60,7 @@ public partial class ExecutionTest
                 Count = g.Count()
             }, TestContext.CancellationToken);
 
-        Assert.AreEqual(7, list.Count);
+        Assert.HasCount(7, list);
         Assert.AreEqual(1500d, list.First(x => x.Region == "华东").Avg, 0.001); // 7500/5
         Assert.AreEqual(176d, list.First(x => x.Region == "西北").Avg, 0.001);   // 880/5
         Assert.AreEqual(5, list.First(x => x.Region == "华东").Count);
@@ -86,13 +86,24 @@ public partial class ExecutionTest
     public async Task Group_Rollup_Coalesce_Test()
     {
         // Rollup 产生汇总行，Coalesce 把 null 分组值替换为“合计”
-        var list = await Db.Select<Sales>()
+        var sales = Db.Select<Sales>()
             .GroupBy(s => s.Region)
-            .Rollup()
-            .ToListAsync(g => new { Region = g.Coalesce("合计", g.Group), Total = g.Count() }, TestContext.CancellationToken);
-        Assert.HasCount(8, list); // 7 区域 + 1 合计行
-        Assert.IsTrue(list.Any(x => x.Region == "合计"));
-        Assert.IsTrue(list.Any(x => x.Region == "华东"));
+            .Rollup();
+        var isSqlServer = CurrentDefaultProvider.DbBaseType == DbBaseType.SqlServer;
+        if (isSqlServer)
+        {
+            var list = await sales.ToListAsync(g => new { Region = g.Coalesce("合计".N(), g.Group), Total = g.Count() }, TestContext.CancellationToken);
+            Assert.HasCount(8, list); // 7 区域 + 1 合计行
+            Assert.IsTrue(list.Any(x => x.Region == "合计"));
+            Assert.IsTrue(list.Any(x => x.Region == "华东"));
+        }
+        else
+        {
+            var list = await sales.ToListAsync(g => new { Region = g.Coalesce("合计", g.Group), Total = g.Count() }, TestContext.CancellationToken);
+            Assert.HasCount(8, list); // 7 区域 + 1 合计行
+            Assert.IsTrue(list.Any(x => x.Region == "合计"));
+            Assert.IsTrue(list.Any(x => x.Region == "华东"));
+        }
     }
 
     [TestMethod]
@@ -111,12 +122,22 @@ public partial class ExecutionTest
     public async Task Group_Cube_Test()
     {
         // Cube（单列分组时等价于 Rollup，方言需支持 CUBE 语法）
-        var list = await Db.Select<Sales>()
-            .GroupBy(s => s.Region)
-            .Cube()
-            .ToListAsync(g => new { Region = g.Coalesce("合计", g.Group), Total = g.Count() }, TestContext.CancellationToken);
-        Assert.IsGreaterThanOrEqualTo(7, list.Count);
-        Assert.IsTrue(list.Any(x => x.Region == "合计"));
+        var isSqlserver = CurrentDefaultProvider.DbBaseType == DbBaseType.SqlServer;
+        var sales = Db.Select<Sales>()
+                .GroupBy(s => s.Region)
+                .Cube();
+        if (isSqlserver)
+        {
+            var list = await sales.ToListAsync(g => new { Region = g.Coalesce("合计".N(), g.Group), Total = g.Count() }, TestContext.CancellationToken);
+            Assert.IsGreaterThanOrEqualTo(7, list.Count);
+            Assert.IsTrue(list.Any(x => x.Region == "合计"));
+        }
+        else
+        {
+            var list = await sales.ToListAsync(g => new { Region = g.Coalesce("合计", g.Group), Total = g.Count() }, TestContext.CancellationToken);
+            Assert.IsGreaterThanOrEqualTo(7, list.Count);
+            Assert.IsTrue(list.Any(x => x.Region == "合计"));
+        }
     }
 
     [TestMethod]

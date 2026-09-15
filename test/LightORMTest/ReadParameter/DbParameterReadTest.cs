@@ -1,4 +1,6 @@
 ﻿using LightORM.Cache;
+using LightORM.Interfaces;
+using LightORM.Models;
 using System.Data;
 using System.Data.SQLite;
 
@@ -22,13 +24,13 @@ public class DbParameterReadTest
             Age2 = 11,
             Name2 = "Marvel2"
         };
-        Dictionary<string, object> dic = [];
+        Dictionary<string, DbParameterValue> dic = [];
         DbParameterReader.MergeObjectToDictionary("@", "@Date, @Age, @Name", p1, dic);
         DbParameterReader.MergeObjectToDictionary("@", "@Age2, @Name2", p2, dic);
         Assert.HasCount(5, dic);
-        Assert.IsTrue((DateTime)dic["Date"] == p1.Date);
-        Assert.AreEqual(p1.Age, (int)dic["Age"]);
-        Assert.AreEqual(p1.Name, (string)dic["Name"]);
+        Assert.IsTrue((DateTime)dic["Date"].Value! == p1.Date);
+        Assert.AreEqual(p1.Age, (int)dic["Age"].Value!);
+        Assert.AreEqual(p1.Name, (string)dic["Name"].Value!);
     }
     enum TestE
     {
@@ -55,8 +57,8 @@ public class DbParameterReadTest
         };
         using var conn = new SQLiteConnection("Data Source=:memory:;Version=3;New=True;");
         var cmd = conn.CreateCommand();
-        Action<IDbCommand, object>? dic = DbParameterReader.GetDbParameterReader("@Date, @Age, @Name, @Level1, @Level2, @Type1, @Type2, @Type_3", "@", p1.GetType());
-        dic(cmd, p1);
+        Action<IDbCommand, object, IDatabaseAdapter>? dic = DbParameterReader.GetDbParameterReader("@Date, @Age, @Name, @Level1, @Level2, @Type1, @Type2, @Type_3", "@", p1.GetType());
+        dic(cmd, p1, null!);
         foreach (SQLiteParameter item in cmd.Parameters)
         {
             Console.WriteLine($"{item.ParameterName} => {item.DbType} => {item.Value}");
