@@ -83,10 +83,10 @@ internal partial class CustomMySqlAdapter
                 sb.Append(',');
                 if (item.Key.IsVersionColumn)
                 {
-                    var oldVersion = context.Parameters[item.Key.PropertyName];
+                    var oldVersion = context.Parameters[item.Key.PropertyName].Value;
                     var newVersion = SqlBuilder.VersionPlus(oldVersion);
                     var verionName = $"{item.Key.PropertyName}_n";
-                    context.Parameters[verionName] = newVersion;
+                    context.Parameters[verionName] = new DbParameterValue(item.Key, newVersion);
                     sb.WithPrefix(verionName, database).Append(" AS ").Append(verionName);
                     sb.Append(',');
                 }
