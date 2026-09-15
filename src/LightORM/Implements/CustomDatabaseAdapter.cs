@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace LightORM.Implements;
 
-internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
+internal abstract class CustomDatabaseAdapter : IDatabaseAdapter, IDatabaseParameterBinder
 {
     public abstract string Prefix { get; }
     public abstract string Emphasis { get; }
@@ -67,12 +67,7 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         return [];
     }
 
-    public virtual void Paging(ISelectSqlBuilder builder, StringBuilder sql)
-    {
-        throw new NotSupportedException();
-    }
-
-    public virtual void ReturnIdentitySql(StringBuilder sql)
+    public virtual void Paging(SelectBuilder builder, StringBuilder sql)
     {
         throw new NotSupportedException();
     }
@@ -141,9 +136,32 @@ internal abstract class CustomDatabaseAdapter : IDatabaseAdapter
         throw new NotSupportedException();
     }
 
-    public virtual void HandleJsonParameter(JsonColumnParameterContext context) { }
+    /// <summary>
+    /// 默认参数绑定: json 列的原始 CLR 值在此序列化为 JSON 文本, 以字符串参数下发。
+    /// <para>
+    /// 框架把 json 列参数的"原始值 + 列元数据"交到这里, 方言可覆盖本方法以：
+    /// · 施加驱动特有的 json 类型(如 PostgreSQL 的 <c>NpgsqlDbType.Jsonb</c>);
+    /// · 按值形状区分绑定方式(如 SqlServer 复合值传 JSON 文本、标量传原生 CLR 值)。
+    /// </para>
+    /// 返回 false 表示未接管, 由框架按 CLR 类型做默认推断。
+    /// </summary>
+    public virtual bool BindParameter(IDataParameter parameter, ITableColumnInfo? column, object? value)
+    {
+        if (column?.IsJsonColumn == true && value is not null)
+        {
+            parameter.DbType = DbType.String;
+            parameter.Value = JsonParameterHelper.Serialize(value);
+            return true;
+        }
+        return false;
+    }
 
-    public virtual void DbCommandInit(DbCommand dbCommand) { }
+    /// <summary>
+    /// [历史兼容] 已由 <see cref="IDatabaseParameterBinder"/> 取代, 框架内不再调用。
+    /// 保留空实现仅为不破坏第三方覆写; 新实现请改用 IDatabaseParameterBinder。
+    /// </summary>
+    [Obsolete("已由 IDatabaseParameterBinder 取代, 框架内不再调用; 请改为实现 IDatabaseParameterBinder.")]
+    public virtual void HandleJsonParameter(JsonColumnParameterContext context) { }
 
     public virtual void HandleSelectGroupBySegment(SelectContext context)
     {
