@@ -118,7 +118,10 @@ internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, I
         }
         else
         {
-            context.Sql.Append("JSON_VALUE");
+            // 读取路径: 末级为复合文档(对象/数组)时必须用 JSON_QUERY —— JSON_VALUE 只返回标量,
+            // 遇对象/数组返回 NULL(投影一个嵌套对象会读回 null); JSON_QUERY 返回 JSON 文档文本,
+            // 由读取侧反序列化。末级为标量仍用 JSON_VALUE。判定只用生成期信息, 与表达式缓存兼容。
+            context.Sql.Append(JsonParameterHelper.IsCompositeJsonLeaf(context) ? "JSON_QUERY" : "JSON_VALUE");
         }
         context.Sql.Append('(');
         if (context.Options.RequiredTableAlias)

@@ -128,7 +128,11 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
         }
         else
         {
-            context.Sql.Append("JSON_VALUE");
+            // 读取路径: 末级为复合文档(对象/数组)时必须用 JSON_QUERY —— JSON_VALUE 只返回标量,
+            // 遇对象/数组返回 NULL(投影一个嵌套对象会读回空对象); JSON_QUERY 返回 JSON 文档文本,
+            // 由读取侧反序列化。末级为标量仍用 JSON_VALUE(返回去引号后的标量文本)。
+            // 判定只用生成期信息(表达式结构/列类型), 与表达式缓存兼容。
+            context.Sql.Append(JsonParameterHelper.IsCompositeJsonLeaf(context) ? "JSON_QUERY" : "JSON_VALUE");
             context.Sql.Append('(');
             if (context.Options.RequiredTableAlias)
             {
