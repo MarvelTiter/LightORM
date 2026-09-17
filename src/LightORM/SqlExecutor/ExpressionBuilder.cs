@@ -136,7 +136,7 @@ internal partial class ExpressionBuilder
         // 其他
         else
         {
-            Body = TargetType.IsAnonymous() ? CreateAnonymous(TargetType) : CreateCustomEntiry(TargetType);
+            Body = TargetType.IsAnonymous() ? CreateAnonymous(TargetType) : CreateCustomEntity(TargetType);
 #if NET8_0_OR_GREATER
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "嵌套的类型，必须是实体表。否则可能出现被裁剪的情况")]
 #endif
@@ -168,7 +168,7 @@ internal partial class ExpressionBuilder
                         }
                         else
                         {
-                            TargetValueExpression = CreateCustomEntiry(targetMember.PropertyType);
+                            TargetValueExpression = CreateCustomEntity(targetMember.PropertyType);
                         }
                     }
                     else if (ContainsJsonType(targetMember.PropertyType))
@@ -190,12 +190,19 @@ internal partial class ExpressionBuilder
                 return Expression.New(ctor, Expressions);
             }
 
-            Expression CreateCustomEntiry(
+            Expression CreateCustomEntity(
 #if NET8_0_OR_GREATER
                 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
                 Type targetType)
             {
+
+                if (ContainsJsonType(targetType))
+                {
+                    var jsonColumn = GetTargetJsonExpression(reader, Culture, recordInstanceExp, SchemaTable, 0, targetType);
+                    return jsonColumn;
+                }
+
                 var columns = TableContext.GetTableInfo(targetType).Columns;
                 // 属性处理 Property
                 List<MemberBinding> Bindings = [];
