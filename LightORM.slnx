@@ -32,6 +32,7 @@
   <Folder Name="/test/">
     <Project Path="test/BenchmarkTest/BenchmarkTest.csproj" Id="8045558c-2ac8-4242-9f5d-1d1f534a4b27" />
     <Project Path="test/LightORMTest.Dameng/LightORMTest.Dameng.csproj" />
+    <Project Path="test/LightORMTest.KingbaseES/LightORMTest.KingbaseES.csproj" Id="c773fa79-3b0d-436d-90f4-2429d9528d35" />
     <Project Path="test/LightORMTest.MySql/LightORMTest.MySql.csproj" />
     <Project Path="test/LightORMTest.Oracle/LightORMTest.Oracle.csproj" />
     <Project Path="test/LightORMTest.PostgreSQL/LightORMTest.PostgreSQL.csproj" />
