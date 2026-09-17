@@ -140,12 +140,13 @@ public partial class ExecutionTest
 
     /// <summary>
     /// SqlFn.JsonSet 更新 JsonObject 嵌套路径（对应 JsonTest: Set(j => SqlFn.JsonSet(j.JsonObject, "$.City.Name", "NewName"))）。
-    /// PostgreSQL 的 JsonSet 路径/值格式与其它库不同，按 DbType 分支处理。
+    /// PostgreSQL / KingbaseES 同源：JsonSet 的路径用 <c>'{a,b}'</c> 形式，值需为 JSON 文本（字符串要带引号），
+    /// 与其它库不同，按 DbType 分支处理。
     /// </summary>
     [TestMethod]
     public async Task JsonColumn_JsonSet_Update()
     {
-        if (DbType == DbBaseType.PostgreSQL)
+        if (DbType.Name is "PostgreSQL" or "KingbaseES")
         {
             await Db.Update<JsonExecTestModel>()
                 .Set(j => SqlFn.JsonSet(j.Obj, "{City,Name}", "\"NewName\""))
