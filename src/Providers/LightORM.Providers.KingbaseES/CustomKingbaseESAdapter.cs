@@ -74,6 +74,19 @@ internal sealed partial class CustomKingbaseESAdapter(ISqlMethodResolver methodR
 
     public override void HandleJsonColumn(JsonColumnContext context)
     {
+        // 整列更新(无成员路径/无索引): 直接列赋值, 与 PostgreSQL/Sqlite/SqlServer/Dameng 一致。
+        // 不可用 JSONB_SET(col::JSONB,'{}',v) 顶替: 首参为 NULL 时整体返回 NULL(列一旦被置空就写不回去),
+        // 且 Kingbase 对空路径不替换整个文档 —— 非空列也会静默写不进去。
+        if (context.Options.SqlType == SqlPartial.Update && !context.HasIndexInfo())
+        {
+            context.Sql.AppendEmphasis(context.Column.ColumnName, this);
+            context.Sql.Append(" = ");
+            context.Sql.Append(Prefix);
+            context.Sql.Append(context.Column.PropertyName);
+            context.Sql.Append("::JSONB");
+            return;
+        }
+
         if (context.Options.SqlType == SqlPartial.Update)
         {
             context.Sql.AppendEmphasis(context.Column.ColumnName, this);
