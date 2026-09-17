@@ -61,6 +61,7 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
 | SqlServer | `JSON_VALUE(...)` | `JSON_QUERY(...)` | **已修**，无实例未实测 |
 | MySQL | `col->>'$.p'` | 同左（`->>` 对对象返回文档文本，本身就对） | 无需改 |
 | PostgreSQL | `(col->>'p')::TARGET` | 同左（数组用 `col->N`） | 无需改 |
+| **KingbaseES** | `(col->>'p')::TARGET` | 同左（与 PG 同源） | **无需改，实测通过**（2026-09-17） |
 | SQLite | `json_extract(...)` | 同左 | 无需改，实测通过 |
 | Dameng | `JSON_VALUE`（Binary 后端起为 `JSONB_VALUE`） | **未改，待验证**（实例未启动，且不确定 DM8 是否有 JSON_QUERY） | — |
 
@@ -83,9 +84,21 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
 - 本机 MySQL 是 **5.7.44**：无 CTE（`WITH ... AS` 直接语法错误）、无窗口函数、CUBE/GROUPING SETS 抛 `NotSupportedException`（`MySqlTableOptions.Version` 默认 null → `over8=false`）。MySQL 全量 144/155，失败的 11 个全部由此而来，与 json 无关。
 
 ### 其他
+- **KingbaseES 陷阱（整列更新）**：`JSONB_SET(col::JSONB,'{}',@p::JSONB)` **不能**当整列赋值用 ——
+  空路径不保证替换整个文档（实测列**非空**时值也写不进去），首参为 NULL 时又整体返回 NULL。
+  整列一律 `col = @p::JSONB`。`CustomKingbaseESAdapter.HandleJsonColumn` 原先漏了 PG 里
+  `HasIndexInfo()` 的二分（UPDATE 分支直接生成 JSONB_SET），2026-09-17 已修。
+- **`DbBaseType` 是 record（按 `Name` 值相等）**：Kingbase 的 `Name` 是 `"KingbaseES"`，故
+  `DbType == DbBaseType.PostgreSQL` 为 **false**。测试里凡"PG 与 KingbaseES 同源"的分支（如
+  `SqlFn.JsonSet` 的路径 `'{a,b}'` 与值 `"\"text\""` 格式）要写成
+  `DbType.Name is "PostgreSQL" or "KingbaseES"` —— `ExecutionTest.JsonColumnCases.cs` 已如此。
 - **例外**：`SqlFn.JsonSet(path, value)` 走 `XxxMethodResolver.JsonSet`，值参数是**用户原始值、不序列化**（不经 HandleJsonColumn）→ 不能加 JSON 包装；PG 侧需用户自己传 JSON 文本（测试里手写 `"\"NewName\""`）。
 - json 列**整列**更新（`Set(j => j.Data, obj)` / `UpdateColumns`）：各方言统一 `col = @p`，读回反序列化，对称。
 - **达梦**：列类型默认 `JSON`（原生，长度 >320000 走 CLOB）；`JSONBackend.Binary` 在本机 DM8 **不可用**（`JSONB_VALUE` 不存在、`JSONB_SET` 拒绝 `'$.a'`），用默认 `Text`。
 - **达梦实例可用**：`localhost:5236`（LIGHTORM_TEST/LIGHTORM_TEST/DAMENG），`LightORMTest.Dameng` 可实跑；多测试类并发建连时 DM 会报 `6001 每个套接字地址只允许使用一次`（环境/连接数问题，非代码 bug），稍等重跑即恢复。
+- **KingbaseES 实例可用**：docker 容器 `kes`（镜像 `kingbase_v009r001c010b0004_single_x86:v1`，端口 **54321**），
+  `database_mode = oracle`（启动未设 DB_MODE，V9 默认 oracle）。**该模式不影响 json**：`jsonb` 类型、`->`/`->>`、
+  `JSONB_SET`、`::` cast 均可用，json 用例 **18/18 通过**。容器内免密查配置：
+  `docker exec -u kingbase kes bash -lc "ksql -U kingbase -d test -c 'show database_mode'"`。
 - **Oracle 实例可用**：`localhost:1521/XE`（`lightorm_test`/`lightorm_test`，写在 `test/LightORMTest.Oracle/GlobalUsings.cs` 的 `ConnectString`），**Oracle 21c XE**。21c 才有原生 `JSON` 类型与 `JSON_TRANSFORM`，实库测试已通过；≤19c 建表即失败。
 - 定位 json 问题的高效手段：先写**方言语义探针**（Python `sqlite3` / `sqlcmd` / DmProvider `DmCommand`）验证各 JSON 函数对各类参数的行为，再改框架，比反复改 C# 跑测试快得多。
