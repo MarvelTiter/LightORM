@@ -108,3 +108,26 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
   （`Transaction_Atomicity_Test` 正是靠长度溢出触发回滚，曾因此失败）。
 - **Oracle 实例可用**：`localhost:1521/XE`（`lightorm_test`/`lightorm_test`，写在 `test/LightORMTest.Oracle/GlobalUsings.cs` 的 `ConnectString`），**Oracle 21c XE**。21c 才有原生 `JSON` 类型与 `JSON_TRANSFORM`，实库测试已通过；≤19c 建表即失败。
 - 定位 json 问题的高效手段：先写**方言语义探针**（Python `sqlite3` / `sqlcmd` / DmProvider `DmCommand`）验证各 JSON 函数对各类参数的行为，再改框架，比反复改 C# 跑测试快得多。
+
+## 测试基础设施（2026-09-17 实测）
+
+- **六台容器常驻**：`dm8` 5236 / `kes` 54321 / `oracle21xe` 1521 / `mysql` 3306 / `pgsql` 5432 / `mssql` 1433。
+  `--list-tests` 实测用例数：Dameng **270** / Oracle 194 / Sqlite 168 / KingbaseES 100。
+- **每个用例前都会重建整个 schema**：`test/LightORMTest/ResultTest/ExecutionTest.InitData.cs` 的
+  `[TestInitialize] InitDatas()` = 10 张表 DROP + CREATE + 8 张表 FullDelete + 重插种子数据。
+  MSTest 的用例耗时**包含 TestInitialize**，所以每个用例都有几秒底噪 —— 写"某用例为何很慢"的分析时别漏了这项。
+- **达梦测试慢的两个真原因**（不是查询、不是驱动）：
+  1. 达梦 DDL 贵：单次 init ≈ **4.8 s**（其中 CREATE 段 3.9 s、裸 DROP 220 ms/张），
+     Kingbase 同项只有 **0.57 s**；DM 的查询本身只要 3–10 ms。
+  2. 建表语句被拆成逐条发送：`DamengTableHandler.Writer` 对 `CREATE TABLE`/每条 `COMMENT`/每条 `INDEX`
+     **各 yield 一次**（10 张表 = **131 条语句 = 131 次往返**），而 PG/Kingbase 用 `StringBuilder.AppendLine`
+     拼成一段、**每表 yield 一次**（≈10 次往返）。
+- **达梦 DDL 的批量化不可行（已实测，别再试）**：裸 `DmConnection` 跑 8 表 × [1 建表 + 10 注释 + 4 索引]
+  = 120 条语句，逐条 **3412 ms**，且 **CREATE 25.6ms/条、COMMENT 25.28ms/条、INDEX 24.63ms/条** ——
+  单条成本与语句内容无关 ⇒ 是"每条 DDL 自带一次提交/落盘"的固有代价。
+  ① `;` 分隔的多语句命令被 DM 拒绝（`语法分析出错`）；② Oracle 风格匿名块
+  `BEGIN EXECUTE IMMEDIATE '…'; … END;` 语法能过但同一工作量要 **23397 ms（慢 ~7 倍）**。
+  ⇒ 唯一可控手段是**减少 DDL 条数/次数**（如把 schema 重建移出 `[TestInitialize]`）。
+- **重复的测试类**：`LightORMTest.Dameng` / `PostgreSQL` / `SqlServer` 项目里同时存在
+  `ResultTest/ExecutionTest.cs` 与 `SelectResult.cs`，**两者都继承共享 `ExecutionTest`（100 个用例）**
+  → 整套共享套件在这些库里跑两遍。Sqlite / Oracle / MySql / KingbaseES 只有一份。
