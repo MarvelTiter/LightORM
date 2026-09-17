@@ -3,6 +3,7 @@ using LightORM.Extension;
 using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
+using LightORM.Utils;
 using System.Text;
 
 namespace LightORM.Providers.Dameng;
@@ -23,6 +24,7 @@ internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResol
 
     string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_VALUE" : "JSON_VALUE";
     string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
+    string Query => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_QUERY" : "JSON_QUERY";
     public override void HandleJsonColumn(JsonColumnContext context)
     {
         if (context.Options.SqlType == SqlPartial.Update)
@@ -41,7 +43,7 @@ internal sealed partial class CustomDamengAdapter(ISqlMethodResolver methodResol
         }
         else
         {
-            context.Sql.Append(Extract);
+            context.Sql.Append(JsonParameterHelper.IsCompositeJsonLeaf(context) ? Query : Extract);
         }
         context.Sql.Append('(');
         if (context.Options.RequiredTableAlias)
