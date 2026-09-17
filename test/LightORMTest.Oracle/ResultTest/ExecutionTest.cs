@@ -7,7 +7,14 @@ public class ExecutionTest : LightORMTest.ResultTest.ExecutionTest
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseOracle(ConnectString.Value);
+        option.UseOracle(static option =>
+        {
+            option.MasterConnectionString = ConnectString.Value;
+            option.ConfigureOracle(o =>
+            {
+                o.UseUnicodeString = false;
+            });
+        });
         option.UseInterceptor<LightOrmAop>();
     }
 }
