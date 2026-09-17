@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace LightORM.Utils;
 
 /// <summary>
@@ -41,4 +43,57 @@ public static class JsonParameterHelper
 
     /// <inheritdoc cref="IsCompositeJsonValue(Type)"/>
     public static bool IsCompositeJsonValue(object? value) => value is not null && IsCompositeJsonValue(value.GetType());
+
+    /// <summary>
+    /// 判断 json 列的<b>路径引用</b>末端指向的是否为复合文档(对象/数组)。
+    /// <para>
+    /// 与 <see cref="IsCompositeJsonValue(Type)"/> 的区别: 这里针对的是"列 + 路径"(如
+    /// <c>j.Data.NestJson</c> / <c>j.Arr[1]</c>)的取值, 供方言在<b>生成期</b>决定读取路径用哪个函数——
+    /// SqlServer / Oracle 的 <c>JSON_VALUE</c> 只返回标量, 遇对象/数组返回 NULL, 必须改用
+    /// <c>JSON_QUERY</c> 取 JSON 文档文本, 再由读取侧反序列化。
+    /// </para>
+    /// <para>
+    /// 只用生成期信息(表达式结构 + 列元数据), 不看运行时值, 与表达式缓存兼容。
+    /// 无法判定时(路径以索引结束且锚点不是数组/集合, 如 <c>Obj["City"]</c>)按标量处理, 保持既有语义。
+    /// </para>
+    /// </summary>
+    public static bool IsCompositeJsonLeaf(JsonColumnContext context)
+    {
+        // Stack<MemberPathInfo> 的枚举顺序即 Pop 顺序(自栈顶向下), 最后一个元素既是最先被弹出、
+        // 也是列名后 json 路径中最靠内的一级 —— 即"末级"。
+        MemberPathInfo leaf = default;
+        var hasLeaf = false;
+        foreach (var mi in context.Members)
+        {
+            leaf = mi;
+            hasLeaf = true;
+        }
+        if (!hasLeaf) return false;
+
+        var type = leaf.Member switch
+        {
+            PropertyInfo p => p.PropertyType,
+            FieldInfo f => f.FieldType,
+            // 路径以索引结束(如 Arr[1] / Lst[0])时, 末级没有成员信息, 锚点就是 json 列本身
+            _ => context.Column.ColumnType
+        };
+        if (type is null) return false;
+        // 有索引则取元素类型: 数组/List<T> 可判定, JsonNode 之类的索引器语义无法判定 → 按标量
+        if (leaf.IndexValue.HasValue) type = GetElementType(type);
+        return type is not null && IsCompositeJsonValue(type);
+    }
+
+    /// <summary>
+    /// 取数组 / 单泛型参数集合(List&lt;T&gt; / IList&lt;T&gt; 等)的元素类型; 无法判定返回 null。
+    /// </summary>
+    private static Type? GetElementType(Type type)
+    {
+        if (type.IsArray) return type.GetElementType();
+        if (type.IsGenericType)
+        {
+            var args = type.GetGenericArguments();
+            if (args.Length == 1) return args[0];
+        }
+        return null;
+    }
 }
