@@ -534,4 +534,49 @@ public partial class ExecutionTest
         Assert.AreEqual("Upsert221", list.Single(j => j.Id == 221).Data!.Name);
         Assert.AreEqual("UpsertNode221", list.Single(j => j.Id == 221).Obj["Name"]!.GetValue<string>());
     }
+
+    /// <summary>
+    /// 读取路径的<b>复合末级成员</b>：投影嵌套对象(<c>Data.NestJson</c>)与数组/List 元素(<c>Arr[1]</c> / <c>Lst[0]</c>)。
+    /// 本组用例此前所有 json 成员引用的末级都是标量(Name/Value)，从不把对象/数组<b>本身</b>作为末级取，
+    /// 因此无法暴露"方言按 JSON 路径取非标量"这一类问题：Oracle / SqlServer 的读取分支都用裸
+    /// <c>JSON_VALUE</c>(只返回标量，遇对象/数组得 NULL)，PG 则是末级 <c>->></c> + cast。
+    /// </summary>
+    [TestMethod]
+    public async Task JsonColumn_CompositeMember_Projection()
+    {
+        // 末级为嵌套对象
+        var nests = await Db.Select<JsonExecTestModel>()
+            .Where(j => j.Id == 100)
+            .ToListAsync(j => new { j.Id, N = j.Data!.NestJson }, TestContext.CancellationToken);
+        Assert.HasCount(1, nests);
+        Assert.IsNotNull(nests[0].N);
+        Assert.AreEqual("Nest Object100", nests[0].N!.Name);
+        Assert.AreEqual(150, nests[0].N!.Value);
+
+        var nests2 = await Db.Select<JsonExecTestModel>()
+            .Where(j => j.Id == 100)
+            .ToListAsync(j =>  j.Data!.NestJson , TestContext.CancellationToken);
+        Assert.HasCount(1, nests2);
+        Assert.IsNotNull(nests2[0]);
+        Assert.AreEqual("Nest Object100", nests2[0]!.Name);
+        Assert.AreEqual(150, nests2[0]!.Value);
+
+        // 末级为数组元素(对象)
+        var items = await Db.Select<JsonExecTestModel>()
+            .Where(j => j.Id == 100)
+            .ToListAsync(j => new { j.Id, I = j.Arr![1] }, TestContext.CancellationToken);
+        Assert.HasCount(1, items);
+        Assert.IsNotNull(items[0].I);
+        Assert.AreEqual("Second100", items[0].I!.Name);
+        Assert.AreEqual(160, items[0].I.Value);
+
+        // 末级为 List 元素(对象)
+        var lst = await Db.Select<JsonExecTestModel>()
+            .Where(j => j.Id == 100)
+            .ToListAsync(j => new { j.Id, L = j.Lst![0] }, TestContext.CancellationToken);
+        Assert.HasCount(1, lst);
+        Assert.IsNotNull(lst[0].L);
+        Assert.AreEqual("List100", lst[0].L!.Name);
+        Assert.AreEqual(170, lst[0].L.Value);
+    }
 }
