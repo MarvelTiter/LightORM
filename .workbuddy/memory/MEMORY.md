@@ -52,7 +52,29 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
 | SqlServer | 复合 `JSON_QUERY(@p)` / 标量传**原生值** | 无 `JSON()`；标量文本抛 Msg 13609；需生成期分流 |
 | MySQL | `CAST(?p AS JSON)` | **5.7.44 实测 17/17 通过**；整列**必须** `col = ?p`（见下"NULL 陷阱"） |
 | **Dameng（DM8）** | `CAST(:p AS JSON)` | 实测对字符串/对象/数组/数字/布尔/null **一律正确**，无需分流；binder 用框架默认 |
-| Oracle | 未处理 | 用户明确跳过（Oracle 库本身不支持 json 列） |
+| Oracle | `JSON(:p)`（包在 `JSON_TRANSFORM` 的 SET 里） | **21c XE 实库测试已通过**（2026-09-17） |
+
+### 各方言"读取路径成员取值"的写法（2026-09-17 新增，统一走 `IsCompositeJsonLeaf`）
+| 方言 | 末级标量 | **末级复合（对象/数组）** | 机制 |
+|---|---|---|---|
+| Oracle | `JSON_VALUE(col,'$.p')` | `JSON_QUERY(col,'$.p')` | **已修**，21c XE 实跑通过 |
+| SqlServer | `JSON_VALUE(...)` | `JSON_QUERY(...)` | **已修**，无实例未实测 |
+| MySQL | `col->>'$.p'` | 同左（`->>` 对对象返回文档文本，本身就对） | 无需改 |
+| PostgreSQL | `(col->>'p')::TARGET` | 同左（数组用 `col->N`） | 无需改 |
+| SQLite | `json_extract(...)` | 同左 | 无需改，实测通过 |
+| Dameng | `JSON_VALUE`（Binary 后端起为 `JSONB_VALUE`） | **未改，待验证**（实例未启动，且不确定 DM8 是否有 JSON_QUERY） | — |
+
+- 判定函数：`JsonParameterHelper.IsCompositeJsonLeaf(JsonColumnContext)`（`src/LightORM/Utils/JsonParameterHelper.cs`）。
+  取值口径 = `Members` 栈（枚举顺序即 Pop 顺序）的**最后一个元素**，即 json 路径最内层；末级无成员信息
+  （`Arr[1]`/`Lst[0]` 这类纯索引路径）时退回列本身的 CLR 类型再取元素类型；无法判定按标量，与 binder 的保守策略一致。
+  **只看表达式结构 + 列元数据，不看运行时值 → 与 `Resolve` 表达式缓存兼容。**
+- 相关用例：`ExecutionTest.JsonColumn_CompositeMember_Projection`（匿名投影 `new { N = j.Data.NestJson }` /
+  `new { I = j.Arr[1] }` / `new { L = j.Lst[0] }`）；SQL 探针 `SqlGenerate.SelectSql_Json.TestJsonCompositeLeafMemberRead`。
+- **投影形状**：取复合末级成员时，**匿名投影与非匿名目标类型都支持**。非匿名（`ToListAsync(j => j.Data!.NestJson)`）
+  靠 `ExpressionBuilder.CreateCustomEntity` 开头的 `if (ContainsJsonType(targetType)) return GetTargetJsonExpression(..., 0, targetType);`
+  —— 该形状 SQL 只 SELECT 一列，第 0 列即 json 表达式。`ContainsJsonType` 查的是 `JsonMaps`（只装 `[LightJsonMap]` 的列类型，
+  经 `ColumnInfo.AddJsonTypeMap` 注册），实体类型不在其中，故不会误伤普通实体映射。2026-09-17 用户改动 + SQLite/Oracle 实测通过。
+
 
 ### MySQL / MySQL 特有陷阱
 - **`JSON_SET` 首参为 NULL 时整体返回 NULL** → MySQL 下整列更新**不能**写成 `JSON_SET(col,'$',val)`：列一旦被 `SetNull`/`Set(col,null)` 置空，值就再也写不回去（静默丢失，不报错）。整列一律 `col = ?p`（JSON 文本写 JSON 列时 MySQL 自动解析）。
@@ -65,4 +87,5 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
 - json 列**整列**更新（`Set(j => j.Data, obj)` / `UpdateColumns`）：各方言统一 `col = @p`，读回反序列化，对称。
 - **达梦**：列类型默认 `JSON`（原生，长度 >320000 走 CLOB）；`JSONBackend.Binary` 在本机 DM8 **不可用**（`JSONB_VALUE` 不存在、`JSONB_SET` 拒绝 `'$.a'`），用默认 `Text`。
 - **达梦实例可用**：`localhost:5236`（LIGHTORM_TEST/LIGHTORM_TEST/DAMENG），`LightORMTest.Dameng` 可实跑；多测试类并发建连时 DM 会报 `6001 每个套接字地址只允许使用一次`（环境/连接数问题，非代码 bug），稍等重跑即恢复。
+- **Oracle 实例可用**：`localhost:1521/XE`（`lightorm_test`/`lightorm_test`，写在 `test/LightORMTest.Oracle/GlobalUsings.cs` 的 `ConnectString`），**Oracle 21c XE**。21c 才有原生 `JSON` 类型与 `JSON_TRANSFORM`，实库测试已通过；≤19c 建表即失败。
 - 定位 json 问题的高效手段：先写**方言语义探针**（Python `sqlite3` / `sqlcmd` / DmProvider `DmCommand`）验证各 JSON 函数对各类参数的行为，再改框架，比反复改 C# 跑测试快得多。
