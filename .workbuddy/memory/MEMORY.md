@@ -100,5 +100,11 @@ NuGet 本地源：`E:\GitRepositories\LocalNuget`（用户 NuGet.Config 里的 "
   `database_mode = oracle`（启动未设 DB_MODE，V9 默认 oracle）。**该模式不影响 json**：`jsonb` 类型、`->`/`->>`、
   `JSONB_SET`、`::` cast 均可用，json 用例 **18/18 通过**。容器内免密查配置：
   `docker exec -u kingbase kes bash -lc "ksql -U kingbase -d test -c 'show database_mode'"`。
+  测试项目 `test/LightORMTest.KingbaseES/`（net10.0 + MSTest 4.0.2），注册 `DbBaseType` 用
+  `KingbaseESProvider.KingbaseEs`（**不是** `Oracle`）；全量 **99/99 通过**（2026-09-17）。
+- **KingbaseES 建表：字符串列一律映射成 `TEXT`**（`Utils.FormatType.TransformType` 的兜底分支），
+  所以 `[LightColumn(Length = n)]` 的长度约束必须靠 `KingbaseESTableHandler.Writer.BuildColumn` 里的
+  `dataType == "TEXT" && column.Length.HasValue → VARCHAR(n)` 补回来，否则约束**静默丢失**
+  （`Transaction_Atomicity_Test` 正是靠长度溢出触发回滚，曾因此失败）。
 - **Oracle 实例可用**：`localhost:1521/XE`（`lightorm_test`/`lightorm_test`，写在 `test/LightORMTest.Oracle/GlobalUsings.cs` 的 `ConnectString`），**Oracle 21c XE**。21c 才有原生 `JSON` 类型与 `JSON_TRANSFORM`，实库测试已通过；≤19c 建表即失败。
 - 定位 json 问题的高效手段：先写**方言语义探针**（Python `sqlite3` / `sqlcmd` / DmProvider `DmCommand`）验证各 JSON 函数对各类参数的行为，再改框架，比反复改 C# 跑测试快得多。
