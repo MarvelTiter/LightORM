@@ -104,6 +104,10 @@ PRIMARY KEY ({string.Join(", ", primaryKeys.Select(item => DbEmphasis(option, it
         {
             dataType = column.Length != null ? $"{dataType}({column.Length})" : dataType;
         }
+        if (dataType == "TEXT" && column.Length.HasValue)
+        {
+            dataType = $"VARCHAR({column.Length})";
+        }
 
         string notNull = column.NotNull || column.PrimaryKey ? " NOT NULL" : " NULL";
         string identity = column.AutoIncrement ? " GENERATED ALWAYS AS IDENTITY" : "";
