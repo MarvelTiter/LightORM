@@ -7,20 +7,18 @@ public static class IoCExtension
 {
     extension(IExpressionContextSetup options)
     {
-        public void UseSqlServer(SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
-        => options.UseSqlServer("MainDb", version, masterConnectString, slaveConnectStrings);
-        public void UseSqlServer(string? key, SqlServerVersion version, string masterConnectString, params string[] slaveConnectStrings)
+        // 需要指定 DbKey / 显式版本 / 关闭版本探测时，用 Action 重载：
+        //   options.UseSqlServer(set => { set.DbKey = "Log"; set.MasterConnectionString = cs;
+        //       set.ConfiguraSqlServer(o => o.DetectVersion = false); });
+        public void UseSqlServer(string masterConnectString, params string[] slaveConnectStrings)
+        => options.UseSqlServer(set =>
         {
-            //var provider = SqlServerProvider.Create((version), masterConnectString, slaveConnectStrings);
-            //options.SetDatabase(key, DbBaseType.SqlServer, provider);
-            UseSqlServer(options, version, set =>
-            {
-                set.DbKey = key;
-                set.MasterConnectionString = masterConnectString;
-                set.SalveConnectionStrings = slaveConnectStrings;
-            });
-        }
-        public void UseSqlServer(SqlServerVersion version, Action<IDbOption> setting)
+            set.DbKey = "MainDb";
+            set.MasterConnectionString = masterConnectString;
+            set.SalveConnectionStrings = slaveConnectStrings;
+        });
+
+        public void UseSqlServer(Action<IDbOption> setting)
         {
             var dbOption = new DataBaseOption<SqlServerTableOptions>();
             setting.Invoke(dbOption);
@@ -28,7 +26,7 @@ public static class IoCExtension
             {
                 throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
             }
-            var provider = SqlServerProvider.Create(version, dbOption);
+            var provider = SqlServerProvider.Create(dbOption);
             options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.SqlServer, provider);
         }
     }

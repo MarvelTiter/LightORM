@@ -9,7 +9,7 @@ public class Select : LightORMTest.ResultTest.ExecutionTest
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseSqlServer(LightORM.Providers.SqlServer.SqlServerVersion.V1, ConnectString.Value);
+        option.UseSqlServer(ConnectString.Value);
         option.UseInterceptor<LightOrmAop>();
     }
 

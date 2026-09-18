@@ -4,9 +4,14 @@ using System.Linq.Expressions;
 
 namespace LightORM.Providers.SqlServer;
 
-public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlMethodResolver
+public sealed class SqlServerMethodResolver(SqlServerCapabilities capabilities) : BaseSqlMethodResolver
 {
-    public SqlServerVersion Version { get; } = version;
+    /// <summary>不感知版本（按完整功能生成）。</summary>
+    public SqlServerMethodResolver() : this(SqlServerCapabilities.Baseline)
+    {
+    }
+
+    public SqlServerCapabilities Capabilities { get; } = capabilities;
 
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -121,9 +126,9 @@ public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlM
 
     public override void Trim(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
-        if (Version == SqlServerVersion.Over2017)
+        if (Capabilities.Features.HasFlag(SqlServerFeatures.TrimFunction))
         {
-            // TRIM(columnName);
+            // TRIM(columnName);   2017+
             resolver.Sql.Append("TRIM");
             resolver.Sql.Append('(');
             resolver.Visit(methodCall.Object);
@@ -134,24 +139,6 @@ public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlM
             base.Trim(resolver, methodCall);
         }
     }
-
-    //public override void Join(IExpressionResolver resolver, MethodCallExpression methodCall)
-    //{
-    //    if (Version == SqlServerVersion.Over2017)
-    //    {
-    //        resolver.Sql.Append("STRING_AGG(");
-    //        resolver.Visit(methodCall.Arguments[0]);
-    //        if (methodCall.Arguments.Count > 1)
-    //        {
-    //            resolver.Sql.Append(", ");
-    //            resolver.Options.Parameterized = false;
-    //            resolver.Visit(methodCall.Arguments[1]);
-    //            resolver.Options.Parameterized = true;
-    //        }
-    //        resolver.Sql.Append(')');
-    //    }
-    //    base.Join(resolver, methodCall);
-    //}
 
     public override void OrderBy(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -187,10 +174,7 @@ public sealed class SqlServerMethodResolver(SqlServerVersion version) : BaseSqlM
         }
         else
         {
-            if (Version < SqlServerVersion.Over2017)
-            {
-                throw new NotSupportedException("不支持STRING_AGG函数");
-            }
+            // STRING_AGG 只有 2017+ 一种写法、没有替代实现 → 不做版本判断，低版本交给数据库报错。
             resolver.Visit(methodCall.Object);
             var exps = resolver.ExpStores!;
             var joinExp = exps["Join"]!;
