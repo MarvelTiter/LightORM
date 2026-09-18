@@ -99,9 +99,10 @@
   - `ParseDataType`：先剥 `(len)` 再 `ToUpperInvariant()` 精确匹配；未命中按 **SQLite 官方亲和性顺序**兜底（INT → CHAR/CLOB/TEXT → BLOB → REAL/FLOA/DOUB），都不中 → `object?` 且 `return false`（NUMERIC 兜底桶不猜）。**顺序不可改**：`FLOATING POINT` 里 `POINT` 含 `INT` ⇒ 引擎判定它是 INTEGER 亲和性。
   - net462 无 `System.Range`/`System.Index` ⇒ 用 `Substring(0, paren)`，不能写 `declared[..paren]`。
   - 写/读**不一一对应**：写出去 byte/sbyte/short/ushort/int/uint/long/ulong/bool 全落 `INTEGER`，float/double/decimal 全落 `REAL`，读回只能取 `int` / `double`；要精确类型得显式声明（`BIGINT`、`DECIMAL(18,2)`）。
-- 回归测试：`test/LightORMTest.Sqlite/SchemaReadTest.cs`（`SqliteSchemaReadTest`，5 用例）、
-  `test/LightORMTest.Dameng/SchemaReadTest.cs`（`DamengSchemaReadTest`，4 用例）。
-  两者都表自建自删、不继承 InitData 重建（达梦单次 init ≈5s，别把这类测试挂到共享 ExecutionTest 下）。
+- 验证方式（**曾用的测试文件已被用户主动删除、未入库**）：`test/LightORMTest.Sqlite/SchemaReadTest.cs`（5 用例，5/5 通过）
+  与 `test/LightORMTest.Dameng/SchemaReadTest.cs`（4 用例，4/4 通过）曾用于验证这两处实现，提交前由用户移除 ⇒
+  **不要把"反向读表有回归测试"当既成事实**。将来补这类用例时要表自建自删，且不要继承 InitData 重建
+  （达梦单次 init ≈5s，别挂到共享 ExecutionTest 下）。
 
 ## JSON 列与方言约定
 架构：序列化下沉到 `IDatabaseParameterBinder.BindParameter`；`DbParameterValue` 携带原始 CLR 值；`CustomDatabaseAdapter` 给默认 json 绑定。`src/LightORM/Utils/JsonParameterHelper.cs`：`Serialize` + `IsCompositeJsonValue`（标量白名单：string/char/数值/Guid/DateTime/TimeSpan/byte[]/Uri/Version/object）+ `IsCompositeJsonLeaf(JsonColumnContext)`。
