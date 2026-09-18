@@ -1,4 +1,6 @@
 ﻿using LightORM.Providers.Sqlite;
+using LightORM.Providers.Sqlite.Extensions;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace LightORMTest.ResolverTest;
@@ -6,6 +8,17 @@ namespace LightORMTest.ResolverTest;
 [TestClass]
 public class ValueResolveTest
 {
+    [NotNull] public ResolveContext? Context { get; set; }
+
+    [TestInitialize]
+    public void InitResolveContext()
+    {
+        Context = new(LightORM.Providers.Sqlite.SqliteProvider.Create(o =>
+        {
+            o.MasterConnectionString = "Data Source=:memory:;Version=3;New=True;";
+            o.ConfiguraSqlite(t => t.DetectVersion = false);
+        }).DatabaseAdapter);
+    }
     class Pa(int a)
     {
         public int A => a;
@@ -15,12 +28,12 @@ public class ValueResolveTest
     {
         Test(new(10));
         Test(new(20));
-        static void Test(Pa a)
+
+        void Test(Pa a)
         {
             var p = "ad";
             Expression<Func<User, bool>> where = u => u.Age > a.A && u.UserName.Contains(p);
-            var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
-            var result = where.Resolve(SqlResolveOptions.Where, context);
+            var result = where.Resolve(SqlResolveOptions.Where, Context);
             Assert.IsNotNull(result.ResolvedValues);
             Assert.HasCount(2, result.ResolvedValues);
             Assert.AreEqual(a.A, result.ResolvedValues[0].Value);
@@ -34,15 +47,12 @@ public class ValueResolveTest
         int[] arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
         int? i = GetIndex();
         var ii = new { index = 5 };
-
-        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
-
         Expression<Func<User, bool>> where1 = u => u.Age == arr[i.Value];
-        var nullableInt = where1.Resolve(SqlResolveOptions.Where, context);
+        var nullableInt = where1.Resolve(SqlResolveOptions.Where, Context);
         Assert.AreEqual(7, nullableInt.ResolvedValues![0].Value);
 
         Expression<Func<User, bool>> where2 = u => u.Age == arr[ii.index];
-        var anonymous = where2.Resolve(SqlResolveOptions.Where, context);
+        var anonymous = where2.Resolve(SqlResolveOptions.Where, Context);
         Assert.AreEqual(5, anonymous.ResolvedValues![0].Value);
 
         static int GetIndex()
@@ -58,12 +68,9 @@ public class ValueResolveTest
         int? i = GetIndex();
         string s = "ad";
         var ii = new { index = 5 };
-
-        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
-
         Expression<Func<User, bool>> withVariable = u => u.Age > arr[i.Value] && u.Age < arr[ii.index] && u.UserName.Contains(s);
-        var result1 = withVariable.Resolve(SqlResolveOptions.Where, context);
-        var result2 = withVariable.Resolve(SqlResolveOptions.Where, context);
+        var result1 = withVariable.Resolve(SqlResolveOptions.Where, Context);
+        var result2 = withVariable.Resolve(SqlResolveOptions.Where, Context);
         Assert.IsNotNull(result1.ResolvedValues);
         Assert.IsNotNull(result2.ResolvedValues);
         Assert.AreEqual(7, result1.ResolvedValues[0].Value);
@@ -78,8 +85,8 @@ public class ValueResolveTest
         }
 
         Expression<Func<User, bool>> noVariable = u => u.Age > 7 && u.Age < 18 && u.UserName.Contains("123");
-        var result3 = noVariable.Resolve(SqlResolveOptions.Where, context);
-        var result4 = noVariable.Resolve(SqlResolveOptions.Where, context);
+        var result3 = noVariable.Resolve(SqlResolveOptions.Where, Context);
+        var result4 = noVariable.Resolve(SqlResolveOptions.Where, Context);
         Assert.IsNull(result3.ResolvedValues);
         Assert.IsNull(result4.ResolvedValues);
         static int GetIndex()
@@ -92,10 +99,9 @@ public class ValueResolveTest
     public void ResolveCacheArrayContain()
     {
         int[] arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-        var context = new ResolveContext(CustomSqliteAdapter.TestInstance);
         Expression<Func<User, bool>> inArray = u => arr.Contains(u.Age!.Value);
-        var result1 = inArray.Resolve(SqlResolveOptions.Where, context);
-        var result2 = inArray.Resolve(SqlResolveOptions.Where, context);
+        var result1 = inArray.Resolve(SqlResolveOptions.Where, Context);
+        var result2 = inArray.Resolve(SqlResolveOptions.Where, Context);
         Assert.IsNotNull(result1.ResolvedValues);
         Assert.IsNotNull(result2.ResolvedValues);
         for (int j = 0; j < result1.ResolvedValues.Count; j++)

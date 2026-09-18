@@ -7,12 +7,8 @@ using System.Text;
 
 namespace LightORM.Providers.Sqlite;
 
-internal sealed partial class CustomSqliteAdapter(ISqlMethodResolver methodResolver, SqliteTableOptions options) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
+internal sealed partial class CustomSqliteAdapter(ISqlMethodResolver methodResolver, SqliteTableOptions options, SqliteCapabilities capabilities) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
 {
-    /// <summary>
-    /// 测试用
-    /// </summary>
-    internal readonly static CustomSqliteAdapter TestInstance = new(new SqliteMethodResolver(new()), new());
     public override string Prefix => "@";
     public override string Emphasis => "``";
     public override void Paging(SelectBuilder builder, StringBuilder sql)
@@ -26,8 +22,8 @@ internal sealed partial class CustomSqliteAdapter(ISqlMethodResolver methodResol
         sql.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss"));
     }
 
-    string Extract => options.JSONBackend == JSONBackend.Binary ? "JSONB_EXTRACT" : "JSON_EXTRACT";
-    string Set => options.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
+    string Extract => capabilities.UseBinaryJson(options.JSONBackend) ? "JSONB_EXTRACT" : "JSON_EXTRACT";
+    string Set => capabilities.UseBinaryJson(options.JSONBackend) ? "JSONB_SET" : "JSON_SET";
     public override void HandleJsonColumn(JsonColumnContext context)
     {
         if (context.Options.SqlType == SqlPartial.Update)

@@ -70,7 +70,8 @@ partial class SqliteTableHandler
     {
         if (type.IsJson && option.JSONBackend != Models.JSONBackend.NotSupport)
         {
-            if (option.JSONBackend == Models.JSONBackend.Binary)
+            // 只有服务端确实支持 jsonb（3.45+）才按二进制存；老版本自动退回文本。
+            if (Capabilities.UseBinaryJson(option.JSONBackend))
             {
                 return "BLOB";
             }
@@ -101,7 +102,7 @@ partial class SqliteTableHandler
         {
             return "BLOB";
         }
-        else if (type.IsJson && option.JSONBackend == Models.JSONBackend.Binary)
+        else if (type.IsJson && Capabilities.UseBinaryJson(option.JSONBackend))
         {
             return "BLOB";
         }
