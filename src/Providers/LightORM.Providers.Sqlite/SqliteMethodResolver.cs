@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace LightORM.Providers.Sqlite;
 
-public sealed class SqliteMethodResolver(SqliteTableOptions tableOptions) : BaseSqlMethodResolver
+public sealed class SqliteMethodResolver(SqliteTableOptions tableOptions, SqliteCapabilities capabilities) : BaseSqlMethodResolver
 {
     public override void ToString(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
@@ -186,8 +186,9 @@ public sealed class SqliteMethodResolver(SqliteTableOptions tableOptions) : Base
         resolver.Sql.Append(')');
     }
 
-    string Extract => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_EXTRACT" : "JSON_EXTRACT";
-    string Set => tableOptions.JSONBackend == JSONBackend.Binary ? "JSONB_SET" : "JSON_SET";
+    // jsonb_* 要 SQLite 3.45+，老版本上会 no such function，由能力档案兜底降级到 json_*。
+    string Extract => capabilities.UseBinaryJson(tableOptions.JSONBackend) ? "JSONB_EXTRACT" : "JSON_EXTRACT";
+    string Set => capabilities.UseBinaryJson(tableOptions.JSONBackend) ? "JSONB_SET" : "JSON_SET";
     public override void JsonQuery(IExpressionResolver resolver, MethodCallExpression methodCall)
     {
         resolver.Sql.Append(Extract);

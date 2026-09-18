@@ -24,16 +24,27 @@ public sealed class SqliteProvider : BaseDatabaseProvider
 
     private SqliteProvider(DataBaseOption<SqliteTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
-        DbHandler = new SqliteTableHandler(option.GenerateOption);
-        var sqlMethodResolver = new SqliteMethodResolver(option.GenerateOption);
+        var generate = option.GenerateOption;
+        var factory = option.NewFactory ?? SQLiteFactory.Instance;
+        // 能力档案先建：handler / methodResolver / adapter 都要读它。
+        // 探测在构造期发起（不阻塞）；SQLite 不 Open，故探测不会建出库文件。
+        DbProviderFactory = factory;
+        Capabilities = SqliteCapabilities.Start(factory, MasterConnectionString, generate.SpecificVersion, generate.DetectVersion);
+        DbHandler = new SqliteTableHandler(generate, Capabilities);
+        var sqlMethodResolver = new SqliteMethodResolver(generate, Capabilities);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomSqliteAdapter(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomSqliteAdapter(sqlMethodResolver, generate, Capabilities);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
-        DbProviderFactory = option.NewFactory ?? SQLiteFactory.Instance;
     }
 
     public override DbBaseType DbBaseType => DbBaseType.Sqlite;
+
+    /// <summary>
+    /// 版本能力档案：由探测结果 / <see cref="TableOptions.SpecificVersion"/> 推导；
+    /// 未启用探测、探测失败或版本未知时按<b>完整功能</b>。
+    /// </summary>
+    public SqliteCapabilities Capabilities { get; }
 
     public override DbProviderFactory DbProviderFactory { get; }
 
