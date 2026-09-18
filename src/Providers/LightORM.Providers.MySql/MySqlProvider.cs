@@ -31,15 +31,23 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         {
             throw new Exception("未能在连接字符串中发现目标数据库!");
         }
-        DbHandler = new MySqlTableHandler(master, option.GenerateOption);
+        var generate = option.GenerateOption;
+        var factory = option.NewFactory ?? MySqlConnectorFactory.Instance;
+        // 版本探测在构造期发起（后台执行），使首个 SQL 构建时档案已就绪；
+        // 已用 TableOptions.SpecificVersion 指定版本、或 DetectVersion = false 时跳过探测（退到保守基线）。
+        Capabilities = MySqlCapabilities.Start(factory, master, generate.SpecificVersion, generate.DetectVersion);
+        DbHandler = new MySqlTableHandler(master, generate);
         var sqlMethodResolver = new MySqlMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomMySqlAdapter(sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomMySqlAdapter(sqlMethodResolver, Capabilities);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
-        DbProviderFactory = option.NewFactory ?? MySqlConnectorFactory.Instance;
+        DbProviderFactory = factory;
     }
     public override DbBaseType DbBaseType => DbBaseType.MySql;
+
+    /// <summary>版本能力档案（探测 / 显式指定 / 未探测时的保守基线）。</summary>
+    public MySqlCapabilities Capabilities { get; }
 
     public override IDatabaseAdapter DatabaseAdapter { get; }
 

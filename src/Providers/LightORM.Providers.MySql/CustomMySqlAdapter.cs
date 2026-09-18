@@ -7,10 +7,10 @@ using System.Text;
 
 namespace LightORM.Providers.MySql;
 
-#pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomMySqlAdapter(ISqlMethodResolver methodResolver, MySqlTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
+internal sealed partial class CustomMySqlAdapter(ISqlMethodResolver methodResolver, MySqlCapabilities capabilities) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
 {
-    internal static readonly CustomMySqlAdapter Instance = new(new MySqlMethodResolver(), new());
+    internal static readonly CustomMySqlAdapter Instance = new(new MySqlMethodResolver(), MySqlCapabilities.Baseline);
+    public MySqlCapabilities Capabilities { get; } = capabilities;
     public override string Prefix => "?";
     public override string Emphasis => "``";
     public override void Paging(SelectBuilder builder, StringBuilder sql)
@@ -20,35 +20,22 @@ internal sealed partial class CustomMySqlAdapter(ISqlMethodResolver methodResolv
 
     public override void HandleSelectGroupBySegment(SelectContext context)
     {
-        var over8 = tableOptions.Version > new Version(8, 0);
-        if (over8)
+        if (Capabilities.Features.HasFlag(MySqlFeatures.GroupByRollup))
         {
             base.HandleSelectGroupBySegment(context);
+            return;
         }
-        else
+
+        // 8.0 以下：ROLLUP 只有旧写法 `GROUP BY (...) WITH ROLLUP`；
+        // CUBE / GROUPING SETS 没有替代实现 → 不判版本，走 base 生成后交给数据库报错（与"只有一种实现的函数"同一原则）。
+        var builder = context.Builder;
+        if (builder.IsRollup)
         {
             var sql = context.Sql;
-            var builder = context.Builder;
-            var ident = context.Ident;
-            if (builder.IsRollup)
-            {
-                // $"{ident}GROUP BY ROLLUP ({string.Join(", ", GroupBy)})"
-                sql.Append(ident).Append("GROUP BY (").Append(builder.GroupBy).AppendLine(") WITH ROLLUP");
-            }
-            else if (builder.IsCube)
-            {
-                throw new NotSupportedException("MySQL 8.0 以下版本不支持 CUBE 分组");
-            }
-            else if (builder.GroupingSets.Count > 0)
-            {
-                throw new NotSupportedException("MySQL 8.0 以下版本不支持 GROUPING SETS 分组");
-            }
-            else
-            {
-                // $"{ident}GROUP BY {string.Join(", ", GroupBy)}"
-                sql.Append(ident).Append("GROUP BY ").Append(builder.GroupBy).AppendLine();
-            }
+            sql.Append(context.Ident).Append("GROUP BY (").Append(builder.GroupBy).AppendLine(") WITH ROLLUP");
+            return;
         }
+        base.HandleSelectGroupBySegment(context);
     }
     public void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT @@IDENTITY");
 
