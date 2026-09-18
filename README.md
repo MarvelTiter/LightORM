@@ -343,10 +343,16 @@ public virtual void Exits(IExpressionResolver resolver, MethodCallExpression met
 
 - `ToString()` → `CONVERT(VARCHAR(MAX), ...)`，且**把 .NET 日期格式字符串映射成 SQL Server 的 style code**（`"yyyy-MM-dd"` → 23，`"yyyyMMdd"` → 112 等），这是非常贴合实际业务痛点的细节。
 - `Contains` 区分 `string.Contains`（→ `LIKE '%'+x+'%'`）和集合 `Contains`（→ `IN (...)`）。
-- `Join` 聚合根据 `SqlServerVersion` 决定用 `STRING_AGG`（2017+）还是抛异常。
+- `Join` 聚合 → `STRING_AGG`（2017+ 才有；低版本不预判，直接交给数据库报错——只有一种写法，判版本只是多一条无意义的失败分支）。
 - `JsonQuery` → `JSON_VALUE`，`JsonSet` → `JSON_MODIFY`。
 
-**版本感知**：`SqlServerMethodResolver` 构造函数接收 `SqlServerVersion` 枚举，同一 SQL 片段在不同 SQL Server 版本下生成不同函数——这是 `TRIM`（2017+ 原生 vs 兼容写法）等函数能正确工作的原因。
+**版本感知**：`SqlServerMethodResolver` / `CustomSqlServerAdapter` 接收 `SqlServerCapabilities`——由构造期后台探测的服务端版本（或显式 `SpecificVersion`）翻译成能力位，同一 SQL 片段在不同 SQL Server 版本下生成不同函数。当前只登记**"存在两套写法"**的能力：`OffsetFetch`（2012+ 的 `OFFSET/FETCH` vs `ROW_NUMBER` 包裹）与 `TrimFunction`（2017+ 原生 `TRIM` vs `LTRIM(RTRIM())`）；只有一种写法的能力（如 `JSON_VALUE`、`STRING_AGG`）不判版本，交给数据库报错即可。
+探测是可选特性：`SpecificVersion` 已指定或 `DetectVersion = false`（典型的 ToSql 纯生成场景）时不建连，**探测失败或未探测也一律按完整功能生成**（SqlServer 的能力位都是"新写法在老版本报错、旧写法在新版本仍可跑"，故乐观基线更合理）。
+
+**能力档案的公共骨架**：`DbCapabilities<TDatabase, TDatabaseFeatures>`（`src/LightORM/Implements/DbCapabilities.cs`）承载探测的全部机制——单飞、后台重试自愈、连接串超时改写、`Baseline`/`ForVersion`/`Start`；方言只实现 `ProbeTarget` 与 `MapFeatures(Version?) → TFeatures`，`PrepareProbeConnectString` / `OpenBeforeRead` 有默认值可按需覆盖。
+> net462 / netstandard2.0 不支持接口静态抽象成员，故方言元数据用**实例成员**表达：静态工厂先 `new TDatabase()` 借一个空实例读出探测键与连接串改写委托（CRTP + `new()` 约束），空实例只是元数据载体。
+
+**接入探测的只有四个方言**：`SqlServerCapabilities` / `MySqlCapabilities` / `OracleCapabilities` / `SqliteCapabilities`——它们各自有"两套写法"的能力位，探测结果有地方用。PostgreSQL / KingbaseES / Dameng **不接入**：实测它们的 SQL 生成本就没有按版本二选一的分支，探测结果无处可用，只会白搭一次连库开销（`SpecificVersion` / `DetectVersion` 在这三个方言上也没有语义）。
 
 ### SelectBuilder：SQL 的结构组装器
 
