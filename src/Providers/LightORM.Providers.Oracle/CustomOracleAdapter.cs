@@ -12,9 +12,16 @@ using System.Text;
 namespace LightORM.Providers.Oracle;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResolver, OracleTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IDbCommandInitializer
+internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResolver, OracleTableOptions tableOptions, OracleCapabilities capabilities) : CustomDatabaseAdapter(methodResolver), IDbCommandInitializer
 {
-    internal readonly static CustomOracleAdapter Instance = new(new OracleMethodResolver(), new());
+    /// <summary>数据库版本能力档案。构造期由 <see cref="OracleProvider"/> 发起后台探测，此处只做读取。</summary>
+    internal OracleCapabilities Capabilities => capabilities;
+
+    /// <summary>
+    /// JSON 列是否走原生 <c>JSON</c> 类型（21c+）：决定值参数用 <c>JSON(:p)</c> 构造器还是 <c>:p FORMAT JSON</c> 子句。
+    /// </summary>
+    private bool UseJsonNativeType => capabilities.Features.HasFlag(OracleFeatures.JsonNativeType);
+
     public override string Prefix => ":";
     public override string Emphasis => "\"\"";
 
@@ -89,10 +96,6 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
         if (context.Options.SqlType == SqlPartial.Update)
         {
             // 无索引、无路径成员的 json 列引用 = 整列替换(如 Set(j => j.Data, obj))。
-            // 不能走 JSON_TRANSFORM(col, SET '$' = :p):
-            //   1) JSON_TRANSFORM 对 NULL 输入返回 NULL, 列原值为空时值会静默丢失(与已修的 MySQL JSON_SET 同类);
-            //   2) SET '$' 的文本参数被当作 JSON 字符串写入, 会双重编码。
-            // 与 PG / Sqlite / SqlServer / MySQL / Dameng 的整列分支保持一致, 直接列赋值。
             if (!context.HasIndexInfo())
             {
                 context.Sql.AppendEmphasis(context.Column.ColumnName, this);
@@ -116,14 +119,22 @@ internal sealed partial class CustomOracleAdapter(ISqlMethodResolver methodResol
             BuildJsonPath();
             context.Sql.Append('\'');
             context.Sql.Append('=');
-            // 值参数须经 JSON() 构造器按 JSON 解析: JSON_TRANSFORM 的 SET 右值若是文本, Oracle 会按
-            // "JSON 字符串"写入(而非解析), 而框架下发的参数是序列化后的 JSON 文本(如 "abc" / {"a":1}),
-            // 直接赋值会双重编码(存成 "\"abc\"")、读回带多余引号。
-            // 与 SQLite 的 JSON(@p)、PG 的 @p::JSONB 语义对齐; 由 OracleMethodResolver 处理。
-            context.Sql.Append("JSON(");
-            context.Sql.Append(Prefix);
-            context.Sql.Append(context.Column.PropertyName);
-            context.Sql.Append(')');
+            // 值参数须按 JSON 解析后写入，否则直接赋值会双重编码(存成 "\"abc\"")、读回带多余引号：
+            //   · 21c 原生 JSON 列 → JSON(:p) 构造器（21c 起才有该构造器）；
+            //   · ≤19c 文本列    → :p FORMAT JSON 子句（不依赖 JSON 类型，语义与构造器一致）。
+            if (UseJsonNativeType)
+            {
+                context.Sql.Append("JSON(");
+                context.Sql.Append(Prefix);
+                context.Sql.Append(context.Column.PropertyName);
+                context.Sql.Append(')');
+            }
+            else
+            {
+                context.Sql.Append(Prefix);
+                context.Sql.Append(context.Column.PropertyName);
+                context.Sql.Append(" FORMAT JSON");
+            }
             context.Sql.Append(')');
         }
         else

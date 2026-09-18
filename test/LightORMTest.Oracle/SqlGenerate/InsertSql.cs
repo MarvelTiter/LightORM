@@ -7,7 +7,14 @@ public class InsertSql : LightORMTest.SqlGenerate.InsertSql
 
     protected override void Configura(IExpressionContextSetup option)
     {
-        option.UseOracle(ConnectString.Value);
+        option.UseOracle(static c =>
+        {
+            c.MasterConnectionString = ConnectString.Value;
+            c.ConfigureOracle(t =>
+            {
+                t.DetectVersion = false;
+            });
+        });
         option.UseInterceptor<LightOrmAop>();
     }
 }

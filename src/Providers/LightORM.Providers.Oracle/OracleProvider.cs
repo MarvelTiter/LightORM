@@ -22,14 +22,23 @@ public sealed class OracleProvider : BaseDatabaseProvider
     }
     private OracleProvider(DataBaseOption<OracleTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
-        DbHandler = new OracleTableHandler(option.GenerateOption);
+        var generate = option.GenerateOption;
         var sqlMethodResolver = new OracleMethodResolver();
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomOracleAdapter(sqlMethodResolver, option.GenerateOption);
+        DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
+        // 版本探测在构造期发起（后台执行），使首个 SQL 构建时档案已就绪；
+        // 已用 TableOptions.SpecificVersion 指定版本、或 DetectVersion = false 时跳过探测（退到保守基线）。
+        Capabilities = OracleCapabilities.Start(DbProviderFactory, MasterConnectionString, generate.SpecificVersion, generate.DetectVersion);
+        // DbHandler 的 DDL 分支依赖能力档案（自增列走 IDENTITY 还是序列 + 触发器），故必须后建。
+        DbHandler = new OracleTableHandler(generate, Capabilities);
+        DatabaseAdapter = new CustomOracleAdapter(sqlMethodResolver, generate, Capabilities);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
-        DbProviderFactory = option.NewFactory ?? OracleClientFactory.Instance;
     }
+
+    /// <summary>数据库版本能力档案（同 <see cref="DatabaseAdapter"/> 上的那份，便于直接取用）。</summary>
+    public OracleCapabilities Capabilities { get; }
+
     public override DbBaseType DbBaseType => DbBaseType.Oracle;
 
     public override IDatabaseAdapter DatabaseAdapter { get; }
