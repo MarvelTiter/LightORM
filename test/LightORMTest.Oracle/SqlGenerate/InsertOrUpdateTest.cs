@@ -10,10 +10,11 @@ public class InsertOrUpdateTest : LightORMTest.SqlGenerate.InsertOrUpdateTest
         option.UseOracle(c =>
         {
             c.MasterConnectionString = ConnectString.Value;
-            c.ConfigureOracle(t =>
-            {
-                t.OverVersion = true;
-            });
+            //c.ConfigureOracle(t =>
+            //{
+            //    // 21c：自增列可用 GENERATED ALWAYS AS IDENTITY（等效于旧的 OverVersion = true）
+            //    t.SpecificVersion = new Version(21, 3, 0, 0);
+            //});
         });
         option.UseInterceptor<LightOrmAop>();
     }

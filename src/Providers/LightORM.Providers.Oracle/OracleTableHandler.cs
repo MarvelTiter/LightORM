@@ -3,10 +3,24 @@ using LightORM.Implements;
 
 namespace LightORM.Providers.Oracle;
 
-public sealed partial class OracleTableHandler(OracleTableOptions tableOptions)
+public sealed partial class OracleTableHandler(OracleTableOptions tableOptions, OracleCapabilities capabilities)
     : BaseDatabaseHandler<OracleTableOptions>
 {
     public override OracleTableOptions Options => tableOptions;
+
+    /// <summary>
+    /// 自增列是否用 <c>GENERATED ALWAYS AS IDENTITY</c>（12.1+）。
+    /// 版本来自 <see cref="OracleCapabilities"/>（探测或 <see cref="TableOptions.SpecificVersion"/> 显式指定）；
+    /// 版本未知时为 false，退化为序列 + 触发器 —— 与旧 <c>OverVersion=false</c> 的默认行为一致。
+    /// </summary>
+    private bool UseIdentityColumn => capabilities.Features.HasFlag(OracleFeatures.IdentityColumn);
+
+    /// <summary>
+    /// JSON 列是否用原生 <c>JSON</c> 类型（21c+）。关掉时退化 <c>CLOB</c> 文本列（≤19c 唯一可行写法）。
+    /// 版本未知时为 false —— 与"探测不到版本就退到全版本可用的写法"一致。
+    /// </summary>
+    private bool UseJsonNativeType => capabilities.Features.HasFlag(OracleFeatures.JsonNativeType);
+
     public override string GetTablesSql()
     {
         return "select table_name TableName from user_tab_columns group by table_name order by table_name";
@@ -19,7 +33,7 @@ public sealed partial class OracleTableHandler(OracleTableOptions tableOptions)
         {
             yield return item;
         }
-        if (!tableOptions.OverVersion)
+        if (!UseIdentityColumn)
         {
             // 序列 + 触发器自增
             var increments = table.Columns.Where(col => col.AutoIncrement);

@@ -102,7 +102,7 @@ partial class OracleTableHandler
 
         #endregion
 
-        if (!option.OverVersion)
+        if (!UseIdentityColumn)
         {
             // 序列 + 触发器自增
             var increments = table.Columns.Where(col => col.AutoIncrement);
@@ -137,10 +137,14 @@ partial class OracleTableHandler
             dataType = $"{dataType}({column.Length ?? option.DefaultStringLength})";
         }
 
-        string notNull = column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
-        string identity = column.AutoIncrement && option.OverVersion ? $"GENERATED ALWAYS AS IDENTITY" : "";
+        // Oracle 的身份列有两条硬约束（实测 21c）：
+        // ① GENERATED ... AS IDENTITY 必须紧跟数据类型，写在 NOT NULL 之后报 ORA-00907；
+        // ② 身份列隐含 NOT NULL，显式写 NULL 报 ORA-30670 —— 故两者必须一起决定。
+        bool useIdentity = column.AutoIncrement && UseIdentityColumn;
+        string identity = useIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+        string notNull = useIdentity || column.NotNull || column.PrimaryKey ? "NOT NULL" : "NULL";
         string defaultValueClause = column.Default != null ? $" DEFAULT '{column.Default}'" : "";
-        return $"{DbEmphasis(option, column.Name)} {dataType} {defaultValueClause} {notNull} {identity}";
+        return $"{DbEmphasis(option, column.Name)} {dataType}{identity} {defaultValueClause} {notNull}";
     }
 
     protected override string ConvertToDbType(OracleTableOptions option, DbColumn type)
@@ -151,7 +155,9 @@ partial class OracleTableHandler
             {
                 return option.SpecificJsonColumnDbType;
             }
-            if (type.Length > 320000)
+            // 超长文档必须走大对象；原生 JSON 类型要 21c 起才有（≤19c 建表报 ORA-00902 invalid datatype）。
+            // 退化成 CLOB 不损失功能：JSON_VALUE / JSON_QUERY / JSON_TRANSFORM 对文本列同样有效。
+            if (type.Length > 320000 || !UseJsonNativeType)
             {
                 return "CLOB";
             }
