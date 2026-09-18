@@ -30,7 +30,7 @@ namespace DatabaseUtils
             supportedDb.Add(DbBaseType.Oracle.Name, str => LightORM.Providers.Oracle.OracleProvider.Create(o => o.MasterConnectionString = str));
             supportedDb.Add(DbBaseType.PostgreSQL.Name, str => LightORM.Providers.PostgreSQL.PostgreSQLProvider.Create(o => o.MasterConnectionString = str));
             supportedDb.Add(DbBaseType.MySql.Name, str => LightORM.Providers.MySql.MySqlProvider.Create(o => o.MasterConnectionString = str));
-            supportedDb.Add(DbBaseType.SqlServer.Name, str => LightORM.Providers.SqlServer.SqlServerProvider.Create(SqlServerVersion.V1, o => o.MasterConnectionString = str));
+            supportedDb.Add(DbBaseType.SqlServer.Name, str => LightORM.Providers.SqlServer.SqlServerProvider.Create(o => o.MasterConnectionString = str));
         }
 
         async Task Connect()

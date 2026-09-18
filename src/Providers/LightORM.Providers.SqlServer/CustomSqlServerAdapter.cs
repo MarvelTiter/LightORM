@@ -11,15 +11,15 @@ using System.Text;
 namespace LightORM.Providers.SqlServer;
 
 #pragma warning disable CS9113 // 参数未读。
-internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, ISqlMethodResolver methodResolver, SqlServerTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
+internal sealed partial class CustomSqlServerAdapter(SqlServerCapabilities capabilities, ISqlMethodResolver methodResolver, SqlServerTableOptions tableOptions) : CustomDatabaseAdapter(methodResolver), IReturnIdentity
 {
-    public SqlServerVersion Version { get; } = version;
+    public SqlServerCapabilities Capabilities { get; } = capabilities;
     public override string Prefix => "@";
     public override string Emphasis => "[]";
 
     public override void Paging(SelectBuilder builder, StringBuilder sql)
     {
-        if (Version == SqlServerVersion.Over2012)
+        if (Capabilities.Features.HasFlag(SqlServerFeatures.OffsetFetch))
         {
             sql.AppendLine($"OFFSET {builder.Skip} ROWS");
             sql.AppendLine($"FETCH NEXT {builder.Take} ROWS ONLY");
@@ -63,10 +63,12 @@ internal sealed partial class CustomSqlServerAdapter(SqlServerVersion version, I
             sql.Append($"AND Paging.ROWNO <= {builder.Skip + builder.Take}");
         }
     }
+
     public override string HandleBooleanValueForBulkCopy(bool value)
     {
         return value ? "true" : "false";
     }
+
     public void ReturnIdentitySql(StringBuilder sql) => sql.Append("SELECT SCOPE_IDENTITY()");
 
     public override void HandleDateValue(StringBuilder sql, DateTime dateTime)

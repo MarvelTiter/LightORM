@@ -10,19 +10,11 @@ using  Microsoft.Data.SqlClient;
 #endif
 namespace LightORM.Providers.SqlServer;
 
-public enum SqlServerVersion
-{
-    V1,
-    Over2012,
-    Over2017,
-}
-
 public sealed class SqlServerProvider : BaseDatabaseProvider
 {
-    public static SqlServerProvider Create(SqlServerVersion version, DataBaseOption<SqlServerTableOptions> option)
-        => new(version, option);
+    public static SqlServerProvider Create(DataBaseOption<SqlServerTableOptions> option) => new(option);
 
-    public static SqlServerProvider Create(SqlServerVersion version, Action<DataBaseOption<SqlServerTableOptions>> setting)
+    public static SqlServerProvider Create(Action<DataBaseOption<SqlServerTableOptions>> setting)
     {
         var dbOption = new DataBaseOption<SqlServerTableOptions>();
         setting.Invoke(dbOption);
@@ -30,23 +22,32 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
         {
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
-        return Create(version, dbOption);
+        return Create(dbOption);
     }
 
-    private SqlServerProvider(SqlServerVersion version
-        , DataBaseOption<SqlServerTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
+    private SqlServerProvider(DataBaseOption<SqlServerTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
-        DbHandler = new SqlServerTableHandler(option.GenerateOption);
-        var sqlMethodResolver = new SqlServerMethodResolver(version);
+        var generate = option.GenerateOption;
+        var factory = option.NewFactory ?? SqlClientFactory.Instance;
+        // 能力档案先建：handler / methodResolver / adapter 都要读它。
+        // 探测在构造期发起（不阻塞），结果在 SQL 生成期才被读取。
+        DbProviderFactory = factory;
+        Capabilities = SqlServerCapabilities.Start(factory, MasterConnectionString, generate.SpecificVersion, generate.DetectVersion);
+        DbHandler = new SqlServerTableHandler(generate);
+        var sqlMethodResolver = new SqlServerMethodResolver(Capabilities);
         option.SqlMethodConfiguration?.Invoke(sqlMethodResolver);
-        DatabaseAdapter = new CustomSqlServerAdapter(version, sqlMethodResolver, option.GenerateOption);
+        DatabaseAdapter = new CustomSqlServerAdapter(Capabilities, sqlMethodResolver, generate);
         DatabaseAdapter.AddKeyWord(option.Keyworks);
         DatabaseAdapter.UseIdentifierQuote = option.IsUseIdentifierQuote ?? true;
-        DbProviderFactory = option.NewFactory ?? SqlClientFactory.Instance;
-
     }
 
     public override DbBaseType DbBaseType => DbBaseType.SqlServer;
+
+    /// <summary>
+    /// 版本能力档案：由探测结果 / <see cref="TableOptions.SpecificVersion"/> 推导；
+    /// 未启用探测、探测失败或版本未知时按<b>完整功能</b>。
+    /// </summary>
+    public SqlServerCapabilities Capabilities { get; }
 
     public override IDatabaseAdapter DatabaseAdapter { get; }
 

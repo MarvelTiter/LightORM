@@ -33,7 +33,7 @@ public partial class MainViewModel : ViewModelBase
         supportedDb.Add(DbBaseType.Oracle.Name, str => OracleProvider.Create(o => o.MasterConnectionString = str));
         supportedDb.Add(DbBaseType.PostgreSQL.Name, str => PostgreSQLProvider.Create(o => o.MasterConnectionString = str));
         supportedDb.Add(DbBaseType.MySql.Name, str => MySqlProvider.Create(o => o.MasterConnectionString = str));
-        supportedDb.Add(DbBaseType.SqlServer.Name, str => SqlServerProvider.Create(SqlServerVersion.V1, o => o.MasterConnectionString = str));
+        supportedDb.Add(DbBaseType.SqlServer.Name, str => SqlServerProvider.Create(o => o.MasterConnectionString = str));
         SupportedDbNames = [.. supportedDb.Keys];
 
         // 从配置恢复上次的状态（经属性赋值，保持与界面绑定一致）
