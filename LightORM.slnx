@@ -40,7 +40,6 @@
     <Project Path="test/LightORMTest.SqlServer/LightORMTest.SqlServer.csproj" />
     <Project Path="test/LightORMTest/LightORMTest.csproj" />
     <Project Path="test/PerformanceTest/PerformanceTest.csproj" />
-    <Project Path="test/TestProject1/TestProject1.csproj" />
     <Project Path="test/TestWeb/TestWeb.csproj" />
   </Folder>
   <Folder Name="/test/AotTest/">
