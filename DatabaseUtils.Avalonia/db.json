@@ -1,0 +1,14 @@
+{
+  "LightOrmDatabases": [
+    {
+      "Key": "MainDb",
+      "Option": {
+        "Type": "Dameng",
+        "Server": "localhost",
+        "Port": 5236,
+        "UserId": "SYSDBA",
+        "Password": "SYSDBA001"
+      }
+    }
+  ]
+}
