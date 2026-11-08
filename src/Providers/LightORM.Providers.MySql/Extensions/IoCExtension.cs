@@ -30,6 +30,15 @@ public static class IoCExtension
             var provider = MySqlProvider.Create(dbOption);
             options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.MySql, provider);
         }
+
+        /// <summary>
+        /// 只登记"从配置创建 MySql provider"的工厂，不注册任何实例。
+        /// <para>配合 <c>AddLightOrm(..., IConfiguration)</c> 使用：配置里 <c>Type = "MySql"</c> 的条目才会被创建。</para>
+        /// </summary>
+        public void UseMySql()
+        {
+            options.RegisterDatabase(DbBaseType.MySql, database => MySqlProvider.Create(database));
+        }
     }
 
     extension(IDbOption option)

@@ -31,6 +31,15 @@ public static class IoCExtension
             var provider = PostgreSQLProvider.Create(dbOption);
             options.SetDatabase(dbOption.DbKey ?? "MainDb", DbBaseType.PostgreSQL, provider);
         }
+
+        /// <summary>
+        /// 只登记"从配置创建 PostgreSQL provider"的工厂，不注册任何实例。
+        /// <para>配合 <c>AddLightOrm(..., IConfiguration)</c> 使用：配置里 <c>Type = "PostgreSQL"</c> 的条目才会被创建。</para>
+        /// </summary>
+        public void UsePostgreSQL()
+        {
+            options.RegisterDatabase(DbBaseType.PostgreSQL, database => PostgreSQLProvider.Create(database));
+        }
     }
 
     extension(IDbOption option)

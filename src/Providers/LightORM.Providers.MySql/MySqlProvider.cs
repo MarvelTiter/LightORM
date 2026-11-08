@@ -2,9 +2,9 @@
 using MySqlConnector;
 using System.Data;
 using System.Data.Common;
-using System.Text.RegularExpressions;
 using LightORM.Implements;
 using LightORM.Models;
+using LightORM.Options;
 
 namespace LightORM.Providers.MySql;
 
@@ -23,13 +23,47 @@ public sealed class MySqlProvider : BaseDatabaseProvider
         return Create(dbOption);
     }
 
+    /// <summary>
+    /// 从配置文件创建（由 <c>UseMySql()</c> 空参重载登记）。
+    /// <para>
+    /// <see cref="DatabaseDefinition.ConnectionString"/> 为底，分散字段逐项覆盖；
+    /// 没有连接串时用 Server / Port / UserId / Password / Database 拼装。
+    /// </para>
+    /// </summary>
+    public static MySqlProvider Create(DatabaseOptions database)
+    {
+        LightOrmException.ThrowIfNull(database, "数据库配置不能为 null");
+        var definition = database.Option
+            ?? throw new LightOrmException($"数据库 '{database.Key}' 缺少 Option 配置。");
+
+        return Create(database.ToDbOption<MySqlTableOptions>(BuildConnectionString(database.Key, definition)));
+    }
+
+    private static string BuildConnectionString(string? key, DatabaseDefinition definition)
+    {
+        return DatabaseConnectionString.Build(key, definition,
+            connectionString => connectionString is null
+                ? new MySqlConnectionStringBuilder()
+                : new MySqlConnectionStringBuilder(connectionString),
+            (builder, def) =>
+            {
+                if (def.DataSource is { Length: > 0 } dataSource) builder.Server = dataSource;
+                else if (def.Server is { Length: > 0 } server) builder.Server = server;
+
+                if (def.Port is { } port) builder.Port = (uint)port;
+                if (def.UserId is { Length: > 0 } userId) builder.UserID = userId;
+                if (def.Password is { } password) builder.Password = password;
+                if (def.Database is { Length: > 0 } databaseName) builder.Database = databaseName;
+            });
+    }
+
     private MySqlProvider(DataBaseOption<MySqlTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         var master = option.MasterConnectionString!;
-        var match = Regex.Match(master, @"(?<=Database\=)([A-Z|a-z|_]+)", RegexOptions.IgnoreCase);
-        if (!match.Success)
+        // 用强类型 builder 取库名：原来的正则只认字母下划线，库名带数字/中文会误判为"未发现数据库"
+        if (string.IsNullOrEmpty(new MySqlConnectionStringBuilder(master).Database))
         {
-            throw new Exception("未能在连接字符串中发现目标数据库!");
+            throw new LightOrmException("连接字符串中缺少 Database（库名不能为空）。");
         }
         var generate = option.GenerateOption;
         var factory = option.NewFactory ?? MySqlConnectorFactory.Instance;

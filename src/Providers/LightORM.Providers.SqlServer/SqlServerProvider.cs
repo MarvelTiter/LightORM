@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
 using LightORM.Models;
+using LightORM.Options;
 #if NET462_OR_GREATER
 using System.Data.SqlClient;
 #else
@@ -23,6 +24,64 @@ public sealed class SqlServerProvider : BaseDatabaseProvider
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
         return Create(dbOption);
+    }
+
+    /// <summary>
+    /// 从配置文件创建（由 <c>UseSqlServer()</c> 空参重载登记）。
+    /// <para>
+    /// <see cref="DatabaseDefinition.ConnectionString"/> 为底，分散字段逐项覆盖。
+    /// 注意 <see cref="SqlConnectionStringBuilder"/> 没有 Port 属性：端口写成 <c>Data Source=host,port</c>。
+    /// </para>
+    /// </summary>
+    public static SqlServerProvider Create(DatabaseOptions database)
+    {
+        LightOrmException.ThrowIfNull(database, "数据库配置不能为 null");
+        var definition = database.Option
+            ?? throw new LightOrmException($"数据库 '{database.Key}' 缺少 Option 配置。");
+
+        return Create(database.ToDbOption<SqlServerTableOptions>(BuildConnectionString(database.Key, definition)));
+    }
+
+    private static string BuildConnectionString(string? key, DatabaseDefinition definition)
+    {
+        return DatabaseConnectionString.Build(key, definition,
+            connectionString => connectionString is null
+                ? new SqlConnectionStringBuilder()
+                : new SqlConnectionStringBuilder(connectionString),
+            (builder, def) =>
+            {
+                if (def.DataSource is { Length: > 0 } dataSource)
+                {
+                    builder.DataSource = dataSource;
+                }
+                else if (def.Server is { Length: > 0 } server)
+                {
+                    if (def.Port is { } port)
+                    {
+                        // 已自带端口或命名实例时再追加会拼出 host,1433,port 这种非法值
+                        if (server.IndexOf(',') >= 0 || server.IndexOf('\\') >= 0)
+                        {
+                            throw new LightOrmException(
+                                $"数据库 '{key}'：Server '{server}' 已包含端口或实例名，不要再单独配置 Port。");
+                        }
+
+                        builder.DataSource = $"{server},{port}";
+                    }
+                    else
+                    {
+                        builder.DataSource = server;
+                    }
+                }
+                else if (def.Port is not null)
+                {
+                    throw new LightOrmException(
+                        $"数据库 '{key}'：SqlServer 的 Port 必须与 Server 一起配置，或直接写进连接串的 Data Source。");
+                }
+
+                if (def.UserId is { Length: > 0 } userId) builder.UserID = userId;
+                if (def.Password is { } password) builder.Password = password;
+                if (def.Database is { Length: > 0 } databaseName) builder.InitialCatalog = databaseName;
+            });
     }
 
     private SqlServerProvider(DataBaseOption<SqlServerTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)

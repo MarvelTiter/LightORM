@@ -1,6 +1,7 @@
 ﻿using LightORM.Implements;
 using LightORM.Interfaces;
 using LightORM.Models;
+using LightORM.Options;
 using System.Data;
 using System.Data.Common;
 
@@ -21,6 +22,40 @@ public class KingbaseESProvider : BaseDatabaseProvider
         }
         return Create(dbOption);
     }
+    /// <summary>
+    /// 从配置文件创建（由 <c>UseKingbaseES()</c> 空参重载登记）。
+    /// <para>
+    /// <see cref="DatabaseDefinition.ConnectionString"/> 为底，分散字段逐项覆盖；
+    /// 没有连接串时用 Host（Server/DataSource）/ Port / Username / Password / Database 拼装。
+    /// </para>
+    /// </summary>
+    public static KingbaseESProvider Create(DatabaseOptions database)
+    {
+        LightOrmException.ThrowIfNull(database, "数据库配置不能为 null");
+        var definition = database.Option
+            ?? throw new LightOrmException($"数据库 '{database.Key}' 缺少 Option 配置。");
+
+        return Create(database.ToDbOption<KingbaseESTableOptions>(BuildConnectionString(database.Key, definition)));
+    }
+
+    private static string BuildConnectionString(string? key, DatabaseDefinition definition)
+    {
+        return DatabaseConnectionString.Build(key, definition,
+            connectionString => connectionString is null
+                ? new Kdbndp.KdbndpConnectionStringBuilder()
+                : new Kdbndp.KdbndpConnectionStringBuilder(connectionString),
+            (builder, def) =>
+            {
+                if (def.DataSource is { Length: > 0 } dataSource) builder.Host = dataSource;
+                else if (def.Server is { Length: > 0 } host) builder.Host = host;
+
+                if (def.Port is { } port) builder.Port = port;
+                if (def.UserId is { Length: > 0 } userName) builder.Username = userName;
+                if (def.Password is { } password) builder.Password = password;
+                if (def.Database is { Length: > 0 } databaseName) builder.Database = databaseName;
+            });
+    }
+
     private KingbaseESProvider(DataBaseOption<KingbaseESTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
     {
         DbHandler = new KingbaseESTableHandler(option.GenerateOption);
