@@ -18,7 +18,8 @@ public static class IoCExtensions
     /// <summary>
     /// 注册 LightORM。
     /// <para>
-    /// 传入 <paramref name="configuration"/> 后，数据库可由配置节 <c>LightOrmDatabases</c> 描述，
+    /// 容器里存在 <see cref="IConfiguration"/> 且其中包含 <c>LightOrmDatabases</c> 节时，数据库即由配置描述，
+    /// 无需在调用处额外传参；没有该节（或没有 <see cref="IConfiguration"/>）时按空列表处理，不报错。
     /// 结构如下（数组，每个元素 = 一个注册的库）：
     /// </para>
     /// <code>
@@ -53,37 +54,30 @@ public static class IoCExtensions
     /// （<c>UseSqlite()</c> / <c>UseMySql()</c> / <c>UseSqlServer()</c> / <c>UsePostgreSQL()</c> /
     /// <c>UseOracle()</c> / <c>UseDameng()</c> / <c>UseKingbaseES()</c>）；未登记的类型会抛异常并列出已支持的方言名。
     /// </para>
+    /// <para>
+    /// 绑定发生在运行时：由 <see cref="IConfigureOptions{TOptions}"/> 实现从容器取 <see cref="IConfiguration"/>，
+    /// 因此 <c>services.AddSingleton&lt;IConfiguration&gt;(...)</c> 在 <c>AddLightOrm</c> 之后注册同样有效。
+    /// 首个 <see cref="IExpressionContext"/> 解析时加载并订阅文件变更，之后配置变化会<b>覆盖/新增/移除</b>对应的库。
+    /// </para>
     /// </summary>
     /// <param name="services">服务集合。</param>
     /// <param name="options">
     /// 代码方式的配置。与配置文件可共存：代码里 <c>UseXxx(connStr)</c> 先登记实例，
     /// 配置文件中同 <c>Key</c> 的条目随后覆盖它。
     /// </param>
-    /// <param name="configuration">
-    /// 提供 <c>LightOrmDatabases</c> 节的配置。传入后会：
-    /// ① 在首次解析 <see cref="IExpressionContext"/> 时按配置注册数据库；
-    /// ② 订阅文件变更，配置变化后<b>覆盖/新增/移除</b>对应的库（连接串改动会生效）。
-    /// <para>为 null 时整条链路跳过，行为与不使用配置的版本完全一致。</para>
-    /// </param>
-    public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options, IConfiguration? configuration = null)
+    public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options)
     {
         var builder = new ExpressionOptionBuilder();
         WeakServices = new(services);
         options(builder);
 
-        if (configuration is not null)
-        {
-            services.TryAddSingleton<IConfiguration>(configuration);
-            // AOT 友好的手写绑定（BindingExtensions.cs）。用 lambda 而不是 method group，
-            // 这样 DatabaseList 类型变化时是编译期错误而不是运行期 InvalidCastException。
-            services.Configure<DatabaseList>(list => configuration.Bind_DatabaseList(list));
-            // IOptionsMonitor 依赖 change token 才会在文件变更时重算。
-            // 显式注册，不要靠"再 Configure 一次"的副作用来拿 token。
-            services.AddSingleton<IOptionsChangeTokenSource<DatabaseList>>(
-                new ConfigurationChangeTokenSource<DatabaseList>(configuration));
-            // 单例：首次构造时做初始加载并订阅变更，容器 dispose 时退订。
-            services.AddSingleton<DatabaseListReloader>();
-        }
+        // 配置驱动注册是"运行时判定"：容器里有 IConfiguration 且含 LightOrmDatabases 节才生效。
+        // 绑定源与变更令牌都做成惰性实现，所以这里不需要（也不能）拿 IConfiguration 实例。
+        services.AddOptions();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IConfigureOptions<DatabaseList>, DatabaseListConfigureOptions>());
+        services.TryAddSingleton<IOptionsChangeTokenSource<DatabaseList>, ConfigurationReloadTokenSource>();
+        // 单例：首次构造时做初始加载并订阅变更，容器 dispose 时退订。
+        services.TryAddSingleton<DatabaseListReloader>();
 
         services.AddScoped(Build);
         services.AddScoped(typeof(ILightOrmRepository<>), typeof(DefaultRepository<>));
@@ -94,7 +88,6 @@ public static class IoCExtensions
     private static ExpressionSqlOptions Build(IServiceProvider provider)
     {
         // 触发单例构造：初始加载 + 订阅变更都在 DatabaseListReloader 里完成。
-        // 没传 configuration 时它没被注册，GetService 返回 null，行为与以前一致。
         _ = provider.GetService<DatabaseListReloader>();
         return new(provider.GetServices<IAdoInterceptor>());
     }

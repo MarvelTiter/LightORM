@@ -43,7 +43,7 @@ namespace DatabaseUtils.Avalonia
                     option.UseInterceptor<DatabaseUtils.SqlLogger>();
                     // 只登记“从配置创建 Dameng provider”的工厂；实际库由 db.json 提供
                     option.UseDameng();
-                }, configuration);
+                });
 
                 Services = services.BuildServiceProvider();
 
