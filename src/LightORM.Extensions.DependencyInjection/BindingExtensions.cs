@@ -179,7 +179,8 @@ internal static class BindingExtensions
             return;
         }
 
-        set(string.IsNullOrEmpty(value) ? null : ParseInt(value, configuration.GetSection(key).Path));
+        // net462 / netstandard2.0 的 BCL 没有 [NotNullWhen]，value 取非空判断后仍需 ! 断言
+        set(string.IsNullOrEmpty(value) ? null : ParseInt(value!, configuration.GetSection(key).Path));
     }
 
     private static void BindBool(IConfiguration configuration, string key, Action<bool?> set)
@@ -189,7 +190,7 @@ internal static class BindingExtensions
             return;
         }
 
-        set(string.IsNullOrEmpty(value) ? null : ParseBool(value, configuration.GetSection(key).Path));
+        set(string.IsNullOrEmpty(value) ? null : ParseBool(value!, configuration.GetSection(key).Path));
     }
 
     public static void ValidateConfigurationKeys(Type type, Lazy<HashSet<string>> keys, IConfiguration configuration, BinderOptions? binderOptions)
