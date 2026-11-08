@@ -77,14 +77,16 @@ IExpressionContext Db = ExpSqlFactory.GetContext();
 
 # 从配置文件注册数据库
 
-依赖 `LightORM.Extensions.DependencyInjection`。把 `IConfiguration` 传给 `AddLightOrm` 的第二个参数，
-数据库改由配置节 `LightOrmDatabases` 描述；代码里只调用无参 `UseXxx()` 登记「该方言如何创建」，
-不再传连接串。
+依赖 `LightORM.Extensions.DependencyInjection`。把 `IConfiguration` 注册进容器，
+数据库即由配置节 `LightOrmDatabases` 描述；代码里只调用无参 `UseXxx()` 登记「该方言如何创建」，
+不再传连接串。绑定是**运行时**做的（从容器取 `IConfiguration`），所以注册顺序无关紧要。
 
 ```csharp
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("db.json", optional: false, reloadOnChange: true)
     .Build();
+
+services.AddSingleton<IConfiguration>(configuration);
 
 services.AddLightOrm(option =>
 {
@@ -92,7 +94,7 @@ services.AddLightOrm(option =>
     // 只登记创建器：配置里出现 Type = "Sqlite" / "Dameng" 才会真正建 provider
     option.UseSqlite();
     option.UseDameng();
-}, configuration);
+});
 ```
 
 ```json
@@ -175,11 +177,12 @@ TNS 别名，也不是合法的 EZ Connect。
 4. 配置里删掉的 `Key` 会在重载时移除对应 provider。
 
 `reloadOnChange: true` 时，改连接串、加库、删库都会在文件保存后生效，无需重启。
-`AddLightOrm` 不传 `configuration` 时整条链路跳过，行为与旧版本一致。
+容器里没有 `IConfiguration`、或没有 `LightOrmDatabases` 节时按空列表处理，不报错。
 
 ## 注意
 
-- `Option.Type` 写了一个没登记过的方言名，会在加载时抛异常并列出当前已支持的方言名。
+- 只要容器里有这个配置节就会**自动生效**，没有"是否启用"的开关参数。不想要配置驱动，就不要放这个节。
+- 该节存在时，条目里的 `Type` 必须对应调用过的空参 `UseXxx()`；否则加载时抛异常并列出当前已支持的方言名。
 - 配置键名目前**不做严格校验**：拼错的键（如 `"UsrId"`）会被静默忽略，
   症状是「明明写了却连不上」。遇到这种情况先核对键名拼写。
 - 手写绑定器 `BindingExtensions` 是唯一入口，新增配置字段必须同步改它，否则字段会被忽略。

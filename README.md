@@ -29,7 +29,7 @@ services.AddLightOrm(option => {
 IExpressionContext Db = ExpSqlFactory.GetContext();
 ```
 
-> 连接串不想写死在代码里？把 `IConfiguration` 传给 `AddLightOrm` 的第二个参数即可，见「[从配置文件注册数据库](#从配置文件注册数据库可选)」。
+> 连接串不想写死在代码里？把 `IConfiguration` 注册进容器，再用无参 `UseXxx()` 登记方言即可，见「[从配置文件注册数据库](#从配置文件注册数据库可选)」。
 
 ### 📦 功能齐全
 
@@ -182,11 +182,14 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("db.json", optional: false, reloadOnChange: true)
     .Build();
 
+// 放进容器即可，不需要传给 AddLightOrm（顺序也不要求，运行时才读）
+services.AddSingleton<IConfiguration>(configuration);
+
 services.AddLightOrm(option =>
 {
     option.SetTableContext(new TestTableContext());
     option.UseSqlite();          // 只登记创建器，不注册实例
-}, configuration);
+});
 ```
 
 ```json
@@ -219,6 +222,7 @@ services.AddLightOrm(option =>
   `Sqlite` / `MySql` / `SqlServer` / `PostgreSQL` / `Oracle` / `Dameng` / `KingbaseES`。
 - `Option.ConnectionString` 可直接给整串；同时给分散字段时，字段**覆盖**连接串里的同名项。
 - `reloadOnChange: true` 下改连接串、加库、删库都会即时生效，删掉的条目会一并移除对应 provider。
+- 容器里没有 `IConfiguration`、或没有 `LightOrmDatabases` 节时按空列表处理，不报错 —— 配置驱动是运行时判定的。
 - 字段清单见 [完整示例 - 从配置文件注册数据库](./examples.md#从配置文件注册数据库)。
 
 ### 仓储模式
@@ -505,8 +509,8 @@ IExpressionContext Db = ExpSqlFactory.GetContext();
 // DI 场景
 services.AddLightOrm(option => option.UseMySql(connStr));
 
-// DI + 配置文件（连接串放配置里，代码只登记方言创建器）
-services.AddLightOrm(option => option.UseMySql(), configuration);
+// DI + 配置文件（连接串放配置里，代码只登记方言创建器；IConfiguration 从容器取）
+services.AddLightOrm(option => option.UseMySql());
 ```
 
 **核心接口层级：**

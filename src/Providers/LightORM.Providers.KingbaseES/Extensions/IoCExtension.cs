@@ -32,7 +32,7 @@ public static class IoCExtension
 
         /// <summary>
         /// 只登记"从配置创建 KingbaseES provider"的工厂，不注册任何实例。
-        /// <para>配合 <c>AddLightOrm(..., IConfiguration)</c> 使用：配置里 <c>Type = "KingbaseES"</c> 的条目才会被创建。</para>
+        /// <para>配合容器里的 <c>IConfiguration</c>（配置节 <c>LightOrmDatabases</c>）使用：配置里 <c>Type = "KingbaseES"</c> 的条目才会被创建。</para>
         /// </summary>
         public void UseKingbaseES()
         {
