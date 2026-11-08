@@ -29,6 +29,8 @@ services.AddLightOrm(option => {
 IExpressionContext Db = ExpSqlFactory.GetContext();
 ```
 
+> 连接串不想写死在代码里？把 `IConfiguration` 传给 `AddLightOrm` 的第二个参数即可，见「[从配置文件注册数据库](#从配置文件注册数据库可选)」。
+
 ### 📦 功能齐全
 
 | 功能特性 | 支持情况 | 说明 |
@@ -84,6 +86,7 @@ LightORM.slnx
 | `DbEntity/` | 实体模型 |
 | `Performances/` | 性能相关（`StringBuilderPool` 等） |
 | `Models/` | 上下文模型（`JsonColumnContext`、`UpsertContext` 等） |
+| `Options/` | 配置模型（`DatabaseOptions` / `DatabaseDefinition`）与连接串拼装 |
 | `Utils/` | 工具类与访问器（`Vistors/` 表达式访问器） |
 
 ### 核心设计理念
@@ -168,6 +171,55 @@ var result = db.Select<Role>()
     .Where((r, u) => r.RoleId == u.UserId)
     .ToList();
 ```
+
+### 从配置文件注册数据库（可选）
+
+数据库描述放配置文件，代码里只登记「该方言如何创建」：
+
+```csharp
+// db.json 需随输出复制（PreserveNewest）
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("db.json", optional: false, reloadOnChange: true)
+    .Build();
+
+services.AddLightOrm(option =>
+{
+    option.SetTableContext(new TestTableContext());
+    option.UseSqlite();          // 只登记创建器，不注册实例
+}, configuration);
+```
+
+```json
+{
+  "LightOrmDatabases": [
+    {
+      "Key": "MainDb",
+      "Option": {
+        "Type": "Sqlite",
+        "DataSource": "test.db"
+      }
+    },
+    {
+      "Key": "Report",
+      "Option": {
+        "Type": "PostgreSQL",
+        "Server": "localhost",
+        "Port": 5432,
+        "UserId": "postgres",
+        "Password": "pwd",
+        "Database": "report"
+      }
+    }
+  ]
+}
+```
+
+- `Key` 是注册名，不写视为 `MainDb`（`DefaultDbKey` 默认就取它）。
+- `Type` 必须与代码里某个空参 `UseXxx()` 登记的方言名一致，大小写不敏感。可选值：
+  `Sqlite` / `MySql` / `SqlServer` / `PostgreSQL` / `Oracle` / `Dameng` / `KingbaseES`。
+- `Option.ConnectionString` 可直接给整串；同时给分散字段时，字段**覆盖**连接串里的同名项。
+- `reloadOnChange: true` 下改连接串、加库、删库都会即时生效，删掉的条目会一并移除对应 provider。
+- 字段清单见 [完整示例 - 从配置文件注册数据库](./examples.md#从配置文件注册数据库)。
 
 ### 仓储模式
 
@@ -452,6 +504,9 @@ IExpressionContext Db = ExpSqlFactory.GetContext();
 
 // DI 场景
 services.AddLightOrm(option => option.UseMySql(connStr));
+
+// DI + 配置文件（连接串放配置里，代码只登记方言创建器）
+services.AddLightOrm(option => option.UseMySql(), configuration);
 ```
 
 **核心接口层级：**

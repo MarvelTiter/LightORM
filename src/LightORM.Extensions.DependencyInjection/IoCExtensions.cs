@@ -17,13 +17,53 @@ public static class IoCExtensions
 
     /// <summary>
     /// 注册 LightORM。
+    /// <para>
+    /// 传入 <paramref name="configuration"/> 后，数据库可由配置节 <c>LightOrmDatabases</c> 描述，
+    /// 结构如下（数组，每个元素 = 一个注册的库）：
+    /// </para>
+    /// <code>
+    /// {
+    ///   "LightOrmDatabases": [
+    ///     {
+    ///       "Key": "MainDb",              // 注册名，不写则视为 "MainDb"
+    ///       "Option": {
+    ///         "Type": "PostgreSQL",           // 必填，须与某个空参 UseXxx() 登记的方言名一致（大小写不敏感）
+    ///         "ConnectionString": string,   // 可直接给整串；下面的分散字段会覆盖其中的同名项
+    ///         "DataSource": string,         // 别名/描述符：Oracle 的 TNS 或 EZ Connect、Sqlite 的文件路径
+    ///         "Server": string,
+    ///         "Port": int,               // 不写则用方言默认端口（如 Oracle 1521 / Dameng 5236）
+    ///         "UserId": string,
+    ///         "Password": string,
+    ///         "Database": string,
+    ///         "ServiceName": string,        // Oracle 专用，与 Sid 二选一
+    ///         "Sid": string,                // Oracle 专用
+    ///         "SlaveConnectionStrings": string[],        // 从库
+    ///         "IsUseIdentifierQuote": bool,        // 标识符引用
+    ///         "SpecificVersion": string,             // 指定服务端版本，给了就不再探测
+    ///         "DetectVersion": bool,               // false 时不探测版本
+    ///         "DefaultStringLength": int,
+    ///         "Settings": { }                      // 方言私有开关，如 PG 的 TableSpace
+    ///       }
+    ///     }
+    ///   ]
+    /// }
+    /// </code>
+    /// <para>
+    /// <c>Option.Type</c> 的可选值取决于代码里调用过哪些空参重载
+    /// （<c>UseSqlite()</c> / <c>UseMySql()</c> / <c>UseSqlServer()</c> / <c>UsePostgreSQL()</c> /
+    /// <c>UseOracle()</c> / <c>UseDameng()</c> / <c>UseKingbaseES()</c>）；未登记的类型会抛异常并列出已支持的方言名。
+    /// </para>
     /// </summary>
     /// <param name="services">服务集合。</param>
-    /// <param name="options">代码方式的配置（优先级低于配置文件：配置文件里的同 key 条目会覆盖它）。</param>
+    /// <param name="options">
+    /// 代码方式的配置。与配置文件可共存：代码里 <c>UseXxx(connStr)</c> 先登记实例，
+    /// 配置文件中同 <c>Key</c> 的条目随后覆盖它。
+    /// </param>
     /// <param name="configuration">
     /// 提供 <c>LightOrmDatabases</c> 节的配置。传入后会：
     /// ① 在首次解析 <see cref="IExpressionContext"/> 时按配置注册数据库；
     /// ② 订阅文件变更，配置变化后<b>覆盖/新增/移除</b>对应的库（连接串改动会生效）。
+    /// <para>为 null 时整条链路跳过，行为与不使用配置的版本完全一致。</para>
     /// </param>
     public static IServiceCollection AddLightOrm(this IServiceCollection services, Action<IExpressionContextSetup> options, IConfiguration? configuration = null)
     {

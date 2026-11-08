@@ -75,6 +75,115 @@ ExpSqlFactory.Configuration(option =>
 IExpressionContext Db = ExpSqlFactory.GetContext();
 ```
 
+# 从配置文件注册数据库
+
+依赖 `LightORM.Extensions.DependencyInjection`。把 `IConfiguration` 传给 `AddLightOrm` 的第二个参数，
+数据库改由配置节 `LightOrmDatabases` 描述；代码里只调用无参 `UseXxx()` 登记「该方言如何创建」，
+不再传连接串。
+
+```csharp
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("db.json", optional: false, reloadOnChange: true)
+    .Build();
+
+services.AddLightOrm(option =>
+{
+    option.SetTableContext(new TestTableContext());
+    // 只登记创建器：配置里出现 Type = "Sqlite" / "Dameng" 才会真正建 provider
+    option.UseSqlite();
+    option.UseDameng();
+}, configuration);
+```
+
+```json
+{
+  "LightOrmDatabases": [
+    {
+      "Key": "MainDb",
+      "Option": {
+        "Type": "Sqlite",
+        "DataSource": "test.db"
+      }
+    },
+    {
+      "Key": "Report",
+      "Option": {
+        "Type": "Dameng",
+        "Server": "localhost",
+        "Port": 5236,
+        "UserId": "SYSDBA",
+        "Password": "SYSDBA001"
+      }
+    }
+  ]
+}
+```
+
+## 配置结构
+
+`LightOrmDatabases` 是数组，每个元素对应一个注册的库：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `Key` | string | 注册名（多库时用它切换）。省略则视为 `MainDb`，`DefaultDbKey` 默认也取 `MainDb` |
+| `Option` | object | 库定义，缺了这条会被跳过并记一条警告日志 |
+| `Option.Type` | string | **必填**，方言名。取值须与调用过的空参 `UseXxx()` 一致，大小写不敏感 |
+| `Option.ConnectionString` | string | 完整连接串。同时给了分散字段时，它作为基底被覆盖 |
+| `Option.DataSource` | string | Sqlite 的文件路径；Oracle 的 TNS 别名 / 完整描述符 / EZ Connect；其余方言视作主机或数据源 |
+| `Option.Server` | string | 主机名。Oracle 在没有 `ServiceName` / `Sid` 时按 TNS 别名原样使用 |
+| `Option.Port` | int | 端口，省略用方言默认（Oracle 1521、达梦 5236 等） |
+| `Option.UserId` / `Option.Password` | string | 凭据 |
+| `Option.Database` | string | 库名；Sqlite 在无 `DataSource` 时把它当文件路径 |
+| `Option.ServiceName` | string | Oracle 专用，拼成 `host:port/service` |
+| `Option.Sid` | string | Oracle 专用，拼成 `(DESCRIPTION=...(CONNECT_DATA=(SID=...)))`；与 `ServiceName` 二选一 |
+| `Option.SlaveConnectionStrings` | string[] | 从库连接串（读写分离用） |
+| `Option.IsUseIdentifierQuote` | bool | 是否引用标识符 |
+| `Option.SpecificVersion` | string | 指定服务端版本；给了就不再连库探测 |
+| `Option.DetectVersion` | bool | `false` 时不探测版本，直接用方言基线能力 |
+| `Option.DefaultStringLength` | int | 默认字符串长度 |
+| `Option.Settings` | object | 方言私有开关，只支持一层字符串键值，如 PG 的 `"TableSpace": "pg_default"` |
+
+> 只收录「拼出可用连接串必需」的字段。连接超时、命令超时、连接池大小这类调优项请写在
+> `ConnectionString` 里，或走代码方式配置。
+
+`Option.Type` 的规范写法（大小写不敏感，但建议照抄）：
+`Sqlite` / `MySql` / `SqlServer` / `PostgreSQL` / `Oracle` / `Dameng` / `KingbaseES`，
+分别对应代码里的 `UseSqlite()` / `UseMySql()` / `UseSqlServer()` / `UsePostgreSQL()` /
+`UseOracle()` / `UseDameng()` / `UseKingbaseES()`。
+
+## 各方言拼串规则
+
+| 方言 | 规则 |
+|------|------|
+| `Sqlite` | `DataSource` → 否则 `Database` 当文件路径；两者都没有且无 `ConnectionString` 则抛错 |
+| `MySql` | `Server` / `Port` / `UserId` / `Password` / `Database` |
+| `SqlServer` | `Server` 作 `Data Source`；端口折进 `Data Source=host,port`。`Server` 已含 `,` 或 `\`（命名实例）时再给 `Port` 会直接报错 |
+| `PostgreSQL` / `KingbaseES` | `DataSource`（回退 `Server`）作 `Host`、`UserId` 作 `Username`、`Port` / `Password` / `Database` |
+| `Dameng` | `DataSource` 优先，否则 `Server` + `Port`（默认 5236）+ 凭据 |
+| `Oracle` | `DataSource` 原样透传 → `ServiceName` 拼 EZ Connect → `Sid` 拼完整描述符 → 裸 `Server` 当 TNS 别名 |
+
+Oracle 补充：`Sid` 不会写成 `host:port/SID`。该位置在 Oracle 语法里是 **service_name**，
+只有单实例且 service 恰好与 SID 同名时才「看起来能用」，RAC 下（SID=`ORCL1`、service=`ORCL`）必失败。
+另外只给 `Server` + `Port` 而不给 `ServiceName` / `Sid` 会报错 —— 拼出的 `host:port` 既不能精确匹配
+TNS 别名，也不是合法的 EZ Connect。
+
+## 优先级与热重载
+
+1. 代码里 `UseXxx(connStr)` 先登记实例；
+2. 配置文件里**同 `Key`** 的条目随后覆盖它（连接串、选项都按配置走）；
+3. 配置里有、代码里没登记的 `Key` 会被新增；
+4. 配置里删掉的 `Key` 会在重载时移除对应 provider。
+
+`reloadOnChange: true` 时，改连接串、加库、删库都会在文件保存后生效，无需重启。
+`AddLightOrm` 不传 `configuration` 时整条链路跳过，行为与旧版本一致。
+
+## 注意
+
+- `Option.Type` 写了一个没登记过的方言名，会在加载时抛异常并列出当前已支持的方言名。
+- 配置键名目前**不做严格校验**：拼错的键（如 `"UsrId"`）会被静默忽略，
+  症状是「明明写了却连不上」。遇到这种情况先核对键名拼写。
+- 手写绑定器 `BindingExtensions` 是唯一入口，新增配置字段必须同步改它，否则字段会被忽略。
+
 # 使用生成器(可选)
 
 ## 用途
