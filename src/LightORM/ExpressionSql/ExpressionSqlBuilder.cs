@@ -1,4 +1,5 @@
 ﻿using LightORM.Implements;
+using LightORM.Options;
 using System.Collections.Concurrent;
 
 namespace LightORM;
@@ -20,153 +21,26 @@ public static class IExpressionContextSetupEx
         setup.SetTableContext(createContext.Invoke());
         return setup;
     }
-}
 
-internal partial class ExpressionSqlOptions
-{
-    // 共享不可变的数据
-    private readonly static ConcurrentDictionary<string, IDatabaseProvider> databaseProviders = [];
-    private readonly static ConcurrentDictionary<string, IDatabaseAdapter> customDatabases = [];
-    private readonly static ConcurrentDictionary<string, IDatabaseTableHandler> databaseHandlers = [];
-    private readonly static ConcurrentDictionary<Type, IAdoInterceptor> stateLessInterceptors = [];
-    private static int poolSize = Environment.ProcessorCount * 4;
-    private static int objectPoolSize = Environment.ProcessorCount * 8;
-    private static ILightJsonHelper? specificInstance;
-
-    private static string? defaultDbKey;
-    private static bool useParameterized = true;
-    private static bool enableExpressionCache = true;
-
-    static ExpressionSqlOptions()
+    /// <summary>
+    /// 登记"从配置创建 provider"的委托（key 为 <see cref="DbBaseType.Name"/>，大小写不敏感）。
+    /// <para>
+    /// 由各方言的空参数 <c>UseXxx()</c> 调用。登记只是登记，provider 的创建发生在读取配置时。
+    /// </para>
+    /// </summary>
+    public static IExpressionContextSetup RegisterDatabase(this IExpressionContextSetup setup, DbBaseType type, Func<DatabaseOptions, IDatabaseProvider> create)
     {
-        Instance = new(() => new ExpressionSqlOptions());
-    }
-
-    public static void SetDatabase(string? key, DbBaseType dbBaseType, IDatabaseProvider provider)
-    {
-        var k = key ?? ConstString.Main;
-        if (!databaseProviders.TryGetValue(k, out _))
+        if (setup is not IDatabaseRegistry registry)
         {
-            databaseProviders.TryAdd(k, provider);
+            throw new LightOrmException($"当前 IExpressionContextSetup 实现（{setup?.GetType().Name ?? "null"}）不支持配置驱动注册。");
         }
 
-        if (!customDatabases.TryGetValue(dbBaseType.Name, out _))
-        {
-            customDatabases.TryAdd(dbBaseType.Name, provider.DatabaseAdapter);
-        }
-
-        if (!databaseHandlers.TryGetValue(dbBaseType.Name, out _))
-        {
-            databaseHandlers.TryAdd(dbBaseType.Name, provider.DbHandler);
-        }
-    }
-
-    public static void AddStateLessInterceptor(Type interceptorType, IAdoInterceptor? interceptor)
-    {
-        if (!stateLessInterceptors.TryGetValue(interceptorType, out _) && interceptor is not null)
-        {
-            stateLessInterceptors.TryAdd(interceptorType, interceptor);
-        }
-    }
-
-    public static void SetTableContext(ITableContext context)
-    {
-        AOTSupported = true;
-        TableContext.StaticContext = context;
-    }
-
-    public static void SetDefaultDatabase(string key)
-    {
-        defaultDbKey = key;
-    }
-
-    public static void SetConnectionPoolSize(int size)
-    {
-        poolSize = size;
-    }
-
-    public static void SetUseParameterized(bool use)
-    {
-        useParameterized = use;
-    }
-
-    public static void SetEnableExpressionCache(bool enable)
-    {
-        enableExpressionCache = enable;
-    }
-
-    public static void SetSpecificJsonHandler(ILightJsonHelper instance)
-    {
-        specificInstance = instance;
+        registry.RegisterDatabase(type, create);
+        return setup;
     }
 }
 
-internal partial class ExpressionSqlOptions : IJsonConfiguration
-{
-    public static Lazy<ExpressionSqlOptions> Instance { get; }
-    public int PoolSize => poolSize;
-    public int InternalObjectPoolSize => objectPoolSize;
-    public bool EnableExpressionCache => enableExpressionCache;
-    public bool ThrowExceptionWhileMethodResolveNotMap { get; set; }
-
-    public string DefaultDbKey
-    {
-        get
-        {
-            var d = defaultDbKey ?? ConstString.Main;
-            if (!DatabaseProviders.ContainsKey(d))
-            {
-                throw new KeyNotFoundException($"数据库 '{d}' 未注册. 使用'SetDefault'设置默认值.");
-            }
-
-            return d;
-        }
-    }
-
-    public bool UseParameterized => useParameterized;
-    public IServiceProvider? Services { get; set; }
-    private readonly ICollection<IAdoInterceptor> allInterceptors;
-    public ICollection<IAdoInterceptor> Interceptors => allInterceptors;
-    public ConcurrentDictionary<string, IDatabaseProvider> DatabaseProviders { get; }
-    public ConcurrentDictionary<string, IDatabaseAdapter> CustomDatabases { get; }
-    public ConcurrentDictionary<string, IDatabaseTableHandler> DatabaseHandlers { get; }
-    public Func<object, string>? Serializer { get; set; }
-    public Func<string, Type, object>? Deserializer { get; set; }
-    public Func<byte[], Type, object>? DeserializerBytes { get; set; }
-
-    public ExpressionSqlOptions()
-    {
-        DatabaseProviders = databaseProviders;
-        CustomDatabases = customDatabases;
-        DatabaseHandlers = databaseHandlers;
-        allInterceptors = stateLessInterceptors.Values;
-    }
-
-    public ILightJsonHelper GetJsonHandler()
-    {
-        if (specificInstance is not null) return specificInstance;
-        if (Serializer is null || Deserializer is null || DeserializerBytes is null)
-        {
-            throw new LightOrmException("未配置ILightJsonHelper实例的情况下，Serializer和Deserializer和DeserializerBytes不能为null");
-        }
-
-        return specificInstance ??= new DefaultJsonHelper(Serializer, Deserializer, DeserializerBytes);
-    }
-
-    public ExpressionSqlOptions(IEnumerable<IAdoInterceptor> interceptors) : this()
-    {
-        if (interceptors.Any())
-        {
-            allInterceptors = [.. interceptors, .. stateLessInterceptors.Values];
-        }
-        else
-        {
-            allInterceptors = stateLessInterceptors.Values;
-        }
-    }
-}
-
-internal partial class ExpressionOptionBuilder : IExpressionContextSetup
+internal partial class ExpressionOptionBuilder : IExpressionContextSetup, IDatabaseRegistry
 {
     public bool ThrowExceptionWhileMethodResolveNotMap
     {
@@ -239,4 +113,10 @@ internal partial class ExpressionOptionBuilder : IExpressionContextSetup
         throw new NotSupportedException();
     }
 
+    public void RegisterDatabase(DbBaseType type, Func<DatabaseOptions, IDatabaseProvider> create)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        LightOrmException.ThrowIfNull(create, "create 不能为 null");
+        ExpressionSqlOptions.RegisterCreator(type.Name, create);
+    }
 }
