@@ -20,6 +20,9 @@ public class TestBase
     protected IDatabaseProvider CurrentDefaultProvider => Db.Options.DatabaseProviders.First().Value;
     protected TestBase()
     {
+        // 注意：这里刻意不接配置文件 —— 各 provider 的用例都靠 Configura 显式注册库，
+        // 再叠一份配置会改变 DatabaseProviders 的内容/顺序，破坏既有断言。
+        // 配置驱动的注册由 DatabaseConfigurationTest 单独覆盖。
         IServiceCollection services = new ServiceCollection();
         services.AddLightOrm(option =>
         {
