@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace LightORMTest;
 
 /// <summary>
-/// 配置驱动的数据库注册（<c>AddLightOrm(..., IConfiguration)</c>）。
+/// 配置驱动的数据库注册（容器里的 <c>IConfiguration</c> + 配置节 <c>LightOrmDatabases</c>）。
 /// <para>
 /// 用 Sqlite 当被测方言：provider 创建不连库，整个用例离线可跑。
 /// 全局注册表是 static 的，所以每个用例用唯一 key，并在 Cleanup 里移除。
@@ -126,6 +126,54 @@ public class DatabaseConfigurationTest
         Assert.IsTrue(db.Options.DatabaseProviders.ContainsKey(key), "Type 匹配应该忽略大小写");
     }
 
+    /// <summary>
+    /// 绑定发生在运行时：<c>IConfiguration</c> 在 <c>AddLightOrm</c> <b>之后</b>注册也能生效。
+    /// </summary>
+    [TestMethod]
+    public void ConfigurationRegisteredAfterAddLightOrm_IsStillBound()
+    {
+        var key = NewKey("late");
+        File.WriteAllText(configFile, Config(key, "Data Source=:memory:"));
+
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(configFile, optional: false)
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddLightOrm(options =>
+        {
+            options.SetTableContext<TestTableContext>();
+            options.ConfigJsonHandler<JsonHandler>();
+            options.RegisterDatabase(DbBaseType.Sqlite, database =>
+                SqliteProvider.Create(setting => setting.MasterConnectionString = database.Option!.ConnectionString));
+        });
+        services.AddSingleton<IConfiguration>(configuration);
+
+        using var provider = services.BuildServiceProvider();
+        var db = provider.GetRequiredService<IExpressionContext>();
+
+        Assert.IsTrue(db.Options.DatabaseProviders.ContainsKey(key), "后注册的 IConfiguration 也应该被绑定");
+    }
+
+    /// <summary>
+    /// 容器里没有 <c>IConfiguration</c> 时按空列表处理，不抛异常、不注册任何库。
+    /// </summary>
+    [TestMethod]
+    public void NoConfiguration_DoesNotThrow()
+    {
+        var services = new ServiceCollection();
+        services.AddLightOrm(options =>
+        {
+            options.SetTableContext<TestTableContext>();
+            options.ConfigJsonHandler<JsonHandler>();
+        });
+
+        using var provider = services.BuildServiceProvider();
+        var db = provider.GetRequiredService<IExpressionContext>();
+
+        Assert.IsNotNull(db);
+    }
+
     private string NewKey(string prefix)
     {
         var key = prefix + "-" + Guid.NewGuid().ToString("N")[..8];
@@ -161,13 +209,14 @@ public class DatabaseConfigurationTest
             .Build();
 
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddLightOrm(options =>
         {
             options.SetTableContext<TestTableContext>();
             options.ConfigJsonHandler<JsonHandler>();
             options.RegisterDatabase(DbBaseType.Sqlite, database =>
                 SqliteProvider.Create(setting => setting.MasterConnectionString = database.Option!.ConnectionString));
-        }, configuration);
+        });
 
         return services.BuildServiceProvider();
     }
