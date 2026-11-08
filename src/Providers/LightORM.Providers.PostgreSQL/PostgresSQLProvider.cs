@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using LightORM.Implements;
 using LightORM.Models;
+using LightORM.Options;
 
 namespace LightORM.Providers.PostgreSQL;
 
@@ -19,6 +20,48 @@ public sealed class PostgreSQLProvider : BaseDatabaseProvider
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
         return Create(dbOption);
+    }
+
+    /// <summary>
+    /// 从配置文件创建（由 <c>UsePostgreSQL()</c> 空参重载登记）。
+    /// <para>
+    /// <see cref="DatabaseDefinition.ConnectionString"/> 为底，分散字段逐项覆盖；
+    /// 没有连接串时用 Host / Port / Username / Password / Database 拼装。
+    /// </para>
+    /// </summary>
+    public static PostgreSQLProvider Create(DatabaseOptions database)
+    {
+        LightOrmException.ThrowIfNull(database, "数据库配置不能为 null");
+        var definition = database.Option
+            ?? throw new LightOrmException($"数据库 '{database.Key}' 缺少 Option 配置。");
+
+        var dbOption = database.ToDbOption<PostgreSQLTableOptions>(BuildConnectionString(database.Key, definition));
+
+        // 方言私有项走 Settings，不进通用模型
+        if (definition.GetSetting("TableSpace") is { Length: > 0 } tableSpace)
+        {
+            dbOption.GenerateOption.TableSpace = tableSpace;
+        }
+
+        return Create(dbOption);
+    }
+
+    private static string BuildConnectionString(string? key, DatabaseDefinition definition)
+    {
+        return DatabaseConnectionString.Build(key, definition,
+            connectionString => connectionString is null
+                ? new Npgsql.NpgsqlConnectionStringBuilder()
+                : new Npgsql.NpgsqlConnectionStringBuilder(connectionString),
+            (builder, def) =>
+            {
+                if (def.DataSource is { Length: > 0 } dataSource) builder.Host = dataSource;
+                else if (def.Server is { Length: > 0 } host) builder.Host = host;
+
+                if (def.Port is { } port) builder.Port = port;
+                if (def.UserId is { Length: > 0 } userName) builder.Username = userName;
+                if (def.Password is { } password) builder.Password = password;
+                if (def.Database is { Length: > 0 } databaseName) builder.Database = databaseName;
+            });
     }
 
     public override DbBaseType DbBaseType => DbBaseType.PostgreSQL;

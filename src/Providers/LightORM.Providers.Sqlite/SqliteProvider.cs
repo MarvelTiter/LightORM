@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data.SQLite;
 using LightORM.Implements;
 using LightORM.Models;
+using LightORM.Options;
 
 namespace LightORM.Providers.Sqlite;
 
@@ -20,6 +21,41 @@ public sealed class SqliteProvider : BaseDatabaseProvider
             throw new ArgumentNullException(nameof(dbOption.MasterConnectionString), "连接字符串不能为空");
         }
         return Create(dbOption);
+    }
+
+    /// <summary>
+    /// 从配置文件创建（由 <c>UseSqlite()</c> 空参重载登记）。
+    /// <para>
+    /// SQLite 没有 Server / Port / 凭据概念：用 <see cref="DatabaseDefinition.ConnectionString"/>，
+    /// 或用 <see cref="DatabaseDefinition.DataSource"/>（<see cref="DatabaseDefinition.Database"/> 视作库文件路径）。
+    /// </para>
+    /// </summary>
+    public static SqliteProvider Create(DatabaseOptions database)
+    {
+        LightOrmException.ThrowIfNull(database, "数据库配置不能为 null");
+        var definition = database.Option
+            ?? throw new LightOrmException($"数据库 '{database.Key}' 缺少 Option 配置。");
+
+        return Create(database.ToDbOption<SqliteTableOptions>(BuildConnectionString(database.Key, definition)));
+    }
+
+    private static string BuildConnectionString(string? key, DatabaseDefinition definition)
+    {
+        return DatabaseConnectionString.Build(key, definition,
+            connectionString => connectionString is null
+                ? new SQLiteConnectionStringBuilder()
+                : new SQLiteConnectionStringBuilder(connectionString),
+            (builder, def) =>
+            {
+                if (def.DataSource is { Length: > 0 } dataSource) builder.DataSource = dataSource;
+                else if (def.Database is { Length: > 0 } databaseName) builder.DataSource = databaseName;
+                else if (string.IsNullOrWhiteSpace(def.ConnectionString))
+                {
+                    throw new LightOrmException(
+                        $"数据库 '{key}'：SQLite 必须提供 ConnectionString 或 DataSource（库文件路径）。" +
+                        "Server / Port / UserId / Password 对 SQLite 没有意义。");
+                }
+            });
     }
 
     private SqliteProvider(DataBaseOption<SqliteTableOptions> option) : base(option.MasterConnectionString!, option.SalveConnectionStrings)
